@@ -1579,14 +1579,6 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
 .rk-chip{min-width:0}.rk-chip em{flex:0 1 auto;white-space:nowrap}
 .rk-chip small,.rk-chip b,.rk-chip i,.rk-chip svg{flex:none}
 .nb-card .rk-chip em{max-width:10.5em}.nb-card .rk-chip{margin-left:0}
-/* Chip hạng gọn: [ SSS | Bậc Thầy ] */
-.rk-chip{gap:0;padding:0;border-radius:8px;overflow:hidden;align-items:stretch;margin-left:0}
-.rk-chip::after{display:none}
-.rk-chip b{display:grid;place-items:center;min-width:34px;padding:4px 8px;font:900 .9rem/1 var(--f-display)!important;font-style:normal!important;color:#0b0d14!important;background:var(--rc)!important;-webkit-background-clip:border-box!important;background-clip:border-box!important;text-shadow:none!important;filter:none!important;margin:0!important;letter-spacing:.02em}
-.rk-chip.rb b{background:linear-gradient(90deg,#ff5a5a,#ffc400,#3fcf5b,#3ec6e0,#9b5cff)!important;animation:none!important}
-.rk-chip em{display:flex;align-items:center;padding:4px 11px;margin:0;border:0;font:700 .74rem/1 var(--f-body)!important;letter-spacing:.02em;text-transform:none;color:#fff;max-width:none}
-.nb-card .rk-chip em{max-width:none}
-@media (max-width:640px){.rk-chip b{min-width:30px;padding:3px 7px;font-size:.8rem!important}.rk-chip em{font-size:.68rem!important;padding:3px 9px;max-width:none}}
 /* Nút tài khoản trên menu: khung avatar theo hạng */
 nav .acct.has-ka{display:inline-flex;align-items:center;gap:8px;padding:2px 14px 2px 2px}
 nav .acct.has-ka .acct-icon{display:none!important}
@@ -1594,3 +1586,25 @@ nav .acct.has-ka .acct-icon{display:none!important}
 .ka.nav{width:40px;height:39px;margin:-4px 0}
 .ka.nav .ka-ma{display:none}
 @media(max-width:600px){nav .acct.has-ka{width:auto;height:auto;padding:0;border:0!important;background:none!important;box-shadow:none!important}.ka.nav{width:44px;height:43px;margin:0}}
+/* ===== Khung thẻ bài nổi bật theo hạng ===== */
+.kt{position:absolute;inset:0;z-index:1;pointer-events:none;border-radius:inherit}
+.kt::before{content:"";position:absolute;inset:0;border-radius:inherit;padding:1.5px;
+  background:linear-gradient(180deg,var(--k0),var(--k1) 45%,var(--k2));-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;opacity:.9}
+.kt.t0::before{opacity:.45}
+.kt.t3::before,.kt.t4::before{padding:2.5px}
+.kt.t5::before,.kt.t6::before,.kt.t7::before,.kt.t8::before{padding:3px}
+.kt.rb::before{background:linear-gradient(180deg,#ff5a5a,#ffc400,#3fcf5b,#3ec6e0,#9b5cff)}
+.kt-thanh{position:absolute;left:-2%;width:104%;top:calc(100% - 112px);transform:translateY(-55%);height:auto;overflow:visible;filter:drop-shadow(0 2px 4px rgba(0,0,0,.6))}
+.kt-goc{position:absolute;top:2px;width:64px;height:64px;overflow:visible;filter:drop-shadow(0 2px 3px rgba(0,0,0,.5))}
+.kt-goc.l{left:2px}.kt-goc.r{right:2px;transform:scaleX(-1)}
+.kt-day{position:absolute;left:50%;bottom:-2px;width:30px;height:30px;transform:translateX(-50%)}
+.kt.t3 .kt-thanh,.kt.t4 .kt-thanh{filter:drop-shadow(0 0 6px color-mix(in srgb,var(--rc) 60%,transparent))}
+.kt.t5 .kt-thanh,.kt.t6 .kt-thanh,.kt.t7 .kt-thanh,.kt.t8 .kt-thanh,.kt.t5 .kt-goc,.kt.t6 .kt-goc,.kt.t7 .kt-goc,.kt.t8 .kt-goc{filter:drop-shadow(0 0 8px var(--rc))}
+.nb-card.on .kt.t5,.nb-card.on .kt.t6,.nb-card.on .kt.t7,.nb-card.on .kt.t8{box-shadow:0 0 30px -4px var(--rc)}
+.nb-card .nb-medal{z-index:3}.nb-card .nb-tt{z-index:3}.nb-card figcaption{z-index:2}
+.kt.t5 ~ .nb-medal,.kt.t6 ~ .nb-medal{}
+@media (max-width:640px){.kt-goc{width:50px;height:50px}}
+.kt-goc{width:78px;height:78px}
+.kt-thanh{left:-3%;width:106%}
+@media (max-width:640px){.kt-goc{width:58px;height:58px}}
+.kt-day{display:none}

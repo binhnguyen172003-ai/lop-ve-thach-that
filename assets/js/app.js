@@ -395,8 +395,8 @@ function tinhRank(dd, prog, fb, ten) {
   return { xp, r, i, next, pct, buoi, baiTap, baiHoc, gioi, nb: nb.length, top1, thuong, thuongDs };
 }
 const huyHieu = (r, i, cls = "", ten = "") => cls === "xs"
-  ? `<span class="rk-chip t${i}${r.mau === "rainbow" ? " rb" : ""}" data-rk="${esc(ten)}" role="button" tabindex="0" style="--rc:${r.mau === "rainbow" ? "#ffd6ff" : r.mau}" title="Hạng ${r.ma} · ${r.kim} · ${r.ten} (${i + 1} sao) — bấm để xem cách leo hạng">
-  <b>${r.ma}</b><em>${r.ten}</em></span>`
+  ? `<span class="rk-chip t${i}${r.mau === "rainbow" ? " rb" : ""}" data-rk="${esc(ten)}" role="button" tabindex="0" style="--rc:${r.mau === "rainbow" ? "#ffd6ff" : r.mau}" title="Hạng ${r.ma} · ${r.kim} · ${r.ten} — xem cách leo hạng">
+  <svg viewBox="0 0 64 64" aria-hidden="true"><path d="M32 6l20 9v16c0 13-9 22-20 27C21 53 12 44 12 31V15z"/></svg>${i >= 5 ? '<s class="fx" aria-hidden="true"></s>' : ""}<small>RANK</small><b>${r.ma}</b><i>${i >= 3 ? (i + 1) + "★" : "★".repeat(i + 1)}</i><em>${r.kim} · ${r.ten}</em></span>`
   : `<span class="rk-badge t${i} ${cls}${r.mau === "rainbow" ? " rb" : ""}" data-rk="${esc(ten)}" style="--rc:${r.mau === "rainbow" ? "#ffd6ff" : r.mau}" title="Hạng ${r.ma} · ${r.kim} · ${r.ten}">
   <svg viewBox="0 0 64 64" aria-hidden="true"><path class="w" d="M6 22c6 2 10 6 12 12-6-1-10-5-12-12zM58 22c-6 2-10 6-12 12 6-1 10-5 12-12z"/><path class="s" d="M32 6l20 9v16c0 13-9 22-20 27C21 53 12 44 12 31V15z"/></svg>
   <b>${r.ma}</b><i>${"★".repeat(i + 1)}</i></span>`;
@@ -414,13 +414,43 @@ function theRank(t) {
       </details></div></div>`;
 }
 
+const KIM_LOAI = [["#f2f4f7", "#8c939d", "#3a3f47"], ["#ffe2c4", "#b9774a", "#4a2a17"], ["#ffffff", "#b9c3cf", "#4b535e"], ["#fff3c4", "#d9a63a", "#5a3c0c"],
+  ["#ffffff", "#c9c2e8", "#4a4366"], ["#fff6cf", "#f0b72e", "#6b4300"], ["#ffe6c7", "#f08a2a", "#5c2200"], ["#ffe1d6", "#e0473f", "#4a0508"], ["#ffffff", "#f3b6ff", "#5b2a6e"]];
+/* Khung thẻ bài nổi bật theo hạng: viền, góc móc, thanh ngang giữa ảnh và tên (tự vẽ) */
+function khungThe(r, i) {
+  const id = "kt" + Math.random().toString(36).slice(2, 8), c = r.mau === "rainbow" ? "#ff9cf5" : r.mau, KL = KIM_LOAI[i];
+  const M = `url(#${id}m)`, A = `url(#${id}a)`;
+  const defs = `<defs><linearGradient id="${id}m" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${KL[0]}"/><stop offset=".5" stop-color="${KL[1]}"/><stop offset="1" stop-color="${KL[2]}"/></linearGradient>
+    <linearGradient id="${id}a" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff"/><stop offset=".4" stop-color="${c}"/><stop offset="1" stop-color="${c}" stop-opacity=".75"/></linearGradient>${r.mau === "rainbow" ? `<linearGradient id="${id}r"><stop offset="0" stop-color="#ff5a5a"/><stop offset=".25" stop-color="#ffc400"/><stop offset=".5" stop-color="#3fcf5b"/><stop offset=".75" stop-color="#3ec6e0"/><stop offset="1" stop-color="#9b5cff"/></linearGradient>` : ""}</defs>`;
+  // thanh ngang (càng cao càng nhiều chi tiết)
+  const t = [];
+  t.push(`<rect x="8" y="13.5" width="284" height="${i >= 3 ? 3.5 : 2.2}" rx="1" fill="${M}"/>`);
+  if (i >= 2) t.push(`<rect x="34" y="19" width="232" height="1.2" fill="${M}" opacity=".8"/><path d="M8 13.5l-6 4 6 4M292 13.5l6 4-6 4" fill="none" stroke="${M}" stroke-width="2"/>`);
+  if (i >= 1) t.push(`<path d="M128 13l22 13 22-13h-7l-15 8-15-8z" fill="${M}"/>`);
+  if (i >= 4) t.push(`<path d="M116 15l16 8 18 11 18-11 16-8z" fill="${A}" opacity=".9"/><path d="M58 15l6-6 6 6-6 6zM230 15l6-6 6 6-6 6z" fill="${A}" stroke="#fff" stroke-width=".6"/>`);
+  if (i >= 3) t.push(`<path d="M150 3l8 11-8 11-8-11z" fill="${A}" stroke="#fff" stroke-width=".8"/><path d="M150 3l3 11-3 11" fill="#fff" opacity=".4"/>`);
+  if (i >= 5) t.push(`<circle cx="36" cy="15" r="5" fill="${A}" stroke="${M}" stroke-width="2"/><circle cx="264" cy="15" r="5" fill="${A}" stroke="${M}" stroke-width="2"/><path d="M84 15c20-10 40-12 54-10M216 15c-20-10-40-12-54-10" fill="none" stroke="${M}" stroke-width="2"/>`);
+  if (i >= 6) t.push(`<path d="M132 24l18 14 18-14-8 1-10 7-10-7zM96 18l-14 8h20zM204 18l14 8h-20z" fill="${M}"/>`);
+  if (i >= 7) t.push(`<path d="M2 15C-2 6 4-2 14-4c-6 5-8 12-4 19zM298 15c4-9-2-17-12-19 6 5 8 12 4 19z" fill="${M}" stroke="${c}" stroke-width=".6"/>`);
+  if (i === 8) t.push(`<rect x="8" y="13.5" width="284" height="3.5" rx="1" fill="url(#${id}r)" opacity=".65"/>`);
+  const thanh = `<svg class="kt-thanh" viewBox="-6 -8 312 48" aria-hidden="true">${defs}${t.join("")}</svg>`;
+  // góc trên (trái, phải đối xứng)
+  const g = [];
+  if (i >= 1) g.push(`<path d="M5 60V12q0-7 7-7h48" fill="none" stroke="${M}" stroke-width="${i >= 4 ? 3.5 : 2.5}"/>`);
+  if (i >= 3) g.push(`<path d="M10 54V16q0-6 6-6h38" fill="none" stroke="${c}" stroke-width="1" opacity=".8"/><path d="M2 6l9-4 2 9-9 2z" fill="${A}"/>`);
+  if (i >= 5) g.push(`<path d="M3 46C1 22 14 4 40 0c-6 4-10 7-12 11-12 3-20 14-21 35z" fill="${M}" stroke="${c}" stroke-width=".7"/><path d="M60 5c6-6 12-6 16-4-6 1-10 4-12 8z" fill="${M}"/>`);
+  if (i >= 7) g.push(`<path d="M18 2C20-8 30-14 42-14c-8 4-14 10-16 18z" fill="${A}"/>`);
+  const goc = g.length ? `<svg class="kt-goc l" viewBox="0 -16 80 80" aria-hidden="true">${defs}${g.join("")}</svg><svg class="kt-goc r" viewBox="0 -16 80 80" aria-hidden="true">${defs.replaceAll(id, id + "b")}${g.join("").replaceAll(id, id + "b")}</svg>` : "";
+  // huy hiệu tròn ở đáy (S+)
+  const day = i >= 5 ? `<svg class="kt-day" viewBox="0 0 40 40" aria-hidden="true">${defs.replaceAll(id, id + "c")}<circle cx="20" cy="20" r="15" fill="#0b0d14" stroke="${M.replace(id, id + "c")}" stroke-width="3"/><path d="M20 9l6 11-6 11-6-11z" fill="${A.replace(id, id + "c")}"/></svg>` : "";
+  return `<span class="kt t${i}${r.mau === "rainbow" ? " rb" : ""}" style="--rc:${c};--k0:${KL[0]};--k1:${KL[1]};--k2:${KL[2]}" aria-hidden="true">${goc}${thanh}${day}</span>`;
+}
 /* Khung avatar theo hạng — tự vẽ, hạng càng cao khung càng cầu kỳ */
 const chuCai = t => String(t || "").trim().split(/\s+/).slice(-2).map(w => w[0] || "").join("").toUpperCase() || "?";
 function khungAvatar(r, i, ten = "", anh = "", cls = "") {
   const id = "ka" + Math.random().toString(36).slice(2, 8), c = r.mau === "rainbow" ? "#ff9cf5" : r.mau;
   // kim loại của khung theo hạng: thép → đồng → bạc → vàng → bạch kim → vàng ròng…
-  const KL = [["#f2f4f7", "#8c939d", "#3a3f47"], ["#ffe2c4", "#b9774a", "#4a2a17"], ["#ffffff", "#b9c3cf", "#4b535e"], ["#fff3c4", "#d9a63a", "#5a3c0c"],
-    ["#ffffff", "#c9c2e8", "#4a4366"], ["#fff6cf", "#f0b72e", "#6b4300"], ["#ffe6c7", "#f08a2a", "#5c2200"], ["#ffe1d6", "#e0473f", "#4a0508"], ["#ffffff", "#f3b6ff", "#5b2a6e"]][i];
+  const KL = KIM_LOAI[i];
   const M = `url(#${id}m)`, A = `url(#${id}a)`, g = [];
   const la = (cx, cy, rot, s = 1) => `<ellipse cx="${cx}" cy="${cy}" rx="${6.6 * s}" ry="${2.6 * s}" transform="rotate(${rot} ${cx} ${cy})"/>`;
   // nhành nguyệt quế hai bên (E+)
@@ -607,6 +637,7 @@ document.addEventListener("keydown", e => {
         <img src="${esc(b.anh)}" alt="${esc((b.loai || "Bài vẽ") + " · " + (b.hocVien || ""))}" loading="lazy" decoding="async" draggable="false">
         ${b.hang && b.hang <= 3 ? `<span class="nb-medal h${Number(b.hang)}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 2h4l1 5-3 1zM17 2h-4l-1 5 3 1z" class="rb"/><circle cx="12" cy="15" r="6.5" class="md"/><text x="12" y="18.2" text-anchor="middle">${Number(b.hang)}</text></svg><b>TOP ${Number(b.hang)}</b><i>${TEN[ky]}</i></span>` : ""}
         ${!b.tg ? (m => m.length ? (a => `<span class="nb-tt" data-rk="${esc(b.hocVien)}" role="button" tabindex="0" title="${esc(a.ten)} · ${CAP[a.cap].ten} — ${esc(a.mo)}">${huyHieuTT(a, a.cap, "sm")}<span class="nb-ttx"><b>${esc(a.ten)}</b><small>${a.n} ${esc(a.dv)} · ${CAP[a.cap].ten}</small></span></span>`)(m[0]) : "")(ttNoiNhat(b.hocVien)) : ""}
+        ${!b.tg ? (t => khungThe(t.r, t.i))(tinhRank(null, null, null, b.hocVien)) : ""}
         <figcaption><b>${esc(b.hocVien || "")} ${!b.tg && !tam ? (t => huyHieu(t.r, t.i, "xs", b.hocVien))(tinhRank(null, null, null, b.hocVien)) : ""}</b><span>${esc([b.loai, b.ghiChu].filter(Boolean).join(" · "))}</span></figcaption></figure>`).join("")}</div>
       <div class="gv-ctl"><button type="button" class="gv-nav" aria-label="Bài trước">‹</button>
         <div class="gv-dots">${ds.map((b, i) => `<button type="button" data-i="${i}" aria-label="Bài ${i + 1}"></button>`).join("")}</div>
