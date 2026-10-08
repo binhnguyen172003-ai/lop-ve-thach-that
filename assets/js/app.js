@@ -343,22 +343,21 @@ async function saveGrade(btn) {
   const k1 = `${hid}|${email}|diem`, k2 = `${hid}|${email}|nx`;
   const row = btn.closest(".g-row");
   const diem = row.querySelector(".g-diem").value.trim(), nhanXet = row.querySelector(".g-nx").value.trim();
-  btn.disabled = true; btn.textContent = "Đang lưu…";
-  try {
-    await setDoc(doc(db, "nhanxet", email), { [hid]: { diem, nhanXet, nguoiCham: (user && user.displayName) || mail, luc: Date.now() } }, { merge: true });
-    delete gradeDraft[k1]; delete gradeDraft[k2];
-    btn.textContent = "Đã lưu ✓";
-  } catch (e) { btn.textContent = "Lỗi, thử lại"; }
-  btn.disabled = false;
+  delete gradeDraft[k1]; delete gradeDraft[k2];
+  btn.textContent = "Đã lưu ✓";
+  setDoc(doc(db, "nhanxet", email), { [hid]: { diem, nhanXet, nguoiCham: (user && user.displayName) || mail, luc: Date.now() } }, { merge: true })
+    .catch(() => { gradeDraft[k1] = diem; gradeDraft[k2] = nhanXet; btn.textContent = "Lỗi, bấm lưu lại"; });
 }
 $$("#hw-filter .tab").forEach(b => b.onclick = () => {
   hwView = b.dataset.h; $$("#hw-filter .tab").forEach(x => x.setAttribute("aria-selected", x === b)); renderHomework();
 });
 
-async function toggleProgress(kind, id) {
+// Đổi trên màn hình ngay, lưu lên máy chủ ở phía sau; lỗi thì trả lại như cũ.
+function toggleProgress(kind, id) {
   myProgress[kind][id] = !myProgress[kind][id];
-  try { await setDoc(doc(db, "tiendo", mail), { bai: myProgress.bai, baitap: myProgress.baitap, capNhat: Date.now() }); }
-  catch (e) { myProgress[kind][id] = !myProgress[kind][id]; alertStatus("Chưa lưu được tiến độ. Kiểm tra mạng rồi thử lại."); }
+  setDoc(doc(db, "tiendo", mail), { bai: myProgress.bai, baitap: myProgress.baitap, capNhat: Date.now() })
+    .catch(() => { myProgress[kind][id] = !myProgress[kind][id]; renderLessons(); renderHomework(); alertStatus("Chưa lưu được tiến độ. Kiểm tra mạng rồi thử lại."); });
+  return Promise.resolve();
 }
 function alertStatus(t) { const s = $("#login-status"); if (s) s.textContent = t; }
 
@@ -387,13 +386,13 @@ function renderRequests() {
   }).join("");
   $$("#requests [data-ok]").forEach(b => b.onclick = async () => {
     const r = requests.find(x => x.id === b.dataset.ok); if (!r) return;
-    b.disabled = true;
+    requests = requests.filter(x => x.id !== r.id); renderRequests();
     const { id, vaiTro, ...data } = r;
     const batch = writeBatch(db);
     if (vaiTro === "giaovien") batch.set(doc(db, "giaovien", r.id), { ten: r.ten, gmail: r.gmail, sdt: r.sdt || "", coso: r.coso || "", ghiChu: r.ghiChu || "", duyetLuc: Date.now() });
     else batch.set(doc(db, "hocvien", r.id), { ...data, lop: r.chuongTrinh || r.lop || "", duyetLuc: Date.now() });
     batch.delete(doc(db, "yeucau", r.id));
-    try { await batch.commit(); } catch (e) { b.disabled = false; b.textContent = "Lỗi, thử lại"; }
+    batch.commit().catch(() => { requests.unshift(r); renderRequests(); $("#req-count").textContent = "Lỗi khi duyệt " + r.ten + ", thử lại"; });
   });
   $$("#requests [data-no]").forEach(b => confirmButton(b, () => deleteDoc(doc(db, "yeucau", b.dataset.no)), "Bấm lần nữa để từ chối"));
 }
@@ -469,9 +468,9 @@ async function onUser(u) {
   const exists = async (col) => { try { return (await getDoc(doc(db, col, mail))).exists(); } catch (e) { return false; } };
   // Hỏi cả 4 thông tin cùng lúc thay vì lần lượt, để trang hiện nhanh hơn.
   const getData = async (col) => { try { const d = await getDoc(doc(db, col, mail)); return d.exists() ? (d.data() || {}) : null; } catch (e) { return null; } };
-  const [isAdm, gvDoc, hvDoc, ycDoc] = await Promise.all([
+  const [isAdm, gvDoc, hvDoc, ycDoc, tdDoc] = await Promise.all([
     mail === ADMIN_EMAIL.toLowerCase() ? true : exists("admins"),
-    getData("giaovien"), getData("hocvien"), getData("yeucau")
+    getData("giaovien"), getData("hocvien"), getData("yeucau"), getData("tiendo")
   ]);
   isAdmin = !!isAdm;
   isTeacher = isAdmin || !!gvDoc;
@@ -484,7 +483,7 @@ async function onUser(u) {
   if (!canLearn) return;
 
   if (!isTeacher) {
-    try { const p = await getDoc(doc(db, "tiendo", mail)); if (p.exists()) myProgress = { bai: p.data().bai || {}, baitap: p.data().baitap || {} }; } catch (e) {}
+    if (tdDoc) myProgress = { bai: tdDoc.bai || {}, baitap: tdDoc.baitap || {} };
     listen(doc(db, "nhanxet", mail), d => { myFeedback = d.exists() ? d.data() : {}; renderHomework(); });
   }
   listen(query(collection(db, "giaotrinh"), orderBy("thutu")), snap => {
@@ -542,7 +541,8 @@ async function startFirebase() {
     app = initializeApp(firebaseConfig);
     auth = getAuth(app);
     // Lưu dữ liệu trên máy: lần sau mở trang hiện ngay, không phải chờ tải lại.
-    try { db = initializeFirestore(app, { localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }) }); }
+    // Tự chọn kiểu kết nối ổn định nhất với mạng di động/wifi ở Việt Nam.
+    try { db = initializeFirestore(app, { experimentalAutoDetectLongPolling: true }); }
     catch (e) { db = getFirestore(app); }
   } catch (e) {
     $$("[data-lock]").forEach(el => { el.hidden = false; el.innerHTML = `<h3>Chưa kết nối được máy chủ</h3><p class="muted">Kiểm tra mạng rồi tải lại trang.</p>`; });
@@ -570,9 +570,12 @@ startFirebase();
 function submitTo(form, statusEl, busy, okMsg, write, keep) {
   form.addEventListener("submit", async ev => {
     ev.preventDefault(); if (!db || !user) return;
-    statusEl.textContent = busy;
-    try { await write(); if (!keep) form.reset(); statusEl.textContent = okMsg; }
-    catch (e) { statusEl.textContent = "Chưa lưu được. Kiểm tra quyền và mạng rồi thử lại."; }
+    statusEl.classList.remove("err");
+    let p;
+    try { p = write(); } catch (e) { p = Promise.reject(e); }
+    if (!keep) form.reset();
+    statusEl.textContent = okMsg;
+    Promise.resolve(p).catch(() => { statusEl.textContent = "Chưa lưu được. Kiểm tra mạng rồi thử lại."; statusEl.classList.add("err"); });
   });
 }
 /* Đăng ký tài khoản: lưu vào Firebase + gửi email báo cho thầy */
@@ -596,12 +599,13 @@ $("#f-reg").addEventListener("submit", async ev => {
       chuongTrinh: v("#rg-ct"), khoi: v("#rg-khoi"), namThi: v("#rg-namthi"), mucTieu: v("#rg-mt"), ghiChu: v("#rg-gc"),
       guiLuc: Date.now()
     };
-  st.textContent = "Đang gửi…"; $("#rg-btn").disabled = true;
-  try { await setDoc(doc(db, "yeucau", mail), data); }
-  catch (e) { st.textContent = "Chưa gửi được. Kiểm tra mạng rồi bấm gửi lại."; st.classList.add("err"); $("#rg-btn").disabled = false; return; }
-  $("#rg-btn").disabled = false; st.textContent = "";
+  st.textContent = "";
   editingReq = false;
-  renderAccount(data);
+  renderAccount(data); saveSession(data);
+  setDoc(doc(db, "yeucau", mail), data).catch(() => {
+    editingReq = true; renderAccount(false);
+    st.textContent = "Chưa gửi được. Kiểm tra mạng rồi bấm gửi lại."; st.classList.add("err");
+  });
   window.scrollTo({ top: 0, behavior: "smooth" });
   guiEmailThongBao(data);
 });
