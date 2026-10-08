@@ -246,3 +246,41 @@ footer{padding-block:32px;border-top:1px solid var(--rule);color:var(--graphite)
 .grade .g-diem{width:72px}
 .grade .g-nx{min-width:180px}
 .fb{grid-column:1/-1;padding:10px 14px;border-radius:8px;background:var(--ok-soft);font-size:.92rem}
+#roster{min-width:760px}
+
+/* Trang Vào lớp học: thân thiện cho học sinh */
+.stepper{list-style:none;margin:0 0 20px;padding:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.stepper li{display:flex;gap:10px;align-items:center;padding:12px;border-radius:var(--r);border:1px solid var(--rule);background:var(--sheet);color:var(--graphite);font-size:.9rem;line-height:1.3;min-width:0}
+.stepper b{flex:none;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;border:1.5px solid var(--graphite);font-family:var(--f-display)}
+.stepper li.now{border-color:var(--accent);color:var(--ink);font-weight:600}
+.stepper li.now b{background:var(--accent);border-color:var(--accent);color:var(--sheet)}
+.stepper li.done b{background:var(--ok);border-color:var(--ok);color:var(--sheet)}
+.step-card{margin-bottom:20px;max-width:640px}
+.step-card form{gap:16px}
+.btn.big{min-height:52px;padding:14px 24px;font-size:1.05rem}
+.more{border:1px dashed var(--rule);border-radius:var(--r);padding:12px 14px}
+.more summary{cursor:pointer;font-weight:600;color:var(--accent)}
+.inapp{max-width:640px;margin-bottom:20px;padding:16px;border-radius:var(--r);background:var(--accent-soft);border:1px solid var(--accent);line-height:1.55}
+.done-card{border-color:var(--ok)}
+@media (max-width:640px){.stepper{grid-template-columns:1fr}.stepper li{padding:10px 12px}}
+
+/* Lỗi hiển thị màu cam để không nhầm với thành công */
+.status.err{color:var(--warn);font-weight:600}
+/* Nút đăng nhập luôn thấy ở menu trên điện thoại */
+nav .acct{position:sticky;right:0;background:var(--paper);box-shadow:-14px 0 12px var(--paper)}
+/* Thẻ yêu cầu duyệt */
+.req-list{display:grid;gap:12px}
+.req-item{border:1px solid var(--rule);border-radius:var(--r);padding:16px;background:var(--paper)}
+.req-head{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:8px}
+.req-head .muted{margin-left:auto;font-size:.85rem}
+.req-body{display:grid;gap:2px;font-size:.93rem;overflow-wrap:anywhere}
+/* Chấm bài dạng thẻ */
+.g-row{padding-block:12px;border-bottom:1px dashed var(--rule);display:grid;gap:8px}
+.g-row:last-child{border-bottom:0}
+.g-who{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.g-who .muted{font-size:.85rem;width:100%}
+.g-in{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end}
+.g-in label{font-size:.8rem}
+.g-in .g-diem{width:80px}
+.g-nx-l{flex:1;min-width:180px}
+.grade .g-nx{min-width:0;width:100%}

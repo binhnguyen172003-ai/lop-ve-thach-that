@@ -171,6 +171,9 @@ let app, auth, db;
 let user = null, mail = "", isAdmin = false, isTeacher = false, approved = false;
 let teachers = [], feedbackAll = {}, myFeedback = {};
 const gradeOpen = new Set(), gradeDraft = {};
+let needRedraw = false;
+// Khi giáo viên gõ xong (rời ô nhập), vẽ lại nếu trong lúc gõ có dữ liệu mới.
+document.addEventListener("focusout", () => setTimeout(() => { if (needRedraw) renderHomework(); }, 0));
 let lessons = [], homework = [], roster = [], requests = [], progressAll = {};
 let myProgress = { bai: {}, baitap: {} };
 let course = null, lessonId = null, hwView = "open";
@@ -194,43 +197,54 @@ function renderLocks(state) {
   $("#bt-body").hidden = state !== "ok";
 }
 
+let pendingReq = null, editingReq = false;
+function setStep(n) {
+  $$("#stepper li").forEach(li => {
+    const k = Number(li.dataset.step);
+    li.className = k < n ? "done" : k === n ? "now" : "";
+  });
+}
 function renderAccount(pending) {
-  $("#btn-login").hidden = !!user || !configured;
-  $("#btn-logout").hidden = !user;
-  $("#btn-learn").hidden = !(user && (approved || isTeacher));
+  if (typeof pending === "object") pendingReq = pending; else if (pending === false) pendingReq = null;
+  const inApp = /FBAN|FBAV|FB_IAB|Messenger|Instagram|Zalo|Line\/|TikTok/i.test(navigator.userAgent);
+  $("#inapp").hidden = !(inApp && !user);
   $$("[data-teacher]").forEach(el => el.hidden = !isTeacher);
   $$("[data-admin]").forEach(el => el.hidden = !isAdmin);
   $("#nav-duyet").hidden = !isAdmin;
   $("#duyet-lock").hidden = isAdmin;
-  const regOn = !!user && !approved && !isTeacher;
-  $$("#f-reg input, #f-reg select, #f-reg textarea, #f-reg button").forEach(el => el.disabled = !regOn);
+  $("#btn-login").hidden = !!user || !configured;
+  $("#btn-switch").hidden = !user;
+  $("#btn-learn").hidden = !(user && (approved || isTeacher));
+  const canReg = !!user && !approved && !isTeacher;
+  $("#card-reg").hidden = !(canReg && (!pendingReq || editingReq));
+  $("#card-wait").hidden = !(canReg && pendingReq && !editingReq);
   if (!configured) {
     $("#who-name").textContent = "Web chưa kết nối Firebase";
-    $("#who-mail").textContent = "Làm theo HƯỚNG DẪN để dán cấu hình vào firebase-config.js.";
-    $("#who-status").innerHTML = "";
-    return;
+    $("#who-mail").textContent = "Thầy cần dán mã kết nối vào config/firebase-config.js.";
+    $("#who-status").innerHTML = ""; setStep(1); return;
   }
   if (!user) {
-    $("#who-name").textContent = "Bạn chưa đăng nhập";
-    $("#who-mail").textContent = "Đăng nhập bằng Gmail để vào khu học viên.";
-    $("#who-status").innerHTML = "";
-    $("#who-avatar").hidden = true;
-    $("#nav-acct").textContent = "Đăng nhập / Đăng ký";
-    $("#reg-hint").textContent = "Đăng nhập bằng Google trước, sau đó điền thông tin để gửi thầy duyệt.";
-    return;
+    $("#who-name").textContent = "Bước 1: Đăng nhập bằng Gmail";
+    $("#who-mail").textContent = "Dùng Gmail của em (hoặc của bố mẹ). Lần sau vào học cũng dùng đúng Gmail này.";
+    $("#who-status").innerHTML = ""; $("#who-avatar").hidden = true;
+    $("#nav-acct").textContent = "Đăng nhập";
+    setStep(1); return;
   }
-  $("#who-name").textContent = user.displayName || "Học viên";
-  $("#who-mail").textContent = mail;
+  $("#who-name").textContent = user.displayName || "Xin chào";
+  $("#who-mail").textContent = "Đang dùng Gmail: " + mail;
   if (user.photoURL) { $("#who-avatar").src = user.photoURL; $("#who-avatar").hidden = false; }
-  $("#nav-acct").textContent = (user.displayName || "Tài khoản").split(" ").slice(-1)[0];
-  $("#who-status").innerHTML = isAdmin ? `<span class="chip">Quản lý</span> Toàn quyền: duyệt học viên và giáo viên, sửa giáo trình, giao và chấm bài.`
-    : isTeacher ? `<span class="chip">Giáo viên</span> Thầy/cô giao bài, xem học viên đã nộp, chấm điểm và nhận xét.`
-    : approved ? `<span class="chip ok">Đã duyệt</span> Em đã vào được Giáo trình và Bài tập.`
-    : pending ? `<span class="chip line">Đã gửi yêu cầu</span> Thầy đã nhận yêu cầu, em chờ duyệt nhé.`
-    : `<span class="chip line">Chưa duyệt</span> Gửi yêu cầu duyệt bên dưới cho thầy.`;
-  $("#reg-hint").textContent = approved || isTeacher ? "Tài khoản này đã có quyền vào học." :
-    pending ? "Em đã gửi yêu cầu. Có thể gửi lại nếu cần sửa thông tin." : "Điền thông tin để gửi thầy duyệt Gmail " + mail + ".";
+  $("#nav-acct").textContent = "Tài khoản";
+  if (isAdmin) { $("#who-status").innerHTML = `<span class="chip">Quản lý</span> Toàn quyền: duyệt học viên và giáo viên, sửa giáo trình, giao và chấm bài.`; setStep(4); return; }
+  if (isTeacher) { $("#who-status").innerHTML = `<span class="chip">Giáo viên</span> Thầy/cô giao bài, xem học viên đã nộp, chấm điểm và nhận xét.`; setStep(4); return; }
+  if (approved) { $("#who-status").innerHTML = `<span class="chip ok">Đã duyệt</span> Em đã vào học được rồi.`; setStep(4); return; }
+  if (pendingReq && !editingReq) {
+    $("#who-status").innerHTML = `<span class="chip line">Chờ duyệt</span>`;
+    $("#wait-text").textContent = `Em đã gửi ngày ${fmtDate(pendingReq.guiLuc)}. Thầy duyệt xong, em mở lại trang này là vào học được.`;
+    setStep(3); return;
+  }
+  $("#who-status").innerHTML = `<span class="chip line">Chưa gửi thông tin</span> Làm tiếp bước 2 ở bên dưới.`;
   if (!$("#rg-ten").value && user.displayName) $("#rg-ten").value = user.displayName;
+  setStep(2);
 }
 
 /* ---------- Giáo trình ---------- */
@@ -274,7 +288,8 @@ function renderLessons() {
 function renderHomework() {
   // Không vẽ lại khi giáo viên đang gõ điểm/nhận xét, tránh mất chữ đang gõ.
   const ae = document.activeElement;
-  if (ae && ae.closest && ae.closest(".grade") && ae.matches("input")) return;
+  if (ae && ae.closest && ae.closest(".grade") && ae.matches("input")) { needRedraw = true; return; }
+  needRedraw = false;
   const list = homework.filter(h => hwView === "open" ? daysUntil(h.han) >= 0 : daysUntil(h.han) < 0);
   if (!list.length) {
     $("#hw-list").innerHTML = `<div class="empty">${hwView === "open" ? "Chưa có bài tập nào đang làm." : "Chưa có bài nào hết hạn."}${isTeacher && hwView === "open" ? " Giao bài ở khung bên dưới." : ""}</div>`;
@@ -307,23 +322,26 @@ function renderHomework() {
 }
 function gradeTable(h) {
   if (!roster.length) return `<div class="grade"><p class="muted">Chưa có học viên nào được duyệt.</p></div>`;
-  const rows = roster.map(r => {
+  const items = roster.map(r => {
     const done = (progressAll[r.id] || {}).baitap && progressAll[r.id].baitap[h.id];
     const fb = (feedbackAll[r.id] || {})[h.id] || {};
     const k1 = `${h.id}|${r.id}|diem`, k2 = `${h.id}|${r.id}|nx`;
     const d = gradeDraft[k1] ?? fb.diem ?? "", nx = gradeDraft[k2] ?? fb.nhanXet ?? "";
-    return `<tr><td>${esc(r.ten)}<br><span class="muted">${esc(r.chuongTrinh || r.lop || "")}</span></td>
-      <td>${done ? '<span class="chip ok">Đã nộp</span>' : '<span class="chip line">Chưa nộp</span>'}</td>
-      <td><input class="g-diem" data-key="${esc(k1)}" value="${esc(d)}" maxlength="6" placeholder="VD: 8"></td>
-      <td><input class="g-nx" data-key="${esc(k2)}" value="${esc(nx)}" maxlength="300" placeholder="Nhận xét ngắn"></td>
-      <td><button class="btn small" data-save="${esc(h.id)}|${esc(r.id)}">${fb.luc ? "Lưu lại" : "Lưu"}</button></td></tr>`;
+    return `<div class="g-row">
+      <div class="g-who"><b>${esc(r.ten)}</b> ${done ? '<span class="chip ok">Đã nộp</span>' : '<span class="chip line">Chưa nộp</span>'}
+        <span class="muted">${esc(r.chuongTrinh || r.lop || "")}</span></div>
+      <div class="g-in">
+        <label>Điểm<input class="g-diem" data-key="${esc(k1)}" value="${esc(d)}" maxlength="6" inputmode="decimal" placeholder="VD: 8"></label>
+        <label class="g-nx-l">Nhận xét<input class="g-nx" data-key="${esc(k2)}" value="${esc(nx)}" maxlength="300" placeholder="Nhận xét ngắn"></label>
+        <button class="btn small primary" data-save="${esc(h.id)}|${esc(r.id)}">${fb.luc ? "Lưu lại" : "Lưu"}</button>
+      </div></div>`;
   }).join("");
-  return `<div class="grade"><div class="roster-wrap"><table class="roster"><thead><tr><th>Học viên</th><th>Trạng thái</th><th>Điểm</th><th>Nhận xét</th><th></th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
+  return `<div class="grade">${items}</div>`;
 }
 async function saveGrade(btn) {
   const [hid, email] = btn.dataset.save.split("|");
   const k1 = `${hid}|${email}|diem`, k2 = `${hid}|${email}|nx`;
-  const row = btn.closest("tr");
+  const row = btn.closest(".g-row");
   const diem = row.querySelector(".g-diem").value.trim(), nhanXet = row.querySelector(".g-nx").value.trim();
   btn.disabled = true; btn.textContent = "Đang lưu…";
   try {
@@ -350,18 +368,23 @@ function renderRequests() {
   const n = requests.length;
   $("#req-count").textContent = n || "";
   $("#nav-req").textContent = n; $("#nav-req").hidden = !n;
-  if (!n) { $("#requests").innerHTML = `<tbody><tr><td class="muted">Không có yêu cầu nào đang chờ.</td></tr></tbody>`; return; }
+  if (!n) { $("#requests").innerHTML = `<p class="muted">Không có yêu cầu nào đang chờ.</p>`; return; }
   const v = x => esc(x || "—");
-  $("#requests").innerHTML = `<thead><tr><th>Người gửi</th><th>Gmail</th><th>Trường · Lớp · Khu vực</th><th>Cơ sở · Chương trình</th><th>Mục tiêu</th><th>Điện thoại</th><th>Gửi lúc</th><th></th></tr></thead><tbody>` +
-    requests.map(r => `<tr>
-      <td><b>${v(r.ten)}</b> <span class="chip ${r.vaiTro === "giaovien" ? "" : "ok"}">${r.vaiTro === "giaovien" ? "Giáo viên" : "Học viên"}</span>${r.namSinh ? `<br><span class="muted num">Sinh năm ${esc(r.namSinh)}</span>` : ""}${r.ghiChu ? `<br><span class="muted">“${esc(r.ghiChu)}”</span>` : ""}</td>
-      <td>${v(r.gmail)}</td>
-      <td>${v(r.truong)}<br><span class="muted">${v(r.lopHoc)} · ${v(r.khuVuc)}</span></td>
-      <td>${v(r.coso)}<br><span class="muted">${v(r.chuongTrinh || r.lop)}</span></td>
-      <td>${v(r.khoi)} · <span class="num">${v(r.namThi)}</span><br><span class="muted">${v(r.mucTieu)}</span></td>
-      <td class="num">HV: ${v(r.sdt)}<br>PH: ${v(r.sdtPh)}</td>
-      <td class="num">${fmtDate(r.guiLuc)}</td>
-      <td style="white-space:nowrap"><button class="btn small primary" data-ok="${esc(r.id)}">${r.vaiTro === "giaovien" ? "Duyệt giáo viên" : "Duyệt học viên"}</button> <button class="btn small" data-no="${esc(r.id)}">Từ chối</button></td></tr>`).join("") + `</tbody>`;
+  const line = (k, val) => val ? `<div><span class="muted">${k}:</span> ${esc(val)}</div>` : "";
+  $("#requests").innerHTML = requests.map(r => {
+    const gv = r.vaiTro === "giaovien";
+    return `<div class="req-item">
+      <div class="req-head"><b>${v(r.ten)}</b> <span class="chip ${gv ? "" : "ok"}">${gv ? "Giáo viên" : "Học viên"}</span>
+        <span class="muted num">Gửi ${fmtDate(r.guiLuc)}</span></div>
+      <div class="req-body">
+        ${line("Gmail", r.gmail)}${line("Năm sinh", r.namSinh)}${line("Cơ sở", r.coso)}${line("Lớp vẽ", r.chuongTrinh)}
+        ${line(gv ? "Điện thoại" : "SĐT của em", r.sdt)}${line("SĐT bố mẹ", r.sdtPh)}
+        ${line("Trường", [r.truong, r.lopHoc].filter(Boolean).join(" · "))}${line("Nhà ở", r.khuVuc)}
+        ${line("Mục tiêu", [r.khoi, r.namThi, r.mucTieu].filter(Boolean).join(" · "))}${line("Lời nhắn", r.ghiChu)}
+      </div>
+      <div class="ctas" style="margin-top:12px"><button class="btn primary" data-ok="${esc(r.id)}">${gv ? "Duyệt giáo viên" : "Duyệt học viên"}</button>
+        <button class="btn" data-no="${esc(r.id)}">Từ chối</button></div></div>`;
+  }).join("");
   $$("#requests [data-ok]").forEach(b => b.onclick = async () => {
     const r = requests.find(x => x.id === b.dataset.ok); if (!r) return;
     b.disabled = true;
@@ -415,13 +438,17 @@ async function onUser(u) {
   isAdmin = false; isTeacher = false; approved = false;
   lessons = []; homework = []; roster = []; requests = []; teachers = []; progressAll = {}; feedbackAll = {}; myFeedback = {};
   myProgress = { bai: {}, baitap: {} };
+  // Đổi người dùng thì xoá sạch form đăng ký, tránh gửi nhầm thông tin của người trước (máy dùng chung).
+  $("#f-reg").reset(); $("#rg-status").textContent = ""; applyRoleFields(); editingReq = false; pendingReq = null;
+  gradeOpen.clear(); Object.keys(gradeDraft).forEach(k => delete gradeDraft[k]);
   if (!u) { renderLocks("out"); renderAccount(false); return; }
   renderLocks("checking");
   const exists = async (col) => { try { return (await getDoc(doc(db, col, mail))).exists(); } catch (e) { return false; } };
   isAdmin = mail === ADMIN_EMAIL.toLowerCase() || await exists("admins");
   isTeacher = isAdmin || await exists("giaovien");
   if (!isTeacher) approved = await exists("hocvien");
-  const pending = !isTeacher && !approved ? await exists("yeucau") : false;
+  let pending = false;
+  if (!isTeacher && !approved) { try { const r = await getDoc(doc(db, "yeucau", mail)); if (r.exists()) pending = r.data(); } catch (e) {} }
   const canLearn = isTeacher || approved;
   renderLocks(canLearn ? "ok" : "pending");
   renderAccount(pending);
@@ -499,7 +526,7 @@ async function startFirebase() {
       else if (e && e.code !== "auth/popup-closed-by-user" && e.code !== "auth/cancelled-popup-request") $("#login-status").textContent = loginError(e);
     }
   };
-  $("#btn-logout").onclick = () => signOut(auth);
+  $("#btn-switch").onclick = async () => { await signOut(auth); $("#btn-login").click(); };
 }
 startFirebase();
 
@@ -512,32 +539,37 @@ function submitTo(form, statusEl, busy, okMsg, write, keep) {
     catch (e) { statusEl.textContent = "Chưa lưu được. Kiểm tra quyền và mạng rồi thử lại."; }
   });
 }
-/* Đăng ký tài khoản học viên: lưu vào Firebase + gửi email báo cho thầy */
-const cleanPhone = x => String(x || "").replace(/[\s.\-]/g, "");
+/* Đăng ký tài khoản: lưu vào Firebase + gửi email báo cho thầy */
+const cleanPhone = x => String(x || "").replace(/[\s.\-()]/g, "");
 const okPhone = x => /^(0|\+84)\d{9,10}$/.test(cleanPhone(x));
 $("#f-reg").addEventListener("submit", async ev => {
   ev.preventDefault(); if (!db || !user) return;
   const st = $("#rg-status"); const v = id => $(id).value.trim();
   const gv = v("#rg-vt") === "giaovien";
-  const nam = Number(v("#rg-nam"));
-  if (!okPhone(v("#rg-sdt")) || (!gv && !okPhone(v("#rg-sdtph")))) { st.textContent = "Số điện thoại chưa đúng. Viết liền 10 số, bắt đầu bằng 0."; return; }
-  if (!gv && !(nam >= 2000 && nam <= 2022)) { st.textContent = "Năm sinh chưa đúng, ví dụ 2009."; return; }
+  st.classList.remove("err");
+  const bad = (msg, id) => { st.textContent = msg; st.classList.add("err"); if (id) $(id).focus(); };
+  if (gv && !okPhone(v("#rg-sdtgv"))) return bad("Số điện thoại chưa đúng. Viết 10 số, bắt đầu bằng số 0.", "#rg-sdtgv");
+  if (!gv && !okPhone(v("#rg-sdtph"))) return bad("Số điện thoại bố mẹ chưa đúng. Viết 10 số, bắt đầu bằng số 0.", "#rg-sdtph");
+  if (!gv && v("#rg-sdt") && !okPhone(v("#rg-sdt"))) { $("#f-reg details").open = true; return bad("Số điện thoại của em chưa đúng. Viết 10 số, hoặc để trống.", "#rg-sdt"); }
   const data = gv
-    ? { vaiTro: "giaovien", gmail: mail, ten: v("#rg-ten"), sdt: cleanPhone(v("#rg-sdt")), coso: v("#rg-cs"), ghiChu: v("#rg-gc"), guiLuc: Date.now() }
+    ? { vaiTro: "giaovien", gmail: mail, ten: v("#rg-ten"), sdt: cleanPhone(v("#rg-sdtgv")), coso: v("#rg-cs"), ghiChu: v("#rg-gc"), guiLuc: Date.now() }
     : {
-      vaiTro: "hocvien", gmail: mail, ten: v("#rg-ten"), namSinh: nam, sdt: cleanPhone(v("#rg-sdt")), sdtPh: cleanPhone(v("#rg-sdtph")),
+      vaiTro: "hocvien", gmail: mail, ten: v("#rg-ten"), namSinh: Number(v("#rg-nam")),
+      sdt: cleanPhone(v("#rg-sdt")), sdtPh: cleanPhone(v("#rg-sdtph")),
       truong: v("#rg-truong"), lopHoc: v("#rg-lophoc"), khuVuc: v("#rg-kv"), coso: v("#rg-cs"),
       chuongTrinh: v("#rg-ct"), khoi: v("#rg-khoi"), namThi: v("#rg-namthi"), mucTieu: v("#rg-mt"), ghiChu: v("#rg-gc"),
       guiLuc: Date.now()
     };
   st.textContent = "Đang gửi…"; $("#rg-btn").disabled = true;
   try { await setDoc(doc(db, "yeucau", mail), data); }
-  catch (e) { st.textContent = "Chưa gửi được. Kiểm tra mạng rồi thử lại."; $("#rg-btn").disabled = false; return; }
-  st.textContent = "Đã gửi. Thầy sẽ duyệt sớm, em mở lại trang sau khi được duyệt.";
-  $("#rg-btn").disabled = false;
-  renderAccount(true);
+  catch (e) { st.textContent = "Chưa gửi được. Kiểm tra mạng rồi bấm gửi lại."; st.classList.add("err"); $("#rg-btn").disabled = false; return; }
+  $("#rg-btn").disabled = false; st.textContent = "";
+  editingReq = false;
+  renderAccount(data);
+  window.scrollTo({ top: 0, behavior: "smooth" });
   guiEmailThongBao(data);
 });
+
 // Đổi vai trò trên biểu mẫu: giáo viên không cần điền thông tin học tập.
 function applyRoleFields() {
   const gv = $("#rg-vt").value === "giaovien";
@@ -545,10 +577,32 @@ function applyRoleFields() {
     el.hidden = gv;
     el.querySelectorAll("input, select").forEach(i => { if (i.dataset.req === "1") i.required = !gv; });
   });
+  $$("#f-reg .chi-gv").forEach(el => {
+    el.hidden = !gv;
+    el.querySelectorAll("input, select").forEach(i => i.required = gv);
+  });
+  $("#f-reg .chi-hv-text").textContent = gv
+    ? "Tôi đồng ý gửi thông tin này cho quản lý lớp để duyệt tài khoản giáo viên."
+    : "Bố mẹ em đã đồng ý cho em gửi thông tin này. Chỉ thầy cô của lớp xem được.";
 }
-$$("#f-reg .chi-hv [required]").forEach(i => i.dataset.req = "1");
+$$("#f-reg .chi-hv [required], #f-reg .chi-hv[required]").forEach(i => i.dataset.req = "1");
+$$("#f-reg label.chi-hv > input[required], #f-reg label.chi-hv > select[required]").forEach(i => i.dataset.req = "1");
 $("#rg-vt").onchange = applyRoleFields;
 applyRoleFields();
+
+// Sửa thông tin đã gửi: điền lại form từ yêu cầu cũ.
+$("#btn-edit").onclick = () => {
+  const r = pendingReq || {}; editingReq = true;
+  const set = (id, val) => { if (val !== undefined && val !== null) $(id).value = val; };
+  set("#rg-vt", r.vaiTro || "hocvien"); applyRoleFields();
+  set("#rg-ten", r.ten); set("#rg-nam", r.namSinh); set("#rg-sdtph", r.sdtPh); set("#rg-cs", r.coso); set("#rg-ct", r.chuongTrinh);
+  set("#rg-sdt", r.vaiTro === "giaovien" ? "" : r.sdt); set("#rg-sdtgv", r.vaiTro === "giaovien" ? r.sdt : "");
+  set("#rg-truong", r.truong); set("#rg-lophoc", r.lopHoc); set("#rg-kv", r.khuVuc); set("#rg-khoi", r.khoi);
+  set("#rg-namthi", r.namThi); set("#rg-mt", r.mucTieu); set("#rg-gc", r.ghiChu);
+  renderAccount(pendingReq);
+};
+$("#btn-check").onclick = () => location.reload();
+$("#btn-copylink").onclick = () => copyText(location.href, $("#copylink-status"), "Đã chép link. Mở Chrome/Safari rồi dán vào.", $("#btn-copylink"));
 
 function guiEmailThongBao(d) {
   if (!EMAIL_NHAN_THONG_BAO) return;
