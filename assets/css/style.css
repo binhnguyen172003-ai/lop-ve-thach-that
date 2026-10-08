@@ -1356,3 +1356,21 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
 .xh-note{font-size:.78rem;margin-top:8px}
 @media (max-width:860px){.xh-grid{grid-template-columns:1fr}}
 @media (max-width:520px){.xh-row{grid-template-columns:62px 46px 1fr;padding:8px 10px}.xh-xp{grid-column:3;text-align:left;font-size:.78rem}.xh-th span:last-child{display:none}.xh-ma{font-size:1.1rem}.xh-ma small{display:none}}
+
+/* Chip hạng nhỏ (cạnh tên học viên) — nổi bật để học viên muốn leo hạng */
+.rk-chip{--rc:#9aa3ad;position:relative;display:inline-flex;align-items:center;gap:4px;margin-left:8px;padding:3px 10px 3px 6px;border-radius:999px;overflow:hidden;vertical-align:middle;
+  background:linear-gradient(135deg,color-mix(in srgb,var(--rc) 38%,#0b0d14),color-mix(in srgb,var(--rc) 14%,#0b0d14));
+  border:1.5px solid color-mix(in srgb,var(--rc) 85%,#fff);box-shadow:0 0 14px color-mix(in srgb,var(--rc) 55%,transparent),inset 0 1px 0 rgba(255,255,255,.25);
+  font-style:normal;line-height:1;white-space:nowrap;font-family:var(--f-sans,inherit);animation:rkPulse 2.6s ease-in-out infinite}
+.rk-chip svg{width:15px;height:15px;fill:var(--rc);filter:drop-shadow(0 0 4px var(--rc))}
+.rk-chip small{font:800 .58rem/1 var(--f-sans,inherit);letter-spacing:.14em;color:rgba(255,255,255,.85)}
+.rk-chip b{font:900 1.02rem/1 var(--f-display,inherit)!important;font-style:normal!important;color:#fff;text-shadow:0 0 8px var(--rc),0 0 2px var(--rc);letter-spacing:-.01em}
+.rk-chip i{font-style:normal;font-size:.62rem;color:#ffd34d;text-shadow:0 0 6px rgba(255,200,0,.8)}
+.rk-chip::after{content:"";position:absolute;inset:0;background:linear-gradient(110deg,transparent 30%,rgba(255,255,255,.45) 50%,transparent 70%);transform:translateX(-120%);animation:rkShine 3.2s ease-in-out infinite}
+.rk-chip.rb{border-color:#ffd6ff;background:linear-gradient(90deg,#ff5a5a55,#ffc40055,#3fcf5b55,#3ec6e055,#9b5cff55),#0b0d14}
+@keyframes rkShine{0%,55%{transform:translateX(-120%)}85%,100%{transform:translateX(120%)}}
+@keyframes rkPulse{0%,100%{box-shadow:0 0 10px color-mix(in srgb,var(--rc) 45%,transparent),inset 0 1px 0 rgba(255,255,255,.25)}50%{box-shadow:0 0 20px color-mix(in srgb,var(--rc) 80%,transparent),inset 0 1px 0 rgba(255,255,255,.25)}}
+@media (prefers-reduced-motion:reduce){.rk-chip,.rk-chip::after{animation:none}}
+.rk-chip,.rk-chip svg{flex:none}
+.nb-card figcaption b{flex-wrap:wrap;row-gap:4px}
+@media (max-width:640px){.nb-card figcaption b{font-size:1.08rem}.rk-chip{margin-left:4px;padding:2px 8px 2px 5px;gap:3px}.rk-chip small{font-size:.5rem;letter-spacing:.1em}.rk-chip b{font-size:.9rem!important}.rk-chip svg{width:13px;height:13px}}

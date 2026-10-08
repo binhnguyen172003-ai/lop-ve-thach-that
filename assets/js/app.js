@@ -392,7 +392,10 @@ function tinhRank(dd, prog, fb, ten) {
   const pct = next ? Math.round((xp - r.xp) / (next.xp - r.xp) * 100) : 100;
   return { xp, r, i, next, pct, buoi, baiTap, baiHoc, gioi, nb: nb.length, top1 };
 }
-const huyHieu = (r, i, cls = "") => `<span class="rk-badge ${cls}${r.mau === "rainbow" ? " rb" : ""}" style="--rc:${r.mau === "rainbow" ? "#ffd6ff" : r.mau}" title="Hạng ${r.ma} · ${r.ten}">
+const huyHieu = (r, i, cls = "") => cls === "xs"
+  ? `<span class="rk-chip${r.mau === "rainbow" ? " rb" : ""}" style="--rc:${r.mau === "rainbow" ? "#ffd6ff" : r.mau}" title="Hạng ${r.ma} · ${r.ten} — xem cách leo hạng">
+  <svg viewBox="0 0 64 64" aria-hidden="true"><path d="M32 6l20 9v16c0 13-9 22-20 27C21 53 12 44 12 31V15z"/></svg><small>RANK</small><b>${r.ma}</b><i>${"★".repeat(i + 1)}</i></span>`
+  : `<span class="rk-badge ${cls}${r.mau === "rainbow" ? " rb" : ""}" style="--rc:${r.mau === "rainbow" ? "#ffd6ff" : r.mau}" title="Hạng ${r.ma} · ${r.ten}">
   <svg viewBox="0 0 64 64" aria-hidden="true"><path class="w" d="M6 22c6 2 10 6 12 12-6-1-10-5-12-12zM58 22c-6 2-10 6-12 12 6-1 10-5 12-12z"/><path class="s" d="M32 6l20 9v16c0 13-9 22-20 27C21 53 12 44 12 31V15z"/></svg>
   <b>${r.ma}</b><i>${"★".repeat(i + 1)}</i></span>`;
 function theRank(t) {
