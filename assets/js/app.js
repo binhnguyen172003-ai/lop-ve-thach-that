@@ -233,13 +233,13 @@ $("#link-pin").href = LIEN_HE.pinterest.link;
 /* ================= Bài vẽ học viên ================= */
 const LOAI_BAI = [
   { ten: "Cơ bản", art: "v-khoi", moTa: "Khối cơ bản, tĩnh vật, sáng tối" },
-  { ten: "Hình hoạ người", art: "v-nguoi", moTa: "Chân dung, bán thân, toàn thân" },
+  { ten: "Hình hoạ người", img: "assets/img/hinh-hoa-nguoi.png", moTa: "Chân dung, bán thân, toàn thân" },
   { ten: "Tượng", art: "v-tuong", moTa: "Tượng thạch cao theo các góc thi" },
   { ten: "Màu", art: "v-mau", moTa: "Bố cục trang trí màu Khối H" },
   { ten: "Mỹ thuật 2", art: "v-mt2", moTa: "Bố cục tạo hình Khối V" },
 ];
 let galFilter = "all", galList = [], galCur = 0;
-const artCard = (l, note) => `<div class="gal-art"><svg class="art" aria-hidden="true"><use href="#${l.art}"/></svg>
+const artCard = (l, note) => `<div class="gal-art">${l.img ? `<span class="art art-img" style="-webkit-mask-image:url(${l.img});mask-image:url(${l.img})" aria-hidden="true"></span>` : `<svg class="art" aria-hidden="true"><use href="#${l.art}"/></svg>`}
   <b>${esc(l.ten)}</b><span class="muted">${esc(l.moTa)}</span><span class="soon">${note}</span></div>`;
 function renderGallery() {
   const has = BAI_VE.length > 0;
@@ -277,7 +277,7 @@ renderGallery();
 
 /* ================= Bảng vàng thi năng khiếu ================= */
 const BV_NAM = [...new Set(BANG_VANG.map(x => Number(x.nam)))].filter(Boolean).sort((a, b) => b - a);
-let bvYear = BV_NAM[0], bvSchool = "";
+let bvYear = BV_NAM[0], bvSchool = "", bvMore = false; // chỉ hiện top 3 có ảnh + 7 bạn tiếp theo
 const initials = t => String(t || "").trim().split(/\s+/).slice(-2).map(w => w[0] || "").join("").toUpperCase();
 const fmtDiem = d => Number(d).toLocaleString("vi-VN", { minimumFractionDigits: Number(d) % 1 ? 1 : 1, maximumFractionDigits: 2 });
 const tr = k => TRUONG[k] || { ten: k, mau: "#5b6068" };
@@ -308,16 +308,13 @@ function renderHonor() {
   $("#bv-years").innerHTML = BV_NAM.map(y => `<button class="tab" data-y="${y}" aria-selected="${y === bvYear && !bvSchool}">Mùa thi ${y}</button>`).join("")
     + `<span class="bv-sep"></span>` + Object.keys(TRUONG).filter(k => BANG_VANG.some(x => Number(x.nam) === bvYear && x.truong === k))
       .map(k => `<button class="tab trtab" data-t="${esc(k)}" style="--c:${esc(tr(k).mau)}" aria-selected="${bvSchool === k}">${esc(k)}</button>`).join("");
-  $$("#bv-years [data-y]").forEach(b => b.onclick = () => { bvYear = Number(b.dataset.y); bvSchool = ""; renderHonor(); });
+  $$("#bv-years [data-y]").forEach(b => b.onclick = () => { bvYear = Number(b.dataset.y); bvSchool = ""; bvMore = false; renderHonor(); });
   $$("#bv-years [data-t]").forEach(b => b.onclick = () => { bvSchool = bvSchool === b.dataset.t ? "" : b.dataset.t; renderHonor(); });
 
   const all = gomHocVien(bvYear, "");
   const list = bvSchool ? gomHocVien(bvYear, bvSchool) : all;
   const scored = list.filter(x => x.top);
   const luot = BANG_VANG.filter(x => Number(x.nam) === bvYear).length;
-  // Biểu đồ cột: số học viên đỗ theo từng trường
-  const perSchool = Object.keys(TRUONG).map(k => ({ k, n: gomHocVien(bvYear, k).length })).filter(x => x.n);
-  const maxN = Math.max(...perSchool.map(x => x.n), 1);
   const ava = x => x.anh ? `<img src="${esc(x.anh)}" alt="" loading="lazy" decoding="async" width="96" height="96">` : `<span>${esc(initials(x.ten))}</span>`;
   const diemCua = x => x.top ? `<b class="sc num">${fmtDiem(x.top.d)}</b><span class="sm">${esc(x.top.m)} · ${esc(x.top.tr)}</span>` : `<span class="sm">Đỗ ${esc(x.truongs.join(", "))}</span>`;
   const chiTiet = x => x.kq.map(r => `<li>${chipTr(r.truong)} <span>${esc(tr(r.truong).ten)}</span>
@@ -330,26 +327,23 @@ function renderHonor() {
       <div><b class="num">${all[0] && all[0].top ? fmtDiem(all[0].top.d) : "–"}</b><span>điểm vẽ cao nhất</span></div>
       <div><b class="num">${all.filter(x => x.top && x.top.d >= 8.5).length}</b><span>bạn đạt từ 8,5 điểm</span></div>
     </div>
-    <div class="bv-chart" role="img" aria-label="Số học viên đỗ theo trường">
-      ${perSchool.map(x => `<button type="button" class="vbar ${bvSchool === x.k ? "on" : ""}" data-t="${esc(x.k)}" style="--c:${esc(tr(x.k).mau)};--h:${Math.round(x.n / maxN * 100)}%">
-        <span class="col"><span class="n num">${x.n}</span></span><span class="vl">${esc(x.k)}</span></button>`).join("")}
-      <p class="cap">Số học viên đỗ theo trường · bấm cột để lọc</p>
-    </div>
     ${bvSchool ? `<p class="bv-filter">Đang xem: <b>${esc(tr(bvSchool).ten)}</b> <button type="button" class="linkish" id="bv-clear">Xem tất cả</button></p>` : ""}
     <ol class="hv-podium">${top3.map((x, i) => `<li class="p${i + 1}">
+      <div class="ph">${x.anh ? `<img src="${esc(x.anh)}" alt="${esc(x.ten)}" loading="lazy" decoding="async" width="240" height="240">` : `<span class="ini">${esc(initials(x.ten))}</span>`}</div>
       <span class="big num" aria-hidden="true">${i + 1}</span>
-      <div class="ava">${ava(x)}</div>
-      <b class="nm">${esc(x.ten)}</b>
-      <div class="trs">${x.truongs.map(chipTr).join("")}</div>
-      <div class="pt">${diemCua(x)}</div></li>`).join("")}</ol>
-    <ol class="hv-table">${list.slice(top3.length).map((x, i) => `<li><details>
+      ${i === 0 ? `<svg class="crown" viewBox="0 0 48 32" aria-hidden="true"><path d="M4 28h40l3-20-12 9-11-15-11 15L1 8z"/></svg>` : ""}
+      <span class="medal">${["Thủ khoa lớp", "Á khoa", "Hạng ba"][i]}</span>
+      <div class="info"><b class="nm">${esc(x.ten)}</b><div class="trs">${x.truongs.map(chipTr).join("")}</div></div>
+      <div class="pt">${x.top ? `<b class="sc num">${fmtDiem(x.top.d)}</b><span class="sm">${esc(x.top.m)} · ${esc(x.top.tr)}</span>` : ""}</div></li>`).join("")}</ol>
+    <ol class="hv-table ${bvMore ? "" : "gon"}">${list.slice(top3.length).map((x, i) => `<li class="${i >= 7 ? "them" : ""}"><details>
       <summary><span class="rk num">${x.top ? top3.length + i + 1 : "–"}</span>
         <span class="who"><b>${esc(x.ten)}</b><span class="trs">${x.truongs.map(chipTr).join("")}</span></span>
         <span class="pt">${diemCua(x)}</span></summary>
       <ul class="kq">${chiTiet(x)}</ul></details></li>`).join("")}</ol>
+    ${list.length > top3.length + 7 ? `<button type="button" class="btn bv-more" id="bv-more">${bvMore ? "Thu gọn" : `Xem tất cả ${list.length} học viên`}</button>` : ""}
     <p class="muted bv-note">Bấm vào tên để xem điểm từng trường. Xếp theo điểm môn vẽ cao nhất của mỗi bạn.</p>`;
-  $$("#bv-body .vbar").forEach(b => b.onclick = () => { bvSchool = bvSchool === b.dataset.t ? "" : b.dataset.t; renderHonor(); });
   if ($("#bv-clear")) $("#bv-clear").onclick = () => { bvSchool = ""; renderHonor(); };
+  if ($("#bv-more")) $("#bv-more").onclick = () => { bvMore = !bvMore; renderHonor(); if (!bvMore) $("#bang-vang").scrollIntoView({ block: "start" }); };
 }
 renderHonor();
 
