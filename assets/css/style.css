@@ -1485,3 +1485,17 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
 .nb-card img{height:calc(100% - 112px)}
 .nb-card figcaption{height:auto;min-height:88px;bottom:12px;align-content:center;gap:5px}
 @media (max-width:640px){.nb-stage{height:420px}.nb-card{height:400px}}
+.who-rank{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin-top:8px}
+.who-rank[hidden]{display:none}
+.who-rank .rk-chip{margin-left:0}
+.who-rank span{font-size:.82rem}.who-rank a{font-size:.82rem;color:#7fd1ff}
+/* Top rank lớp (trang chủ) */
+.tr-list{list-style:none;margin:0;padding:0;display:grid;gap:10px;max-width:760px}
+.tr-list li{display:grid;grid-template-columns:40px auto 1fr auto;gap:14px;align-items:center;padding:10px 18px 10px 12px;border-radius:16px;cursor:pointer;
+  background:linear-gradient(90deg,color-mix(in srgb,var(--rc) 14%,transparent),rgba(255,255,255,.02) 60%);border:1px solid color-mix(in srgb,var(--rc) 35%,rgba(255,255,255,.08));transition:transform .2s,box-shadow .2s}
+.tr-list li:hover{transform:translateX(4px);box-shadow:0 0 22px color-mix(in srgb,var(--rc) 35%,transparent)}
+.tr-so{font:900 1.5rem/1 var(--f-display);text-align:center;color:rgba(255,255,255,.45)}
+.tr-list li.p1 .tr-so{color:#ffcf3a;text-shadow:0 0 12px rgba(255,200,0,.7)}.tr-list li.p2 .tr-so{color:#dfe6f0}.tr-list li.p3 .tr-so{color:#d08a52}
+.tr-ten{display:grid;gap:2px}.tr-ten b{font:italic 600 1.15rem var(--f-serif)}.tr-ten small{font-size:.78rem;color:var(--graphite)}
+.tr-xp{font:800 1rem var(--f-display);color:var(--rc)}
+@media (max-width:640px){.tr-list li{grid-template-columns:28px auto 1fr;gap:10px;padding:10px 12px 10px 8px}.tr-xp{grid-column:3;font-size:.85rem;margin-top:-8px}.tr-ten b{font-size:1rem}}

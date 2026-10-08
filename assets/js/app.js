@@ -528,6 +528,16 @@ document.addEventListener("keydown", e => {
     <div class="tt-show">${THANH_TUU.map(a => `<div class="tt-s" style="--tc:${a.mau}">${huyHieuTT(a, 3, "lg")}<b>${a.ten}</b><span>${a.mo}</span>
       <ol>${a.moc.map((m, j) => `<li style="--cc:${CAP[j + 1].mau}"><i>${CAP[j + 1].ten}</i>${m} ${a.dv}</li>`).join("")}</ol>${a.trao ? `<small>Thầy trao</small>` : ""}</div>`).join("")}</div>`;
 })();
+/* Trang chủ: chỉ hiện Top rank của lớp */
+(function topRank() {
+  const box = $("#tr-list"); if (!box) return;
+  const ten = [...new Set([...BAI_NOI_BAT.filter(b => !b.tg && b.hocVien).map(b => b.hocVien), ...(XP_THUONG || []).map(x => x.hocVien)].filter(Boolean))];
+  const ds = ten.map(t => ({ t, k: tinhRank(null, null, null, t) })).sort((a, b) => b.k.xp - a.k.xp || b.k.i - a.k.i).slice(0, 5);
+  box.innerHTML = ds.map(({ t, k }, j) => `<li class="t${k.i}${j < 3 ? " p" + (j + 1) : ""}" data-rk="${esc(t)}" role="button" tabindex="0" style="--rc:${k.r.mau === "rainbow" ? "#ffd6ff" : k.r.mau}">
+    <span class="tr-so num">${j + 1}</span>${huyHieu(k.r, k.i, "sm")}
+    <span class="tr-ten"><b>${esc(t)}</b><small>Hạng ${k.r.ma} · ${k.r.kim} · ${k.r.ten}</small></span><span class="tr-xp num">${k.xp} XP</span></li>`).join("");
+  $("#top-rank").hidden = !ds.length;
+})();
 /* ================= Bài vẽ nổi bật: tuần / tháng / năm, vòng xoay 3D ================= */
 (function noiBat() {
   const box = $("#nb-ring"); if (!box) return;
@@ -1652,6 +1662,9 @@ function renderTiles() {
   const box = $("#acc-tiles"); if (!box) return;
   const show = canLearnNow();
   box.hidden = !show; { const xh = $("#xep-hang"); if (xh) xh.hidden = !show; }
+  { const wr = $("#who-rank"); if (wr) { const hv = show && !isTeacher; wr.hidden = !hv;
+    if (hv) { const ten = (myHv && myHv.ten) || (user && user.displayName), t = tinhRank(myDiemdanh, myProgress, myFeedback, ten), tt = tinhThanhTuu(myDiemdanh, myProgress, myFeedback, ten, homework);
+      wr.innerHTML = `${huyHieu(t.r, t.i, "xs", ten)}<span class="muted"><b class="num">${t.xp} XP</b> · ${tt.filter(a => a.cap).length}/${tt.length} thành tựu</span><a href="#xep-hang">Xem hạng & thành tựu ↓</a>`; } } }
   if (!show) { box.innerHTML = ""; return; }
   const today = todayVN();
   const tin = lvUnreadMsgs(), tb = lvUnreadTB(), viec = lvMyOpenTasks();

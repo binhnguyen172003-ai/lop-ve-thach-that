@@ -31,7 +31,7 @@ self.addEventListener("fetch", e => {
   // Trang chính: lấy bản mới nhất; mạng yếu quá 0,8 giây hoặc mất mạng thì mở bản đã lưu.
   if (req.mode === "navigate" && url.origin === self.location.origin) {
     e.respondWith((async () => {
-      const mang = fetch(req).then(res => { if (res.ok) { const c = res.clone(); caches.open(TRANG).then(x => x.put("./", c)); } return res; });
+      const mang = fetch(req, { cache: "no-cache" }).then(res => { if (res.ok) { const c = res.clone(); caches.open(TRANG).then(x => x.put("./", c)); } return res; });
       const cu = await caches.match("./");
       if (!cu) return mang;
       const cho = new Promise(r => setTimeout(() => r(cu), 800));
