@@ -378,6 +378,23 @@ async function onUser(u) {
   }
 }
 
+// Giải thích lỗi đăng nhập bằng lời dễ hiểu, kèm mã lỗi để dễ tra.
+function loginError(e) {
+  const code = (e && e.code) || "unknown";
+  const host = location.hostname;
+  const tips = {
+    "auth/unauthorized-domain": `Tên miền ${host} chưa được cho phép. Vào Firebase → Authentication → Settings → Authorized domains, thêm ${host}.`,
+    "auth/operation-not-allowed": "Đăng nhập Google chưa được bật. Vào Firebase → Authentication → Sign-in method → Google → Enable → Save.",
+    "auth/configuration-not-found": "Firebase Authentication chưa được bật. Vào Firebase → Authentication → bấm Get started, rồi bật Google.",
+    "auth/invalid-api-key": "Mã kết nối Firebase không đúng. Kiểm tra lại file config/firebase-config.js.",
+    "auth/api-key-not-valid.-please-pass-a-valid-api-key.": "Mã kết nối Firebase không đúng. Kiểm tra lại file config/firebase-config.js.",
+    "auth/network-request-failed": "Mất kết nối mạng. Kiểm tra mạng rồi thử lại.",
+    "auth/web-storage-unsupported": "Trình duyệt đang chặn lưu dữ liệu. Mở trang bằng Chrome hoặc Safari (không dùng chế độ ẩn danh).",
+    "auth/internal-error": "Lỗi tạm thời từ Google. Thử lại sau ít phút."
+  };
+  return `Chưa đăng nhập được (mã lỗi: ${code}). ${tips[code] || "Thử lại, hoặc mở trang bằng Chrome/Safari."}`;
+}
+
 async function startFirebase() {
   if (!configured) { renderLocks("setup"); renderAccount(false); return; }
   renderLocks("checking");
@@ -390,7 +407,7 @@ async function startFirebase() {
     $$("[data-lock]").forEach(el => { el.hidden = false; el.innerHTML = `<h3>Chưa kết nối được máy chủ</h3><p class="muted">Kiểm tra mạng rồi tải lại trang.</p>`; });
     return;
   }
-  getRedirectResult(auth).catch(() => {});
+  getRedirectResult(auth).catch(e => { if (e && e.code) $("#login-status").textContent = loginError(e); });
   onAuthStateChanged(auth, onUser);
   $("#btn-login").onclick = async () => {
     const provider = new GoogleAuthProvider();
@@ -399,7 +416,7 @@ async function startFirebase() {
     try { await signInWithPopup(auth, provider); }
     catch (e) {
       if (e && (e.code === "auth/popup-blocked" || e.code === "auth/operation-not-supported-in-this-environment")) await signInWithRedirect(auth, provider);
-      else if (e && e.code !== "auth/popup-closed-by-user" && e.code !== "auth/cancelled-popup-request") $("#login-status").textContent = "Chưa đăng nhập được. Thử lại hoặc mở trang bằng Chrome/Safari.";
+      else if (e && e.code !== "auth/popup-closed-by-user" && e.code !== "auth/cancelled-popup-request") $("#login-status").textContent = loginError(e);
     }
   };
   $("#btn-logout").onclick = () => signOut(auth);
