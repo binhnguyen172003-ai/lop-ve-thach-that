@@ -175,7 +175,7 @@ export const MUC_TIEU = {
 // anh = ảnh chân dung vuông · bai = ảnh các bài vẽ · the = cả tấm thẻ (bấm vào để xem to).
 // truong: dùng mã ở bảng TRUONG phía trên (HAU, MTCN…) để có đúng màu trường.
 export const GIAO_VIEN = [
-  { ten: "Nguyễn Đình Bình", vaiTro: "Quản lý · Giáo viên chính", khoi: "Khối H, V", truong: "", nganh: "Phụ trách chuyên môn và lộ trình luyện thi của lớp", chinh: true },
+  { ten: "Nguyễn Đình Bình", vaiTro: "Quản lý lớp", khoi: "Khối H, V", truong: "", nganh: "Phụ trách chuyên môn và lộ trình luyện thi của lớp", chinh: true },
   { ten: "Cấn Hải An", vaiTro: "Giảng viên", khoi: "Khối V", truong: "HAU", nganh: "Sinh viên Kiến trúc · kiểm soát chất lượng giảng dạy", anh: "can-hai-an" },
   { ten: "Đỗ Hữu Trường", vaiTro: "Trợ giảng", khoi: "Khối V", truong: "HAU", nganh: "Sinh viên Kiến trúc, học viên Dreamers khoá 2026 · tượng, Mỹ thuật 2", anh: "do-huu-truong" },
   { ten: "Bùi Anh Đức", vaiTro: "Trợ giảng", khoi: "Khối H", truong: "MTCN", nganh: "Sinh viên Mỹ thuật Công nghiệp · chân dung và người cơ bản", anh: "bui-anh-duc" },
