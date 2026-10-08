@@ -1099,6 +1099,7 @@ function renderAccount(pending) {
     $("#who-mail").textContent = "Dùng Gmail của em (hoặc của bố mẹ). Chưa có tài khoản thì chọn “Lần đầu: Tạo tài khoản”.";
     $("#who-status").innerHTML = ""; $("#who-avatar").hidden = true;
     $("#nav-acct-t").textContent = "Đăng nhập";
+    { const k = $("#nav-ka"); if (k) { k.remove(); $("#nav-acct").classList.remove("has-ka"); } }
     setStep(1); return;
   }
   $("#who-name").textContent = user.displayName || "Xin chào";
@@ -1712,6 +1713,11 @@ function renderTiles() {
   const box = $("#acc-tiles"); if (!box) return;
   const show = canLearnNow();
   box.hidden = !show; { const xh = $("#xep-hang"); if (xh) xh.hidden = !show; }
+  { const na = $("#nav-acct"), hv = show && !isTeacher; let k = $("#nav-ka");
+    if (hv) { const ten = (myHv && myHv.ten) || (user && user.displayName), t = tinhRank(myDiemdanh, myProgress, myFeedback, ten);
+      if (!k) { k = document.createElement("span"); k.id = "nav-ka"; na.prepend(k); }
+      k.innerHTML = khungAvatar(t.r, t.i, ten, user && user.photoURL, "nav"); na.classList.add("has-ka"); na.title = `Tài khoản · Hạng ${t.r.ma} · ${t.r.ten}`;
+    } else if (k) { k.remove(); na.classList.remove("has-ka"); na.removeAttribute("title"); } }
   { const wr = $("#who-rank"); if (wr) { const hv = show && !isTeacher; wr.hidden = !hv;
     if (hv) { const av = $("#who-avatar"); if (av) av.hidden = true; const ten = (myHv && myHv.ten) || (user && user.displayName), t = tinhRank(myDiemdanh, myProgress, myFeedback, ten), tt = tinhThanhTuu(myDiemdanh, myProgress, myFeedback, ten, homework);
       wr.innerHTML = `${khungAvatar(t.r, t.i, ten, user && user.photoURL, "md")}${huyHieu(t.r, t.i, "xs", ten)}<span class="muted"><b class="num">${t.xp} XP</b> · ${tt.filter(a => a.cap).length}/${tt.length} thành tựu</span><a href="#xep-hang">Xem hạng & thành tựu ↓</a>`; } } }

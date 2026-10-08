@@ -1587,3 +1587,10 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
 .rk-chip em{display:flex;align-items:center;padding:4px 11px;margin:0;border:0;font:700 .74rem/1 var(--f-body)!important;letter-spacing:.02em;text-transform:none;color:#fff;max-width:none}
 .nb-card .rk-chip em{max-width:none}
 @media (max-width:640px){.rk-chip b{min-width:30px;padding:3px 7px;font-size:.8rem!important}.rk-chip em{font-size:.68rem!important;padding:3px 9px;max-width:none}}
+/* Nút tài khoản trên menu: khung avatar theo hạng */
+nav .acct.has-ka{display:inline-flex;align-items:center;gap:8px;padding:2px 14px 2px 2px}
+nav .acct.has-ka .acct-icon{display:none!important}
+#nav-ka{display:inline-flex}
+.ka.nav{width:40px;height:39px;margin:-4px 0}
+.ka.nav .ka-ma{display:none}
+@media(max-width:600px){nav .acct.has-ka{width:auto;height:auto;padding:0;border:0!important;background:none!important;box-shadow:none!important}.ka.nav{width:44px;height:43px;margin:0}}
