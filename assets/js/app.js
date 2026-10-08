@@ -277,17 +277,18 @@ renderGallery();
 
 /* ================= Bảng vàng thi năng khiếu ================= */
 const BV_NAM = [...new Set(BANG_VANG.map(x => Number(x.nam)))].filter(Boolean).sort((a, b) => b - a);
-let bvYear = BV_NAM[0], bvSchool = "", bvMore = false; // chỉ hiện top 3 có ảnh + 7 bạn tiếp theo
+let bvYear = 0, bvSchool = "", bvMore = false; // chỉ hiện top 3 có ảnh + 7 bạn tiếp theo
 const initials = t => String(t || "").trim().split(/\s+/).slice(-2).map(w => w[0] || "").join("").toUpperCase();
 const fmtDiem = d => Number(d).toLocaleString("vi-VN", { minimumFractionDigits: Number(d) % 1 ? 1 : 1, maximumFractionDigits: 2 });
 const tr = k => TRUONG[k] || { ten: k, mau: "#5b6068" };
+const hopNam = (x, nam) => !nam || Number(x.nam) === nam;
 const chipTr = k => `<span class="trc" style="--c:${esc(tr(k).mau)}" title="${esc(tr(k).ten)}">${esc(k)}</span>`;
 // Gộp các dòng của cùng một bạn; xếp theo điểm vẽ cao nhất, rồi tổng 2 điểm cao nhất.
 function gomHocVien(nam, truong) {
   const map = new Map();
-  BANG_VANG.filter(x => Number(x.nam) === nam && (!truong || x.truong === truong)).forEach(r => {
-    const k = r.ten.trim().toLowerCase();
-    if (!map.has(k)) map.set(k, { ten: r.ten.trim(), anh: r.anh, kq: [] });
+  BANG_VANG.filter(x => hopNam(x, nam) && (!truong || x.truong === truong)).forEach(r => {
+    const k = r.ten.trim().toLowerCase() + "|" + r.nam;
+    if (!map.has(k)) map.set(k, { ten: r.ten.trim(), nam: Number(r.nam), anh: r.anh, kq: [] });
     const s = map.get(k); s.kq.push(r); if (r.anh) s.anh = r.anh;
   });
   return [...map.values()].map(s => {
@@ -305,8 +306,8 @@ function renderHonor() {
     return;
   }
   $("#bv-years").hidden = false;
-  $("#bv-years").innerHTML = BV_NAM.map(y => `<button class="tab" data-y="${y}" aria-selected="${y === bvYear && !bvSchool}">Mùa thi ${y}</button>`).join("")
-    + `<span class="bv-sep"></span>` + Object.keys(TRUONG).filter(k => BANG_VANG.some(x => Number(x.nam) === bvYear && x.truong === k))
+  $("#bv-years").innerHTML = `<button class="tab" data-y="0" aria-selected="${!bvYear && !bvSchool}">Tất cả các khoá</button>` + BV_NAM.map(y => `<button class="tab" data-y="${y}" aria-selected="${y === bvYear && !bvSchool}">Mùa thi ${y}</button>`).join("")
+    + `<span class="bv-sep"></span>` + Object.keys(TRUONG).filter(k => BANG_VANG.some(x => hopNam(x, bvYear) && x.truong === k))
       .map(k => `<button class="tab trtab" data-t="${esc(k)}" style="--c:${esc(tr(k).mau)}" aria-selected="${bvSchool === k}">${esc(k)}</button>`).join("");
   $$("#bv-years [data-y]").forEach(b => b.onclick = () => { bvYear = Number(b.dataset.y); bvSchool = ""; bvMore = false; renderHonor(); });
   $$("#bv-years [data-t]").forEach(b => b.onclick = () => { bvSchool = bvSchool === b.dataset.t ? "" : b.dataset.t; renderHonor(); });
@@ -314,7 +315,8 @@ function renderHonor() {
   const all = gomHocVien(bvYear, "");
   const list = bvSchool ? gomHocVien(bvYear, bvSchool) : all;
   const scored = list.filter(x => x.top);
-  const luot = BANG_VANG.filter(x => Number(x.nam) === bvYear).length;
+  const luot = BANG_VANG.filter(x => hopNam(x, bvYear)).length;
+  const tatCa = !bvYear, nhanNam = x => tatCa ? ` · Khoá ${x.nam}` : "";
   const ava = x => x.anh ? `<img src="${esc(x.anh)}" alt="" loading="lazy" decoding="async" width="96" height="96">` : `<span>${esc(initials(x.ten))}</span>`;
   const diemCua = x => x.top ? `<b class="sc num">${fmtDiem(x.top.d)}</b><span class="sm">${esc(x.top.m)} · ${esc(x.top.tr)}</span>` : `<span class="sm">Đỗ ${esc(x.truongs.join(", "))}</span>`;
   const chiTiet = x => x.kq.map(r => `<li>${chipTr(r.truong)} <span>${esc(tr(r.truong).ten)}</span>
@@ -333,7 +335,7 @@ function renderHonor() {
         <span class="mg-badge">${x.truongs.map(k => `<i style="--c:${esc(tr(k).mau)}">${esc(k)}</i>`).join("")}</span>
         <span class="mg-pts"><b class="num">${x.top ? fmtDiem(x.top.d) : "–"}</b><small>${x.top ? esc(VT[x.top.m] || x.top.m) : ""}</small></span>
       </div>
-      <div class="mg-name"><span>${esc(ho)}</span><b>${esc(ten)}</b></div></li>`;
+      <div class="mg-name"><span>${esc(ho)}</span><b>${esc(ten)}</b>${tatCa ? `<em class="mg-yr">Khoá ${x.nam}</em>` : ""}</div></li>`;
   };
   const rest = list.filter(x => !cards.includes(x));
   $("#bv-body").innerHTML = `
@@ -345,13 +347,13 @@ function renderHonor() {
     </div>
     ${bvSchool ? `<p class="bv-filter">Đang xem: <b>${esc(tr(bvSchool).ten)}</b> <button type="button" class="linkish" id="bv-clear">Xem tất cả</button></p>` : ""}
     <div class="mg-board">
-      <h3 class="mg-title">TOP ${Math.min(9, list.length)} <span>· Mùa thi ${bvYear}</span></h3>
+      <h3 class="mg-title">TOP ${Math.min(9, list.length)} <span>· ${tatCa ? "Tất cả các khoá" : `Mùa thi ${bvYear}`}</span></h3>
       <ol class="mg-pod">${cards.map(mgCard).join("")}</ol>
       <ol class="mg-rows ${bvMore ? "" : "gon"}">${rest.map((x, i) => `<li class="${i >= 6 ? "them" : ""}"><details>
         <summary><span class="mg-rk num">${x.top ? rankOf.get(x) : "–"}</span>
           <span class="mg-tr">${x.truongs.map(k => `<i style="--c:${esc(tr(k).mau)}">${esc(k)}</i>`).join("")}</span>
           <b class="mg-nm">${esc(x.ten)}</b>
-          <span class="mg-sub">${x.top ? `${esc(x.top.m)} · ${esc(x.top.tr)}` : `Đỗ ${esc(x.truongs.join(", "))}`}</span>
+          <span class="mg-sub">${x.top ? `${esc(x.top.m)} · ${esc(x.top.tr)}${nhanNam(x)}` : `Đỗ ${esc(x.truongs.join(", "))}${nhanNam(x)}`}</span>
           <span class="mg-sc"><b class="num">${x.top ? fmtDiem(x.top.d) : "–"}</b><small>Đ</small></span></summary>
         <ul class="kq">${chiTiet(x)}</ul></details></li>`).join("")}</ol>
       ${rest.length > 6 ? `<button type="button" class="mg-more" id="bv-more">${bvMore ? "Thu gọn ▲" : `Xem tất cả ${list.length} học viên ▼`}</button>` : ""}
@@ -361,25 +363,6 @@ function renderHonor() {
   if ($("#bv-more")) $("#bv-more").onclick = () => { bvMore = !bvMore; renderHonor(); if (!bvMore) $("#bang-vang").scrollIntoView({ block: "start" }); };
 }
 renderHonor();
-
-/* ---------- Tổng hợp các khoá: mỗi khoá một dòng ---------- */
-function renderTopKhoa() {
-  if (!BANG_VANG.length) { $("#tk-grid").innerHTML = ""; $(".tk-head").hidden = true; return; }
-  const rows = BV_NAM.map(y => {
-    const hv = gomHocVien(y, ""), co = hv.filter(x => x.top);
-    const luot = BANG_VANG.filter(x => Number(x.nam) === y).length;
-    const theoTruong = Object.keys(TRUONG).map(k => [k, hv.filter(x => x.truongs.includes(k)).length]).filter(([, n]) => n);
-    return `<tr>
-      <td class="tk-y"><b>Khoá ${y}</b></td>
-      <td class="num" data-l="Học viên"><b>${hv.length}</b></td>
-      <td class="num" data-l="Lượt đỗ"><b>${luot}</b></td>
-      <td class="num" data-l="Từ 8,5 điểm"><b>${co.filter(x => x.top.d >= 8.5).length}</b></td>
-      <td data-l="Từ 9 điểm trở lên" class="tk-9">${co.filter(x => x.top.d >= 9).map(x => `<span title="${esc(x.top.m)} · ${esc(x.top.tr)}">${esc(x.ten)} <b class="num">${fmtDiem(x.top.d)}</b></span>`).join("") || "–"}</td>
-      <td data-l="Đỗ theo trường"><div class="tk-trs">${theoTruong.map(([k, n]) => `<span style="--c:${esc(tr(k).mau)}" title="${esc(tr(k).ten)}"><i>${esc(k)}</i>${n}</span>`).join("")}</div></td></tr>`;
-  }).join("");
-  $("#tk-grid").innerHTML = `<table class="tk-table"><thead><tr><th>Khoá</th><th>Học viên</th><th>Lượt đỗ</th><th>Từ 8,5 điểm</th><th>Từ 9 điểm trở lên</th><th>Đỗ theo trường</th></tr></thead><tbody>${rows}</tbody></table>`;
-}
-renderTopKhoa();
 
 /* ================= Đăng ký học thử ================= */
 // Gửi thẳng cho thầy qua email (không bắt phụ huynh tự sao chép), kèm nút Gọi / Zalo dự phòng.
