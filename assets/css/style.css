@@ -1674,4 +1674,12 @@ nav .acct.has-ka .acct-icon{display:none!important}
 @media (max-width:640px){.tsd i{display:none}.tsd svg{width:26px;height:28px}}
 .tsd svg{width:38px;height:40px}.tsd.sm svg{width:32px;height:34px}
 @media (max-width:640px){.tsd svg{width:32px;height:34px}.tsd.sm svg{width:28px;height:30px}}
-.xh-row:last-child .xh-kim{background:linear-gradient(90deg,#ff3b3b,#ffc400)}
+.xh-row.t8 .xh-kim{background:linear-gradient(90deg,#ff3b3b,#ffc400)}
+/* SSS+ (t9): hưởng mọi hiệu ứng hạng cao */
+.kt.t9::before{padding:3px}.kt.t9::after{opacity:1;left:3.5px;right:3.5px;border-width:1.8px}
+.tr-list li.t9{padding-block:14px;border-width:1.5px;background:radial-gradient(120% 140% at 0 50%,rgba(255,140,255,.28),transparent 60%),linear-gradient(90deg,rgba(0,0,0,.2),rgba(255,255,255,.02));box-shadow:0 0 0 1px rgba(255,140,255,.7)!important}
+.tr-list li.t9 .tr-ten b{font-size:1.35rem;background:linear-gradient(90deg,#ff5a5a,#ffc400,#3fcf5b,#3ec6e0,#9b5cff);-webkit-background-clip:text;background-clip:text;color:transparent}
+.tr-list li.t9 .ka{width:80px;height:78px}
+.xh-row.t9{background:linear-gradient(90deg,rgba(255,140,255,.16),transparent 60%)}
+.xh-row.t9 .xh-mo b{background:linear-gradient(90deg,#ff5a5a,#ffc400,#3fcf5b,#3ec6e0,#9b5cff);-webkit-background-clip:text;background-clip:text;color:transparent}
+.xh-row.t9 .xh-kim{background:linear-gradient(90deg,#ff5a5a,#ffc400,#3fcf5b,#3ec6e0,#9b5cff);-webkit-text-fill-color:#0b0d14}

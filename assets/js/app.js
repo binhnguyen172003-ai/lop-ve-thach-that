@@ -360,7 +360,7 @@ function vongXoay(box, st, cards, dots, prev, next, onCenter) {
   return { pause, go };
 }
 
-/* ================= Hạng học viên (F → SSS): leo hạng nhờ đi học, làm bài, có bài nổi bật ================= */
+/* ================= Hạng học viên (F → SSS+): leo hạng nhờ đi học, làm bài, có bài nổi bật ================= */
 const RANK = [
   { ma: "F", xp: 0, mau: "#9aa3ad", kim: "Sắt", ten: "Người Mới", mo: "Vừa vào lớp, bắt đầu hành trình." },
   { ma: "E", xp: 100, mau: "#3fcf5b", kim: "Đồng", ten: "Tập Sự", mo: "Đã có bài đầu tiên được chọn hoặc đi học đều." },
@@ -370,7 +370,8 @@ const RANK = [
   { ma: "A", xp: 1400, mau: "#9b5cff", kim: "Bạch Kim", ten: "Lão Làng", mo: "Trên mức trung bình của lớp." },
   { ma: "S", xp: 3400, mau: "#ffc400", kim: "Kim Cương", ten: "Cao Thủ", mo: "Được cả lớp công nhận." },
   { ma: "SS", xp: 5400, mau: "#ff8a1f", kim: "Tinh Anh", ten: "Đại Cao Thủ", mo: "Nhóm học viên giỏi nhất." },
-  { ma: "SSS", xp: 7400, mau: "#ff3b3b", kim: "Huyền Thoại", ten: "Bậc Thầy", mo: "Đỉnh cao của lớp — rất ít người đạt được." },
+  { ma: "SSS", xp: 7400, mau: "#ff3b3b", kim: "Huyền Thoại", ten: "Bậc Thầy", mo: "Rất ít người đạt được." },
+  { ma: "SSS+", xp: 9400, mau: "rainbow", kim: "Thách Đấu", ten: "Huyền Thoại Thạch Thất", mo: "Đỉnh cao tuyệt đối — vượt mọi giới hạn." },
 ];
 // Cách tính điểm kinh nghiệm (XP) — thầy sửa số ở đây nếu muốn
 const XP = { buoi: 10, baiTap: 15, baiHoc: 5, diemGioi: 10, noiBat: 100, top1: 25 };
@@ -415,7 +416,7 @@ function theRank(t) {
 }
 
 const KIM_LOAI = [["#f2f4f7", "#8c939d", "#3a3f47"], ["#ffe2c4", "#b9774a", "#4a2a17"], ["#e6fff9", "#5fb3a3", "#1f4a42"], ["#ffffff", "#b9c3cf", "#4b535e"], ["#fff3c4", "#d9a63a", "#5a3c0c"],
-  ["#ffffff", "#c9c2e8", "#4a4366"], ["#fff6cf", "#f0b72e", "#6b4300"], ["#ffe6c7", "#f08a2a", "#5c2200"], ["#ffe1d6", "#e0473f", "#4a0508"]];
+  ["#ffffff", "#c9c2e8", "#4a4366"], ["#fff6cf", "#f0b72e", "#6b4300"], ["#ffe6c7", "#f08a2a", "#5c2200"], ["#ffe1d6", "#e0473f", "#4a0508"], ["#ffffff", "#f3b6ff", "#5b2a6e"]];
 /* Khung thẻ bài nổi bật theo hạng: viền, góc móc, thanh ngang giữa ảnh và tên (tự vẽ) */
 function khungThe(r, i) {
   const id = "kt" + Math.random().toString(36).slice(2, 8), c = r.mau === "rainbow" ? "#ff9cf5" : r.mau, KL = KIM_LOAI[i];
@@ -607,8 +608,8 @@ function moBangRank(ten) {
     ${ten ? (m => `<div class="rk-ttd"><b>🏆 Thành tựu đã đạt</b>${m.length ? `<ul>${m.map(a => `<li>${huyHieuTT(a, a.cap, "sm")}<span><b>${esc(a.ten)} <i style="color:${CAP[a.cap].mau}">· Cấp ${CAP[a.cap].ten}</i></b><small>Cách đạt: ${esc(a.mo)} — đã có <b>${a.n} ${esc(a.dv)}</b>${a.toi ? ` · cần ${a.toi} để lên ${CAP[a.cap + 1].ten}` : " · cấp cao nhất"}</small></span></li>`).join("")}</ul>` : `<p class="muted">Chưa có thành tựu nào. Nộp bài, đi học đều và có bài lên nổi bật để mở khoá!</p>`}</div>`)(tinhThanhTuu(null, null, null, ten).filter(a => a.cap)) : ""}
     <div class="rk-note"><b>📌 Ghi chú</b><ul>
       <li>Mùa xếp hạng bắt đầu từ <b>${fmtDate(new Date(RANK_BAT_DAU + "T00:00"))}</b>. Mọi học viên khởi đầu ở <b>hạng F · Sắt · Người Mới</b>.</li>
-      <li>Hạng càng cao, huy hiệu càng rực rỡ: từ Sắt xám → Đồng → Thép → Bạc → Vàng → Bạch Kim → Kim Cương → Tinh Anh → <b>Huyền Thoại đỏ rực</b>.</li>
-      <li><b>Càng lên cao càng khó:</b> mỗi hạng cần nhiều XP hơn hẳn hạng trước (F→E chỉ 100 XP). <b>Từ Lão Làng (A) trở lên, mỗi hạng cần thêm 2.000 XP</b>: A 1.400 → S 3.400 → SS 5.400 → SSS 7.400. Chỉ những bạn chăm chỉ bền bỉ cả năm mới chạm tới SSS · Huyền Thoại.</li>
+      <li>Hạng càng cao, huy hiệu càng rực rỡ: từ Sắt xám → Đồng → Thép → Bạc → Vàng → Bạch Kim → Kim Cương → Tinh Anh → Huyền Thoại đỏ rực → <b>Thách Đấu cầu vồng</b>.</li>
+      <li><b>Càng lên cao càng khó:</b> mỗi hạng cần nhiều XP hơn hẳn hạng trước (F→E chỉ 100 XP). <b>Từ Lão Làng (A) trở lên, mỗi hạng cần thêm 2.000 XP</b>: A 1.400 → S 3.400 → SS 5.400 → SSS 7.400 → SSS+ 9.400. Chỉ những bạn chăm chỉ bền bỉ cả năm mới chạm tới SSS+ · Thách Đấu.</li>
       <li>XP cộng tự động khi em đi học, nộp bài, được chấm điểm cao hoặc có bài lên Bài vẽ nổi bật. Thầy có thể thưởng thêm XP cho bài xuất sắc.</li>
       <li>Hạng đầy đủ của em (gồm đi học, bài tập) xem trong mục <b>Tài khoản</b>.</li></ul></div>
     <h3>Cách kiếm XP</h3>${cachXpHTML()}
