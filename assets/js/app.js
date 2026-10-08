@@ -350,6 +350,75 @@ function vongXoay(box, st, cards, dots, prev, next, onCenter) {
   return { pause, go };
 }
 
+/* ================= Hạng học viên (F → SSS+): leo hạng nhờ đi học, làm bài, có bài nổi bật ================= */
+const RANK = [
+  { ma: "F", xp: 0, mau: "#9aa3ad", ten: "Mới bắt đầu", mo: "Vừa vào lớp, bắt đầu hành trình." },
+  { ma: "E", xp: 100, mau: "#3fcf5b", ten: "Đang làm quen", mo: "Đã có bài đầu tiên được chọn hoặc đi học đều." },
+  { ma: "C", xp: 250, mau: "#3ec6e0", ten: "Bắt nhịp", mo: "Tiềm năng bắt đầu lộ rõ." },
+  { ma: "B", xp: 500, mau: "#3d6bff", ten: "Vững vàng", mo: "Nền tảng chắc, làm bài đầy đủ." },
+  { ma: "A", xp: 800, mau: "#9b5cff", ten: "Giỏi", mo: "Trên mức trung bình của lớp." },
+  { ma: "S", xp: 1200, mau: "#ffc400", ten: "Xuất sắc", mo: "Được cả lớp công nhận." },
+  { ma: "SS", xp: 1700, mau: "#ff8a1f", ten: "Tinh hoa", mo: "Nhóm học viên giỏi nhất." },
+  { ma: "SSS", xp: 2300, mau: "#ff3b3b", ten: "Huyền thoại", mo: "Rất ít người đạt được." },
+  { ma: "SSS+", xp: 3000, mau: "rainbow", ten: "Đỉnh cao", mo: "Vượt mọi giới hạn." },
+];
+// Cách tính điểm kinh nghiệm (XP) — thầy sửa số ở đây nếu muốn
+const XP = { buoi: 10, baiTap: 15, baiHoc: 5, diemGioi: 10, noiBat: 100, top1: 25 };
+// Mùa xếp hạng bắt đầu: mọi học viên khởi đầu ở hạng F (1 sao), chỉ tính hoạt động SAU ngày này
+const RANK_BAT_DAU = "2026-10-09";
+function tinhRank(dd, prog, fb, ten) {
+  const moc = new Date(RANK_BAT_DAU + "T23:59:59+07:00").getTime();
+  const sau = v => typeof v === "number" && v > moc;
+  const buoi = Object.entries(dd || {}).filter(([k, v]) => /^\d{4}-\d{2}-\d{2}_/.test(k) && v === "co" && k.slice(0, 10) > RANK_BAT_DAU).length;
+  const baiTap = Object.values((prog || {}).baitap || {}).filter(sau).length;
+  const baiHoc = Object.values((prog || {}).bai || {}).filter(sau).length;
+  const gioi = Object.values(fb || {}).filter(x => x && sau(x.luc) && soDiem(x.diem) !== null && soDiem(x.diem) >= 8).length;
+  const bo = t => String(t || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
+  const nb = ten ? BAI_NOI_BAT.filter(b => !b.tg && b.hocVien && b.ngay > RANK_BAT_DAU && bo(ten).endsWith(bo(b.hocVien))) : [];
+  const top1 = nb.filter(b => b.hang === 1).length;
+  const xp = buoi * XP.buoi + baiTap * XP.baiTap + baiHoc * XP.baiHoc + gioi * XP.diemGioi + nb.length * XP.noiBat + top1 * XP.top1;
+  let i = 0; RANK.forEach((r, j) => { if (xp >= r.xp) i = j; });
+  const r = RANK[i], next = RANK[i + 1] || null;
+  const pct = next ? Math.round((xp - r.xp) / (next.xp - r.xp) * 100) : 100;
+  return { xp, r, i, next, pct, buoi, baiTap, baiHoc, gioi, nb: nb.length, top1 };
+}
+const huyHieu = (r, i, cls = "") => `<span class="rk-badge ${cls}${r.mau === "rainbow" ? " rb" : ""}" style="--rc:${r.mau === "rainbow" ? "#ffd6ff" : r.mau}" title="Hạng ${r.ma} · ${r.ten}">
+  <svg viewBox="0 0 64 64" aria-hidden="true"><path class="w" d="M6 22c6 2 10 6 12 12-6-1-10-5-12-12zM58 22c-6 2-10 6-12 12 6-1 10-5 12-12z"/><path class="s" d="M32 6l20 9v16c0 13-9 22-20 27C21 53 12 44 12 31V15z"/></svg>
+  <b>${r.ma}</b><i>${"★".repeat(i + 1)}</i></span>`;
+function theRank(t) {
+  return `<div class="rk-card" style="--rc:${t.r.mau === "rainbow" ? "#ffd6ff" : t.r.mau}">
+    ${huyHieu(t.r, t.i, "lg")}
+    <div class="rk-in"><p class="eyebrow">Hạng của em</p><h3>Hạng ${t.r.ma} <span>· ${t.r.ten}</span></h3>
+      <div class="rk-bar"><i style="width:${t.pct}%"></i></div>
+      <p class="rk-sub"><b class="num">${t.xp} XP</b>${t.next ? ` · còn <b class="num">${t.next.xp - t.xp} XP</b> nữa lên hạng ${t.next.ma}` : " · đã đạt hạng cao nhất!"}</p>
+      <ul class="rk-chi"><li>${t.buoi} buổi đi học</li><li>${t.baiTap} bài tập đã nộp</li><li>${t.baiHoc} bài giáo trình</li><li>${t.gioi} bài điểm ≥ 8</li><li>${t.nb} bài nổi bật</li></ul>
+      <details class="rk-cach"><summary>Cách leo hạng ▾</summary>
+        <p>Mỗi buổi đi học +${XP.buoi} XP · nộp 1 bài tập +${XP.baiTap} · học xong 1 bài giáo trình +${XP.baiHoc} · bài được chấm từ 8 điểm +${XP.diemGioi} · có bài lên Top nổi bật +${XP.noiBat} (Top 1 thêm +${XP.top1}).</p>
+        <div class="rk-list">${RANK.map((r, j) => `<span class="${j === t.i ? "on" : ""}">${huyHieu(r, j, "sm")}<small>${r.xp}+</small></span>`).join("")}</div>
+      </details></div></div>`;
+}
+
+/* Bảng xếp hạng công khai trên trang chủ */
+(function bangXepHang() {
+  const bang = $("#xh-bang"); if (!bang) return;
+  bang.innerHTML = `<div class="xh-row xh-th" role="row"><span>Hạng</span><span>Huy hiệu</span><span>Mô tả</span><span>Cần</span></div>` +
+    RANK.map((r, i) => `<div class="xh-row" role="row" style="--rc:${r.mau === "rainbow" ? "#ffd6ff" : r.mau}">
+      <b class="xh-ma${r.mau === "rainbow" ? " rb" : ""}">${r.ma}<small> RANK</small></b>${huyHieu(r, i, "sm")}
+      <span class="xh-mo"><b>${r.ten}</b><span>${r.mo}</span><i>${"★".repeat(i + 1)}</i></span><span class="xh-xp num">${r.xp} XP</span></div>`).join("");
+  $("#xh-cach").innerHTML = `<h3>Cách kiếm XP</h3><ul>
+    <li><b>+${XP.buoi}</b><span>Mỗi buổi đi học (thầy điểm danh có mặt)</span></li>
+    <li><b>+${XP.baiTap}</b><span>Mỗi bài tập đã nộp</span></li>
+    <li><b>+${XP.baiHoc}</b><span>Mỗi bài giáo trình học xong</span></li>
+    <li><b>+${XP.diemGioi}</b><span>Mỗi bài được chấm từ 8 điểm</span></li>
+    <li><b>+${XP.noiBat}</b><span>Có bài lên Bài vẽ nổi bật</span></li>
+    <li><b>+${XP.top1}</b><span>Thêm nếu bài đạt Top 1</span></li></ul>
+    <p class="muted">Mùa xếp hạng bắt đầu từ ${fmtDate(new Date(RANK_BAT_DAU + "T00:00"))}. Mọi học viên khởi đầu ở hạng F.</p>`;
+  // Học viên có hạng nổi bật (từ Bài vẽ nổi bật)
+  const ten = [...new Set(BAI_NOI_BAT.filter(b => !b.tg && b.hocVien).map(b => b.hocVien))];
+  const ds = ten.map(t => ({ t, k: tinhRank(null, null, null, t) })).sort((a, b) => b.k.xp - a.k.xp);
+  $("#xh-top").innerHTML = ds.length ? `<h3>Học viên đang leo hạng</h3><div class="xh-hv">${ds.map(({ t, k }) => `<div style="--rc:${k.r.mau === "rainbow" ? "#ffd6ff" : k.r.mau}">${huyHieu(k.r, k.i, "sm")}<b>${esc(t)}</b><span>Hạng ${k.r.ma} · ${k.xp} XP</span></div>`).join("")}</div>
+    <p class="muted xh-note">Tính từ bài vẽ nổi bật. Hạng đầy đủ (gồm đi học, bài tập) xem trong Tài khoản của từng em.</p>` : "";
+})();
 /* ================= Bài vẽ nổi bật: tuần / tháng / năm, vòng xoay 3D ================= */
 (function noiBat() {
   const box = $("#nb-ring"); if (!box) return;
@@ -369,7 +438,7 @@ function vongXoay(box, st, cards, dots, prev, next, onCenter) {
     box.innerHTML = `<div class="gv-stage nb-stage">${ds.map((b, i) => `<figure class="nb-card" data-i="${i}">
         <img src="${esc(b.anh)}" alt="${esc((b.loai || "Bài vẽ") + " · " + (b.hocVien || ""))}" loading="lazy" decoding="async" draggable="false">
         ${b.hang && b.hang <= 3 ? `<span class="nb-medal h${Number(b.hang)}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 2h4l1 5-3 1zM17 2h-4l-1 5 3 1z" class="rb"/><circle cx="12" cy="15" r="6.5" class="md"/><text x="12" y="18.2" text-anchor="middle">${Number(b.hang)}</text></svg><b>TOP ${Number(b.hang)}</b><i>${TEN[ky]}</i></span>` : ""}
-        <figcaption><b>${esc(b.hocVien || "")}</b><span>${esc([b.loai, b.ghiChu].filter(Boolean).join(" · "))}</span></figcaption></figure>`).join("")}</div>
+        <figcaption><b>${esc(b.hocVien || "")} ${!b.tg && !tam ? (t => huyHieu(t.r, t.i, "xs"))(tinhRank(null, null, null, b.hocVien)) : ""}</b><span>${esc([b.loai, b.ghiChu].filter(Boolean).join(" · "))}</span></figcaption></figure>`).join("")}</div>
       <div class="gv-ctl"><button type="button" class="gv-nav" aria-label="Bài trước">‹</button>
         <div class="gv-dots">${ds.map((b, i) => `<button type="button" data-i="${i}" aria-label="Bài ${i + 1}"></button>`).join("")}</div>
         <button type="button" class="gv-nav" aria-label="Bài sau">›</button></div>
@@ -1158,9 +1227,9 @@ $("#f-bt").addEventListener("submit", async ev => {
 
 // Đổi trên màn hình ngay, lưu lên máy chủ ở phía sau; lỗi thì trả lại như cũ.
 function toggleProgress(kind, id) {
-  myProgress[kind][id] = !myProgress[kind][id]; saveData();
+  const cu = myProgress[kind][id]; myProgress[kind][id] = cu ? false : Date.now(); saveData(); // lưu thời điểm để tính hạng
   timed("Lưu tiến độ", setDoc(doc(db, "tiendo", mail), { bai: myProgress.bai, baitap: myProgress.baitap, capNhat: Date.now() }))
-    .catch(() => { myProgress[kind][id] = !myProgress[kind][id]; renderLessons(); renderHomework(); alertStatus("Chưa lưu được tiến độ. Kiểm tra mạng rồi thử lại."); });
+    .catch(() => { myProgress[kind][id] = cu; renderLessons(); renderHomework(); alertStatus("Chưa lưu được tiến độ. Kiểm tra mạng rồi thử lại."); });
   return Promise.resolve();
 }
 function alertStatus(t) { toast(t, "err"); }
@@ -1376,7 +1445,7 @@ function renderMyProg() {
     const ks = t.keys.filter(k => { const d = (Date.parse(today) - Date.parse(k.slice(0, 10))) / 864e5; return d >= w * 7 && d < (w + 1) * 7; });
     return `<div class="wk"><div>${ks.map(k => `<i class="${myDiemdanh[k]}" title="${ngayVN(k.slice(0, 10))}"></i>`).join("") || "<i class='none'></i>"}</div><span>${w === 0 ? "Tuần này" : w + "t trước"}</span></div>`;
   }).join("");
-  box.innerHTML = `
+  box.innerHTML = theRank(tinhRank(myDiemdanh, myProgress, myFeedback, (myHv && myHv.ten) || (user && user.displayName))) + `
     <div class="mp-head">
       <div><p class="eyebrow">Tiến độ của em · ${esc(t.khoi)}</p>
         <h3>Còn <b class="num">${t.daysLeft}</b> ngày đến kỳ thi <span class="muted">(${ngayVN(t.ngayThi)})</span></h3></div>
@@ -1403,7 +1472,7 @@ function renderAttend() {
   const n = v => ds.filter(r => val(r) === v).length;
   $("#dd-sum").innerHTML = `Đang hiển thị <b>${ds.length}</b>/${roster.length} học viên` + (ds.length ? ` · Ca đã chọn: <b>${n("co")}</b> có mặt · <b>${n("vang")}</b> vắng · <b>${n("phep")}</b> phép · <b>${ds.length - n("co") - n("vang") - n("phep")}</b> chưa điểm danh` : "");
   const empty = roster.length ? "Không tìm thấy học viên phù hợp. Thử đổi tên tìm kiếm hoặc cơ sở." : "Chưa có học viên nào được duyệt.";
-  $("#dd-list").innerHTML = rows.length ? rows.map(({ r, t }) => `<li><div><b>${esc(r.ten)}</b><span class="muted">${esc(r.chuongTrinh || r.lop || "")}${r.coso ? " · " + esc(r.coso) : ""}</span><span class="dd-history">${t.records28 ? `Đã đi ${t.co28} buổi trong 4 tuần` : "Chưa có điểm danh trong 4 tuần"}</span></div>
+  $("#dd-list").innerHTML = rows.length ? rows.map(({ r, t }) => `<li><div><b>${esc(r.ten)}</b> ${(t2 => huyHieu(t2.r, t2.i, "xs"))(tinhRank(diemdanhAll[r.id], progressAll[r.id], feedbackAll[r.id], r.ten))}<span class="muted">${esc(r.chuongTrinh || r.lop || "")}${r.coso ? " · " + esc(r.coso) : ""}</span><span class="dd-history">${t.records28 ? `Đã đi ${t.co28} buổi trong 4 tuần` : "Chưa có điểm danh trong 4 tuần"}</span></div>
     <div class="seg" role="group" aria-label="Điểm danh ${esc(r.ten)}">${[["co", "Có mặt"], ["vang", "Vắng"], ["phep", "Phép"]].map(([v, t]) =>
       `<button type="button" class="${v}" data-dd="${esc(r.id)}" data-v="${v}" aria-pressed="${val(r) === v}">${t}</button>`).join("")}</div></li>`).join("")
     : `<li class="muted">${empty}</li>`;
@@ -1485,7 +1554,7 @@ function renderTiles() {
     isTeacher && { href: "#diem-danh", t: "Điểm danh", d: "Điểm danh buổi hôm nay, theo dõi chuyên cần" },
     isAdmin && { href: "#duyet", t: "Duyệt học viên", n: reqCount, d: reqCount ? `${reqCount} yêu cầu đang chờ` : "Không có yêu cầu đang chờ" },
   ].filter(Boolean);
-  box.innerHTML = tiles.map(x => `<a class="acc-tile" href="${x.href}"><b>${x.t}${x.n ? ` <span class="nbadge num">${x.n}</span>` : ""}</b><span class="muted">${esc(x.d)}</span><i aria-hidden="true">→</i></a>`).join("");
+  box.innerHTML = (!isTeacher ? theRank(tinhRank(myDiemdanh, myProgress, myFeedback, (myHv && myHv.ten) || (user && user.displayName))) : "") + tiles.map(x => `<a class="acc-tile" href="${x.href}"><b>${x.t}${x.n ? ` <span class="nbadge num">${x.n}</span>` : ""}</b><span class="muted">${esc(x.d)}</span><i aria-hidden="true">→</i></a>`).join("");
 }
 
 /* ================= Làm việc: tin nhắn · thông báo · việc cần làm ================= */

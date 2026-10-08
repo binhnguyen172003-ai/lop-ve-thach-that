@@ -204,8 +204,8 @@ export const VIDEO_BIA = "";
 // Web tự chia theo ngày:  0–7 ngày → Top Tuần · 8–30 ngày → Top Tháng · 31–365 ngày → Top Năm
 // Không cần xoá bài cũ: bài tự chuyển mục khi đủ ngày.
 export const BAI_NOI_BAT = [
-  { ngay: "2026-10-09", hang: 1, anh: "assets/img/bai-ve/bao-tuong.webp", hocVien: "Bảo", loai: "Tượng", ghiChu: "Hình hoạ tượng cơ bản" },
-  { ngay: "2026-10-09", hang: 2, anh: "assets/img/bai-ve/bao-sac-do.webp", hocVien: "Bảo", loai: "Mỹ thuật 2", ghiChu: "Bố cục sắc độ" },
+  { ngay: "2026-10-09", hang: 1, anh: "assets/img/bai-ve/bao-tuong.webp", hocVien: "Nguyễn Văn Bảo", loai: "Tượng", ghiChu: "Hình hoạ tượng cơ bản" },
+  { ngay: "2026-10-09", hang: 2, anh: "assets/img/bai-ve/bao-sac-do.webp", hocVien: "Nguyễn Văn Bảo", loai: "Mỹ thuật 2", ghiChu: "Bố cục sắc độ" },
   { ngay: "2026-10-09", anh: "assets/img/bai-ve/khang-mau.webp", hocVien: "Khang", loai: "Màu" },
   { ngay: "2026-10-09", anh: "assets/img/bai-ve/linh-mau.webp", hocVien: "Linh", loai: "Màu" },
   { ngay: "2026-10-09", anh: "assets/img/bai-ve/thuy-chan-dung.webp", hocVien: "Thùy", loai: "Hình hoạ người", ghiChu: "Chân dung" },

@@ -1293,11 +1293,66 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
 .nb-rong{text-align:center;color:var(--graphite);padding:48px 16px;border:1px dashed var(--rule);border-radius:18px}
 /* Vương miện trên thẻ Top 1 Bảng vàng */
 .mg-card{position:relative}
-.mg-crown{position:absolute;left:50%;top:-30px;z-index:5;width:68px;transform:translateX(-50%);pointer-events:none;
+.mg-crown{position:absolute;left:50%;top:-14px;z-index:5;width:68px;transform:translateX(-50%);pointer-events:none;
   filter:drop-shadow(0 6px 14px rgba(0,0,0,.55)) drop-shadow(0 0 16px rgba(255,196,0,.45))}
 .mg-crown svg{display:block;width:100%;height:auto}
 .mg-crown path,.mg-crown rect,.mg-crown circle{fill:url(#none);fill:#ffc400;stroke:#7a5500;stroke-width:1.5;stroke-linejoin:round}
 .mg-crown rect{fill:#e0a800}
 @media (prefers-reduced-motion:no-preference){.mg-crown{animation:crown 3s ease-in-out infinite}}
 @keyframes crown{0%,100%{transform:translateX(-50%) translateY(0) rotate(-3deg)}50%{transform:translateX(-50%) translateY(-4px) rotate(3deg)}}
-@media (max-width:640px){.mg-crown{width:44px;top:-20px}}
+@media (max-width:640px){.mg-crown{width:44px;top:-8px}}
+
+/* ===== Hạng học viên ===== */
+.rk-badge{position:relative;display:inline-grid;place-items:center;width:58px;height:62px;flex:none;vertical-align:middle}
+.rk-badge svg{position:absolute;inset:0;width:100%;height:100%;filter:drop-shadow(0 0 10px color-mix(in srgb,var(--rc) 55%,transparent))}
+.rk-badge .s{fill:#121520;stroke:var(--rc);stroke-width:2.5}
+.rk-badge .w{fill:var(--rc);opacity:.75}
+.rk-badge b{position:relative;font:900 .95rem/1 var(--f-display);color:var(--rc);margin-top:-6px;letter-spacing:-.02em}
+.rk-badge i{position:absolute;bottom:-4px;font-style:normal;font-size:.48rem;letter-spacing:-.5px;color:var(--rc);white-space:nowrap}
+.rk-badge.rb b,.rk-badge.rb i{background:linear-gradient(90deg,#ff5a5a,#ffc400,#3fcf5b,#3ec6e0,#9b5cff);-webkit-background-clip:text;background-clip:text;color:transparent}
+.rk-badge.lg{width:96px;height:102px}.rk-badge.lg b{font-size:1.6rem}.rk-badge.lg i{font-size:.66rem;bottom:-8px}
+.rk-badge.sm{width:44px;height:48px}.rk-badge.sm b{font-size:.72rem}.rk-badge.sm i{display:none}
+.rk-badge.xs{width:28px;height:30px;margin-left:4px}.rk-badge.xs b{font-size:.56rem;margin-top:-3px}.rk-badge.xs i,.rk-badge.xs .w{display:none}
+.rk-card{grid-column:1/-1;display:grid;grid-template-columns:auto 1fr;gap:18px;align-items:center;padding:18px 20px;margin-bottom:14px;border-radius:18px;
+  background:radial-gradient(120% 140% at 0% 0%,color-mix(in srgb,var(--rc) 18%,transparent),transparent 60%),var(--sheet);border:1px solid color-mix(in srgb,var(--rc) 35%,var(--rule))}
+.rk-in h3{font:italic 600 1.5rem var(--f-serif);color:var(--rc)}
+.rk-in h3 span{font:500 .9rem var(--f-body);font-style:normal;color:var(--graphite)}
+.rk-bar{height:8px;border-radius:4px;background:rgba(255,255,255,.08);margin:10px 0 6px;overflow:hidden}
+.rk-bar i{display:block;height:100%;background:linear-gradient(90deg,color-mix(in srgb,var(--rc) 50%,transparent),var(--rc));border-radius:inherit}
+.rk-sub{font-size:.85rem;color:var(--graphite)}.rk-sub b{color:var(--ink)}
+.rk-chi{list-style:none;margin:8px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:6px}
+.rk-chi li{font-size:.74rem;padding:3px 9px;border-radius:999px;background:rgba(255,255,255,.06);color:var(--graphite)}
+.rk-cach{margin-top:10px}.rk-cach summary{cursor:pointer;color:var(--accent);font-weight:600;font-size:.85rem;list-style:none;min-height:32px;display:flex;align-items:center}
+.rk-cach p{font-size:.82rem;color:var(--graphite);line-height:1.5}
+.rk-list{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.rk-list span{display:grid;justify-items:center;gap:2px;opacity:.55}.rk-list span.on{opacity:1}
+.rk-list small{font-size:.66rem;color:var(--graphite)}
+@media (max-width:520px){.rk-card{grid-template-columns:1fr;justify-items:start}}
+
+/* Huy chương tròn nhỏ cạnh tên trên bài nổi bật */
+.nb-card figcaption b{display:flex;align-items:center;gap:6px}
+#hero-pill{color:#fff;text-decoration:none}#hero-pill:hover{background:rgba(255,255,255,.14)}
+
+/* ===== Bảng xếp hạng & cách leo hạng ===== */
+.xh-grid{display:grid;grid-template-columns:1.6fr 1fr;gap:18px;align-items:start}
+.xh-bang{border:1px solid var(--rule);border-radius:16px;overflow:hidden;background:var(--sheet)}
+.xh-row{display:grid;grid-template-columns:110px 60px 1fr 80px;gap:12px;align-items:center;padding:8px 14px;border-top:1px solid var(--rule);
+  background:linear-gradient(90deg,color-mix(in srgb,var(--rc,#000) 14%,transparent),transparent 55%)}
+.xh-th{border-top:0;background:rgba(255,255,255,.04);font-size:.7rem;text-transform:uppercase;letter-spacing:.1em;color:var(--graphite);padding:10px 14px}
+.xh-ma{font:900 1.4rem/1 var(--f-display);color:var(--rc)}.xh-ma small{font-size:.6em;letter-spacing:.06em}
+.xh-ma.rb{background:linear-gradient(90deg,#ff5a5a,#ffc400,#3fcf5b,#3ec6e0,#9b5cff);-webkit-background-clip:text;background-clip:text;color:transparent}
+.xh-mo{display:grid;gap:1px;font-size:.8rem;color:var(--graphite)}.xh-mo b{color:var(--ink);font-size:.9rem}.xh-mo i{font-style:normal;color:var(--rc);letter-spacing:1px;font-size:.72rem}
+.xh-xp{text-align:right;font-weight:700;color:var(--rc)}
+.xh-cach{border:1px solid var(--rule);border-radius:16px;background:var(--sheet);padding:18px}
+.xh-cach h3,.xh-top h3{font:italic 600 1.3rem var(--f-serif);margin-bottom:10px}
+.xh-cach ul{list-style:none;margin:0 0 12px;padding:0;display:grid;gap:8px}
+.xh-cach li{display:grid;grid-template-columns:56px 1fr;gap:10px;align-items:center;font-size:.88rem}
+.xh-cach li b{font:800 1rem var(--f-display);color:#3fcf5b;background:rgba(63,207,91,.1);border-radius:8px;text-align:center;padding:6px 0}
+.xh-cach p{font-size:.8rem}
+.xh-top{margin-top:22px}
+.xh-hv{display:flex;flex-wrap:wrap;gap:10px}
+.xh-hv > div{display:grid;grid-template-columns:auto 1fr;grid-template-rows:auto auto;column-gap:10px;align-items:center;padding:8px 14px 8px 8px;border-radius:14px;border:1px solid color-mix(in srgb,var(--rc) 40%,var(--rule));background:var(--sheet)}
+.xh-hv .rk-badge{grid-row:span 2}.xh-hv b{font-weight:700}.xh-hv span{font-size:.76rem;color:var(--graphite)}
+.xh-note{font-size:.78rem;margin-top:8px}
+@media (max-width:860px){.xh-grid{grid-template-columns:1fr}}
+@media (max-width:520px){.xh-row{grid-template-columns:62px 46px 1fr;padding:8px 10px}.xh-xp{grid-column:3;text-align:left;font-size:.78rem}.xh-th span:last-child{display:none}.xh-ma{font-size:1.1rem}.xh-ma small{display:none}}
