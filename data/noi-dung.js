@@ -224,7 +224,8 @@ export const THANH_TUU_TRAO = [
 
 // ===== XP THƯỞNG — thầy cộng tay cho học viên (ghi rõ lý do) =====
 //   VD: { hocVien: "Khang", xp: 50, ghiChu: "Hoàn thành xuất sắc bài màu tuần 2" },
+//   Thêm huyenThoai: true để trao huy hiệu "HUYỀN THOẠI CỦA LỚP".
 export const XP_THUONG = [
-  { hocVien: "Đặng Huy Hoàn", xp: 7400, ghiChu: "Huyền thoại của lớp Thạch Thất — đạt hạng SSS" },
+  { hocVien: "Đặng Huy Hoàn", xp: 7400, ghiChu: "Huyền thoại của lớp Thạch Thất — đạt hạng SSS", huyenThoai: true },
   { hocVien: "Nguyễn Văn Bảo", xp: 100, ghiChu: "Bài đầu tiên lên Bài vẽ nổi bật (Top 1 & Top 2 tuần)" },
 ];

@@ -1644,3 +1644,24 @@ nav .acct.has-ka .acct-icon{display:none!important}
 .nb-tt .tt-em.sm{width:34px;height:34px}
 .nb-ttx{display:none!important}
 @media (max-width:640px){.nb-tt,.nb-medal ~ .nb-tt{top:10px;right:10px}.nb-tt .tt-em.sm{width:30px;height:30px}}
+/* khung thẻ v2: góc móc vuốt nhọn, dải khảm màu dọc hai cạnh, lưỡi trăng khuyết góc dưới */
+.kt-goc{width:110px;height:110px}
+.kt::after{content:"";position:absolute;top:0;bottom:0;left:3px;right:3px;border-left:1.3px solid var(--rc);border-right:1.3px solid var(--rc);opacity:0;pointer-events:none}
+.kt.t2::after,.kt.t3::after{opacity:.75}
+.kt.t4::after,.kt.t5::after,.kt.t6::after,.kt.t7::after,.kt.t8::after{opacity:1;left:3.5px;right:3.5px;border-width:1.8px}
+.kt.rb::after{border-image:linear-gradient(180deg,#ff5a5a,#ffc400,#3fcf5b,#3ec6e0,#9b5cff) 1}
+.kt-duoi{position:absolute;bottom:0;width:84px;height:84px;filter:drop-shadow(0 1.5px 0 rgba(0,0,0,.75))}
+.kt-duoi.l{left:0}.kt-duoi.r{right:0;transform:scaleX(-1)}
+@media (max-width:640px){.kt-goc{width:86px;height:86px}.kt-duoi{width:66px;height:66px}}
+/* Huy hiệu HUYỀN THOẠI CỦA LỚP */
+.ht-logo{display:inline-block;width:150px;line-height:0;filter:drop-shadow(0 2px 0 rgba(0,0,0,.7))}
+.ht-logo svg{width:100%;height:auto;overflow:visible}
+.ht-chu{font:900 10px var(--f-display);fill:#fff;letter-spacing:1.4px}
+.ht-logo.the{position:absolute;left:50%;top:calc(100% - 112px);width:150px;transform:translate(-50%,-72%);z-index:3;pointer-events:none}
+.ht-logo.dong{display:block;width:130px;margin:2px 0 2px -4px}
+@media (max-width:640px){.ht-logo.the{width:124px}.ht-logo.dong{width:112px}}
+.ht-chu{font-size:9.5px;letter-spacing:1px}
+.ht-logo.the{transform:translate(-50%,-90%);width:140px}
+@media (max-width:640px){.ht-logo.the{width:118px}}
+/* nút tài khoản trên điện thoại: tròn đều, biểu tượng rõ */
+@media(max-width:600px){nav .acct:not(.has-ka){width:40px;height:40px;min-width:40px;aspect-ratio:1;padding:0;border-radius:50%;display:inline-grid;place-items:center}nav .acct:not(.has-ka) .acct-icon{width:20px;height:20px;stroke-width:1.8}}

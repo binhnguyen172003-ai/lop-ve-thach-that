@@ -392,7 +392,7 @@ function tinhRank(dd, prog, fb, ten) {
   let i = 0; RANK.forEach((r, j) => { if (xp >= r.xp) i = j; });
   const r = RANK[i], next = RANK[i + 1] || null;
   const pct = next ? Math.round((xp - r.xp) / (next.xp - r.xp) * 100) : 100;
-  return { xp, r, i, next, pct, buoi, baiTap, baiHoc, gioi, nb: nb.length, top1, thuong, thuongDs };
+  return { xp, r, i, next, pct, buoi, baiTap, baiHoc, gioi, nb: nb.length, top1, thuong, thuongDs, huyenThoai: thuongDs.some(x => x.huyenThoai) };
 }
 const huyHieu = (r, i, cls = "", ten = "") => cls === "xs"
   ? `<span class="rk-chip t${i}${r.mau === "rainbow" ? " rb" : ""}" data-rk="${esc(ten)}" role="button" tabindex="0" style="--rc:${r.mau === "rainbow" ? "#ffd6ff" : r.mau}" title="Hạng ${r.ma} · ${r.kim} · ${r.ten} — xem cách leo hạng">
@@ -434,16 +434,47 @@ function khungThe(r, i) {
   if (i >= 7) t.push(`<path d="M2 15C-2 6 4-2 14-4c-6 5-8 12-4 19zM298 15c4-9-2-17-12-19 6 5 8 12 4 19z" fill="${M}" stroke="${c}" stroke-width=".6"/>`);
   if (i === 8) t.push(`<rect x="8" y="13.5" width="284" height="3.5" rx="1" fill="url(#${id}r)" opacity=".65"/>`);
   const thanh = `<svg class="kt-thanh" viewBox="-6 -8 312 48" aria-hidden="true">${defs}${t.join("")}</svg>`;
-  // góc trên (trái, phải đối xứng) — ôm sát mép bo của thẻ
-  const g = [];
-  if (i >= 1) g.push(`<path d="M2 ${i >= 4 ? 76 : 64}V20A18 18 0 0 1 20 2H${i >= 4 ? 76 : 64}" fill="none" stroke="${M}" stroke-width="${i >= 4 ? 4 : 3}" stroke-linecap="square"/>`);
-  if (i >= 3) g.push(`<path d="M8 58V22a14 14 0 0 1 14-14h36" fill="none" stroke="${c}" stroke-width="1.2"/><path d="M8 8l6-1-1 6-6 1z" fill="${A}" stroke="#fff" stroke-width=".5"/>`);
-  if (i >= 5) g.push(`<path d="M2 52C3 30 14 12 34 5c-5 6-8 10-9 15C13 26 6 37 2 52z" fill="${M}" stroke="${c}" stroke-width=".7"/><path d="M76 2c8 0 13 4 16 10-5-3-10-5-16-5zM2 76c0 8 4 13 10 16-3-5-5-10-5-16z" fill="${M}"/>`);
-  if (i >= 7) g.push(`<path d="M24 2c10-1 18 2 22 9-7-4-14-5-22-4z" fill="${A}"/>`);
-  const goc = g.length ? `<svg class="kt-goc l" viewBox="0 0 96 96" aria-hidden="true">${defs}${g.join("")}</svg><svg class="kt-goc r" viewBox="0 0 96 96" aria-hidden="true">${defs.replaceAll(id, id + "b")}${g.join("").replaceAll(id, id + "b")}</svg>` : "";
+  // góc trên (trái, phải đối xứng) — kim loại 2 tông (mép sáng + mép tối), dải màu khảm, mũi móc vuốt nhọn
+  const g = [], d = [], k0 = KL[0], k2 = KL[2], W = i >= 4 ? 7 : 5, L = i >= 4 ? 92 : 70;
+  if (i >= 1) {
+    g.push(`<path d="M0 ${L}V22C0 9 9 0 22 0H${L}v${W}H24C13 ${W} ${W} 13 ${W} 24V${L}z" fill="${M}"/>`);
+    g.push(`<path d="M.8 ${L}V22C.8 9.5 9.5 .8 22 .8H${L}" fill="none" stroke="${k0}" stroke-width=".9" opacity=".9"/>`);
+    g.push(`<path d="M${W - .6} ${L}V24C${W - .6} 14 14 ${W - .6} 24 ${W - .6}H${L}" fill="none" stroke="${k2}" stroke-width=".9"/>`);
+  }
+  if (i >= 2) g.push(`<path d="M${W / 2} ${L - 2}V23C${W / 2} 12 12 ${W / 2} 23 ${W / 2}H${L - 2}" fill="none" stroke="${c}" stroke-width="${i >= 4 ? 1.8 : 1.3}"/>`);
+  if (i >= 3) g.push(`<path d="M${L} 0c6 0 10 2 13 6-1 5-4 9-9 12 2-4 2-7 0-9-1-2-3-3-4-3z" fill="${M}" stroke="${k2}" stroke-width=".5"/><path d="M0 ${L}c0 6 2 10 6 13 5-1 9-4 12-9-4 2-7 2-9 0-2-1-3-3-3-4z" fill="${M}" stroke="${k2}" stroke-width=".5"/>`);
+  if (i >= 5) g.push(`<path d="M9 40C10 24 22 10 40 8c-6 4-10 8-12 13-9 3-15 10-19 19z" fill="${M}" stroke="${k2}" stroke-width=".5"/><path d="M14 31c4-8 10-13 18-15" fill="none" stroke="${c}" stroke-width="1.2"/><path d="M9 9l7-2-2 7-7 2z" fill="${A}" stroke="#fff" stroke-width=".6"/>`);
+  if (i >= 7) g.push(`<path d="M30 8c12-3 24 0 32 8-9-3-19-4-30-1z" fill="${A}"/>`);
+  // lưỡi trăng khuyết vươn lên từ hai góc dưới (A+)
+  if (i >= 4) {
+    d.push(`<path d="M0 30C4 58 22 80 56 94H40C18 86 4 66 0 46z" fill="${M}"/><path d="M1 36C6 60 22 80 50 92" fill="none" stroke="${c}" stroke-width="1.6"/><path d="M0 30C4 58 22 80 56 94" fill="none" stroke="${k0}" stroke-width=".8" opacity=".85"/>`);
+    if (i >= 6) d.push(`<path d="M0 62C8 78 20 88 36 94H24C12 88 4 80 0 72z" fill="#14161d" stroke="${M}" stroke-width="1"/>`);
+  }
+  const goc = (g.length ? `<svg class="kt-goc l" viewBox="0 0 110 110" aria-hidden="true">${defs}${g.join("")}</svg><svg class="kt-goc r" viewBox="0 0 110 110" aria-hidden="true">${defs.replaceAll(id, id + "b")}${g.join("").replaceAll(id, id + "b")}</svg>` : "")
+    + (d.length ? `<svg class="kt-duoi l" viewBox="0 0 96 96" aria-hidden="true">${defs.replaceAll(id, id + "d")}${d.join("").replaceAll(id, id + "d")}</svg><svg class="kt-duoi r" viewBox="0 0 96 96" aria-hidden="true">${defs.replaceAll(id, id + "e")}${d.join("").replaceAll(id, id + "e")}</svg>` : "");
   // huy hiệu tròn ở đáy (S+)
   const day = i >= 5 ? `<svg class="kt-day" viewBox="0 0 40 40" aria-hidden="true">${defs.replaceAll(id, id + "c")}<circle cx="20" cy="20" r="15" fill="#0b0d14" stroke="${M.replace(id, id + "c")}" stroke-width="3"/><path d="M20 9l6 11-6 11-6-11z" fill="${A.replace(id, id + "c")}"/></svg>` : "";
   return `<span class="kt t${i}${r.mau === "rainbow" ? " rb" : ""}" style="--rc:${c};--k0:${KL[0]};--k1:${KL[1]};--k2:${KL[2]}" aria-hidden="true">${goc}${thanh}${day}</span>`;
+}
+/* Huy hiệu riêng "HUYỀN THOẠI CỦA LỚP" (tự vẽ): khiên đỏ thẫm, vương miện vàng, đôi cánh, dải băng */
+function logoHuyenThoai(cls = "") {
+  const id = "ht" + Math.random().toString(36).slice(2, 8);
+  const canh = `<path d="M78 30C56 17 30 13 4 19c22 6 44 13 68 22z"/><path d="M76 41C54 34 30 33 8 41c22 5 44 8 66 10z"/><path d="M76 52c-18 0-38 4-54 13 19-1 37-3 52-6z"/>`;
+  return `<span class="ht-logo ${cls}" title="Huyền thoại của lớp Thạch Thất"><svg viewBox="0 -4 200 96" aria-hidden="true">
+    <defs><linearGradient id="${id}g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff6cf"/><stop offset=".5" stop-color="#f0b72e"/><stop offset="1" stop-color="#7a4a00"/></linearGradient>
+      <linearGradient id="${id}r" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff6b6b"/><stop offset=".55" stop-color="#b3101e"/><stop offset="1" stop-color="#3a0006"/></linearGradient>
+      <radialGradient id="${id}d" cx=".5" cy=".4" r=".7"><stop offset="0" stop-color="#4a0a12"/><stop offset="1" stop-color="#12030a"/></radialGradient></defs>
+    <g fill="url(#${id}g)" stroke="#3a2400" stroke-width=".8">${canh}<g transform="matrix(-1 0 0 1 200 0)">${canh}</g></g>
+    <path d="M87 20l3-13 6 7 4-10 4 10 6-7 3 13q-13-4-26 0z" fill="url(#${id}g)" stroke="#3a2400" stroke-width=".8"/>
+    <circle cx="100" cy="2.5" r="2.4" fill="#ff4d5e" stroke="#fff6cf" stroke-width=".6"/>
+    <circle cx="100" cy="43" r="24" fill="url(#${id}d)" stroke="url(#${id}g)" stroke-width="4"/>
+    <circle cx="100" cy="43" r="19.5" fill="none" stroke="#f0b72e" stroke-width=".8" opacity=".8"/>
+    <path d="M100 63c-11-4-16-13-13-24 4 7 8 11 13 13zM100 63c11-4 16-13 13-24-4 7-8 11-13 13z" fill="url(#${id}g)" stroke="#3a2400" stroke-width=".6"/>
+    <path d="M100 19l9 18-9 24-9-24z" fill="url(#${id}r)" stroke="url(#${id}g)" stroke-width="1.4"/>
+    <path d="M100 19v42M91 37h18M100 19l-4 18 4 24M100 19l4 18-4 24" fill="none" stroke="#fff" stroke-width=".55" opacity=".55"/>
+    <path d="M100 21l3 15h-6z" fill="#fff" opacity=".45"/>
+    <path d="M46 70h108l-7 8 7 8H46l7-8z" fill="url(#${id}r)" stroke="url(#${id}g)" stroke-width="1.8"/>
+    <text x="100" y="81.5" text-anchor="middle" class="ht-chu">HUYỀN THOẠI</text></svg></span>`;
 }
 /* Khung avatar theo hạng — tự vẽ, hạng càng cao khung càng cầu kỳ */
 const chuCai = t => String(t || "").trim().split(/\s+/).slice(-2).map(w => w[0] || "").join("").toUpperCase() || "?";
@@ -568,7 +599,7 @@ function moBangRank(ten) {
   dlg.innerHTML = `<div class="rk-dlg-in">
     <button class="rk-x" type="button" data-dong aria-label="Đóng">✕</button>
     <p class="eyebrow">Hệ thống hạng lớp Thạch Thất</p><h2>Bảng hạng & cách leo rank</h2>
-    ${t ? `<div class="rk-ai t${t.i}" style="--rc:${t.r.mau === "rainbow" ? "#ffd6ff" : t.r.mau}">${khungAvatar(t.r, t.i, ten, "", "lg")}<div><b>${esc(ten)}</b>
+    ${t ? `<div class="rk-ai t${t.i}" style="--rc:${t.r.mau === "rainbow" ? "#ffd6ff" : t.r.mau}">${khungAvatar(t.r, t.i, ten, "", "lg")}<div><b>${esc(ten)}</b>${t.huyenThoai ? logoHuyenThoai("dong") : ""}
       <span>Hạng ${t.r.ma} · ${t.r.kim} · ${t.r.ten} · <b class="num">${t.xp} XP</b></span>
       <div class="rk-bar"><i style="width:${t.pct}%"></i></div>
       <small>${t.next ? `Còn <b class="num">${t.next.xp - t.xp} XP</b> nữa lên hạng ${t.next.ma} · ${t.next.kim} · ${t.next.ten}` : "Đã đạt hạng cao nhất!"}</small>
@@ -614,7 +645,7 @@ document.addEventListener("keydown", e => {
   const ds = ten.map(t => ({ t, k: tinhRank(null, null, null, t) })).sort((a, b) => b.k.xp - a.k.xp || b.k.i - a.k.i).slice(0, 5);
   box.innerHTML = ds.map(({ t, k }, j) => `<li class="t${k.i}${j < 3 ? " p" + (j + 1) : ""}" data-rk="${esc(t)}" role="button" tabindex="0" style="--rc:${k.r.mau === "rainbow" ? "#ffd6ff" : k.r.mau}">
     <span class="tr-so num">${j + 1}</span>${khungAvatar(k.r, k.i, t, "", "md")}
-    <span class="tr-ten"><b>${esc(t)}</b><small>Hạng ${k.r.ma} · ${k.r.kim} · ${k.r.ten}</small></span><span class="tr-xp num">${k.xp} XP</span></li>`).join("");
+    <span class="tr-ten"><b>${esc(t)}</b>${k.huyenThoai ? logoHuyenThoai("dong") : ""}<small>Hạng ${k.r.ma} · ${k.r.kim} · ${k.r.ten}</small></span><span class="tr-xp num">${k.xp} XP</span></li>`).join("");
   $("#top-rank").hidden = !ds.length;
 })();
 /* ================= Bài vẽ nổi bật: tuần / tháng / năm, vòng xoay 3D ================= */
@@ -637,7 +668,7 @@ document.addEventListener("keydown", e => {
         <img src="${esc(b.anh)}" alt="${esc((b.loai || "Bài vẽ") + " · " + (b.hocVien || ""))}" loading="lazy" decoding="async" draggable="false">
         ${b.hang && b.hang <= 3 ? `<span class="nb-medal h${Number(b.hang)}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 2h4l1 5-3 1zM17 2h-4l-1 5 3 1z" class="rb"/><circle cx="12" cy="15" r="6.5" class="md"/><text x="12" y="18.2" text-anchor="middle">${Number(b.hang)}</text></svg><b>TOP ${Number(b.hang)}</b><i>${TEN[ky]}</i></span>` : ""}
         ${!b.tg ? (m => m.length ? (a => `<span class="nb-tt" data-rk="${esc(b.hocVien)}" role="button" tabindex="0" title="${esc(a.ten)} · ${CAP[a.cap].ten} — ${esc(a.mo)}">${huyHieuTT(a, a.cap, "sm")}<span class="nb-ttx"><b>${esc(a.ten)}</b><small>${a.n} ${esc(a.dv)} · ${CAP[a.cap].ten}</small></span></span>`)(m[0]) : "")(ttNoiNhat(b.hocVien)) : ""}
-        ${!b.tg ? (t => khungThe(t.r, t.i))(tinhRank(null, null, null, b.hocVien)) : ""}
+        ${!b.tg ? (t => khungThe(t.r, t.i) + (t.huyenThoai ? logoHuyenThoai("the") : ""))(tinhRank(null, null, null, b.hocVien)) : ""}
         <figcaption><b>${esc(b.hocVien || "")} ${!b.tg && !tam ? (t => huyHieu(t.r, t.i, "xs", b.hocVien))(tinhRank(null, null, null, b.hocVien)) : ""}</b><span>${esc([b.loai, b.ghiChu].filter(Boolean).join(" · "))}</span></figcaption></figure>`).join("")}</div>
       <div class="gv-ctl"><button type="button" class="gv-nav" aria-label="Bài trước">‹</button>
         <div class="gv-dots">${ds.map((b, i) => `<button type="button" data-i="${i}" aria-label="Bài ${i + 1}"></button>`).join("")}</div>
@@ -1744,10 +1775,13 @@ function renderTiles() {
   const box = $("#acc-tiles"); if (!box) return;
   const show = canLearnNow();
   box.hidden = !show; { const xh = $("#xep-hang"); if (xh) xh.hidden = !show; }
-  { const na = $("#nav-acct"), hv = show && !isTeacher; let k = $("#nav-ka");
-    if (hv) { const ten = (myHv && myHv.ten) || (user && user.displayName), t = tinhRank(myDiemdanh, myProgress, myFeedback, ten);
+  { const na = $("#nav-acct"), hv = !!user && show; let k = $("#nav-ka");
+    if (hv) { const ten = (!isTeacher && myHv && myHv.ten) || (user && user.displayName) || (mail || "").split("@")[0];
+      // học viên: khung theo hạng · thầy cô: khung riêng (Quản lý vàng, Giáo viên xanh)
+      const t = isTeacher ? (isAdmin ? { r: { ma: "QL", mau: "#ffc400", kim: "Quản lý", ten: "Quản lý lớp" }, i: 5 } : { r: { ma: "GV", mau: "#57a6ff", kim: "Giáo viên", ten: "Giáo viên" }, i: 3 })
+        : tinhRank(myDiemdanh, myProgress, myFeedback, ten);
       if (!k) { k = document.createElement("span"); k.id = "nav-ka"; na.prepend(k); }
-      k.innerHTML = khungAvatar(t.r, t.i, ten, user && user.photoURL, "nav"); na.classList.add("has-ka"); na.title = `Tài khoản · Hạng ${t.r.ma} · ${t.r.ten}`;
+      k.innerHTML = khungAvatar(t.r, t.i, ten, user && user.photoURL, "nav"); na.classList.add("has-ka"); na.title = isTeacher ? `Tài khoản · ${t.r.ten}` : `Tài khoản · Hạng ${t.r.ma} · ${t.r.ten}`;
     } else if (k) { k.remove(); na.classList.remove("has-ka"); na.removeAttribute("title"); } }
   { const wr = $("#who-rank"); if (wr) { const hv = show && !isTeacher; wr.hidden = !hv;
     if (hv) { const av = $("#who-avatar"); if (av) av.hidden = true; const ten = (myHv && myHv.ten) || (user && user.displayName), t = tinhRank(myDiemdanh, myProgress, myFeedback, ten), tt = tinhThanhTuu(myDiemdanh, myProgress, myFeedback, ten, homework);
