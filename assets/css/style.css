@@ -471,3 +471,26 @@ svg.art{display:block;width:100%;height:auto;aspect-ratio:4/3;color:var(--ink)}
   .hv-podium .p1 .pt{flex-direction:row;align-items:baseline}
   .hv-podium .sc{font-size:1.8rem}.hv-podium .sm{text-align:left}
 }
+
+/* ===== Ảnh bìa trang chủ ===== */
+.hero.cover{display:grid;position:relative;overflow:hidden;margin-top:18px;padding:0;border-radius:20px;min-height:clamp(500px,74vh,640px);align-items:end;color:#fff;background:#0b0f1e;isolation:isolate}
+.cover-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 35%;z-index:-2}
+.hero.cover::before{content:"";position:absolute;inset:0;z-index:-1;background:
+  linear-gradient(90deg,rgba(8,11,24,.88) 0%,rgba(8,11,24,.62) 42%,rgba(8,11,24,.08) 75%),
+  linear-gradient(0deg,rgba(8,11,24,.75) 0%,transparent 45%)}
+.cover-in{padding:clamp(24px,5vw,56px);max-width:640px}
+.hero.cover .eyebrow{color:rgba(255,255,255,.78)}
+.hero.cover h1{color:#fff;text-shadow:0 4px 24px rgba(0,0,0,.35)}
+.hero.cover h1 .strike::after{background:#7f97ff}
+.hero.cover .lede{color:rgba(255,255,255,.9)}
+.hero.cover .btn{border-color:#fff;color:#fff}
+.hero.cover .btn.primary{background:#fff;color:#0b0f1e}
+.hero.cover .btn.primary:hover{background:#dfe5ff;border-color:#dfe5ff;color:#0b0f1e}
+.hero.cover .facts span{color:rgba(255,255,255,.75)}
+.hero.cover .facts b{color:#fff}
+@media (max-width:640px){
+  .hero.cover{margin-inline:-16px;border-radius:0;min-height:640px;margin-top:0}
+  .cover-img{object-position:42% 30%}
+  .hero.cover::before{background:linear-gradient(0deg,rgba(8,11,24,.95) 0%,rgba(8,11,24,.75) 45%,rgba(8,11,24,.15) 80%)}
+  .cover-in{padding:24px 16px 28px}
+}
