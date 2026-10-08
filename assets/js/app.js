@@ -592,7 +592,8 @@ async function startFirebase() {
     const provider = new GoogleAuthProvider();
     provider.setCustomParameters({ prompt: "select_account" });
     $("#login-status").textContent = "";
-    try { await signInWithPopup(auth, provider); }
+    const tl = performance.now();
+    try { await signInWithPopup(auth, provider); mark("Cửa sổ đăng nhập Google (gồm thời gian chọn Gmail)", tl); }
     catch (e) {
       if (e && (e.code === "auth/popup-blocked" || e.code === "auth/operation-not-supported-in-this-environment")) await signInWithRedirect(auth, provider);
       else if (e && e.code !== "auth/popup-closed-by-user" && e.code !== "auth/cancelled-popup-request") $("#login-status").textContent = loginError(e);
