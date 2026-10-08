@@ -191,7 +191,7 @@ function renderExams() {
         <i class="tl-dot" style="--c:${mau(e0.t)}"></i>
         <div class="tl-card">
           <div class="tl-d"><b class="num">${esc(e0.hien)}</b><span class="num">${qua ? "Đã thi" : "Còn " + e0.n + " ngày"}</span></div>
-          <ul>${g.map(e => `<li style="--c:${mau(e.t)}"><i>${esc(e.t === "THPT" ? "THPT" : MA[e.t] || e.t)}</i><span>${esc(e.truong)}<em>${esc(e.dot)}</em></span></li>`).join("")}</ul>
+          <ul>${g.map(e => `<li style="--c:${mau(e.t)}"><i>${esc(e.t === "THPT" ? "THPT" : MA[e.t] || e.t)}</i><span>${esc(e.truong.replace("ĐHQG Hà Nội · Trường KH Liên ngành & Nghệ thuật", "ĐHQG HN · KH Liên ngành & Nghệ thuật"))}<em>${esc(e.dot)}</em></span></li>`).join("")}</ul>
         </div></div>`;
     }).join("");
   }).join("");
@@ -199,8 +199,8 @@ function renderExams() {
   let more = $("#months-more");
   if (!more) { more = document.createElement("button"); more.type = "button"; more.id = "months-more"; more.className = "btn months-more"; $("#months").after(more);
     more.onclick = () => { $("#months").classList.toggle("gon"); renderExams(); }; }
-  if (!$("#months").dataset.init) { $("#months").dataset.init = "1"; $("#months").classList.add("gon"); }
-  more.hidden = con <= 0;
+  more.hidden = true; // sơ đồ nằm ngang, vuốt để xem hết nên không cần nút thu gọn
+  if (!$("#tl-hint")) $("#months").insertAdjacentHTML("afterend", `<span class="tl-hint" id="tl-hint">Vuốt ngang để xem cả lịch →</span>`);
   more.textContent = $("#months").classList.contains("gon") ? `Xem cả lịch (${shown.length} kỳ thi) ▼` : "Thu gọn ▲";
 }
 $("#exam-filters").innerHTML = [{ truong: "all", ten: "Tất cả" }, ...BO_LOC_TRUONG]
