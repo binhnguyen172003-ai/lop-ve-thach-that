@@ -662,6 +662,47 @@ document.addEventListener("keydown", e => {
     <span class="tr-ten"><b>${esc(t)}</b><small>Hạng ${k.r.ma} · ${k.r.kim} · ${k.r.ten}</small></span><span class="tr-xp num">${k.xp} XP</span></li>`).join("");
   $("#top-rank").hidden = !ds.length;
 })();
+/* ================= Dấu "!" giải thích từng mục cho người mới — tự hiện khi lướt tới ================= */
+const GHI_CHU = {
+  "h-nb": "Những bài vẽ đẹp nhất do thầy chọn. Bài mới vào Top Tuần, để lâu sẽ tự chuyển sang Top Tháng rồi Top Năm. Vuốt hoặc bấm vào ảnh bên cạnh để xem bài khác. Bấm vào RANK để xem hạng của bạn đó.",
+  "h-tr": "5 học viên có hạng cao nhất lớp. Đi học đều, nộp bài, có bài lên mục nổi bật là được cộng XP để lên hạng. Bấm vào từng bạn để xem chi tiết.",
+  "h-ve-lop": "Cách lớp dạy: học có mục tiêu theo trường em muốn thi, đi từ nền tảng đến luyện đề.",
+  "h-khoa": "Các khoá học của lớp. Vuốt sang hai bên để xem từng khoá, bấm vào khoá để xem chi tiết.",
+  "h-bv": "Học viên của lớp đã đỗ đại học và điểm năng khiếu. Chọn năm hoặc trường để lọc, bấm “Xem điểm từng trường” để xem kỹ hơn. Huy hiệu cạnh tên đổi màu theo điểm: 8 · 8,5 · 9 · 9,5.",
+  "h-gv": "Thầy cô và trợ giảng đang dạy ở lớp. Vuốt để xem từng người, trường đang học và môn phụ trách.",
+  "h-baive": "Bài vẽ của học viên trong quá trình học. Bấm vào ảnh để xem to.",
+  "h-qloi": "Những gì em nhận được khi học ở lớp.",
+  "h-thi": "Lịch thi năng khiếu dự kiến của các trường. Ngày chính xác sẽ cập nhật khi trường công bố.",
+  "h-lich": "Giờ học ở hai cơ sở. Chọn ca phù hợp rồi đăng ký học thử ở cuối trang.",
+  "h-khoi": "Giải thích Khối H và Khối V thi môn gì, vào ngành nào, để em chọn đúng khối.",
+  "h-dk": "Điền họ tên, lớp và số điện thoại để đăng ký học thử miễn phí. Thầy sẽ gọi lại tư vấn. Trang cũng đếm ngược còn bao nhiêu ngày đến kỳ thi của em.",
+  "h-xh": "Bảng hạng F → SSS+, cách kiếm XP và các thành tựu. Hạng của em tự cập nhật khi đi học, nộp bài và có bài nổi bật.",
+};
+(function ghiChu() {
+  let daXem = {}; try { daXem = JSON.parse(sessionStorage.getItem("lvtt-gc") || "{}"); } catch (e) {}
+  const canh = pop => { pop.style.marginLeft = "0px"; const r = pop.getBoundingClientRect(), m = 12;
+    let d = 0; if (r.right > innerWidth - m) d = innerWidth - m - r.right; else if (r.left < m) d = m - r.left;
+    pop.style.marginLeft = d + "px"; pop.style.setProperty("--ax", (22 - d) + "px"); };
+  const mo = (w, tu) => { $$(".gc.mo").forEach(x => x !== w && x.classList.remove("mo")); w.classList.add("mo"); canh(w.querySelector(".gc-pop"));
+    clearTimeout(w._t); if (tu) w._t = setTimeout(() => w.classList.remove("mo"), 6000); };
+  const io = "IntersectionObserver" in window ? new IntersectionObserver(es => es.forEach(e => {
+    if (!e.isIntersecting) return; const w = e.target.querySelector(".gc"); io.unobserve(e.target);
+    if (!w || daXem[e.target.id]) return; daXem[e.target.id] = 1; try { sessionStorage.setItem("lvtt-gc", JSON.stringify(daXem)); } catch (x) {}
+    setTimeout(() => mo(w, true), 450);
+  }), { threshold: .6 }) : null;
+  Object.entries(GHI_CHU).forEach(([id, nd]) => {
+    const h = document.getElementById(id); if (!h || h.querySelector(".gc")) return;
+    const w = document.createElement("span"); w.className = "gc";
+    w.innerHTML = `<button type="button" class="gc-i" aria-label="Giải thích mục này" aria-expanded="false">!</button><span class="gc-pop" role="tooltip"><b>Mục này là gì?</b>${esc(nd)}</span>`;
+    h.append(w);
+    const b = w.querySelector(".gc-i");
+    b.addEventListener("click", e => { e.stopPropagation(); w.classList.contains("mo") ? w.classList.remove("mo") : mo(w); b.setAttribute("aria-expanded", w.classList.contains("mo")); });
+    w.addEventListener("mouseenter", () => mo(w)); w.addEventListener("mouseleave", () => w.classList.remove("mo"));
+    if (io) io.observe(h);
+  });
+  document.addEventListener("click", e => { if (!e.target.closest(".gc")) $$(".gc.mo").forEach(x => x.classList.remove("mo")); });
+  document.addEventListener("keydown", e => { if (e.key === "Escape") $$(".gc.mo").forEach(x => x.classList.remove("mo")); });
+})();
 /* ================= Bài vẽ nổi bật: tuần / tháng / năm, vòng xoay 3D ================= */
 (function noiBat() {
   const box = $("#nb-ring"); if (!box) return;

@@ -1687,3 +1687,21 @@ nav .acct.has-ka .acct-icon{display:none!important}
 .av-doi[hidden]{display:none}
 .av-doi span{font-size:.8rem}
 .who-rank .ka.md{width:84px;height:82px}
+/* Dấu ! giải thích mục */
+.gc{position:relative;display:inline-block;vertical-align:middle;margin-left:10px;font-style:normal;line-height:1}
+.gc-i{width:26px;height:26px;border-radius:50%;border:1.5px solid #ffcf3a;background:rgba(255,207,58,.12);color:#ffcf3a;font:900 .95rem/1 var(--f-display);cursor:pointer;display:inline-grid;place-items:center;padding:0;animation:gcNhay 2.4s ease-in-out infinite}
+.gc-i:hover,.gc.mo .gc-i{background:#ffcf3a;color:#0b0d14;animation:none}
+@keyframes gcNhay{0%,100%{box-shadow:0 0 0 0 rgba(255,207,58,.5)}50%{box-shadow:0 0 0 6px rgba(255,207,58,0)}}
+.gc-pop{position:absolute;z-index:40;top:calc(100% + 10px);left:-14px;width:min(320px,calc(100vw - 24px));padding:12px 14px;border-radius:12px;
+  background:#12151d;border:1px solid rgba(255,207,58,.45);box-shadow:0 14px 34px -8px rgba(0,0,0,.7);color:#e8ebf1;
+  font:400 .84rem/1.55 var(--f-body);font-style:normal;letter-spacing:0;text-transform:none;text-align:left;white-space:normal;
+  opacity:0;visibility:hidden;transform:translateY(-6px);transition:opacity .25s,transform .25s,visibility .25s}
+.gc-pop::before{content:"";position:absolute;top:-6px;left:22px;width:10px;height:10px;background:#12151d;border-left:1px solid rgba(255,207,58,.45);border-top:1px solid rgba(255,207,58,.45);transform:rotate(45deg)}
+.gc-pop b{display:block;font:700 .78rem var(--f-body);color:#ffcf3a;margin-bottom:4px;letter-spacing:.02em}
+.gc.mo .gc-pop{opacity:1;visibility:visible;transform:none}
+@media (prefers-reduced-motion:reduce){.gc-i{animation:none}.gc-pop{transition:none}}
+@media (max-width:640px){.gc-i{width:22px;height:22px;font-size:.8rem}.gc{margin-left:6px}}
+.gc,.gc *{-webkit-text-fill-color:currentColor;-webkit-background-clip:border-box;background-clip:border-box;text-shadow:none}
+.gc-pop{background:#12151d!important}.gc-i{background-color:rgba(255,207,58,.12)}
+.gc-i:hover,.gc.mo .gc-i{background-color:#ffcf3a}
+.gc-pop::before{left:var(--ax,22px)}
