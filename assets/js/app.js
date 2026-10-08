@@ -289,6 +289,72 @@ document.addEventListener("keydown", e => {
 });
 renderGallery();
 
+/* ================= Vòng xoay 3D dùng chung (Giáo viên, Khoá học) =================
+   Thẻ giữa to nhất, hai bên xoay nghiêng và lùi ra sau, tự quay mỗi 3,5 giây.
+   Dừng khi người xem chạm / để chuột / đang xem ảnh; vuốt hoặc bấm mũi tên để chuyển. */
+function vongXoay(box, st, cards, dots, prev, next, onCenter) {
+  const n = cards.length;
+  let cur = 0, timer = 0, paused = false, inView = false;
+  const draw = () => {
+    const mob = innerWidth < 640;
+    cards.forEach((c, i) => {
+      let d = i - cur; if (d > n / 2) d -= n; if (d < -n / 2) d += n;
+      const a = Math.abs(d);
+      c.style.transform = `translateX(${d * (mob ? 62 : 72)}%) translateZ(${-a * (mob ? 140 : 180)}px) rotateY(${-d * 28}deg)`;
+      c.style.opacity = a > 2 ? 0 : a === 2 ? .45 : a === 1 ? .85 : 1;
+      c.style.zIndex = 10 - a; c.style.pointerEvents = a > 2 ? "none" : "";
+      c.classList.toggle("on", d === 0); c.setAttribute("aria-hidden", a > 2);
+    });
+    dots.forEach((d, i) => d.setAttribute("aria-current", i === cur));
+  };
+  const go = i => { cur = (i + n) % n; draw(); };
+  const tick = () => { clearTimeout(timer); if (!paused && inView && !document.hidden && !matchMedia("(prefers-reduced-motion:reduce)").matches) timer = setTimeout(() => { go(cur + 1); tick(); }, 3500); };
+  const pause = p => { paused = p; tick(); };
+  prev.onclick = () => { go(cur - 1); tick(); };
+  next.onclick = () => { go(cur + 1); tick(); };
+  dots.forEach(d => d.onclick = () => { go(Number(d.dataset.i)); tick(); });
+  cards.forEach((c, i) => c.addEventListener("click", () => {
+    if (i !== cur) { go(i); tick(); return; }   // bấm thẻ bên cạnh: xoay tới thẻ đó
+    if (onCenter) onCenter(c);
+  }));
+  let x0 = null, moved = false;
+  st.addEventListener("pointerdown", e => { x0 = e.clientX; moved = false; pause(true); });
+  st.addEventListener("pointermove", e => { if (x0 !== null && Math.abs(e.clientX - x0) > 8) moved = true; });
+  st.addEventListener("pointerup", e => { if (x0 === null) return; const dx = e.clientX - x0; x0 = null; if (Math.abs(dx) > 40) go(cur + (dx < 0 ? 1 : -1)); setTimeout(() => pause(false), 4000); });
+  st.addEventListener("pointercancel", () => { x0 = null; pause(false); });
+  st.addEventListener("click", e => { if (moved) { e.stopPropagation(); e.preventDefault(); moved = false; } }, true);
+  box.addEventListener("mouseenter", () => pause(true)); box.addEventListener("mouseleave", () => pause(false));
+  box.addEventListener("focusin", () => pause(true)); box.addEventListener("focusout", () => pause(false));
+  box.tabIndex = 0;
+  box.addEventListener("keydown", e => {
+    if (e.key === "ArrowRight") { go(cur + 1); e.preventDefault(); }
+    if (e.key === "ArrowLeft") { go(cur - 1); e.preventDefault(); }
+    if (e.key === "Enter" && e.target === box) cards[cur].click();
+  });
+  document.addEventListener("visibilitychange", tick);
+  addEventListener("resize", draw, { passive: true });
+  new IntersectionObserver(es => { inView = es[0].isIntersecting; tick(); }, { threshold: .3 }).observe(box);
+  draw();
+  return { pause, go };
+}
+
+/* Khoá học: biến 6 thẻ khoá học thành vòng xoay giống phần Giáo viên */
+(function khoaHocXoay() {
+  const box = $("#khoa-hoc .courses"); if (!box) return;
+  const cards = $$("#khoa-hoc .courses > .course"); if (cards.length < 3) return;
+  const stage = document.createElement("div"); stage.className = "gv-stage cs-stage";
+  cards.forEach((c, i) => { c.dataset.i = i; stage.appendChild(c); });
+  box.className = "gv-ring cs-ring"; box.setAttribute("aria-roledescription", "vòng xoay"); box.setAttribute("aria-label", "Các khoá học");
+  box.appendChild(stage);
+  const ctl = document.createElement("div"); ctl.className = "gv-ctl";
+  ctl.innerHTML = `<button type="button" class="gv-nav" aria-label="Khoá trước">‹</button>
+    <div class="gv-dots">${cards.map((c, i) => `<button type="button" data-i="${i}" aria-label="${esc((c.querySelector("h3") || {}).textContent || "")}"></button>`).join("")}</div>
+    <button type="button" class="gv-nav" aria-label="Khoá sau">›</button>`;
+  box.appendChild(ctl);
+  const [prev, next] = ctl.querySelectorAll(".gv-nav");
+  vongXoay(box, stage, cards, [...ctl.querySelectorAll(".gv-dots button")], prev, next, () => { location.hash = "#dang-ky"; });
+})();
+
 /* ================= Đội ngũ giáo viên ================= */
 function renderGiaoVien() {
   const box = $("#gv-grid"); if (!box) return;
@@ -315,51 +381,13 @@ function renderGiaoVien() {
     <button type="button" class="gv-nav" id="gv-next" aria-label="Thầy cô sau">›</button>
   </div>`;
 
-  // Vòng xoay 3D: thẻ giữa to nhất, hai bên xoay nghiêng và lùi ra sau, tự quay mỗi 3,5 giây
-  const cards = $$("#gv-stage .gv"), dots = $$("#gv-dots button");
-  let cur = 0, timer = 0, paused = false, inView = false;
-  const draw = () => {
-    const mob = innerWidth < 640;
-    cards.forEach((c, i) => {
-      let d = i - cur; if (d > n / 2) d -= n; if (d < -n / 2) d += n;
-      const a = Math.abs(d);
-      c.style.transform = `translateX(${d * (mob ? 62 : 72)}%) translateZ(${-a * (mob ? 140 : 180)}px) rotateY(${-d * 28}deg)`;
-      c.style.opacity = a > 2 ? 0 : a === 2 ? .45 : a === 1 ? .85 : 1;
-      c.style.zIndex = 10 - a; c.style.pointerEvents = a > 2 ? "none" : "";
-      c.classList.toggle("on", d === 0); c.setAttribute("aria-hidden", a > 2);
-    });
-    dots.forEach((d, i) => d.setAttribute("aria-current", i === cur));
-  };
-  const go = i => { cur = (i + n) % n; draw(); };
-  const tick = () => { clearTimeout(timer); if (!paused && inView && !document.hidden && !matchMedia("(prefers-reduced-motion:reduce)").matches) timer = setTimeout(() => { go(cur + 1); tick(); }, 3500); };
-  const pause = p => { paused = p; tick(); };
-  $("#gv-prev").onclick = () => { go(cur - 1); tick(); };
-  $("#gv-next").onclick = () => { go(cur + 1); tick(); };
-  dots.forEach(d => d.onclick = () => { go(Number(d.dataset.i)); tick(); });
   const ds = GIAO_VIEN.filter(g => g.anh);
-  cards.forEach(c => c.querySelector(".gv-in").onclick = () => {
-    const i = Number(c.dataset.i);
-    if (i !== cur) { go(i); tick(); return; }               // bấm thẻ bên cạnh: xoay tới thẻ đó
-    const g = GIAO_VIEN[i]; if (!g.anh) return;               // bấm thẻ giữa: xem cả tấm thẻ + bài vẽ
+  const vx = vongXoay(box, $("#gv-stage"), $$("#gv-stage .gv"), $$("#gv-dots button"), $("#gv-prev"), $("#gv-next"), (c) => {
+    const g = GIAO_VIEN[Number(c.dataset.i)]; if (!g.anh) return;   // bấm thẻ giữa: xem cả tấm thẻ + bài vẽ
     galList = ds.map(x => ({ anh: IMG + x.anh + "-the.jpg", hocVien: x.ten, loai: x.vaiTro + " " + x.khoi, moTa: x.nganh }));
-    pause(true); showLb(ds.indexOf(g));
+    vx.pause(true); showLb(ds.indexOf(g));
   });
-  // Vuốt trên điện thoại / kéo chuột
-  const st = $("#gv-stage"); let x0 = null, moved = false;
-  st.addEventListener("pointerdown", e => { x0 = e.clientX; moved = false; pause(true); });
-  st.addEventListener("pointermove", e => { if (x0 !== null && Math.abs(e.clientX - x0) > 8) moved = true; });
-  const end = e => { if (x0 === null) return; const dx = e.clientX - x0; x0 = null; if (Math.abs(dx) > 40) go(cur + (dx < 0 ? 1 : -1)); setTimeout(() => pause(false), 4000); };
-  st.addEventListener("pointerup", end); st.addEventListener("pointercancel", () => { x0 = null; pause(false); });
-  st.addEventListener("click", e => { if (moved) { e.stopPropagation(); e.preventDefault(); moved = false; } }, true);
-  box.addEventListener("mouseenter", () => pause(true)); box.addEventListener("mouseleave", () => pause(false));
-  box.addEventListener("focusin", () => pause(true)); box.addEventListener("focusout", () => pause(false));
-  box.tabIndex = 0;
-  box.addEventListener("keydown", e => { if (e.key === "ArrowRight") { go(cur + 1); e.preventDefault(); } if (e.key === "ArrowLeft") { go(cur - 1); e.preventDefault(); } if (e.key === "Enter" && e.target === box) cards[cur].querySelector(".gv-in").click(); });
-  $("#lb-close").addEventListener("click", () => pause(false));
-  document.addEventListener("visibilitychange", tick);
-  addEventListener("resize", draw, { passive: true });
-  new IntersectionObserver(es => { inView = es[0].isIntersecting; tick(); }, { threshold: .3 }).observe(box);
-  draw();
+  $("#lb-close").addEventListener("click", () => vx.pause(false));
 }
 
 /* ================= Bảng vàng thi năng khiếu ================= */

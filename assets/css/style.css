@@ -962,3 +962,17 @@ html,body{overflow-x:clip}
 @media (prefers-reduced-motion:reduce){.gv-stage .gv{transition:none}}
 .gv-bai-trong.alt{background:linear-gradient(135deg,#2a2f3a,#4a5468 60%,#7d8799)}
 .gv-bai-trong.alt b{font-family:var(--f-serif);font-style:italic}
+
+/* ===== Khoá học: vòng xoay giống phần Giáo viên ===== */
+.cs-stage{height:470px}
+.cs-stage .course{position:absolute;top:0;left:50%;width:310px;margin-left:-155px;height:450px;overflow:hidden;cursor:pointer;
+  transition:transform .7s cubic-bezier(.22,.8,.3,1),opacity .7s,border-color .3s,box-shadow .3s;will-change:transform;backface-visibility:hidden;align-content:start}
+.cs-stage .course.on{border-color:var(--accent);box-shadow:0 22px 44px -12px rgba(10,14,30,.35)}
+.cs-stage .course.on::after{content:"Đăng ký học thử →";position:absolute;left:22px;bottom:18px;font-weight:700;font-size:.88rem;color:var(--accent)}
+.cs-stage .course .art{max-height:120px}
+@media (max-width:640px){
+  .cs-stage{height:450px}
+  .cs-stage .course{width:min(74vw,280px);margin-left:calc(min(74vw,280px) / -2);height:430px;padding:18px}
+  .cs-stage .course.on::after{left:18px}
+}
+@media (prefers-reduced-motion:reduce){.cs-stage .course{transition:none}}
