@@ -1579,3 +1579,11 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
 .rk-chip{min-width:0}.rk-chip em{flex:0 1 auto;white-space:nowrap}
 .rk-chip small,.rk-chip b,.rk-chip i,.rk-chip svg{flex:none}
 .nb-card .rk-chip em{max-width:10.5em}.nb-card .rk-chip{margin-left:0}
+/* Chip hạng gọn: [ SSS | Bậc Thầy ] */
+.rk-chip{gap:0;padding:0;border-radius:8px;overflow:hidden;align-items:stretch;margin-left:0}
+.rk-chip::after{display:none}
+.rk-chip b{display:grid;place-items:center;min-width:34px;padding:4px 8px;font:900 .9rem/1 var(--f-display)!important;font-style:normal!important;color:#0b0d14!important;background:var(--rc)!important;-webkit-background-clip:border-box!important;background-clip:border-box!important;text-shadow:none!important;filter:none!important;margin:0!important;letter-spacing:.02em}
+.rk-chip.rb b{background:linear-gradient(90deg,#ff5a5a,#ffc400,#3fcf5b,#3ec6e0,#9b5cff)!important;animation:none!important}
+.rk-chip em{display:flex;align-items:center;padding:4px 11px;margin:0;border:0;font:700 .74rem/1 var(--f-body)!important;letter-spacing:.02em;text-transform:none;color:#fff;max-width:none}
+.nb-card .rk-chip em{max-width:none}
+@media (max-width:640px){.rk-chip b{min-width:30px;padding:3px 7px;font-size:.8rem!important}.rk-chip em{font-size:.68rem!important;padding:3px 9px;max-width:none}}

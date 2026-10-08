@@ -395,8 +395,8 @@ function tinhRank(dd, prog, fb, ten) {
   return { xp, r, i, next, pct, buoi, baiTap, baiHoc, gioi, nb: nb.length, top1, thuong, thuongDs };
 }
 const huyHieu = (r, i, cls = "", ten = "") => cls === "xs"
-  ? `<span class="rk-chip t${i}${r.mau === "rainbow" ? " rb" : ""}" data-rk="${esc(ten)}" role="button" tabindex="0" style="--rc:${r.mau === "rainbow" ? "#ffd6ff" : r.mau}" title="Hạng ${r.ma} · ${r.kim} · ${r.ten} — xem cách leo hạng">
-  <svg viewBox="0 0 64 64" aria-hidden="true"><path d="M32 6l20 9v16c0 13-9 22-20 27C21 53 12 44 12 31V15z"/></svg>${i >= 5 ? '<s class="fx" aria-hidden="true"></s>' : ""}<small>RANK</small><b>${r.ma}</b><i>${i >= 3 ? (i + 1) + "★" : "★".repeat(i + 1)}</i><em>${r.kim} · ${r.ten}</em></span>`
+  ? `<span class="rk-chip t${i}${r.mau === "rainbow" ? " rb" : ""}" data-rk="${esc(ten)}" role="button" tabindex="0" style="--rc:${r.mau === "rainbow" ? "#ffd6ff" : r.mau}" title="Hạng ${r.ma} · ${r.kim} · ${r.ten} (${i + 1} sao) — bấm để xem cách leo hạng">
+  <b>${r.ma}</b><em>${r.ten}</em></span>`
   : `<span class="rk-badge t${i} ${cls}${r.mau === "rainbow" ? " rb" : ""}" data-rk="${esc(ten)}" style="--rc:${r.mau === "rainbow" ? "#ffd6ff" : r.mau}" title="Hạng ${r.ma} · ${r.kim} · ${r.ten}">
   <svg viewBox="0 0 64 64" aria-hidden="true"><path class="w" d="M6 22c6 2 10 6 12 12-6-1-10-5-12-12zM58 22c-6 2-10 6-12 12 6-1 10-5 12-12z"/><path class="s" d="M32 6l20 9v16c0 13-9 22-20 27C21 53 12 44 12 31V15z"/></svg>
   <b>${r.ma}</b><i>${"★".repeat(i + 1)}</i></span>`;
