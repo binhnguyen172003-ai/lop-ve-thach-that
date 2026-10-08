@@ -640,7 +640,9 @@ $("#dk-zalo").href = "https://zalo.me/" + SDT_LOP;
     const diem = BANG_VANG.flatMap(r => Object.entries(r.diem || {}).filter(([m]) => !/phỏng vấn/i.test(m)).map(([, d]) => Number(d))).filter(d => !isNaN(d));
     if (diem.length) $("#hs-top").textContent = fmtDiem(Math.max(...diem));
     const co = new Set(BANG_VANG.map(r => r.truong));
-    $("#hero-schools").innerHTML = Object.keys(TRUONG).filter(k => co.has(k)).map(k => `<span title="${esc(TRUONG[k].ten)}">${esc(k)}</span>`).join("");
+    $("#hero-schools").innerHTML = Object.keys(TRUONG).filter(k => co.has(k)).map(k => `<a href="#bang-vang" data-t="${esc(k)}" style="--c:${esc(TRUONG[k].mau)}" title="Xem học viên đỗ ${esc(TRUONG[k].ten)}">${esc(k)}</a>`).join("");
+    // Bấm tên trường ở trang đầu → mở Bảng vàng, lọc sẵn học viên đỗ trường đó
+    $$("#hero-schools a").forEach(a => a.addEventListener("click", () => { bvYear = 0; bvSchool = a.dataset.t; bvMore = false; renderHonor(); }));
   }
   const sap = LICH_THI.map(e => ({ ...e, n: daysUntil(e.ngay) })).filter(e => e.n >= 0).sort((a, b) => a.n - b.n)[0];
   if (sap) $("#hero-badge").textContent = `Còn ${sap.n} ngày đến kỳ thi đầu tiên`;

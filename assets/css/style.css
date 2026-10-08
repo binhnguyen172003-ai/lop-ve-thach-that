@@ -1179,3 +1179,22 @@ nav.on-hero .nav-search{color:#fff;border-color:rgba(255,255,255,.3);background:
 .nb-note{text-align:center;margin-top:10px;font-size:.84rem}
 @media (max-width:640px){.nb-stage{height:380px}.nb-card{width:min(74vw,280px);margin-left:calc(min(74vw,280px) / -2);height:360px}}
 @media (prefers-reduced-motion:reduce){.nb-card{transition:none}}
+/* Tên trường ở trang đầu: bấm để xem Bảng vàng của trường đó */
+.cine-schools a{position:relative;font:italic 600 clamp(1.3rem,3.6vw,1.9rem) var(--f-serif);letter-spacing:-.01em;color:#fff;opacity:.92;text-decoration:none;padding:4px 2px;transition:color .25s,opacity .25s}
+.cine-schools a::after{content:"";position:absolute;left:2px;right:2px;bottom:0;height:2px;border-radius:2px;background:var(--c,#fff);transform:scaleX(0);transform-origin:left;transition:transform .3s cubic-bezier(.22,1,.36,1)}
+.cine-schools a:hover,.cine-schools a:focus-visible{color:var(--c,#fff);opacity:1}
+.cine-schools a:hover::after,.cine-schools a:focus-visible::after{transform:scaleX(1)}
+.cine-partners .pill::after{content:" · bấm để xem";opacity:.6}
+
+/* ===== Logo chữ ở thanh menu ===== */
+nav .brand{display:inline-flex;align-items:center;gap:10px;line-height:1}
+.lg-mark{display:grid;place-items:center;width:34px;height:34px;border-radius:10px;flex:none;
+  font:italic 700 1.25rem/1 var(--f-serif);color:#0b0d12;background:linear-gradient(145deg,#ffe46b,#f5c400 55%,#d39a00);box-shadow:inset 0 1px 1px rgba(255,255,255,.6),0 6px 16px -6px rgba(245,196,0,.6)}
+.lg-t{font:italic 600 1.22rem/1 var(--f-serif);letter-spacing:-.01em;white-space:nowrap;
+  background:linear-gradient(180deg,#f2f6f8 0%,#aeb7c1 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;padding-right:.05em}
+.lg-t i{font-style:italic}
+.lg-t s{text-decoration:line-through;text-decoration-color:#f5c400;text-decoration-thickness:2px;-webkit-text-fill-color:rgba(242,246,248,.55)}
+.lg-t b{font-weight:700}
+@media (prefers-reduced-motion:no-preference){nav .brand:hover .lg-mark{transform:rotate(-8deg) scale(1.06)}.lg-mark{transition:transform .35s cubic-bezier(.22,1,.36,1)}}
+@media (max-width:440px){.lg-t{font-size:1.02rem}.lg-mark{width:30px;height:30px;font-size:1.05rem}nav .brand{gap:8px}.nav-search{flex:none}}
+@media (max-width:440px){nav .acct{padding-inline:12px;font-size:.82rem}nav .wrap{gap:4px}.burger{width:38px;padding-inline:7px}}
