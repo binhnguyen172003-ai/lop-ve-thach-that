@@ -2,9 +2,9 @@
 //  LOGIC CỦA WEB — thường không cần sửa file này.
 //  Nội dung (liên hệ, lịch thi, thời gian biểu, ảnh) nằm ở data/noi-dung.js
 // =====================================================================
-import { firebaseConfig, ADMIN_EMAIL } from "../../config/firebase-config.js";
-import { LIEN_HE, NAM_THI, LICH_THI, BO_LOC_TRUONG, CA_HOC, THOI_GIAN_BIEU, BAI_VE } from "../../data/noi-dung.js";
-import { GIAO_TRINH_MAU } from "../../data/giao-trinh-mau.js";
+import { firebaseConfig, ADMIN_EMAIL } from "../../config/firebase-config.js?v=20261008c";
+import { LIEN_HE, NAM_THI, LICH_THI, BO_LOC_TRUONG, CA_HOC, THOI_GIAN_BIEU, BAI_VE } from "../../data/noi-dung.js?v=20261008c";
+import { GIAO_TRINH_MAU } from "../../data/giao-trinh-mau.js?v=20261008c";
 
 // Firebase được tải riêng, để phần giới thiệu vẫn chạy kể cả khi mạng chậm hoặc chưa cấu hình.
 const FB = "https://www.gstatic.com/firebasejs/10.12.2/";
