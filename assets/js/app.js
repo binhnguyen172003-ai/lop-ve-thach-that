@@ -599,7 +599,7 @@ function moBangRank(ten) {
   dlg.innerHTML = `<div class="rk-dlg-in">
     <button class="rk-x" type="button" data-dong aria-label="Đóng">✕</button>
     <p class="eyebrow">Hệ thống hạng lớp Thạch Thất</p><h2>Bảng hạng & cách leo rank</h2>
-    ${t ? `<div class="rk-ai t${t.i}" style="--rc:${t.r.mau === "rainbow" ? "#ffd6ff" : t.r.mau}">${khungAvatar(t.r, t.i, ten, "", "lg")}<div><b>${esc(ten)}</b>${t.huyenThoai ? logoHuyenThoai("dong") : ""}
+    ${t ? `<div class="rk-ai t${t.i}" style="--rc:${t.r.mau === "rainbow" ? "#ffd6ff" : t.r.mau}">${khungAvatar(t.r, t.i, ten, "", "lg")}<div><b>${esc(ten)}</b>
       <span>Hạng ${t.r.ma} · ${t.r.kim} · ${t.r.ten} · <b class="num">${t.xp} XP</b></span>
       <div class="rk-bar"><i style="width:${t.pct}%"></i></div>
       <small>${t.next ? `Còn <b class="num">${t.next.xp - t.xp} XP</b> nữa lên hạng ${t.next.ma} · ${t.next.kim} · ${t.next.ten}` : "Đã đạt hạng cao nhất!"}</small>
@@ -645,7 +645,7 @@ document.addEventListener("keydown", e => {
   const ds = ten.map(t => ({ t, k: tinhRank(null, null, null, t) })).sort((a, b) => b.k.xp - a.k.xp || b.k.i - a.k.i).slice(0, 5);
   box.innerHTML = ds.map(({ t, k }, j) => `<li class="t${k.i}${j < 3 ? " p" + (j + 1) : ""}" data-rk="${esc(t)}" role="button" tabindex="0" style="--rc:${k.r.mau === "rainbow" ? "#ffd6ff" : k.r.mau}">
     <span class="tr-so num">${j + 1}</span>${khungAvatar(k.r, k.i, t, "", "md")}
-    <span class="tr-ten"><b>${esc(t)}</b>${k.huyenThoai ? logoHuyenThoai("dong") : ""}<small>Hạng ${k.r.ma} · ${k.r.kim} · ${k.r.ten}</small></span><span class="tr-xp num">${k.xp} XP</span></li>`).join("");
+    <span class="tr-ten"><b>${esc(t)}</b><small>Hạng ${k.r.ma} · ${k.r.kim} · ${k.r.ten}</small></span><span class="tr-xp num">${k.xp} XP</span></li>`).join("");
   $("#top-rank").hidden = !ds.length;
 })();
 /* ================= Bài vẽ nổi bật: tuần / tháng / năm, vòng xoay 3D ================= */
@@ -668,7 +668,7 @@ document.addEventListener("keydown", e => {
         <img src="${esc(b.anh)}" alt="${esc((b.loai || "Bài vẽ") + " · " + (b.hocVien || ""))}" loading="lazy" decoding="async" draggable="false">
         ${b.hang && b.hang <= 3 ? `<span class="nb-medal h${Number(b.hang)}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 2h4l1 5-3 1zM17 2h-4l-1 5 3 1z" class="rb"/><circle cx="12" cy="15" r="6.5" class="md"/><text x="12" y="18.2" text-anchor="middle">${Number(b.hang)}</text></svg><b>TOP ${Number(b.hang)}</b><i>${TEN[ky]}</i></span>` : ""}
         ${!b.tg ? (m => m.length ? (a => `<span class="nb-tt" data-rk="${esc(b.hocVien)}" role="button" tabindex="0" title="${esc(a.ten)} · ${CAP[a.cap].ten} — ${esc(a.mo)}">${huyHieuTT(a, a.cap, "sm")}<span class="nb-ttx"><b>${esc(a.ten)}</b><small>${a.n} ${esc(a.dv)} · ${CAP[a.cap].ten}</small></span></span>`)(m[0]) : "")(ttNoiNhat(b.hocVien)) : ""}
-        ${!b.tg ? (t => khungThe(t.r, t.i) + (t.huyenThoai ? logoHuyenThoai("the") : ""))(tinhRank(null, null, null, b.hocVien)) : ""}
+        ${!b.tg ? (t => khungThe(t.r, t.i))(tinhRank(null, null, null, b.hocVien)) : ""}
         <figcaption><b>${esc(b.hocVien || "")} ${!b.tg && !tam ? (t => huyHieu(t.r, t.i, "xs", b.hocVien))(tinhRank(null, null, null, b.hocVien)) : ""}</b><span>${esc([b.loai, b.ghiChu].filter(Boolean).join(" · "))}</span></figcaption></figure>`).join("")}</div>
       <div class="gv-ctl"><button type="button" class="gv-nav" aria-label="Bài trước">‹</button>
         <div class="gv-dots">${ds.map((b, i) => `<button type="button" data-i="${i}" aria-label="Bài ${i + 1}"></button>`).join("")}</div>
@@ -761,6 +761,28 @@ function gomHocVien(nam, truong) {
     return { ...s, top: ve[0] || null, sum: (ve[0] ? ve[0].d : 0) + (ve[1] ? ve[1].d : 0), truongs: [...new Set(s.kq.map(r => r.truong))] };
   }).sort((a, b) => ((b.top ? b.top.d : -1) - (a.top ? a.top.d : -1)) || (b.sum - a.sum) || a.ten.localeCompare(b.ten, "vi"));
 }
+/* Huy hiệu "Thợ săn danh hiệu" cạnh tên Bảng vàng — theo điểm cao nhất: 8 · 8,5 · 9 · 9,5 (tự vẽ) */
+const THO_SAN = [
+  { tu: 9.5, ten: "Huyền Thoại", mau: "#ff3b4e", kl: ["#fff6cf", "#f0b72e", "#6b4300"] },
+  { tu: 9, ten: "Vàng", mau: "#ffcf3a", kl: ["#fff6cf", "#e2a92c", "#5a3c0c"] },
+  { tu: 8.5, ten: "Bạc", mau: "#7fe3ff", kl: ["#ffffff", "#c3ccd8", "#4b535e"] },
+  { tu: 8, ten: "Đồng", mau: "#e08a4c", kl: ["#ffe2c4", "#b9774a", "#4a2a17"] },
+];
+function thoSan(d, cls = "") {
+  const n = Number(d); if (!(n >= 8)) return "";
+  const k = THO_SAN.findIndex(x => n >= x.tu), t = THO_SAN[k], cap = 4 - k, id = "ts" + Math.random().toString(36).slice(2, 8), c = t.mau;
+  const M = `url(#${id}m)`, x = [];
+  if (cap >= 4) x.push(`<g fill="${c}" opacity=".85">${[...Array(8)].map((_, j) => `<path d="M24 -4l1.6 6h-3.2z" transform="rotate(${j * 45} 24 24)"/>`).join("")}</g>`);
+  if (cap >= 2) x.push(`<g fill="${M}" stroke="${t.kl[2]}" stroke-width=".4">${[0, 1, 2].map(j => `<ellipse cx="${5 - j * .6}" cy="${30 - j * 7}" rx="4.4" ry="1.8" transform="rotate(${-60 - j * 12} ${5 - j * .6} ${30 - j * 7})"/><ellipse cx="${43 + j * .6}" cy="${30 - j * 7}" rx="4.4" ry="1.8" transform="rotate(${60 + j * 12} ${43 + j * .6} ${30 - j * 7})"/>`).join("")}</g>`);
+  if (cap >= 3) x.push(`<path d="M24 0l4 5-4 4-4-4z" fill="${c}" stroke="#fff" stroke-width=".6"/>`);
+  x.push(`<path d="M24 5l16 9v20l-16 9-16-9V14z" fill="#0d0f16" stroke="${M}" stroke-width="${cap >= 3 ? 3 : 2.4}"/>`);
+  x.push(`<path d="M24 9l12.5 7v16L24 39l-12.5-7V16z" fill="none" stroke="${c}" stroke-width=".8" opacity=".7"/>`);
+  // tâm ngắm + mũi tên: biểu tượng thợ săn
+  x.push(`<circle cx="24" cy="24" r="7.5" fill="none" stroke="${c}" stroke-width="1.6"/><path d="M24 14v4M24 30v4M14 24h4M30 24h4" stroke="${c}" stroke-width="1.4"/>`);
+  x.push(`<path d="M15 33l15-15" stroke="${M}" stroke-width="2.2" stroke-linecap="round"/><path d="M32.5 15.5l-7.5 1.2 6.3 6.3z" fill="${M}"/><path d="M15 33l-3 .5M15 33l-.5 3M17 31l-3 .6M17 31l-.6 3" stroke="${c}" stroke-width="1.2" stroke-linecap="round"/>`);
+  if (cap >= 4) x.push(`<path d="M15 3l2-7 4 4 3-6 3 6 4-4 2 7q-9-2.5-18 0z" fill="${M}" stroke="${t.kl[2]}" stroke-width=".5"/>`);
+  return `<span class="tsd c${cap} ${cls}" style="--tc:${c}" title="Thợ săn danh hiệu · ${t.ten} (từ ${String(t.tu).replace(".", ",")} điểm)"><svg viewBox="-4 -10 56 60" aria-hidden="true"><defs><linearGradient id="${id}m" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${t.kl[0]}"/><stop offset=".5" stop-color="${t.kl[1]}"/><stop offset="1" stop-color="${t.kl[2]}"/></linearGradient></defs>${x.join("")}</svg><i>${t.ten}</i></span>`;
+}
 function renderHonor() {
   if (!BANG_VANG.length) {
     $("#bv-years").hidden = true;
@@ -799,7 +821,7 @@ function renderHonor() {
         <span class="mg-badge">${x.truongs.map(k => `<i style="--c:${esc(tr(k).mau)}">${esc(k)}</i>`).join("")}</span>
         <span class="mg-pts"><b class="num">${x.top ? fmtDiem(x.top.d) : "–"}</b><small>${x.top ? esc(VT[x.top.m] || x.top.m) : ""}</small></span>
       </div>
-      <div class="mg-name"><span>${esc(ho)}</span><b>${esc(ten)}</b>${tatCa ? `<em class="mg-yr">Khoá ${x.nam}</em>` : ""}
+      <div class="mg-name"><span>${esc(ho)}</span><b>${esc(ten)}${x.top ? thoSan(x.top.d) : ""}</b>${tatCa ? `<em class="mg-yr">Khoá ${x.nam}</em>` : ""}
         <span class="mg-sub2">${x.top ? `${esc(x.top.m)} · ${esc(x.top.tr)}` : `Đỗ ${esc(x.truongs.join(", "))}`}</span>
         <details class="mg-kq"><summary>Xem điểm từng trường ▾</summary><ul class="kq">${chiTiet(x)}</ul></details></div></li>`;
   };
@@ -818,7 +840,7 @@ function renderHonor() {
       <ol class="mg-rows ${bvMore ? "" : "gon"}">${rest.map((x, i) => `<li class="${i >= 6 ? "them" : ""}"><details>
         <summary><span class="mg-rk num">${x.top ? rankOf.get(x) : "–"}</span>
           <span class="mg-tr">${x.truongs.map(k => `<i style="--c:${esc(tr(k).mau)}">${esc(k)}</i>`).join("")}</span>
-          <b class="mg-nm">${esc(x.ten)}</b>
+          <b class="mg-nm">${esc(x.ten)}${x.top ? thoSan(x.top.d, "sm") : ""}</b>
           <span class="mg-sub">${x.top ? `${esc(x.top.m)} · ${esc(x.top.tr)}${nhanNam(x)}` : `Đỗ ${esc(x.truongs.join(", "))}${nhanNam(x)}`}</span>
           <span class="mg-sc"><b class="num">${x.top ? fmtDiem(x.top.d) : "–"}</b><small>Đ</small></span></summary>
         <ul class="kq">${chiTiet(x)}</ul></details></li>`).join("")}</ol>
