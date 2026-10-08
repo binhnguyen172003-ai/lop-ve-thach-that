@@ -86,6 +86,7 @@ export const THOI_GIAN_BIEU = {
 export const BAI_VE = [
   { anh: "assets/img/bai-ve/khang-mau.webp", loai: "Màu", hocVien: "Khang", moTa: "Bố cục màu" },
   { anh: "assets/img/bai-ve/linh-mau.webp", loai: "Màu", hocVien: "Linh", moTa: "Bố cục màu" },
+  { anh: "assets/img/bai-ve/huyen-linh-mau.webp", loai: "Màu", hocVien: "Kiều Huyền Linh", moTa: "Bài mẫu trợ giảng · bố cục màu" },
   { anh: "assets/img/bai-ve/bao-tuong.webp", loai: "Tượng", hocVien: "Bảo", moTa: "Hình hoạ tượng cơ bản" },
   { anh: "assets/img/bai-ve/bao-sac-do.webp", loai: "Mỹ thuật 2", hocVien: "Bảo", moTa: "Bố cục sắc độ" },
   { anh: "assets/img/bai-ve/thuy-chan-dung.webp", loai: "Hình hoạ người", hocVien: "Thùy", moTa: "Chân dung" },
