@@ -362,15 +362,15 @@ function vongXoay(box, st, cards, dots, prev, next, onCenter) {
 
 /* ================= Hạng học viên (F → SSS+): leo hạng nhờ đi học, làm bài, có bài nổi bật ================= */
 const RANK = [
-  { ma: "F", xp: 0, mau: "#9aa3ad", ten: "Mới bắt đầu", mo: "Vừa vào lớp, bắt đầu hành trình." },
-  { ma: "E", xp: 100, mau: "#3fcf5b", ten: "Đang làm quen", mo: "Đã có bài đầu tiên được chọn hoặc đi học đều." },
-  { ma: "C", xp: 250, mau: "#3ec6e0", ten: "Bắt nhịp", mo: "Tiềm năng bắt đầu lộ rõ." },
-  { ma: "B", xp: 500, mau: "#3d6bff", ten: "Vững vàng", mo: "Nền tảng chắc, làm bài đầy đủ." },
-  { ma: "A", xp: 800, mau: "#9b5cff", ten: "Giỏi", mo: "Trên mức trung bình của lớp." },
-  { ma: "S", xp: 1200, mau: "#ffc400", ten: "Xuất sắc", mo: "Được cả lớp công nhận." },
-  { ma: "SS", xp: 1700, mau: "#ff8a1f", ten: "Tinh hoa", mo: "Nhóm học viên giỏi nhất." },
-  { ma: "SSS", xp: 2300, mau: "#ff3b3b", ten: "Huyền thoại", mo: "Rất ít người đạt được." },
-  { ma: "SSS+", xp: 3000, mau: "rainbow", ten: "Đỉnh cao", mo: "Vượt mọi giới hạn." },
+  { ma: "F", xp: 0, mau: "#9aa3ad", kim: "Sắt", ten: "Người Mới", mo: "Vừa vào lớp, bắt đầu hành trình." },
+  { ma: "E", xp: 100, mau: "#3fcf5b", kim: "Đồng", ten: "Tập Sự", mo: "Đã có bài đầu tiên được chọn hoặc đi học đều." },
+  { ma: "C", xp: 250, mau: "#3ec6e0", kim: "Bạc", ten: "Chăm Chỉ", mo: "Tiềm năng bắt đầu lộ rõ." },
+  { ma: "B", xp: 500, mau: "#3d6bff", kim: "Vàng", ten: "Dân Chuyên", mo: "Nền tảng chắc, làm bài đầy đủ." },
+  { ma: "A", xp: 800, mau: "#9b5cff", kim: "Bạch Kim", ten: "Lão Làng", mo: "Trên mức trung bình của lớp." },
+  { ma: "S", xp: 1200, mau: "#ffc400", kim: "Kim Cương", ten: "Cao Thủ", mo: "Được cả lớp công nhận." },
+  { ma: "SS", xp: 1700, mau: "#ff8a1f", kim: "Tinh Anh", ten: "Đại Cao Thủ", mo: "Nhóm học viên giỏi nhất." },
+  { ma: "SSS", xp: 2300, mau: "#ff3b3b", kim: "Huyền Thoại", ten: "Bậc Thầy", mo: "Rất ít người đạt được." },
+  { ma: "SSS+", xp: 3000, mau: "rainbow", kim: "Thách Đấu", ten: "Huyền Thoại Dreamers", mo: "Vượt mọi giới hạn." },
 ];
 // Cách tính điểm kinh nghiệm (XP) — thầy sửa số ở đây nếu muốn
 const XP = { buoi: 10, baiTap: 15, baiHoc: 5, diemGioi: 10, noiBat: 100, top1: 25 };
@@ -393,15 +393,15 @@ function tinhRank(dd, prog, fb, ten) {
   return { xp, r, i, next, pct, buoi, baiTap, baiHoc, gioi, nb: nb.length, top1 };
 }
 const huyHieu = (r, i, cls = "") => cls === "xs"
-  ? `<span class="rk-chip${r.mau === "rainbow" ? " rb" : ""}" style="--rc:${r.mau === "rainbow" ? "#ffd6ff" : r.mau}" title="Hạng ${r.ma} · ${r.ten} — xem cách leo hạng">
-  <svg viewBox="0 0 64 64" aria-hidden="true"><path d="M32 6l20 9v16c0 13-9 22-20 27C21 53 12 44 12 31V15z"/></svg><small>RANK</small><b>${r.ma}</b><i>${"★".repeat(i + 1)}</i></span>`
-  : `<span class="rk-badge ${cls}${r.mau === "rainbow" ? " rb" : ""}" style="--rc:${r.mau === "rainbow" ? "#ffd6ff" : r.mau}" title="Hạng ${r.ma} · ${r.ten}">
+  ? `<span class="rk-chip${r.mau === "rainbow" ? " rb" : ""}" style="--rc:${r.mau === "rainbow" ? "#ffd6ff" : r.mau}" title="Hạng ${r.ma} · ${r.kim} · ${r.ten} — xem cách leo hạng">
+  <svg viewBox="0 0 64 64" aria-hidden="true"><path d="M32 6l20 9v16c0 13-9 22-20 27C21 53 12 44 12 31V15z"/></svg><small>RANK</small><b>${r.ma}</b><i>${"★".repeat(i + 1)}</i><em>${r.kim} · ${r.ten}</em></span>`
+  : `<span class="rk-badge ${cls}${r.mau === "rainbow" ? " rb" : ""}" style="--rc:${r.mau === "rainbow" ? "#ffd6ff" : r.mau}" title="Hạng ${r.ma} · ${r.kim} · ${r.ten}">
   <svg viewBox="0 0 64 64" aria-hidden="true"><path class="w" d="M6 22c6 2 10 6 12 12-6-1-10-5-12-12zM58 22c-6 2-10 6-12 12 6-1 10-5 12-12z"/><path class="s" d="M32 6l20 9v16c0 13-9 22-20 27C21 53 12 44 12 31V15z"/></svg>
   <b>${r.ma}</b><i>${"★".repeat(i + 1)}</i></span>`;
 function theRank(t) {
   return `<div class="rk-card" style="--rc:${t.r.mau === "rainbow" ? "#ffd6ff" : t.r.mau}">
     ${huyHieu(t.r, t.i, "lg")}
-    <div class="rk-in"><p class="eyebrow">Hạng của em</p><h3>Hạng ${t.r.ma} <span>· ${t.r.ten}</span></h3>
+    <div class="rk-in"><p class="eyebrow">Hạng của em</p><h3>Hạng ${t.r.ma} <span>· ${t.r.kim} · ${t.r.ten}</span></h3>
       <div class="rk-bar"><i style="width:${t.pct}%"></i></div>
       <p class="rk-sub"><b class="num">${t.xp} XP</b>${t.next ? ` · còn <b class="num">${t.next.xp - t.xp} XP</b> nữa lên hạng ${t.next.ma}` : " · đã đạt hạng cao nhất!"}</p>
       <ul class="rk-chi"><li>${t.buoi} buổi đi học</li><li>${t.baiTap} bài tập đã nộp</li><li>${t.baiHoc} bài giáo trình</li><li>${t.gioi} bài điểm ≥ 8</li><li>${t.nb} bài nổi bật</li></ul>
@@ -417,7 +417,7 @@ function theRank(t) {
   bang.innerHTML = `<div class="xh-row xh-th" role="row"><span>Hạng</span><span>Huy hiệu</span><span>Mô tả</span><span>Cần</span></div>` +
     RANK.map((r, i) => `<div class="xh-row" role="row" style="--rc:${r.mau === "rainbow" ? "#ffd6ff" : r.mau}">
       <b class="xh-ma${r.mau === "rainbow" ? " rb" : ""}">${r.ma}<small> RANK</small></b>${huyHieu(r, i, "sm")}
-      <span class="xh-mo"><b>${r.ten}</b><span>${r.mo}</span><i>${"★".repeat(i + 1)}</i></span><span class="xh-xp num">${r.xp} XP</span></div>`).join("");
+      <span class="xh-mo"><b><span class="xh-kim">${r.kim}</span> ${r.ten}</b><span>${r.mo}</span><i>${"★".repeat(i + 1)}</i></span><span class="xh-xp num">${r.xp} XP</span></div>`).join("");
   $("#xh-cach").innerHTML = `<h3>Cách kiếm XP</h3><ul>
     <li><b>+${XP.buoi}</b><span>Mỗi buổi đi học (thầy điểm danh có mặt)</span></li>
     <li><b>+${XP.baiTap}</b><span>Mỗi bài tập đã nộp</span></li>
@@ -429,7 +429,7 @@ function theRank(t) {
   // Học viên có hạng nổi bật (từ Bài vẽ nổi bật)
   const ten = [...new Set(BAI_NOI_BAT.filter(b => !b.tg && b.hocVien).map(b => b.hocVien))];
   const ds = ten.map(t => ({ t, k: tinhRank(null, null, null, t) })).sort((a, b) => b.k.xp - a.k.xp);
-  $("#xh-top").innerHTML = ds.length ? `<h3>Học viên đang leo hạng</h3><div class="xh-hv">${ds.map(({ t, k }) => `<div style="--rc:${k.r.mau === "rainbow" ? "#ffd6ff" : k.r.mau}">${huyHieu(k.r, k.i, "sm")}<b>${esc(t)}</b><span>Hạng ${k.r.ma} · ${k.xp} XP</span></div>`).join("")}</div>
+  $("#xh-top").innerHTML = ds.length ? `<h3>Học viên đang leo hạng</h3><div class="xh-hv">${ds.map(({ t, k }) => `<div style="--rc:${k.r.mau === "rainbow" ? "#ffd6ff" : k.r.mau}">${huyHieu(k.r, k.i, "sm")}<b>${esc(t)}</b><span>Hạng ${k.r.ma} · ${k.r.kim} · ${k.r.ten} · ${k.xp} XP</span></div>`).join("")}</div>
     <p class="muted xh-note">Tính từ bài vẽ nổi bật. Hạng đầy đủ (gồm đi học, bài tập) xem trong Tài khoản của từng em.</p>` : "";
 })();
 /* ================= Bài vẽ nổi bật: tuần / tháng / năm, vòng xoay 3D ================= */
