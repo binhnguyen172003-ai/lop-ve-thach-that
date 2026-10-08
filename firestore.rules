@@ -2,6 +2,11 @@ rules_version = '2';
 
 // Luật bảo mật cho web Lớp Vẽ Không Vui.
 // Dán toàn bộ nội dung file này vào Firebase Console > Firestore Database > Rules > Publish.
+//
+// Ba vai trò:
+//   Quản lý  : Gmail trong ADMIN (bên dưới) hoặc có document admins/<gmail>. Toàn quyền.
+//   Giáo viên: có document giaovien/<gmail>. Giao bài, xem tiến độ, chấm và nhận xét.
+//   Học viên : có document hocvien/<gmail>. Học giáo trình, làm bài, xem nhận xét của mình.
 service cloud.firestore {
   match /databases/{database}/documents {
 
@@ -11,60 +16,85 @@ service cloud.firestore {
     function myEmail() {
       return request.auth.token.email.lower();
     }
-    // Gmail giáo viên quản lý. Muốn thêm giáo viên: tạo document admins/<gmail> trong Firestore.
     function isAdmin() {
       return signedIn() && (
         myEmail() == 'binhnguyen172003@gmail.com' ||
         exists(/databases/$(database)/documents/admins/$(myEmail()))
       );
     }
-    // Học viên đã được duyệt = có document hocvien/<gmail>.
+    function isTeacher() {
+      return signedIn() && exists(/databases/$(database)/documents/giaovien/$(myEmail()));
+    }
+    function isStaff() {
+      return isAdmin() || isTeacher();
+    }
     function isStudent() {
       return signedIn() && exists(/databases/$(database)/documents/hocvien/$(myEmail()));
     }
+    function isMe(mail) {
+      return signedIn() && myEmail() == mail;
+    }
+    function shortText(d, k, n) {
+      return !(k in d) || (d[k] is string && d[k].size() <= n);
+    }
 
-    // Giáo trình và bài tập: học viên đã duyệt được đọc, chỉ giáo viên được sửa.
+    // Giáo trình: ai đã duyệt cũng đọc được; chỉ quản lý sửa.
     match /giaotrinh/{id} {
-      allow read: if isStudent() || isAdmin();
+      allow read: if isStudent() || isStaff();
       allow write: if isAdmin();
     }
+
+    // Bài tập: ai đã duyệt cũng đọc được; giáo viên và quản lý giao, sửa, xoá.
     match /baitap/{id} {
-      allow read: if isStudent() || isAdmin();
-      allow write: if isAdmin();
+      allow read: if isStudent() || isStaff();
+      allow write: if isStaff();
     }
 
-    // Danh sách học viên đã duyệt: học viên chỉ đọc được hồ sơ của chính mình.
+    // Học viên đã duyệt: giáo viên xem danh sách; học viên chỉ xem hồ sơ mình; quản lý duyệt.
     match /hocvien/{mail} {
-      allow read: if isAdmin() || (signedIn() && myEmail() == mail);
+      allow read: if isStaff() || isMe(mail);
       allow write: if isAdmin();
     }
 
-    // Yêu cầu duyệt: ai đăng nhập Google cũng gửi được, nhưng chỉ cho Gmail của chính mình.
+    // Giáo viên đã duyệt: chỉ quản lý xem và duyệt; giáo viên xem hồ sơ của chính mình.
+    match /giaovien/{mail} {
+      allow read: if isAdmin() || isMe(mail);
+      allow write: if isAdmin();
+    }
+
+    // Yêu cầu duyệt: ai đăng nhập Google cũng gửi được, chỉ cho Gmail của chính mình.
     match /yeucau/{mail} {
-      allow read: if isAdmin() || (signedIn() && myEmail() == mail);
-      allow create, update: if signedIn() && myEmail() == mail
+      allow read: if isAdmin() || isMe(mail);
+      allow create, update: if isMe(mail)
         && request.resource.data.gmail == mail
-        && request.resource.data.keys().hasOnly(['gmail', 'ten', 'namSinh', 'sdt', 'sdtPh', 'truong', 'lopHoc',
+        && request.resource.data.vaiTro in ['hocvien', 'giaovien']
+        && request.resource.data.keys().hasOnly(['vaiTro', 'gmail', 'ten', 'namSinh', 'sdt', 'sdtPh', 'truong', 'lopHoc',
              'khuVuc', 'coso', 'chuongTrinh', 'khoi', 'namThi', 'mucTieu', 'ghiChu', 'guiLuc'])
         && request.resource.data.ten is string && request.resource.data.ten.size() > 0 && request.resource.data.ten.size() <= 80
-        && request.resource.data.sdt is string && request.resource.data.sdt.size() <= 15
-        && request.resource.data.sdtPh is string && request.resource.data.sdtPh.size() <= 15
-        && request.resource.data.namSinh is int
-        && request.resource.data.truong is string && request.resource.data.truong.size() <= 80
-        && request.resource.data.khuVuc is string && request.resource.data.khuVuc.size() <= 80
-        && request.resource.data.mucTieu is string && request.resource.data.mucTieu.size() <= 120
-        && request.resource.data.ghiChu is string && request.resource.data.ghiChu.size() <= 300;
+        && shortText(request.resource.data, 'sdt', 15)
+        && shortText(request.resource.data, 'sdtPh', 15)
+        && shortText(request.resource.data, 'truong', 80)
+        && shortText(request.resource.data, 'khuVuc', 80)
+        && shortText(request.resource.data, 'mucTieu', 120)
+        && shortText(request.resource.data, 'ghiChu', 300)
+        && (!('namSinh' in request.resource.data) || request.resource.data.namSinh is int);
       allow delete: if isAdmin();
     }
 
-    // Tiến độ học: học viên tự ghi của mình, giáo viên xem được tất cả.
+    // Tiến độ học: học viên tự ghi của mình; giáo viên và quản lý xem.
     match /tiendo/{mail} {
-      allow read: if isAdmin() || (signedIn() && myEmail() == mail);
-      allow write: if isStudent() && myEmail() == mail;
+      allow read: if isStaff() || isMe(mail);
+      allow write: if isStudent() && isMe(mail);
+    }
+
+    // Điểm và nhận xét bài tập: giáo viên và quản lý ghi; học viên xem của mình.
+    match /nhanxet/{mail} {
+      allow read: if isStaff() || isMe(mail);
+      allow write: if isStaff();
     }
 
     match /admins/{mail} {
-      allow read: if signedIn() && myEmail() == mail;
+      allow read: if isMe(mail);
       allow write: if false;
     }
   }
