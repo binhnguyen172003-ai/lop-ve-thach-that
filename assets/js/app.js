@@ -366,18 +366,18 @@ renderHonor();
 function renderTopKhoa() {
   if (!BANG_VANG.length) { $("#tk-grid").innerHTML = ""; $(".tk-head").hidden = true; return; }
   const rows = BV_NAM.map(y => {
-    const hv = gomHocVien(y, ""), co = hv.filter(x => x.top), top = co[0];
+    const hv = gomHocVien(y, ""), co = hv.filter(x => x.top);
     const luot = BANG_VANG.filter(x => Number(x.nam) === y).length;
     const theoTruong = Object.keys(TRUONG).map(k => [k, hv.filter(x => x.truongs.includes(k)).length]).filter(([, n]) => n);
     return `<tr>
       <td class="tk-y"><b>Khoá ${y}</b></td>
       <td class="num" data-l="Học viên"><b>${hv.length}</b></td>
       <td class="num" data-l="Lượt đỗ"><b>${luot}</b></td>
-      <td data-l="Thủ khoa">${top ? `<b>${esc(top.ten)}</b> <span class="tk-sc num">${fmtDiem(top.top.d)}</span>` : "–"}</td>
       <td class="num" data-l="Từ 8,5 điểm"><b>${co.filter(x => x.top.d >= 8.5).length}</b></td>
+      <td data-l="Từ 9 điểm trở lên" class="tk-9">${co.filter(x => x.top.d >= 9).map(x => `<span title="${esc(x.top.m)} · ${esc(x.top.tr)}">${esc(x.ten)} <b class="num">${fmtDiem(x.top.d)}</b></span>`).join("") || "–"}</td>
       <td data-l="Đỗ theo trường"><div class="tk-trs">${theoTruong.map(([k, n]) => `<span style="--c:${esc(tr(k).mau)}" title="${esc(tr(k).ten)}"><i>${esc(k)}</i>${n}</span>`).join("")}</div></td></tr>`;
   }).join("");
-  $("#tk-grid").innerHTML = `<table class="tk-table"><thead><tr><th>Khoá</th><th>Học viên</th><th>Lượt đỗ</th><th>Thủ khoa</th><th>Từ 8,5 điểm</th><th>Đỗ theo trường</th></tr></thead><tbody>${rows}</tbody></table>`;
+  $("#tk-grid").innerHTML = `<table class="tk-table"><thead><tr><th>Khoá</th><th>Học viên</th><th>Lượt đỗ</th><th>Từ 8,5 điểm</th><th>Từ 9 điểm trở lên</th><th>Đỗ theo trường</th></tr></thead><tbody>${rows}</tbody></table>`;
 }
 renderTopKhoa();
 
