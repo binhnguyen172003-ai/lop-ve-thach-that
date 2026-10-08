@@ -370,7 +370,7 @@ const RANK = [
   { ma: "S", xp: 3400, mau: "#ffc400", kim: "Kim Cương", ten: "Cao Thủ", mo: "Được cả lớp công nhận." },
   { ma: "SS", xp: 5400, mau: "#ff8a1f", kim: "Tinh Anh", ten: "Đại Cao Thủ", mo: "Nhóm học viên giỏi nhất." },
   { ma: "SSS", xp: 7400, mau: "#ff3b3b", kim: "Huyền Thoại", ten: "Bậc Thầy", mo: "Rất ít người đạt được." },
-  { ma: "SSS+", xp: 9400, mau: "rainbow", kim: "Thách Đấu", ten: "Huyền Thoại Dreamers", mo: "Vượt mọi giới hạn." },
+  { ma: "SSS+", xp: 9400, mau: "rainbow", kim: "Thách Đấu", ten: "Huyền Thoại Thạch Thất", mo: "Vượt mọi giới hạn." },
 ];
 // Cách tính điểm kinh nghiệm (XP) — thầy sửa số ở đây nếu muốn
 const XP = { buoi: 10, baiTap: 15, baiHoc: 5, diemGioi: 10, noiBat: 100, top1: 25 };
@@ -534,7 +534,7 @@ function moBangRank(ten) {
   const t = ten ? tinhRank(null, null, null, ten) : null;
   dlg.innerHTML = `<div class="rk-dlg-in">
     <button class="rk-x" type="button" data-dong aria-label="Đóng">✕</button>
-    <p class="eyebrow">Hệ thống hạng Dreamers</p><h2>Bảng hạng & cách leo rank</h2>
+    <p class="eyebrow">Hệ thống hạng lớp Thạch Thất</p><h2>Bảng hạng & cách leo rank</h2>
     ${t ? `<div class="rk-ai t${t.i}" style="--rc:${t.r.mau === "rainbow" ? "#ffd6ff" : t.r.mau}">${khungAvatar(t.r, t.i, ten, "", "lg")}<div><b>${esc(ten)}</b>
       <span>Hạng ${t.r.ma} · ${t.r.kim} · ${t.r.ten} · <b class="num">${t.xp} XP</b></span>
       <div class="rk-bar"><i style="width:${t.pct}%"></i></div>
@@ -1589,7 +1589,7 @@ function hocVienDiemDanh(cs, search, sort) {
 }
 function tinNhanPhuHuynh(r, t) {
   const start = new Date(Date.parse(todayVN()) - 27 * 864e5).toISOString().slice(0, 10);
-  const intro = `Lớp Vẽ Dreamers gửi phụ huynh em ${r.ten}: `;
+  const intro = `Lớp Vẽ Thạch Thất gửi phụ huynh em ${r.ten}: `;
   if (!t.records28) return intro + `Lớp chưa có dữ liệu điểm danh của em trong 4 tuần qua (${ngayVN(start)}–${ngayVN(todayVN())}), nên chưa kết luận được số buổi em đi học. Lớp sẽ kiểm tra lại và trao đổi với bố mẹ ạ.`;
   return intro + `Trong 4 tuần qua (${ngayVN(start)}–${ngayVN(todayVN())}), lớp ghi nhận em đi học ${t.co28} buổi.`
     + (t.trackedDays < 28 ? ` Dữ liệu mới được theo dõi trong ${t.trackedDays} ngày gần đây.` : "")
@@ -1810,7 +1810,7 @@ function renderLV() {
 
 /* ----- Tin nhắn ----- */
 function tenKenh(k) {
-  if (!isTeacher) return "Thầy cô Dreamers";
+  if (!isTeacher) return "Thầy cô lớp Thạch Thất";
   if (k === mail) return "Quản lý lớp";
   const m = lvKenh.find(x => x.id === k), r = roster.find(x => x.id === k), g = teachers.find(x => x.id === k);
   return (m && m.ten) || (r && r.ten) || (g && g.ten) || k;

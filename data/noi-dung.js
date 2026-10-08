@@ -184,7 +184,7 @@ export const MUC_TIEU = {
 export const GIAO_VIEN = [
   { ten: "Nguyễn Đình Bình", vaiTro: "Quản lý lớp", khoi: "Khối H, V", truong: "", nganh: "Phụ trách chuyên môn và lộ trình luyện thi của lớp", chinh: true },
   { ten: "Cấn Hải An", vaiTro: "Giảng viên", khoi: "Khối V", truong: "HAU", nganh: "Sinh viên Kiến trúc · kiểm soát chất lượng giảng dạy", anh: "can-hai-an" },
-  { ten: "Đỗ Hữu Trường", vaiTro: "Trợ giảng", khoi: "Khối V", truong: "HAU", nganh: "Sinh viên Kiến trúc, học viên Dreamers khoá 2026 · tượng, Mỹ thuật 2", anh: "do-huu-truong" },
+  { ten: "Đỗ Hữu Trường", vaiTro: "Trợ giảng", khoi: "Khối V", truong: "HAU", nganh: "Sinh viên Kiến trúc, học viên lớp Thạch Thất khoá 2026 · tượng, Mỹ thuật 2", anh: "do-huu-truong" },
   { ten: "Bùi Anh Đức", vaiTro: "Trợ giảng", khoi: "Khối H", truong: "MTCN", nganh: "Sinh viên Mỹ thuật Công nghiệp · chân dung và người cơ bản", anh: "bui-anh-duc" },
   { ten: "Kiều Huyền Linh", vaiTro: "Trợ giảng", khoi: "Khối H", truong: "NUAE", nganh: "Sinh viên Sư phạm Mỹ thuật · màu cơ bản", anh: "kieu-huyen-linh", bai: "assets/img/bai-ve/huyen-linh-mau.webp" },
   { ten: "Nguyễn Duy Cường", vaiTro: "Trợ giảng", khoi: "Khối V", truong: "HAU", nganh: "Sinh viên Kiến trúc · tượng, Mỹ thuật 2", anh: "nguyen-duy-cuong" },
@@ -223,6 +223,6 @@ export const THANH_TUU_TRAO = [
 // ===== XP THƯỞNG — thầy cộng tay cho học viên (ghi rõ lý do) =====
 //   VD: { hocVien: "Khang", xp: 50, ghiChu: "Hoàn thành xuất sắc bài màu tuần 2" },
 export const XP_THUONG = [
-  { hocVien: "Đặng Huy Hoàn", xp: 7400, ghiChu: "Huyền thoại của lớp Dreamers — đạt hạng SSS" },
+  { hocVien: "Đặng Huy Hoàn", xp: 7400, ghiChu: "Huyền thoại của lớp Thạch Thất — đạt hạng SSS" },
   { hocVien: "Nguyễn Văn Bảo", xp: 100, ghiChu: "Bài đầu tiên lên Bài vẽ nổi bật (Top 1 & Top 2 tuần)" },
 ];
