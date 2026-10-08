@@ -27,6 +27,7 @@
     <a class="link" href="#lich-thi" data-nav="home">Lịch thi 2027</a>
     <a class="link" href="#giao-trinh" data-nav="giao-trinh"><svg class="ico"><use href="#i-lock"/></svg> Giáo trình</a>
     <a class="link" href="#bai-tap" data-nav="bai-tap"><svg class="ico"><use href="#i-lock"/></svg> Bài tập</a>
+    <a class="link" href="#duyet" data-nav="duyet" id="nav-duyet" hidden>Duyệt học viên <span class="chip" id="nav-req" hidden></span></a>
     <a class="btn small acct" href="#tai-khoan" id="nav-acct">Đăng nhập / Đăng ký</a>
   </div>
 </nav>
@@ -255,6 +256,11 @@
       <article class="lesson" id="lesson"></article>
     </div>
     <div class="teacher" data-teacher hidden>
+      <div id="seed-box" hidden style="margin-bottom:28px">
+      <h3>Giáo trình đang trống</h3>
+      <p class="muted" style="margin-block:6px 12px">Nạp 13 bài giáo trình có sẵn của lớp (lộ trình các khoá, quy trình hình hoạ, bố cục màu, Mỹ thuật 2).</p>
+      <button class="btn primary" id="btn-seed" type="button">Nạp giáo trình có sẵn</button> <span class="status" id="seed-status"></span>
+    </div>
       <h3>Thêm bài vào giáo trình</h3>
       <form id="f-gt">
         <div class="fgrid">
@@ -335,12 +341,35 @@
       <h3 style="margin-block:6px 14px">Gửi yêu cầu duyệt</h3>
       <p class="muted" id="reg-hint" style="margin-bottom:14px">Đăng nhập bằng Google trước, sau đó điền thông tin để gửi thầy duyệt.</p>
       <form id="f-reg">
-        <label for="rg-ten">Họ tên học viên<input id="rg-ten" required maxlength="80" autocomplete="name"></label>
-        <div class="fgrid">
-          <label for="rg-lop">Lớp đang học<select id="rg-lop"><option>Hình hoạ cơ bản</option><option>Khối H</option><option>Khối V</option><option>Ôn thi cấp tốc</option><option>Online</option></select></label>
-          <label for="rg-cs">Cơ sở<select id="rg-cs"><option>Bình Phú</option><option>Kim Quan</option><option>Online</option></select></label>
-        </div>
-        <label for="rg-sdt">Số điện thoại<input id="rg-sdt" type="tel" required maxlength="20"></label>
+        <fieldset class="fs">
+          <legend>Thông tin học viên</legend>
+          <div class="fgrid">
+            <label for="rg-ten"><span>Họ và tên <span class="req">*</span></span><input id="rg-ten" required maxlength="80" autocomplete="name"></label>
+            <label for="rg-nam"><span>Năm sinh <span class="req">*</span></span><input id="rg-nam" type="number" inputmode="numeric" required min="2000" max="2022" placeholder="VD: 2009"></label>
+            <label for="rg-sdt"><span>SĐT học viên <span class="req">*</span></span><input id="rg-sdt" type="tel" inputmode="tel" required maxlength="15" placeholder="VD: 0912345678"></label>
+            <label for="rg-sdtph"><span>SĐT phụ huynh <span class="req">*</span></span><input id="rg-sdtph" type="tel" inputmode="tel" required maxlength="15"></label>
+          </div>
+        </fieldset>
+        <fieldset class="fs">
+          <legend>Nơi học</legend>
+          <div class="fgrid">
+            <label for="rg-truong"><span>Trường đang học <span class="req">*</span></span><input id="rg-truong" required maxlength="80" placeholder="VD: THPT Thạch Thất"></label>
+            <label for="rg-lophoc"><span>Lớp <span class="req">*</span></span><select id="rg-lophoc" required><option value="">Chọn lớp</option><option>Lớp 6</option><option>Lớp 7</option><option>Lớp 8</option><option>Lớp 9</option><option>Lớp 10</option><option>Lớp 11</option><option>Lớp 12</option><option>Đã tốt nghiệp</option></select></label>
+            <label for="rg-kv"><span>Khu vực sinh sống <span class="req">*</span></span><input id="rg-kv" required maxlength="80" placeholder="VD: Bình Phú, Thạch Thất"></label>
+            <label for="rg-cs"><span>Cơ sở học vẽ <span class="req">*</span></span><select id="rg-cs" required><option value="">Chọn cơ sở</option><option>Bình Phú</option><option>Kim Quan</option><option>Online</option></select></label>
+          </div>
+        </fieldset>
+        <fieldset class="fs">
+          <legend>Chương trình &amp; mục tiêu</legend>
+          <div class="fgrid">
+            <label for="rg-ct"><span>Chương trình đang học <span class="req">*</span></span><select id="rg-ct" required><option value="">Chọn chương trình</option><option>Hình hoạ cơ bản</option><option>Luyện thi Khối H</option><option>Luyện thi Khối V</option><option>Ôn thi cấp tốc</option><option>Online</option></select></label>
+            <label for="rg-khoi"><span>Khối dự thi <span class="req">*</span></span><select id="rg-khoi" required><option value="">Chọn khối</option><option>Khối H</option><option>Khối V</option><option>Cả H và V</option><option>Chưa xác định</option></select></label>
+            <label for="rg-namthi"><span>Năm dự thi <span class="req">*</span></span><select id="rg-namthi" required><option value="">Chọn năm</option><option>2027</option><option>2028</option><option>2029</option><option>2030</option><option>Chưa xác định</option></select></label>
+            <label for="rg-mt">Trường hoặc ngành muốn vào<input id="rg-mt" maxlength="120" placeholder="VD: ĐH Kiến trúc HN, Thiết kế đồ hoạ"></label>
+          </div>
+          <label for="rg-gc">Ghi chú cho thầy<textarea id="rg-gc" maxlength="300"></textarea></label>
+        </fieldset>
+        <label class="check" for="rg-dy"><input id="rg-dy" type="checkbox" required> Em và phụ huynh đồng ý gửi thông tin này cho thầy để duyệt tài khoản. Thông tin chỉ thầy xem được.</label>
         <div><button class="btn primary" type="submit" id="rg-btn">Gửi yêu cầu duyệt</button> <span class="status" id="rg-status"></span></div>
       </form>
     </div>
@@ -349,14 +378,24 @@
       <h3 style="margin-block:6px 14px">3 bước</h3>
       <ol class="steps-plain">
         <li>Bấm <b>Đăng nhập bằng Google</b> và chọn Gmail em dùng để học.</li>
-        <li>Điền <b>Gửi yêu cầu duyệt</b>. Thầy sẽ thấy yêu cầu ngay trên web.</li>
+        <li>Điền đủ thông tin và bấm <b>Gửi yêu cầu duyệt</b>. Thầy nhận được qua email.</li>
         <li>Khi thầy duyệt, mở lại trang và vào <b>Giáo trình</b>, <b>Bài tập</b>.</li>
       </ol>
       <p class="note">Chưa là học viên của lớp? <a href="#dang-ky">Đăng ký học thử</a> trước nhé.</p>
     </div>
   </div>
 
-  <div class="teacher" data-teacher hidden>
+</main>
+
+<!-- ============ DUYỆT HỌC VIÊN (chỉ giáo viên) ============ -->
+<main class="wrap" id="v-duyet" hidden>
+  <div class="page-head">
+    <p class="eyebrow">Dành cho giáo viên</p>
+    <h1>Duyệt học viên</h1>
+    <p class="muted">Gmail học viên gửi yêu cầu sẽ hiện ở đây. Bấm Duyệt để mở Giáo trình và Bài tập cho Gmail đó.</p>
+  </div>
+  <div class="lock" id="duyet-lock"><h3>Trang dành cho giáo viên</h3><p class="muted">Đăng nhập bằng Gmail giáo viên để xem.</p><div class="ctas"><a class="btn primary" href="#tai-khoan">Đăng nhập</a></div></div>
+  <div class="teacher" data-teacher hidden id="duyet-body">
     <h3>Yêu cầu chờ duyệt <span class="chip" id="req-count"></span></h3>
     <div class="roster-wrap"><table class="roster" id="requests"></table></div>
 
@@ -374,11 +413,6 @@
       <div><button class="btn primary" type="submit">Duyệt Gmail này</button> <span class="status" id="hv-status"></span></div>
     </form>
 
-    <div id="seed-box" hidden style="margin-top:32px">
-      <h3>Giáo trình đang trống</h3>
-      <p class="muted" style="margin-block:6px 12px">Nạp 13 bài giáo trình có sẵn của lớp (lộ trình các khoá, quy trình hình hoạ, bố cục màu, Mỹ thuật 2).</p>
-      <button class="btn primary" id="btn-seed" type="button">Nạp giáo trình có sẵn</button> <span class="status" id="seed-status"></span>
-    </div>
   </div>
 </main>
 

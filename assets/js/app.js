@@ -2,7 +2,7 @@
 //  LOGIC CỦA WEB — thường không cần sửa file này.
 //  Nội dung (liên hệ, lịch thi, thời gian biểu, ảnh) nằm ở data/noi-dung.js
 // =====================================================================
-import { firebaseConfig, ADMIN_EMAIL } from "../../config/firebase-config.js?v=20261008c";
+import { firebaseConfig, ADMIN_EMAIL, EMAIL_NHAN_THONG_BAO } from "../../config/firebase-config.js?v=20261008c";
 import { LIEN_HE, NAM_THI, LICH_THI, BO_LOC_TRUONG, CA_HOC, THOI_GIAN_BIEU, BAI_VE } from "../../data/noi-dung.js?v=20261008c";
 import { GIAO_TRINH_MAU } from "../../data/giao-trinh-mau.js?v=20261008c";
 
@@ -34,7 +34,7 @@ function copyText(text, statusEl, okMsg, selectEl) {
 }
 
 /* ================= Điều hướng ================= */
-const PAGES = ["giao-trinh", "bai-tap", "tai-khoan"];
+const PAGES = ["giao-trinh", "bai-tap", "tai-khoan", "duyet"];
 function route() {
   const h = location.hash.replace("#", "");
   const page = PAGES.includes(h) ? h : "home";
@@ -196,8 +196,10 @@ function renderAccount(pending) {
   $("#btn-logout").hidden = !user;
   $("#btn-learn").hidden = !(user && approved);
   $$("[data-teacher]").forEach(el => el.hidden = !isTeacher);
+  $("#nav-duyet").hidden = !isTeacher;
+  $("#duyet-lock").hidden = isTeacher;
   const regOn = !!user && !approved && !isTeacher;
-  $$("#f-reg input, #f-reg select, #f-reg button").forEach(el => el.disabled = !regOn);
+  $$("#f-reg input, #f-reg select, #f-reg textarea, #f-reg button").forEach(el => el.disabled = !regOn);
   if (!configured) {
     $("#who-name").textContent = "Web chưa kết nối Firebase";
     $("#who-mail").textContent = "Làm theo HƯỚNG DẪN để dán cấu hình vào firebase-config.js.";
@@ -238,7 +240,7 @@ function renderLessons() {
   $("#gt-prog").style.width = total ? (n / total * 100) + "%" : "0";
   if (!cs.length) {
     $("#course-tabs").innerHTML = ""; $("#lesson-nav").innerHTML = "";
-    $("#lesson").innerHTML = `<p class="muted">Giáo trình chưa có bài nào.${isTeacher ? " Vào trang Tài khoản để nạp giáo trình có sẵn, hoặc thêm bài ở khung bên dưới." : ""}</p>`;
+    $("#lesson").innerHTML = `<p class="muted">Giáo trình chưa có bài nào.${isTeacher ? " Bấm “Nạp giáo trình có sẵn” ở khung bên dưới, hoặc tự thêm bài." : ""}</p>`;
     return;
   }
   if (!cs.includes(course)) course = cs[0];
@@ -298,16 +300,27 @@ function alertStatus(t) { const s = $("#login-status"); if (s) s.textContent = t
 /* ---------- Giáo viên: duyệt học viên ---------- */
 function fmtDate(t) { return t ? new Date(t).toLocaleDateString("vi-VN") : ""; }
 function renderRequests() {
-  $("#req-count").textContent = requests.length ? requests.length : "";
-  if (!requests.length) { $("#requests").innerHTML = `<tbody><tr><td class="muted">Không có yêu cầu nào đang chờ.</td></tr></tbody>`; return; }
-  $("#requests").innerHTML = `<thead><tr><th>Họ tên</th><th>Gmail</th><th>Lớp</th><th>Cơ sở</th><th>SĐT</th><th>Ngày gửi</th><th></th></tr></thead><tbody>` +
-    requests.map(r => `<tr><td>${esc(r.ten)}</td><td>${esc(r.gmail)}</td><td>${esc(r.lop)}</td><td>${esc(r.coso)}</td><td class="num">${esc(r.sdt)}</td>
-      <td class="num">${fmtDate(r.guiLuc)}</td><td style="white-space:nowrap"><button class="btn small primary" data-ok="${esc(r.id)}">Duyệt</button> <button class="btn small" data-no="${esc(r.id)}">Từ chối</button></td></tr>`).join("") + `</tbody>`;
+  const n = requests.length;
+  $("#req-count").textContent = n || "";
+  $("#nav-req").textContent = n; $("#nav-req").hidden = !n;
+  if (!n) { $("#requests").innerHTML = `<tbody><tr><td class="muted">Không có yêu cầu nào đang chờ.</td></tr></tbody>`; return; }
+  const v = x => esc(x || "—");
+  $("#requests").innerHTML = `<thead><tr><th>Học viên</th><th>Gmail</th><th>Trường · Lớp · Khu vực</th><th>Cơ sở · Chương trình</th><th>Mục tiêu</th><th>Điện thoại</th><th>Gửi lúc</th><th></th></tr></thead><tbody>` +
+    requests.map(r => `<tr>
+      <td><b>${v(r.ten)}</b><br><span class="muted num">Sinh năm ${v(r.namSinh)}</span>${r.ghiChu ? `<br><span class="muted">“${esc(r.ghiChu)}”</span>` : ""}</td>
+      <td>${v(r.gmail)}</td>
+      <td>${v(r.truong)}<br><span class="muted">${v(r.lopHoc)} · ${v(r.khuVuc)}</span></td>
+      <td>${v(r.coso)}<br><span class="muted">${v(r.chuongTrinh || r.lop)}</span></td>
+      <td>${v(r.khoi)} · <span class="num">${v(r.namThi)}</span><br><span class="muted">${v(r.mucTieu)}</span></td>
+      <td class="num">HV: ${v(r.sdt)}<br>PH: ${v(r.sdtPh)}</td>
+      <td class="num">${fmtDate(r.guiLuc)}</td>
+      <td style="white-space:nowrap"><button class="btn small primary" data-ok="${esc(r.id)}">Duyệt</button> <button class="btn small" data-no="${esc(r.id)}">Từ chối</button></td></tr>`).join("") + `</tbody>`;
   $$("#requests [data-ok]").forEach(b => b.onclick = async () => {
     const r = requests.find(x => x.id === b.dataset.ok); if (!r) return;
     b.disabled = true;
+    const { id, ...data } = r;
     const batch = writeBatch(db);
-    batch.set(doc(db, "hocvien", r.id), { ten: r.ten, gmail: r.gmail, lop: r.lop, coso: r.coso, sdt: r.sdt, duyetLuc: Date.now() });
+    batch.set(doc(db, "hocvien", r.id), { ...data, lop: r.chuongTrinh || r.lop || "", duyetLuc: Date.now() });
     batch.delete(doc(db, "yeucau", r.id));
     try { await batch.commit(); } catch (e) { b.disabled = false; b.textContent = "Lỗi, thử lại"; }
   });
@@ -316,10 +329,11 @@ function renderRequests() {
 function renderRoster() {
   if (!roster.length) { $("#roster").innerHTML = `<tbody><tr><td class="muted">Chưa có học viên nào được duyệt.</td></tr></tbody>`; return; }
   const total = lessons.length;
-  $("#roster").innerHTML = `<thead><tr><th>Họ tên</th><th>Gmail</th><th>Lớp</th><th>Cơ sở</th><th>Đã học</th><th>Ngày duyệt</th><th></th></tr></thead><tbody>` +
+  $("#roster").innerHTML = `<thead><tr><th>Họ tên</th><th>Gmail</th><th>Chương trình</th><th>Cơ sở</th><th>Điện thoại</th><th>Đã học</th><th>Ngày duyệt</th><th></th></tr></thead><tbody>` +
     roster.map(r => {
       const p = progressAll[r.id]; const n = p && p.bai ? lessons.filter(l => p.bai[l.id]).length : 0;
-      return `<tr><td>${esc(r.ten)}</td><td>${esc(r.gmail)}</td><td>${esc(r.lop)}</td><td>${esc(r.coso)}</td>
+      return `<tr><td>${esc(r.ten)}${r.namSinh ? `<br><span class="muted num">Sinh năm ${esc(r.namSinh)}</span>` : ""}</td><td>${esc(r.gmail)}</td><td>${esc(r.chuongTrinh || r.lop)}</td><td>${esc(r.coso)}</td>
+        <td class="num">${r.sdt ? "HV: " + esc(r.sdt) : ""}${r.sdtPh ? "<br>PH: " + esc(r.sdtPh) : ""}</td>
         <td class="num">${n}/${total}</td><td class="num">${fmtDate(r.duyetLuc)}</td>
         <td><button class="btn small" data-rm="${esc(r.id)}">Thu hồi</button></td></tr>`;
     }).join("") + `</tbody>`;
@@ -432,13 +446,47 @@ function submitTo(form, statusEl, busy, okMsg, write, keep) {
     catch (e) { statusEl.textContent = "Chưa lưu được. Kiểm tra quyền và mạng rồi thử lại."; }
   });
 }
-submitTo($("#f-reg"), $("#rg-status"), "Đang gửi…", "Đã gửi. Thầy sẽ duyệt sớm.", async () => {
-  await setDoc(doc(db, "yeucau", mail), {
-    gmail: mail, ten: $("#rg-ten").value.trim(), lop: $("#rg-lop").value, coso: $("#rg-cs").value,
-    sdt: $("#rg-sdt").value.trim(), guiLuc: Date.now()
-  });
+/* Đăng ký tài khoản học viên: lưu vào Firebase + gửi email báo cho thầy */
+const cleanPhone = x => String(x || "").replace(/[\s.\-]/g, "");
+const okPhone = x => /^(0|\+84)\d{9,10}$/.test(cleanPhone(x));
+$("#f-reg").addEventListener("submit", async ev => {
+  ev.preventDefault(); if (!db || !user) return;
+  const st = $("#rg-status"); const v = id => $(id).value.trim();
+  const nam = Number(v("#rg-nam"));
+  if (!okPhone(v("#rg-sdt")) || !okPhone(v("#rg-sdtph"))) { st.textContent = "Số điện thoại chưa đúng. Viết liền 10 số, bắt đầu bằng 0."; return; }
+  if (!(nam >= 2000 && nam <= 2022)) { st.textContent = "Năm sinh chưa đúng, ví dụ 2009."; return; }
+  const data = {
+    gmail: mail, ten: v("#rg-ten"), namSinh: nam, sdt: cleanPhone(v("#rg-sdt")), sdtPh: cleanPhone(v("#rg-sdtph")),
+    truong: v("#rg-truong"), lopHoc: v("#rg-lophoc"), khuVuc: v("#rg-kv"), coso: v("#rg-cs"),
+    chuongTrinh: v("#rg-ct"), khoi: v("#rg-khoi"), namThi: v("#rg-namthi"), mucTieu: v("#rg-mt"), ghiChu: v("#rg-gc"),
+    guiLuc: Date.now()
+  };
+  st.textContent = "Đang gửi…"; $("#rg-btn").disabled = true;
+  try { await setDoc(doc(db, "yeucau", mail), data); }
+  catch (e) { st.textContent = "Chưa gửi được. Kiểm tra mạng rồi thử lại."; $("#rg-btn").disabled = false; return; }
+  st.textContent = "Đã gửi. Thầy sẽ duyệt sớm, em mở lại trang sau khi được duyệt.";
+  $("#rg-btn").disabled = false;
   renderAccount(true);
-}, true);
+  guiEmailThongBao(data);
+});
+function guiEmailThongBao(d) {
+  if (!EMAIL_NHAN_THONG_BAO) return;
+  const link = location.origin + location.pathname + "#duyet";
+  fetch("https://formsubmit.co/ajax/" + EMAIL_NHAN_THONG_BAO, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "Accept": "application/json" },
+    body: JSON.stringify({
+      _subject: `Yêu cầu duyệt tài khoản: ${d.ten} (${d.chuongTrinh})`,
+      _template: "table", _captcha: "false",
+      "Họ tên": d.ten, "Năm sinh": d.namSinh, "Gmail": d.gmail,
+      "SĐT học viên": d.sdt, "SĐT phụ huynh": d.sdtPh,
+      "Trường": d.truong, "Lớp": d.lopHoc, "Khu vực": d.khuVuc,
+      "Cơ sở": d.coso, "Chương trình": d.chuongTrinh,
+      "Khối dự thi": d.khoi, "Năm dự thi": d.namThi, "Trường/ngành muốn vào": d.mucTieu || "",
+      "Ghi chú": d.ghiChu || "", "Duyệt tại": link
+    })
+  }).catch(() => {});
+}
 submitTo($("#f-bt"), $("#bt-status"), "Đang giao bài…", "Đã giao bài.", () => addDoc(collection(db, "baitap"), {
   ten: $("#bt-ten").value.trim(), khoa: $("#bt-khoa").value, han: $("#bt-han").value,
   lop: $("#bt-lop").value.trim(), mota: $("#bt-mota").value.trim(), taoLuc: Date.now()
@@ -450,7 +498,7 @@ submitTo($("#f-gt"), $("#gt-status"), "Đang thêm…", "Đã thêm vào giáo t
 }));
 submitTo($("#f-hv"), $("#hv-status"), "Đang duyệt…", "Đã duyệt. Học viên đăng nhập Gmail này là vào học được.", () => {
   const g = $("#hv-mail").value.trim().toLowerCase();
-  return setDoc(doc(db, "hocvien", g), { ten: $("#hv-ten").value.trim(), gmail: g, lop: $("#hv-lop").value.trim(), coso: $("#hv-cs").value, sdt: "", duyetLuc: Date.now() });
+  return setDoc(doc(db, "hocvien", g), { ten: $("#hv-ten").value.trim(), gmail: g, lop: $("#hv-lop").value.trim(), chuongTrinh: $("#hv-lop").value.trim(), coso: $("#hv-cs").value, sdt: "", duyetLuc: Date.now() });
 });
 
 /* ---------- Nạp giáo trình có sẵn ---------- */

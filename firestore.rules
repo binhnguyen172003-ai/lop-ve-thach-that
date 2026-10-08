@@ -44,9 +44,16 @@ service cloud.firestore {
       allow read: if isAdmin() || (signedIn() && myEmail() == mail);
       allow create, update: if signedIn() && myEmail() == mail
         && request.resource.data.gmail == mail
-        && request.resource.data.keys().hasOnly(['gmail', 'ten', 'lop', 'coso', 'sdt', 'guiLuc'])
-        && request.resource.data.ten is string && request.resource.data.ten.size() < 100
-        && request.resource.data.sdt is string && request.resource.data.sdt.size() < 30;
+        && request.resource.data.keys().hasOnly(['gmail', 'ten', 'namSinh', 'sdt', 'sdtPh', 'truong', 'lopHoc',
+             'khuVuc', 'coso', 'chuongTrinh', 'khoi', 'namThi', 'mucTieu', 'ghiChu', 'guiLuc'])
+        && request.resource.data.ten is string && request.resource.data.ten.size() > 0 && request.resource.data.ten.size() <= 80
+        && request.resource.data.sdt is string && request.resource.data.sdt.size() <= 15
+        && request.resource.data.sdtPh is string && request.resource.data.sdtPh.size() <= 15
+        && request.resource.data.namSinh is int
+        && request.resource.data.truong is string && request.resource.data.truong.size() <= 80
+        && request.resource.data.khuVuc is string && request.resource.data.khuVuc.size() <= 80
+        && request.resource.data.mucTieu is string && request.resource.data.mucTieu.size() <= 120
+        && request.resource.data.ghiChu is string && request.resource.data.ghiChu.size() <= 300;
       allow delete: if isAdmin();
     }
 

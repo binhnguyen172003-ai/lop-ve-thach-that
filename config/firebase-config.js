@@ -15,3 +15,8 @@ export const firebaseConfig = {
 
 // Gmail giáo viên quản lý web. Phải trùng với Gmail trong firestore.rules.
 export const ADMIN_EMAIL = "binhnguyen172003@gmail.com";
+
+// Email nhận thông báo khi học viên gửi yêu cầu duyệt tài khoản.
+// Lần đầu có yêu cầu, FormSubmit gửi một email xác nhận: bấm "Activate Form" một lần là xong.
+// Để trống "" nếu không muốn nhận email.
+export const EMAIL_NHAN_THONG_BAO = "binhnguyen172003@gmail.com";

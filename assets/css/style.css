@@ -231,3 +231,11 @@ footer{padding-block:32px;border-top:1px solid var(--rule);color:var(--graphite)
   .cd-lead,.scholar{grid-template-columns:1fr}
 }
 @media (prefers-reduced-motion:no-preference){ .btn,.tab,.social a{transition:background .15s,color .15s,border-color .15s} }
+
+/* Biểu mẫu đăng ký tài khoản */
+.fs{border:1px solid var(--rule);border-radius:var(--r);padding:16px;margin:0;display:grid;gap:14px;min-width:0}
+.fs legend{font-family:var(--f-display);font-weight:700;padding-inline:6px}
+.req{color:var(--warn)}
+.check{display:flex;gap:10px;align-items:flex-start;font-weight:500;font-size:.9rem}
+.check input{width:20px;height:20px;min-height:0;margin-top:2px;flex:none}
+#nav-req{margin-left:2px}
