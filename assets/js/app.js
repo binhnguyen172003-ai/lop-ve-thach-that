@@ -176,13 +176,24 @@ function renderExams() {
   }
   // Điện thoại: chỉ hiện 3 kỳ thi gần nhất, bấm để xem cả lịch
   const gan = new Set(shown.filter(e => e.n >= 0).sort((a, b) => a.n - b.n).slice(0, 3));
+  // Sơ đồ cây: thân là dòng thời gian, mỗi tháng một mốc, mỗi ngày thi một nhánh, các trường là lá
+  const MA = { XD: "HUCE", QG: "SIS", SP: "NUAE", MTCN: "MTCN", HAU: "HAU" };
+  const mau = t => t === "THPT" ? "#8a919c" : (TRUONG[MA[t]] || {}).mau || "#5b6068";
+  let side = 0;
+  $("#months").className = "months tl" + ($("#months").classList.contains("gon") ? " gon" : "");
   $("#months").innerHTML = Object.keys(MONTH).map(m => {
     const evs = shown.filter(e => e.ngay.slice(5, 7) === m);
-    return `<div class="month${evs.some(e => gan.has(e)) ? "" : " xa"}"><h3>${MONTH[m]}</h3>${evs.length ? evs.map(e =>
-      `<div class="ev ${e.n < 0 ? "past" : ""}${gan.has(e) ? "" : " xa"}"><span class="d">${esc(e.hien)}</span>
-        <span class="s">${esc(e.truong)} ${e.t === "THPT" ? '<span class="chip line">Văn hoá</span>' : `<span class="chip">${esc(e.dot)}</span>`}</span>
-        <span class="left num">${e.n < 0 ? "Đã thi" : "Còn " + e.n + " ngày"}</span></div>`).join("")
-      : `<p class="muted" style="padding-block:12px">Không có lịch thi</p>`}</div>`;
+    if (!evs.length) return "";
+    const ngays = [...new Set(evs.map(e => e.ngay))].sort();
+    return `<div class="tl-m${evs.some(e => gan.has(e)) ? "" : " xa"}"><span>${MONTH[m]}</span></div>` + ngays.map(ng => {
+      const g = evs.filter(e => e.ngay === ng), e0 = g[0], qua = e0.n < 0;
+      return `<div class="tl-n ${side++ % 2 ? "R" : "L"}${qua ? " past" : ""}${g.some(e => gan.has(e)) ? "" : " xa"}">
+        <i class="tl-dot" style="--c:${mau(e0.t)}"></i>
+        <div class="tl-card">
+          <div class="tl-d"><b class="num">${esc(e0.hien)}</b><span class="num">${qua ? "Đã thi" : "Còn " + e0.n + " ngày"}</span></div>
+          <ul>${g.map(e => `<li style="--c:${mau(e.t)}"><i>${esc(e.t === "THPT" ? "THPT" : MA[e.t] || e.t)}</i><span>${esc(e.truong)}<em>${esc(e.dot)}</em></span></li>`).join("")}</ul>
+        </div></div>`;
+    }).join("");
   }).join("");
   const con = shown.length - gan.size;
   let more = $("#months-more");
