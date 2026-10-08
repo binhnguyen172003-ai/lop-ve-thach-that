@@ -9,12 +9,12 @@ import { GIAO_TRINH_MAU } from "../../data/giao-trinh-mau.js?v=20261008c";
 // Firebase được tải riêng, để phần giới thiệu vẫn chạy kể cả khi mạng chậm hoặc chưa cấu hình.
 const FB = "https://www.gstatic.com/firebasejs/10.12.2/";
 let initializeApp, getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut;
-let getFirestore, collection, doc, getDoc, setDoc, addDoc, deleteDoc, writeBatch, onSnapshot, query, orderBy;
+let getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager, collection, doc, getDoc, setDoc, addDoc, deleteDoc, writeBatch, onSnapshot, query, orderBy;
 async function loadFirebase() {
   const [a, au, fs] = await Promise.all([import(FB + "firebase-app.js"), import(FB + "firebase-auth.js"), import(FB + "firebase-firestore.js")]);
   ({ initializeApp } = a);
   ({ getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut } = au);
-  ({ getFirestore, collection, doc, getDoc, setDoc, addDoc, deleteDoc, writeBatch, onSnapshot, query, orderBy } = fs);
+  ({ getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager, collection, doc, getDoc, setDoc, addDoc, deleteDoc, writeBatch, onSnapshot, query, orderBy } = fs);
 }
 
 const $ = s => document.querySelector(s);
@@ -444,11 +444,16 @@ async function onUser(u) {
   if (!u) { renderLocks("out"); renderAccount(false); return; }
   renderLocks("checking");
   const exists = async (col) => { try { return (await getDoc(doc(db, col, mail))).exists(); } catch (e) { return false; } };
-  isAdmin = mail === ADMIN_EMAIL.toLowerCase() || await exists("admins");
-  isTeacher = isAdmin || await exists("giaovien");
-  if (!isTeacher) approved = await exists("hocvien");
-  let pending = false;
-  if (!isTeacher && !approved) { try { const r = await getDoc(doc(db, "yeucau", mail)); if (r.exists()) pending = r.data(); } catch (e) {} }
+  // Hỏi cả 4 thông tin cùng lúc thay vì lần lượt, để trang hiện nhanh hơn.
+  const getData = async (col) => { try { const d = await getDoc(doc(db, col, mail)); return d.exists() ? (d.data() || {}) : null; } catch (e) { return null; } };
+  const [isAdm, gvDoc, hvDoc, ycDoc] = await Promise.all([
+    mail === ADMIN_EMAIL.toLowerCase() ? true : exists("admins"),
+    getData("giaovien"), getData("hocvien"), getData("yeucau")
+  ]);
+  isAdmin = !!isAdm;
+  isTeacher = isAdmin || !!gvDoc;
+  approved = !isTeacher && !!hvDoc;
+  const pending = !isTeacher && !approved && ycDoc ? ycDoc : false;
   const canLearn = isTeacher || approved;
   renderLocks(canLearn ? "ok" : "pending");
   renderAccount(pending);
@@ -509,7 +514,9 @@ async function startFirebase() {
     await loadFirebase();
     app = initializeApp(firebaseConfig);
     auth = getAuth(app);
-    db = getFirestore(app);
+    // Lưu dữ liệu trên máy: lần sau mở trang hiện ngay, không phải chờ tải lại.
+    try { db = initializeFirestore(app, { localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }) }); }
+    catch (e) { db = getFirestore(app); }
   } catch (e) {
     $$("[data-lock]").forEach(el => { el.hidden = false; el.innerHTML = `<h3>Chưa kết nối được máy chủ</h3><p class="muted">Kiểm tra mạng rồi tải lại trang.</p>`; });
     return;
