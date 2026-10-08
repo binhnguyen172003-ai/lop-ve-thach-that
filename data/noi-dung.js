@@ -84,6 +84,12 @@ export const THOI_GIAN_BIEU = {
 // Ví dụ:
 //   { anh: "assets/img/bai-ve/an-chan-dung.jpg", loai: "Hình hoạ người", hocVien: "Nguyễn Văn An", moTa: "Chân dung · 3 giờ" },
 export const BAI_VE = [
+  { anh: "assets/img/bai-ve/khang-mau.webp", loai: "Màu", hocVien: "Khang", moTa: "Bố cục màu" },
+  { anh: "assets/img/bai-ve/linh-mau.webp", loai: "Màu", hocVien: "Linh", moTa: "Bố cục màu" },
+  { anh: "assets/img/bai-ve/bao-tuong.webp", loai: "Tượng", hocVien: "Bảo", moTa: "Hình hoạ tượng cơ bản" },
+  { anh: "assets/img/bai-ve/bao-sac-do.webp", loai: "Mỹ thuật 2", hocVien: "Bảo", moTa: "Bố cục sắc độ" },
+  { anh: "assets/img/bai-ve/thuy-chan-dung.webp", loai: "Hình hoạ người", hocVien: "Thùy", moTa: "Chân dung" },
+  { anh: "assets/img/bai-ve/nam-sac-do.webp", loai: "Mỹ thuật 2", hocVien: "Nam", moTa: "Bố cục sắc độ" },
 ];
 
 
@@ -179,7 +185,7 @@ export const GIAO_VIEN = [
   { ten: "Cấn Hải An", vaiTro: "Giảng viên", khoi: "Khối V", truong: "HAU", nganh: "Sinh viên Kiến trúc · kiểm soát chất lượng giảng dạy", anh: "can-hai-an" },
   { ten: "Đỗ Hữu Trường", vaiTro: "Trợ giảng", khoi: "Khối V", truong: "HAU", nganh: "Sinh viên Kiến trúc, học viên Dreamers khoá 2026 · tượng, Mỹ thuật 2", anh: "do-huu-truong" },
   { ten: "Bùi Anh Đức", vaiTro: "Trợ giảng", khoi: "Khối H", truong: "MTCN", nganh: "Sinh viên Mỹ thuật Công nghiệp · chân dung và người cơ bản", anh: "bui-anh-duc" },
-  { ten: "Kiều Huyền Linh", vaiTro: "Trợ giảng", khoi: "Khối H", truong: "NUAE", nganh: "Sinh viên Sư phạm Mỹ thuật · màu cơ bản", anh: "kieu-huyen-linh" },
+  { ten: "Kiều Huyền Linh", vaiTro: "Trợ giảng", khoi: "Khối H", truong: "NUAE", nganh: "Sinh viên Sư phạm Mỹ thuật · màu cơ bản", anh: "kieu-huyen-linh", bai: "assets/img/bai-ve/huyen-linh-mau.webp" },
   { ten: "Nguyễn Duy Cường", vaiTro: "Trợ giảng", khoi: "Khối V", truong: "HAU", nganh: "Sinh viên Kiến trúc · tượng, Mỹ thuật 2", anh: "nguyen-duy-cuong" },
   { ten: "Nguyễn Ngân Thương", vaiTro: "Trợ giảng", khoi: "Khối V", truong: "HUCE", nganh: "Sinh viên Kiến trúc · tượng, tĩnh vật", anh: "nguyen-ngan-thuong" },
   { ten: "Châu", vaiTro: "Trợ giảng", khoi: "Khối H", truong: "MTCN", nganh: "Chân dung và người cơ bản" },
@@ -195,5 +201,7 @@ export const VIDEO_BIA = "";
 // ky: "tuan" | "thang" | "nam" · hang: 1, 2, 3… · anh: đường dẫn ảnh · hocVien: tên · loai: phần học · ghiChu: lời khen ngắn
 // Mục nào chưa có bài, web tạm hiện bài mẫu của đội ngũ giáo viên.
 export const BAI_NOI_BAT = [
+  { ky: "tuan", anh: "assets/img/bai-ve/khang-mau.webp", hocVien: "Khang", loai: "Màu" },
+  { ky: "tuan", anh: "assets/img/bai-ve/linh-mau.webp", hocVien: "Linh", loai: "Màu" },
   // { ky: "tuan", hang: 1, anh: "assets/img/noi-bat/tuan-1.jpg", hocVien: "Nguyễn Văn A", loai: "Hình hoạ tượng", ghiChu: "Khối rõ, sáng tối đẹp" },
 ];
