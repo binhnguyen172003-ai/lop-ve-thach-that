@@ -354,16 +354,32 @@
     </div>
     <p class="status" id="login-status"></p>
     <div class="pw-box" id="pw-box" hidden>
-      <form id="f-pw" novalidate>
-        <label for="pw-mail">Gmail của em<input id="pw-mail" type="email" inputmode="email" autocomplete="username" autocapitalize="off" spellcheck="false" maxlength="100" placeholder="VD: tenem@gmail.com"></label>
-        <label for="pw-pass">Mật khẩu (ít nhất 6 ký tự)<span class="pw-row"><input id="pw-pass" type="password" autocomplete="current-password" maxlength="60"><button type="button" class="btn small" id="pw-show">Hiện</button></span></label>
-        <div class="ctas" style="margin-top:4px">
-          <button class="btn primary big" type="submit" id="pw-in">Đăng nhập</button>
-          <button class="btn big" type="button" id="pw-new">Tạo tài khoản mới</button>
-        </div>
-        <button class="linkish" type="button" id="pw-forgot">Quên mật khẩu?</button>
+      <div class="pw-tabs" role="tablist">
+        <button class="tab" type="button" role="tab" id="tab-new" aria-selected="true">Lần đầu: Tạo tài khoản</button>
+        <button class="tab" type="button" role="tab" id="tab-in" aria-selected="false">Đã có tài khoản: Đăng nhập</button>
+      </div>
+
+      <!-- TẠO TÀI KHOẢN MỚI -->
+      <form id="f-new" novalidate>
+        <p class="muted pw-hint">Chỉ làm <b>1 lần</b>. Dùng Gmail thật của em (hoặc của bố mẹ) vì thầy sẽ gửi thư xác nhận vào đó.</p>
+        <label for="nw-ten">Họ và tên học sinh<input id="nw-ten" maxlength="80" autocomplete="name" placeholder="VD: Nguyễn Văn An"></label>
+        <label for="nw-mail">Gmail<input id="nw-mail" type="email" inputmode="email" autocomplete="email" autocapitalize="off" spellcheck="false" maxlength="100" placeholder="VD: tenem@gmail.com"></label>
+        <label for="nw-pass">Tự đặt mật khẩu (ít nhất 6 ký tự)<span class="pw-row"><input id="nw-pass" type="password" autocomplete="new-password" maxlength="60"><button type="button" class="btn small" id="nw-show">Hiện</button></span></label>
+        <label for="nw-pass2">Nhập lại mật khẩu<input id="nw-pass2" type="password" autocomplete="new-password" maxlength="60"></label>
+        <p class="muted pw-hint">Ghi mật khẩu ra vở để lần sau không quên.</p>
+        <div><button class="btn primary big" type="submit" id="nw-btn">Tạo tài khoản</button></div>
+        <p class="status" id="nw-status"></p>
+        <button class="btn small" type="button" id="nw-setpass" hidden>Gửi thư đặt mật khẩu cho Gmail này</button>
+        <p class="muted pw-hint"><b>Sau khi bấm Tạo tài khoản:</b> mở Gmail → bấm link xác nhận trong thư → quay lại đây điền thông tin gửi thầy.</p>
+      </form>
+
+      <!-- ĐĂNG NHẬP -->
+      <form id="f-pw" novalidate hidden>
+        <label for="pw-mail">Gmail<input id="pw-mail" type="email" inputmode="email" autocomplete="username" autocapitalize="off" spellcheck="false" maxlength="100" placeholder="VD: tenem@gmail.com"></label>
+        <label for="pw-pass">Mật khẩu<span class="pw-row"><input id="pw-pass" type="password" autocomplete="current-password" maxlength="60"><button type="button" class="btn small" id="pw-show">Hiện</button></span></label>
+        <div><button class="btn primary big" type="submit" id="pw-in">Đăng nhập</button></div>
         <p class="status" id="pw-status"></p>
-        <p class="muted pw-hint"><b>Lần đầu vào:</b> gõ Gmail, tự đặt mật khẩu, bấm <b>Tạo tài khoản mới</b>.<br><b>Lần sau:</b> gõ lại đúng Gmail và mật khẩu đó, bấm <b>Đăng nhập</b>.</p>
+        <button class="linkish" type="button" id="pw-forgot">Quên mật khẩu?</button>
       </form>
     </div>
   </div>
@@ -431,7 +447,8 @@
   </div>
   <div class="lock" id="duyet-lock"><h3>Trang dành cho quản lý</h3><p class="muted">Chỉ Gmail quản lý lớp mới mở được trang này.</p><div class="ctas"><a class="btn primary" href="#tai-khoan">Đăng nhập</a></div></div>
   <div class="teacher" data-admin hidden id="duyet-body">
-    <h3>Yêu cầu chờ duyệt <span class="chip" id="req-count"></span></h3>
+    <p class="sv-status" id="sv-status"></p>
+    <h3>Yêu cầu chờ duyệt <span class="chip" id="req-count" hidden></span></h3>
     <div class="req-list" id="requests"></div>
 
     <h3 style="margin-top:32px">Học viên đã duyệt</h3>

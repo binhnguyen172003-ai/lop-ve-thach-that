@@ -9,13 +9,13 @@ import { GIAO_TRINH_MAU } from "../../data/giao-trinh-mau.js?v=20261008c";
 // Firebase được tải riêng, để phần giới thiệu vẫn chạy kể cả khi mạng chậm hoặc chưa cấu hình.
 const FB = "https://www.gstatic.com/firebasejs/10.12.2/";
 let initializeApp, getAuth, onAuthStateChanged, signOut;
-let createUserWithEmailAndPassword, signInWithEmailAndPassword, sendEmailVerification, sendPasswordResetEmail;
+let createUserWithEmailAndPassword, signInWithEmailAndPassword, sendEmailVerification, sendPasswordResetEmail, updateProfile;
 let getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager, collection, doc, getDoc, setDoc, addDoc, deleteDoc, writeBatch, onSnapshot, query, orderBy;
 async function loadFirebase() {
   const [a, au, fs] = await Promise.all([import(FB + "firebase-app.js"), import(FB + "firebase-auth.js"), import(FB + "firebase-firestore.js")]);
   ({ initializeApp } = a);
   ({ getAuth, onAuthStateChanged, signOut,
-     createUserWithEmailAndPassword, signInWithEmailAndPassword, sendEmailVerification, sendPasswordResetEmail } = au);
+     createUserWithEmailAndPassword, signInWithEmailAndPassword, sendEmailVerification, sendPasswordResetEmail, updateProfile } = au);
   ({ getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager, collection, doc, getDoc, setDoc, addDoc, deleteDoc, writeBatch, onSnapshot, query, orderBy } = fs);
 }
 
@@ -346,8 +346,8 @@ function renderAccount(pending) {
     $("#who-status").innerHTML = ""; setStep(1); return;
   }
   if (!user) {
-    $("#who-name").textContent = "Bước 1: Đăng nhập";
-    $("#who-mail").textContent = "Dùng Gmail của em (hoặc của bố mẹ). Lần sau vào học cũng dùng đúng Gmail và mật khẩu này.";
+    $("#who-name").textContent = "Bước 1: Tạo tài khoản hoặc đăng nhập";
+    $("#who-mail").textContent = "Dùng Gmail của em (hoặc của bố mẹ). Chưa có tài khoản thì chọn “Lần đầu: Tạo tài khoản”.";
     $("#who-status").innerHTML = ""; $("#who-avatar").hidden = true;
     $("#nav-acct").textContent = "Đăng nhập";
     setStep(1); return;
@@ -499,11 +499,45 @@ function toggleProgress(kind, id) {
 }
 function alertStatus(t) { toast(t, "err"); }
 
+/* ---------- Quản lý: tự kiểm tra luật bảo mật trên Firebase có đúng bản mới không ---------- */
+let svChecked = false;
+async function checkRules() {
+  const box = $("#sv-status"); if (!box) return;
+  box.className = "sv-status"; box.textContent = "Đang kiểm tra máy chủ…";
+  const ref = doc(db, "yeucau", mail);
+  const mau = { vaiTro: "hocvien", gmail: mail, ten: "Phiếu thử", namSinh: 2010, sdt: "", sdtPh: "0900000000", truong: "", lopHoc: "",
+    khuVuc: "", coso: "Bình Phú", chuongTrinh: "Vẽ cơ bản", khoi: "", namThi: "", mucTieu: "", ghiChu: "", guiLuc: Date.now() };
+  try {
+    await setDoc(ref, mau); await deleteDoc(ref);
+    box.className = "sv-status ok"; box.textContent = "✓ Máy chủ hoạt động tốt: học viên gửi phiếu sẽ hiện ngay ở đây.";
+  } catch (e) {
+    const code = (e && e.code) || "";
+    box.className = "sv-status bad";
+    box.innerHTML = code === "permission-denied"
+      ? `<b>⚠ Luật bảo mật trên Firebase đang là bản CŨ</b>, nên phiếu học viên gửi bị máy chủ chặn (thầy vẫn nhận email nhưng danh sách trống).
+         <ol><li>Bấm <b>Sao chép luật mới</b>.</li><li>Bấm <b>Mở trang dán luật</b> → xoá hết chữ cũ trong khung → dán vào → bấm <b>Publish</b>.</li><li>Quay lại đây, bấm <b>Kiểm tra lại</b>.</li></ol>
+         <div class="ctas" style="margin-top:8px"><button class="btn primary small" type="button" id="sv-copy">Sao chép luật mới</button>
+         <a class="btn small" target="_blank" rel="noopener" href="https://console.firebase.google.com/project/${esc(firebaseConfig.projectId)}/firestore/databases/-default-/rules">Mở trang dán luật</a>
+         <button class="btn small" type="button" id="sv-retry">Kiểm tra lại</button></div><span class="status" id="sv-copy-st"></span>`
+      : `<b>⚠ Chưa kết nối được máy chủ</b> (mã: ${esc(code || "không rõ")}). Kiểm tra mạng, hoặc xem Firestore Database đã được tạo chưa. <button class="btn small" type="button" id="sv-retry">Kiểm tra lại</button>`;
+    if ($("#sv-retry")) $("#sv-retry").onclick = checkRules;
+    if ($("#sv-copy")) {
+      const luat = fetch("firestore.rules?v=" + Date.now()).then(r => r.text()).catch(() => "");
+      $("#sv-copy").onclick = async () => {
+        const t = await luat; const st = $("#sv-copy-st");
+        if (!t) { st.textContent = "Chưa tải được luật. Thử lại."; return; }
+        try { await navigator.clipboard.writeText(t); st.textContent = "Đã sao chép. Giờ bấm Mở trang dán luật."; }
+        catch (err) { st.textContent = "Máy không cho sao chép tự động. Mở file firestore.rules trên GitHub để sao chép."; }
+      };
+    }
+  }
+}
+
 /* ---------- Giáo viên: duyệt học viên ---------- */
 function fmtDate(t) { return t ? new Date(t).toLocaleDateString("vi-VN") : ""; }
 function renderRequests() {
   const n = requests.length;
-  $("#req-count").textContent = n || "";
+  $("#req-count").textContent = n || ""; $("#req-count").hidden = !n;
   $("#nav-req").textContent = n; $("#nav-req").hidden = !n;
   if (!n) { $("#requests").innerHTML = `<p class="muted">Không có yêu cầu nào đang chờ.</p>`; return; }
   const v = x => esc(x || "—");
@@ -611,6 +645,7 @@ async function onUser(u) {
   }
   pendingReq = null;
   if (!u) { saveSession(null); renderLocks("out"); renderAccount(false); return; }
+  store.set("lvkv-gmail", mail); // lần sau mở máy này: Gmail điền sẵn ở mục Đăng nhập
   // Tạo tài khoản bằng mật khẩu: phải bấm link xác nhận trong Gmail trước (chống mạo danh Gmail người khác).
   if (!u.emailVerified) {
     needVerify = true; saveSession(null); renderLocks("pending"); renderAccount(false); watchVerify(); return;
@@ -638,7 +673,18 @@ async function onUser(u) {
   isAdmin = !!isAdm;
   isTeacher = isAdmin || !!gvDoc;
   approved = !isTeacher && !!hvDoc;
-  const pending = !isTeacher && !approved && ycDoc ? ycDoc : false;
+  let pending = !isTeacher && !approved && ycDoc ? ycDoc : false;
+  // Phiếu lần trước bị máy chủ từ chối: tự gửi lại khi học viên mở web.
+  const unsent = !isTeacher && !approved && !ycDoc ? store.get(UNSENT + mail, null) : null;
+  if (unsent) {
+    try {
+      await setDoc(doc(db, "yeucau", mail), { ...unsent, guiLuc: Date.now() });
+      store.set(UNSENT + mail, null); dropDraft("nhap-tk-" + mail);
+      pending = unsent; guiEmailThongBao(unsent, "Phiếu này trước đó chưa lưu được, nay đã tự gửi lại thành công.");
+      toast("Phiếu của em đã gửi được cho thầy.");
+    } catch (e) { /* vẫn lỗi: để lần sau thử tiếp */ }
+    if (mail !== (u.email || "").toLowerCase() || user !== u) return;
+  }
   const canLearn = isTeacher || approved;
   saveSession(pending);
   renderLocks(canLearn ? "ok" : "pending");
@@ -680,7 +726,8 @@ async function onUser(u) {
   }
   if (isAdmin) {
     listen(query(collection(db, "yeucau"), orderBy("guiLuc", "desc")), snap => {
-      requests = snap.docs.map(d => ({ id: d.id, ...d.data() })); renderRequests();
+      requests = snap.docs.filter(d => d.id !== mail).map(d => ({ id: d.id, ...d.data() })); renderRequests();
+      if (!svChecked) { svChecked = true; checkRules(); }
     });
     listen(query(collection(db, "giaovien"), orderBy("duyetLuc", "desc")), snap => {
       teachers = snap.docs.map(d => ({ id: d.id, ...d.data() })); renderTeachers();
@@ -726,8 +773,9 @@ async function startFirebase() {
   }
   onAuthStateChanged(auth, onUser);
   $("#btn-switch").onclick = async () => {
+    const prev = mail;
     await signOut(auth);
-    $("#pw-pass").value = ""; $("#pw-status").textContent = "";
+    $("#pw-mail").value = prev; $("#pw-pass").value = ""; $("#pw-status").textContent = ""; showTab("in");
     toast("Đã đăng xuất.");
   };
 }
@@ -740,10 +788,10 @@ function pwSay(t, err) { const st = $("#pw-status"); st.textContent = t; st.clas
 function pwError(e) {
   const c = (e && e.code) || "";
   return ({
-    "auth/invalid-credential": "Sai Gmail hoặc mật khẩu. Kiểm tra lại, hoặc bấm “Quên mật khẩu?”. Chưa từng tạo tài khoản thì bấm “Tạo tài khoản mới”. Trước đây vào bằng nút Google thì bấm “Quên mật khẩu?” để đặt mật khẩu.",
+    "auth/invalid-credential": "Sai Gmail hoặc mật khẩu. Kiểm tra lại từng chữ. Chưa có tài khoản thì bấm mục “Lần đầu: Tạo tài khoản” ở trên.",
     "auth/wrong-password": "Sai mật khẩu. Bấm “Quên mật khẩu?” để đặt lại.",
-    "auth/user-not-found": "Gmail này chưa có tài khoản. Bấm “Tạo tài khoản mới”.",
-    "auth/email-already-in-use": "Gmail này đã có tài khoản rồi. Bấm “Đăng nhập”. Quên mật khẩu (hoặc trước đây vào bằng nút Google) thì bấm “Quên mật khẩu?” để đặt mật khẩu mới.",
+    "auth/user-not-found": "Gmail này chưa có tài khoản. Bấm mục “Lần đầu: Tạo tài khoản” ở trên.",
+    "auth/email-already-in-use": "Gmail này đã có tài khoản rồi. Bấm mục “Đã có tài khoản: Đăng nhập”.",
     "auth/weak-password": "Mật khẩu quá ngắn. Dùng ít nhất 6 ký tự.",
     "auth/invalid-email": "Gmail viết chưa đúng. VD: tenem@gmail.com",
     "auth/too-many-requests": "Thử sai nhiều lần quá. Chờ vài phút rồi thử lại, hoặc bấm “Quên mật khẩu?”.",
@@ -777,16 +825,60 @@ $("#pw-show").onclick = () => {
 $("#f-pw").addEventListener("submit", ev => {
   ev.preventDefault(); const v = pwCheck(true); if (!v) return;
   pwSay("");
-  pwBusy($("#pw-in"), "Đang đăng nhập…", () => signInWithEmailAndPassword(auth, v.m, v.p));
+  pwBusy($("#pw-in"), "Đang đăng nhập…", async () => { await signInWithEmailAndPassword(auth, v.m, v.p); store.set(LAST_MAIL, v.m); });
 });
-$("#pw-new").onclick = () => {
-  const v = pwCheck(true); if (!v) return;
-  pwSay("");
-  pwBusy($("#pw-new"), "Đang tạo…", async () => {
-    const c = await createUserWithEmailAndPassword(auth, v.m, v.p);
-    await sendVerify(c.user);
-    toast("Đã tạo tài khoản. Mở Gmail để xác nhận nhé.");
-  });
+// Hai mục rõ ràng: "Lần đầu: Tạo tài khoản" và "Đã có tài khoản: Đăng nhập".
+const LAST_MAIL = "lvkv-gmail";
+function showTab(which) {
+  const isNew = which === "new";
+  $("#tab-new").setAttribute("aria-selected", isNew); $("#tab-in").setAttribute("aria-selected", !isNew);
+  $("#f-new").hidden = !isNew; $("#f-pw").hidden = isNew;
+}
+$("#tab-new").onclick = () => showTab("new");
+$("#tab-in").onclick = () => { showTab("in"); if (!$("#pw-mail").value && $("#nw-mail").value) $("#pw-mail").value = $("#nw-mail").value.trim(); };
+// Máy này từng đăng nhập: mở sẵn mục Đăng nhập và điền sẵn Gmail.
+const lastMail = store.get(LAST_MAIL, "");
+if (lastMail) { $("#pw-mail").value = lastMail; showTab("in"); } else showTab("new");
+
+function nwSay(t, err) { const st = $("#nw-status"); st.textContent = t; st.classList.toggle("err", !!err); }
+$("#nw-show").onclick = () => {
+  const show = $("#nw-pass").type === "password";
+  ["#nw-pass", "#nw-pass2"].forEach(id => $(id).type = show ? "text" : "password");
+  $("#nw-show").textContent = show ? "Ẩn" : "Hiện";
+};
+$("#f-new").addEventListener("submit", ev => {
+  ev.preventDefault();
+  const ten = $("#nw-ten").value.trim(), m = $("#nw-mail").value.trim().toLowerCase(), p1 = $("#nw-pass").value, p2 = $("#nw-pass2").value;
+  $("#nw-setpass").hidden = true;
+  if (!ten) { nwSay("Gõ họ và tên trước nhé.", true); $("#nw-ten").focus(); return; }
+  if (!okMail(m)) { nwSay("Gmail viết chưa đúng. VD: tenem@gmail.com", true); $("#nw-mail").focus(); return; }
+  if (p1.length < 6) { nwSay("Mật khẩu cần ít nhất 6 ký tự.", true); $("#nw-pass").focus(); return; }
+  if (p1 !== p2) { nwSay("Hai lần mật khẩu chưa giống nhau. Gõ lại ô Nhập lại mật khẩu.", true); $("#nw-pass2").focus(); return; }
+  nwSay("");
+  pwBusy($("#nw-btn"), "Đang tạo tài khoản…", async () => {
+    try {
+      const c = await createUserWithEmailAndPassword(auth, m, p1);
+      store.set(LAST_MAIL, m);
+      store.set("nhap-tk-" + m, { "rg-ten": ten });
+      try { await updateProfile(c.user, { displayName: ten }); $("#who-name").textContent = ten; } catch (e) {}
+      await sendVerify(c.user);
+      $("#nw-pass").value = ""; $("#nw-pass2").value = "";
+      toast("Đã tạo tài khoản! Mở Gmail để xác nhận nhé.");
+    } catch (e) {
+      if (e && e.code === "auth/email-already-in-use") {
+        nwSay("Gmail này đã có tài khoản rồi. Nếu em nhớ mật khẩu, bấm mục “Đã có tài khoản: Đăng nhập”. Nếu chưa từng đặt mật khẩu (trước đây vào bằng nút Google), bấm nút bên dưới để đặt mật khẩu.", true);
+        $("#nw-setpass").hidden = false; $("#pw-mail").value = m;
+      } else nwSay(pwError(e), true);
+    }
+  }, nwSay);
+});
+$("#nw-setpass").onclick = () => {
+  const m = $("#nw-mail").value.trim().toLowerCase();
+  pwBusy($("#nw-setpass"), "Đang gửi…", async () => {
+    await sendPasswordResetEmail(auth, m);
+    $("#nw-setpass").hidden = true;
+    nwSay(`Đã gửi thư vào ${m}. Mở Gmail (xem cả Thư rác), bấm link trong thư để đặt mật khẩu, rồi quay lại mục “Đăng nhập”.`);
+  }, nwSay);
 };
 $("#pw-forgot").onclick = () => {
   const v = pwCheck(false); if (!v) return;
@@ -867,17 +959,33 @@ $("#f-reg").addEventListener("submit", async ev => {
     };
   st.textContent = "";
   editingReq = false;
-  renderAccount(data); saveSession(data); dropDraft("nhap-tk-" + mail);
-  timed("Gửi đăng ký", setDoc(doc(db, "yeucau", mail), data)).catch(() => {
-    editingReq = true; renderAccount(false);
-    st.textContent = "Chưa gửi được. Kiểm tra mạng rồi bấm gửi lại."; st.classList.add("err");
-  });
+  renderAccount(data); saveSession(data);
   window.scrollTo({ top: 0, behavior: "smooth" });
-  toast("Đã gửi cho thầy. Thầy duyệt xong, trang tự mở khoá.");
-  // Bấm gửi nhiều lần (hoặc sửa mà không đổi gì) thì không gửi email trùng cho thầy.
-  const sig = JSON.stringify({ ...data, guiLuc: 0 });
-  if (sig !== regSent) { regSent = sig; guiEmailThongBao(data); }
+  const forMail = mail;
+  const t = performance.now();
+  setDoc(doc(db, "yeucau", mail), data).then(() => {
+    mark("✓ Gửi đăng ký", t);
+    dropDraft("nhap-tk-" + forMail); store.set(UNSENT + forMail, null);
+    toast("Đã gửi cho thầy. Thầy duyệt xong, trang tự mở khoá.");
+    // Bấm gửi nhiều lần (hoặc sửa mà không đổi gì) thì không gửi email trùng cho thầy.
+    const sig = JSON.stringify({ ...data, guiLuc: 0 });
+    if (sig !== regSent) { regSent = sig; guiEmailThongBao(data); }
+  }, e => {
+    mark("✗ LỖI Gửi đăng ký: " + (e && e.code), t);
+    if (mail !== forMail) return;
+    editingReq = true; renderAccount(false);
+    store.set(UNSENT + forMail, data); store.set("nhap-tk-" + forMail, formValues($("#f-reg")));
+    const code = (e && e.code) || "loi";
+    st.classList.add("err");
+    if (code === "permission-denied" || code === "failed-precondition" || code === "not-found") {
+      st.textContent = "Máy chủ của lớp đang chưa nhận phiếu (lỗi cài đặt phía thầy, không phải lỗi của em). Thầy đã được báo qua email. Lần sau em mở lại trang này, phiếu sẽ tự gửi lại.";
+      guiEmailThongBao(data, "PHIẾU CHƯA LƯU ĐƯỢC LÊN WEB (mã lỗi: " + code + "). Thầy mở trang Duyệt học viên để xem cách sửa.");
+    } else {
+      st.textContent = "Mạng yếu nên chưa gửi được. Kiểm tra wifi/4G rồi bấm Gửi lại (chữ em đã điền vẫn còn).";
+    }
+  });
 });
+const UNSENT = "phieu-chua-gui-";
 
 // Đổi vai trò trên biểu mẫu: giáo viên không cần điền thông tin học tập.
 function applyRoleFields() {
@@ -919,14 +1027,14 @@ $("#btn-check").onclick = async () => {
   if (!approved && !isTeacher) toast("Thầy chưa duyệt. Khi thầy duyệt, trang này tự mở khoá, em không cần bấm lại.");
 };
 
-function guiEmailThongBao(d) {
+function guiEmailThongBao(d, canhBao) {
   if (!EMAIL_NHAN_THONG_BAO) return;
   const link = location.origin + location.pathname + "#duyet";
   fetch("https://formsubmit.co/ajax/" + EMAIL_NHAN_THONG_BAO, {
     method: "POST",
     headers: { "Content-Type": "application/json", "Accept": "application/json" },
     body: JSON.stringify({
-      _subject: `Yêu cầu duyệt ${d.vaiTro === "giaovien" ? "GIÁO VIÊN" : "học viên"}: ${d.ten}${d.chuongTrinh ? " (" + d.chuongTrinh + ")" : ""}`,
+      _subject: `${canhBao && canhBao.startsWith("PHIẾU CHƯA") ? "[CHƯA LƯU ĐƯỢC] " : ""}Yêu cầu duyệt ${d.vaiTro === "giaovien" ? "GIÁO VIÊN" : "học viên"}: ${d.ten}${d.chuongTrinh ? " (" + d.chuongTrinh + ")" : ""}`,
       _template: "table", _captcha: "false",
       "Vai trò": d.vaiTro === "giaovien" ? "Giáo viên" : "Học viên",
       "Họ tên": d.ten, "Năm sinh": d.namSinh || "", "Gmail": d.gmail,
@@ -934,7 +1042,7 @@ function guiEmailThongBao(d) {
       "Trường": d.truong || "", "Lớp": d.lopHoc || "", "Khu vực": d.khuVuc || "",
       "Cơ sở": d.coso, "Chương trình": d.chuongTrinh || "",
       "Khối dự thi": d.khoi || "", "Năm dự thi": d.namThi || "", "Trường/ngành muốn vào": d.mucTieu || "",
-      "Ghi chú": d.ghiChu || "", "Duyệt tại": link
+      "Ghi chú": d.ghiChu || "", "Duyệt tại": link, ...(canhBao ? { "⚠ Lưu ý": canhBao } : {})
     })
   }).catch(() => {});
 }

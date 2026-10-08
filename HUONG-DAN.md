@@ -65,7 +65,9 @@ Bỏ qua bước này, link xác nhận Gmail sẽ không quay về đúng web.
 
 ## Bước 8. Kiểm tra và nạp giáo trình
 
-1. Mở web, vào **Đăng nhập** → gõ Gmail của anh → bấm **Quên mật khẩu?** (nếu trước đây anh đã vào bằng nút Google) hoặc **Tạo tài khoản mới** → làm theo thư trong Gmail để đặt mật khẩu / xác nhận → quay lại đăng nhập.
+1. Mở web, vào **Đăng nhập** → mục **Lần đầu: Tạo tài khoản** → điền họ tên, Gmail của anh, mật khẩu → **Tạo tài khoản** → bấm link xác nhận trong Gmail.
+   (Nếu báo "Gmail này đã có tài khoản" vì trước đây anh vào bằng nút Google: bấm nút **Gửi thư đặt mật khẩu cho Gmail này** ngay bên dưới, đặt mật khẩu trong thư, rồi vào mục **Đăng nhập**.)
+2. Vào trang **Duyệt học viên**: dòng trên cùng phải báo **✓ Máy chủ hoạt động tốt**. Nếu hiện khung cam "luật bảo mật bản CŨ", bấm theo 3 bước trong khung.
 2. Trang hiện nhãn **Giáo viên**. Kéo xuống cuối, bấm **Nạp giáo trình có sẵn** để đưa 13 bài vào.
 3. Thử bằng một Gmail khác (hoặc nhờ một học viên): đăng nhập → gửi yêu cầu duyệt. Yêu cầu hiện ở bảng **Yêu cầu chờ duyệt** của anh → bấm **Duyệt**. Màn hình học viên tự mở khoá, không cần tải lại.
 

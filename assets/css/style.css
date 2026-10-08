@@ -324,3 +324,11 @@ a,button,.btn,.tab,summary,label{touch-action:manipulation;-webkit-tap-highlight
 .linkish{background:none;border:0;padding:8px 0;min-height:40px;font:600 .9rem var(--f-body);color:var(--accent);text-decoration:underline;cursor:pointer;justify-self:start}
 .mini-steps{margin:12px 0 4px;padding-left:20px;display:grid;gap:4px}
 .pw-box{margin-top:0;border-top:0;padding-top:0}.pw-hint{font-size:.9rem;line-height:1.5}
+/* Tình trạng máy chủ ở trang Duyệt */
+.sv-status{margin:0 0 20px;padding:12px 14px;border-radius:8px;background:var(--paper);font-size:.93rem;line-height:1.5}
+.sv-status:empty{display:none}
+.sv-status.ok{background:var(--ok-soft);color:var(--ok);font-weight:600}
+.sv-status.bad{background:#fdf0e1;color:#5a3306;border:1px solid var(--warn)}
+.sv-status ol{margin:8px 0 0;padding-left:20px}
+.pw-tabs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:18px}.pw-tabs .tab{min-height:48px;line-height:1.25;white-space:normal}.pw-tabs .tab[aria-selected="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}#f-new,#f-pw{display:grid;gap:14px}
+.pw-tabs .tab{border-radius:12px;padding:8px 10px}
