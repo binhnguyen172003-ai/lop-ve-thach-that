@@ -1565,3 +1565,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
 .nb-card img{height:calc(100% - 112px)}
 @media (max-width:640px){.nb-tt{top:auto;bottom:124px;right:8px;padding:3px 10px 3px 3px}.nb-tt .tt-em.sm{width:26px;height:26px}.nb-ttx b{font-size:.62rem!important}.nb-ttx small{font-size:.55rem}}
 @media (max-width:640px){.nb-tt{top:10px;bottom:auto;right:10px;padding:3px}.nb-tt .tt-em.sm{width:34px;height:34px}.nb-ttx{display:none}}
+.rk-dlg-tt .tt-show{grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
+.rk-dlg-tt .tt-s{padding:14px 10px 12px}.rk-dlg-tt .tt-em.lg{width:60px;height:60px}
+.rk-dlg-tt h3{font:italic 600 1.2rem var(--f-serif);margin:8px 0 2px}
+@media (max-width:640px){.rk-dlg-tt .tt-show{grid-template-columns:1fr 1fr}.rk-dlg-tt .tt-s > span{font-size:.72rem}.rk-dlg-tt .tt-s li{font-size:.64rem;padding:2px 6px}}

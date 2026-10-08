@@ -526,6 +526,9 @@ const cachXpHTML = () => `<ul class="xh-xpl">
     <li><b>+${XP.diemGioi}</b><span>Mỗi bài được chấm từ 8 điểm</span></li>
     <li><b>+${XP.noiBat}</b><span>Có bài lên Bài vẽ nổi bật</span></li>
     <li><b>+${XP.top1}</b><span>Thêm nếu bài đạt Top 1</span></li></ul>`;
+const thanhTuuSanHTML = () => `<h3>Thành tựu cần săn</h3><p class="muted">Thành tựu giữ trọn đời. Mỗi thành tựu có 3 cấp: <b style="color:${CAP[1].mau}">Đồng</b> → <b style="color:${CAP[2].mau}">Bạc</b> → <b style="color:${CAP[3].mau}">Vàng</b>.</p>
+    <div class="tt-show">${THANH_TUU.map(a => `<div class="tt-s" style="--tc:${a.mau}">${huyHieuTT(a, 3, "lg")}<b>${a.ten}</b><span>${a.mo}</span>
+      <ol>${a.moc.map((m, j) => `<li style="--cc:${CAP[j + 1].mau}"><i>${CAP[j + 1].ten}</i>${m} ${a.dv}</li>`).join("")}</ol>${a.trao ? `<small>Thầy trao</small>` : ""}</div>`).join("")}</div>`;
 /* Bấm vào huy hiệu / chip hạng ở bất kỳ đâu → mở bảng ghi chú, bảng hạng và cách leo rank */
 function moBangRank(ten) {
   let dlg = $("#rk-dlg");
@@ -540,7 +543,7 @@ function moBangRank(ten) {
       <div class="rk-bar"><i style="width:${t.pct}%"></i></div>
       <small>${t.next ? `Còn <b class="num">${t.next.xp - t.xp} XP</b> nữa lên hạng ${t.next.ma} · ${t.next.kim} · ${t.next.ten}` : "Đã đạt hạng cao nhất!"}</small>
       ${t.thuongDs.length ? `<small class="rk-th">XP thưởng: ${t.thuongDs.map(x => `+${x.xp} — ${esc(x.ghiChu || "")}`).join(" · ")}</small>` : ""}</div></div>` : ""}
-    ${ten ? (m => `<div class="rk-ttd"><b>🏆 Thành tựu đã đạt</b>${m.length ? `<ul>${m.map(a => `<li>${huyHieuTT(a, a.cap, "sm")}<span><b>${esc(a.ten)}</b> · <i style="color:${CAP[a.cap].mau}">Cấp ${CAP[a.cap].ten}</i><small>Cách đạt: ${esc(a.mo)} — đã có <b>${a.n} ${esc(a.dv)}</b>${a.toi ? ` · cần ${a.toi} để lên ${CAP[a.cap + 1].ten}` : " · cấp cao nhất"}</small></span></li>`).join("")}</ul>` : `<p class="muted">Chưa có thành tựu nào. Nộp bài, đi học đều và có bài lên nổi bật để mở khoá!</p>`}</div>`)(tinhThanhTuu(null, null, null, ten).filter(a => a.cap)) : ""}
+    ${ten ? (m => `<div class="rk-ttd"><b>🏆 Thành tựu đã đạt</b>${m.length ? `<ul>${m.map(a => `<li>${huyHieuTT(a, a.cap, "sm")}<span><b>${esc(a.ten)} <i style="color:${CAP[a.cap].mau}">· Cấp ${CAP[a.cap].ten}</i></b><small>Cách đạt: ${esc(a.mo)} — đã có <b>${a.n} ${esc(a.dv)}</b>${a.toi ? ` · cần ${a.toi} để lên ${CAP[a.cap + 1].ten}` : " · cấp cao nhất"}</small></span></li>`).join("")}</ul>` : `<p class="muted">Chưa có thành tựu nào. Nộp bài, đi học đều và có bài lên nổi bật để mở khoá!</p>`}</div>`)(tinhThanhTuu(null, null, null, ten).filter(a => a.cap)) : ""}
     <div class="rk-note"><b>📌 Ghi chú</b><ul>
       <li>Mùa xếp hạng bắt đầu từ <b>${fmtDate(new Date(RANK_BAT_DAU + "T00:00"))}</b>. Mọi học viên khởi đầu ở <b>hạng F · Sắt · Người Mới</b>.</li>
       <li>Hạng càng cao, huy hiệu càng rực rỡ: từ Sắt xám → Đồng → Bạc → Vàng → Bạch Kim → Kim Cương → … → <b>Thách Đấu cầu vồng</b>.</li>
@@ -548,6 +551,7 @@ function moBangRank(ten) {
       <li>XP cộng tự động khi em đi học, nộp bài, được chấm điểm cao hoặc có bài lên Bài vẽ nổi bật. Thầy có thể thưởng thêm XP cho bài xuất sắc.</li>
       <li>Hạng đầy đủ của em (gồm đi học, bài tập) xem trong mục <b>Tài khoản</b>.</li></ul></div>
     <h3>Cách kiếm XP</h3>${cachXpHTML()}
+    <div class="rk-dlg-tt">${thanhTuuSanHTML()}</div>
     <h3>Các hạng</h3><div class="xh-bang">${bangRankHTML()}</div></div>`;
   dlg.showModal ? dlg.showModal() : dlg.setAttribute("open", "");
 }
@@ -571,9 +575,7 @@ document.addEventListener("keydown", e => {
   $("#xh-top").innerHTML = ds.length ? `<h3>Học viên đang leo hạng</h3><div class="xh-hv">${ds.map(({ t, k }) => `<div class="t${k.i}" data-rk="${esc(t)}" role="button" tabindex="0" style="--rc:${k.r.mau === "rainbow" ? "#ffd6ff" : k.r.mau}">${huyHieu(k.r, k.i, "sm", t)}<b>${esc(t)}</b><span>Hạng ${k.r.ma} · ${k.r.kim} · ${k.r.ten} · ${k.xp} XP</span>${(m => m.length ? `<span class="xh-tt">${m.map(a => huyHieuTT(a, a.cap, "xs")).join("")}</span>` : "")(tinhThanhTuu(null, null, null, t).filter(a => a.cap))}</div>`).join("")}</div>
     <p class="muted xh-note">Tính từ bài vẽ nổi bật. Hạng đầy đủ (gồm đi học, bài tập) xem trong Tài khoản của từng em.</p>` : "";
   const tt = $("#xh-thanhtuu");
-  if (tt) tt.innerHTML = `<h3>Thành tựu cần săn</h3><p class="muted">Thành tựu giữ trọn đời. Mỗi thành tựu có 3 cấp: <b style="color:${CAP[1].mau}">Đồng</b> → <b style="color:${CAP[2].mau}">Bạc</b> → <b style="color:${CAP[3].mau}">Vàng</b>.</p>
-    <div class="tt-show">${THANH_TUU.map(a => `<div class="tt-s" style="--tc:${a.mau}">${huyHieuTT(a, 3, "lg")}<b>${a.ten}</b><span>${a.mo}</span>
-      <ol>${a.moc.map((m, j) => `<li style="--cc:${CAP[j + 1].mau}"><i>${CAP[j + 1].ten}</i>${m} ${a.dv}</li>`).join("")}</ol>${a.trao ? `<small>Thầy trao</small>` : ""}</div>`).join("")}</div>`;
+  if (tt) tt.innerHTML = thanhTuuSanHTML();
 })();
 /* Trang chủ: chỉ hiện Top rank của lớp */
 (function topRank() {
