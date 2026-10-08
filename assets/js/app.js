@@ -234,7 +234,7 @@ $("#link-pin").href = LIEN_HE.pinterest.link;
 const LOAI_BAI = [
   { ten: "Cơ bản", art: "v-khoi", moTa: "Khối cơ bản, tĩnh vật, sáng tối" },
   { ten: "Hình hoạ người", img: "assets/img/hinh-hoa-nguoi.png", moTa: "Chân dung, bán thân, toàn thân" },
-  { ten: "Tượng", art: "v-tuong", moTa: "Tượng thạch cao theo các góc thi" },
+  { ten: "Tượng", img: "assets/img/hinh-hoa-tuong.png", moTa: "Tượng thạch cao theo các góc thi" },
   { ten: "Màu", art: "v-mau", moTa: "Bố cục trang trí màu Khối H" },
   { ten: "Mỹ thuật 2", art: "v-mt2", moTa: "Bố cục tạo hình Khối V" },
 ];
