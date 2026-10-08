@@ -335,6 +335,16 @@ function vongXoay(box, st, cards, dots, prev, next, onCenter) {
   st.addEventListener("pointerup", e => { if (x0 === null) return; const dx = e.clientX - x0; x0 = null; if (Math.abs(dx) > 40) go(cur + (dx < 0 ? 1 : -1)); setTimeout(() => pause(false), 4000); });
   st.addEventListener("pointercancel", () => { x0 = null; pause(false); });
   st.addEventListener("click", e => { if (moved) { e.stopPropagation(); e.preventDefault(); moved = false; } }, true);
+  // Thẻ bên cạnh nằm "lùi sâu" trong không gian 3D nên chuột hay trúng lớp nền → tự tìm thẻ dưới con trỏ
+  const theDuoiChuot = (x, y) => cards.map((c, i) => ({ c, i, z: +c.style.zIndex || 0, r: c.getBoundingClientRect() }))
+    .filter(o => o.c.style.pointerEvents !== "none" && x >= o.r.left && x <= o.r.right && y >= o.r.top && y <= o.r.bottom)
+    .sort((a, b) => b.z - a.z)[0];
+  st.addEventListener("click", e => {
+    if (cards.some(c => c.contains(e.target))) return;
+    const o = theDuoiChuot(e.clientX, e.clientY); if (o) o.c.click();
+  });
+  st.addEventListener("mousemove", e => { const o = theDuoiChuot(e.clientX, e.clientY); st.style.cursor = o && o.i !== cur ? "pointer" : ""; });
+  st.addEventListener("dragstart", e => e.preventDefault());
   box.addEventListener("mouseenter", () => pause(true)); box.addEventListener("mouseleave", () => pause(false));
   box.addEventListener("focusin", () => pause(true)); box.addEventListener("focusout", () => pause(false));
   box.tabIndex = 0;
