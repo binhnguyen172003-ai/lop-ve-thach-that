@@ -1314,7 +1314,10 @@ function renderLessons() {
   const selectedCourse = $("#bt-khoa").value || store.get(homeworkDraftKey(), {})?.["bt-khoa"];
   $("#bt-khoa").innerHTML = cs.concat(["Chung"]).map(c => `<option>${esc(c)}</option>`).join("");
   if (cs.concat(["Chung"]).includes(selectedCourse)) $("#bt-khoa").value = selectedCourse;
-  $("#seed-box").hidden = !(isAdmin && lessons.length === 0);
+  // Quản lý luôn thấy khung này: lần đầu để nạp, về sau để cập nhật bài có sẵn (bài tự thêm không bị đụng tới).
+  $("#seed-box").hidden = !isAdmin;
+  $("#seed-title").textContent = lessons.length ? "Cập nhật giáo trình có sẵn" : "Giáo trình đang trống";
+  $("#btn-seed").textContent = lessons.length ? "Cập nhật giáo trình có sẵn" : "Nạp giáo trình có sẵn";
   const total = lessons.length, n = lessons.filter(l => myProgress.bai[l.id]).length;
   $("#gt-prog-text").textContent = `Đã học ${n}/${total} bài`;
   $("#gt-prog").style.width = total ? (n / total * 100) + "%" : "0";
