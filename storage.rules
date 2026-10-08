@@ -1,0 +1,33 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    function signedIn() {
+      return request.auth != null && request.auth.token.email_verified == true;
+    }
+    function email() { return request.auth.token.email.lower(); }
+    function staff() {
+      return signedIn() && (email() == 'binhnguyen172003@gmail.com'
+        || firestore.exists(/databases/(default)/documents/admins/$(email()))
+        || firestore.exists(/databases/(default)/documents/giaovien/$(email())));
+    }
+    function student() {
+      return signedIn() && firestore.exists(/databases/(default)/documents/hocvien/$(email()));
+    }
+    match /baitap/{homeworkId}/{fileName} {
+      allow get: if staff() || (student()
+        && firestore.exists(/databases/(default)/documents/baitap/$(homeworkId)));
+      allow create, update: if staff()
+        && request.resource.size > 0 && request.resource.size <= 10 * 1024 * 1024
+        && request.resource.metadata.uploadedBy == request.auth.uid
+        && request.resource.contentDisposition == 'attachment'
+        && request.resource.contentType in [
+          'application/pdf', 'image/jpeg', 'image/png', 'image/webp',
+          'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+          'application/vnd.ms-powerpoint', 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+          'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+          'text/plain', 'text/markdown'
+        ];
+      allow delete: if staff();
+    }
+  }
+}

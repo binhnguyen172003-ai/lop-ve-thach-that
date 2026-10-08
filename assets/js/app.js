@@ -2,8 +2,9 @@
 //  LOGIC CỦA WEB — thường không cần sửa file này.
 //  Nội dung (liên hệ, lịch thi, thời gian biểu, ảnh) nằm ở data/noi-dung.js
 // =====================================================================
-import { firebaseConfig, ADMIN_EMAIL, EMAIL_NHAN_THONG_BAO } from "../../config/firebase-config.js?v=20261008c";
-import { LIEN_HE, NAM_THI, LICH_THI, BO_LOC_TRUONG, CA_HOC, THOI_GIAN_BIEU, BAI_VE, BANG_VANG, TRUONG, MUC_TIEU, GIAO_VIEN, VIDEO_BIA, BAI_NOI_BAT } from "../../data/noi-dung.js?v=20261008c";
+import { firebaseConfig, ADMIN_EMAIL, EMAIL_NHAN_THONG_BAO } from "../../config/firebase-config.js?v=20261009b";
+import { FILE_LIMITS, FILE_TYPES, fileExt, fileSize, validateFiles, attachmentStorage, uploadError, validAttachmentPath } from "./attachments.js?v=20261009b";
+import { LIEN_HE, NAM_THI, LICH_THI, BO_LOC_TRUONG, CA_HOC, THOI_GIAN_BIEU, BAI_VE, BANG_VANG, TRUONG, MUC_TIEU, GIAO_VIEN, VIDEO_BIA, BAI_NOI_BAT } from "../../data/noi-dung.js?v=20261009b";
 
 // Firebase được tải riêng, để phần giới thiệu vẫn chạy kể cả khi mạng chậm hoặc chưa cấu hình.
 const FB = "https://www.gstatic.com/firebasejs/10.12.2/";
@@ -51,7 +52,7 @@ addEventListener("error", e => {
 });
 /* ---------- Mở tức thì ở lần sau + dùng được khi mạng yếu ---------- */
 if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost") && !/[?&]khongcache/.test(location.search))
-  addEventListener("load", () => navigator.serviceWorker.register("sw.js?v=20261008c").catch(() => {}));
+  addEventListener("load", () => navigator.serviceWorker.register("sw.js?v=20261009b").catch(() => {}));
 
 /* ---------- Đo tốc độ: mở web kèm ?chandoan=1 để xem từng bước mất bao lâu ---------- */
 const DIAG = /[?&]chandoan/.test(location.search);
@@ -104,7 +105,7 @@ const store = {
   set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
 };
 /* ---------- Tự lưu nháp biểu mẫu: lỡ tắt trang, mất mạng hay chuyển ứng dụng cũng không mất chữ đã gõ ---------- */
-const formFields = form => Array.from(form.querySelectorAll("input[id], select[id], textarea[id]")).filter(i => i.type !== "checkbox" && i.type !== "hidden");
+const formFields = form => Array.from(form.querySelectorAll("input[id], select[id], textarea[id]")).filter(i => i.type !== "checkbox" && i.type !== "hidden" && i.type !== "file");
 const formValues = form => Object.fromEntries(formFields(form).map(i => [i.id, i.value]));
 function fillForm(form, vals) {
   if (!vals) return;
@@ -353,14 +354,14 @@ function vongXoay(box, st, cards, dots, prev, next, onCenter) {
 (function noiBat() {
   const box = $("#nb-ring"); if (!box) return;
   const TEN = { tuan: "tuần", thang: "tháng", nam: "năm" };
-  const mau = GIAO_VIEN.filter(g => g.anh).map((g, i) => ({ anh: "assets/img/giao-vien/" + g.anh + "-bai.jpg", hocVien: g.ten, loai: "Bài mẫu giáo viên", mau: true }));
+  const mau = GIAO_VIEN.filter(g => g.anh).map((g, i) => ({ anh: g.bai || "assets/img/giao-vien/" + g.anh + "-bai.jpg", hocVien: g.ten, loai: "Bài mẫu giáo viên", mau: true }));
   let ky = "tuan", vx = null;
   const ve = () => {
     let ds = BAI_NOI_BAT.filter(b => b.ky === ky).sort((a, b) => (a.hang || 99) - (b.hang || 99));
     const tam = !ds.length; if (tam) ds = mau;
     box.innerHTML = `<div class="gv-stage nb-stage">${ds.map((b, i) => `<figure class="nb-card" data-i="${i}">
         <img src="${esc(b.anh)}" alt="${esc((b.loai || "Bài vẽ") + " · " + (b.hocVien || ""))}" loading="lazy" decoding="async" draggable="false">
-        ${!tam && i < 3 ? `<span class="nb-hang h${i + 1}">${i + 1}</span>` : ""}
+        ${!tam && b.hang ? `<span class="nb-hang h${Number(b.hang)}">${esc(b.hang)}</span>` : ""}
         <figcaption><b>${esc(b.hocVien || "")}</b><span>${esc([b.loai, b.ghiChu].filter(Boolean).join(" · "))}</span></figcaption></figure>`).join("")}</div>
       <div class="gv-ctl"><button type="button" class="gv-nav" aria-label="Bài trước">‹</button>
         <div class="gv-dots">${ds.map((b, i) => `<button type="button" data-i="${i}" aria-label="Bài ${i + 1}"></button>`).join("")}</div>
@@ -405,7 +406,7 @@ function renderGiaoVien() {
     const t = g.truong ? TRUONG[g.truong] : null;
     return `<article class="gv${g.chinh ? " chinh" : ""}" data-i="${i}" aria-roledescription="thẻ" aria-label="${i + 1} / ${n}: ${esc(g.ten)}">
       <button type="button" class="gv-in" data-i="${i}" tabindex="-1">
-        ${g.anh ? `<img class="gv-bai" src="${IMG}${esc(g.anh)}-bai.jpg" alt="" loading="lazy" decoding="async" width="348" height="234" draggable="false">`
+        ${g.anh ? `<img class="gv-bai${g.bai ? " gv-art-full" : ""}" src="${esc(g.bai || IMG + g.anh + "-bai.jpg")}" alt="" loading="lazy" decoding="async" width="348" height="234" draggable="false">`
           : g.chinh ? `<span class="gv-bai gv-bai-trong"><b>6</b><small>năm đứng lớp<br>luyện thi năng khiếu</small></span>`
           : `<span class="gv-bai gv-bai-trong alt"><b>${esc(g.khoi.replace("Khối ", ""))}</b><small>${esc(g.vaiTro)} ${esc(g.khoi)}</small></span>`}
         <span class="gv-ava">${g.anh ? `<img src="${IMG}${esc(g.anh)}.jpg" alt="" loading="lazy" decoding="async" width="96" height="96" draggable="false">` : `<i>${esc(initials(g.ten))}</i>`}</span>
@@ -888,7 +889,9 @@ function courses() { return [...new Set(lessons.map(l => l.khoa))]; }
 function renderLessons() {
   const cs = courses();
   $("#khoa-list").innerHTML = cs.map(c => `<option value="${esc(c)}">`).join("");
+  const selectedCourse = $("#bt-khoa").value || store.get(homeworkDraftKey(), {})?.["bt-khoa"];
   $("#bt-khoa").innerHTML = cs.concat(["Chung"]).map(c => `<option>${esc(c)}</option>`).join("");
+  if (cs.concat(["Chung"]).includes(selectedCourse)) $("#bt-khoa").value = selectedCourse;
   $("#seed-box").hidden = !(isAdmin && lessons.length === 0);
   const total = lessons.length, n = lessons.filter(l => myProgress.bai[l.id]).length;
   $("#gt-prog-text").textContent = `Đã học ${n}/${total} bài`;
@@ -931,15 +934,32 @@ function renderHomework() {
   const ae = document.activeElement;
   if (ae && ae.closest && ae.closest(".grade") && ae.matches("input")) { needRedraw = true; return; }
   needRedraw = false;
-  const list = homework.filter(h => hwView === "open" ? daysUntil(h.han) >= 0 : daysUntil(h.han) < 0);
+  $("#hw-workspace").classList.toggle("staff", isTeacher);
+  $("#hw-intro").textContent = isTeacher ? "Giao đề, chia sẻ tài liệu và theo dõi bài nộp của học viên trong một không gian." : "Đọc đề, tải tài liệu và theo dõi hạn nộp tại đây. Bài vẽ nộp trên lớp hoặc qua nhóm lớp.";
+  const open = homework.filter(h => !h.han || daysUntil(h.han) >= 0);
+  const soon = open.filter(h => h.han && daysUntil(h.han) <= 3);
+  const done = isTeacher ? homework.filter(h => roster.some(r => progressAll[r.id]?.baitap?.[h.id] && !feedbackAll[r.id]?.[h.id])).length : homework.filter(h => myProgress.baitap[h.id]).length;
+  $("#hw-count-open").textContent = open.length;
+  $("#hw-count-past").textContent = homework.length - open.length;
+  $("#hw-overview").innerHTML = `<article><span>Đang làm</span><b class="num">${open.length}</b><small>Bài còn thời gian</small></article><article><span>Sắp đến hạn</span><b class="num">${soon.length}</b><small>Trong 3 ngày tới</small></article><article><span>${isTeacher ? "Cần chấm" : "Đã nộp"}</span><b class="num">${done}</b><small>${isTeacher ? "Bài có học viên chờ chấm" : "Bài đã đánh dấu nộp"}</small></article>`;
+  const courseSelect = $("#hw-course"), selected = courseSelect.value;
+  const courses = [...new Set(homework.map(h => h.khoa).filter(Boolean))].sort((a,b) => a.localeCompare(b, "vi"));
+  courseSelect.innerHTML = '<option value="">Tất cả khóa học</option>' + courses.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join("");
+  courseSelect.value = courses.includes(selected) ? selected : "";
+  const q = timTen($("#hw-search").value), khoa = courseSelect.value;
+  const list = homework.filter(h => (hwView === "open" ? !h.han || daysUntil(h.han) >= 0 : h.han && daysUntil(h.han) < 0)
+    && (!khoa || h.khoa === khoa) && (!q || timTen(`${h.ten} ${h.mota || ""} ${h.lop || ""}`).includes(q)))
+    .sort((a,b) => hwView === "open" ? String(a.han || "9999").localeCompare(String(b.han || "9999")) : String(b.han).localeCompare(String(a.han)));
+  $("#hw-results").textContent = `${list.length} bài tập · ${hwView === "open" ? "Hạn gần nhất trước" : "Hết hạn gần nhất trước"}`;
   if (!list.length) {
-    $("#hw-list").innerHTML = `<div class="empty">${hwView === "open" ? "Chưa có bài tập nào đang làm." : "Chưa có bài nào hết hạn."}${isTeacher && hwView === "open" ? " Giao bài ở khung bên dưới." : ""}</div>`;
+    $("#hw-list").innerHTML = `<div class="hw-empty"><b>${q || khoa ? "Không tìm thấy bài phù hợp" : hwView === "open" ? "Chưa có bài tập đang làm" : "Chưa có bài hết hạn"}</b><p>${q || khoa ? "Thử đổi từ khóa hoặc chọn lại khóa học." : isTeacher ? "Bắt đầu bằng một đề bài và tài liệu hướng dẫn." : "Bài thầy cô giao sẽ xuất hiện tại đây."}</p>${q || khoa ? '<button class="btn small" type="button" id="hw-clear">Xóa bộ lọc</button>' : ""}</div>`;
+    if ($("#hw-clear")) $("#hw-clear").onclick = () => { $("#hw-search").value = ""; courseSelect.value = ""; renderHomework(); };
     return;
   }
   const students = roster.length;
   $("#hw-list").innerHTML = list.map(h => {
     const n = daysUntil(h.han); const [, m, d] = String(h.han).split("-");
-    const due = n < 0 ? `Hết hạn ${d}/${m}` : n === 0 ? "Hạn nộp hôm nay" : `Hạn ${d}/${m} · còn ${n} ngày`;
+    const due = !h.han ? "Chưa đặt hạn nộp" : n < 0 ? `Hết hạn ${d}/${m}` : n === 0 ? "Hạn nộp hôm nay" : `Hạn ${d}/${m} · còn ${n} ngày`;
     const submitted = roster.filter(r => (progressAll[r.id] || {}).baitap && progressAll[r.id].baitap[h.id]).length;
     const graded = roster.filter(r => (feedbackAll[r.id] || {})[h.id]).length;
     const fb = myFeedback[h.id];
@@ -949,12 +969,14 @@ function renderHomework() {
     const studentBar = `<button class="btn small" data-hw="${esc(h.id)}">${myProgress.baitap[h.id] ? "Đã nộp ✓" : "Đánh dấu đã nộp"}</button>`;
     return `<div class="hw"><div><p class="eyebrow">${esc(h.khoa)}${h.lop ? " · " + esc(h.lop) : ""}</p><h3>${esc(h.ten)}</h3></div>
       <p class="due ${n <= 1 ? "late" : ""}">${due}</p>${h.mota ? `<p class="desc">${esc(h.mota)}</p>` : ""}
+      ${homeworkFilesHTML(h)}
       ${!isTeacher && fb ? `<p class="fb"><b>Thầy nhận xét${fb.diem ? ` · Điểm ${esc(fb.diem)}` : ""}:</b> ${esc(fb.nhanXet || "")}<br><span class="muted">${esc(fb.nguoiCham || "")} · ${fmtDate(fb.luc)}</span></p>` : ""}
       <div class="acts">${isTeacher ? staffBar : studentBar}</div>
       ${isTeacher && gradeOpen.has(h.id) ? gradeTable(h) : ""}</div>`;
   }).join("");
   $$("#hw-list [data-hw]").forEach(b => b.onclick = () => toggleProgress("baitap", b.dataset.hw).then(renderHomework));
-  $$("#hw-list [data-del]").forEach(b => confirmButton(b, () => deleteDoc(doc(db, "baitap", b.dataset.del))));
+  $$("#hw-list [data-del]").forEach(b => confirmButton(b, () => deleteHomework(b.dataset.del)));
+  $$("#hw-list [data-file]").forEach(b => b.onclick = () => downloadHomeworkFile(b));
   $$("#hw-list [data-grade]").forEach(b => b.onclick = () => {
     const id = b.dataset.grade; gradeOpen.has(id) ? gradeOpen.delete(id) : gradeOpen.add(id); renderHomework();
   });
@@ -991,6 +1013,140 @@ async function saveGrade(btn) {
 }
 $$("#hw-filter .tab").forEach(b => b.onclick = () => {
   hwView = b.dataset.h; $$("#hw-filter .tab").forEach(x => x.setAttribute("aria-selected", x === b)); renderHomework();
+});
+$("#hw-search").oninput = renderHomework;
+$("#hw-course").onchange = renderHomework;
+$("#hw-new").onclick = () => { $("#hw-composer").open = true; $("#hw-composer").scrollIntoView({block:"start", behavior:matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth"}); $("#bt-ten").focus({preventScroll:true}); };
+if (matchMedia("(max-width:900px)").matches) $("#hw-composer").open = false;
+
+/* ---------- Tệp bài tập: chọn trước, tải khi giao bài, chỉ báo thành công sau khi lưu ---------- */
+let homeworkFiles = [], homeworkBusy = false, homeworkUpload = null, homeworkCanceled = false;
+const homeworkDraftKey = () => mail ? "nhap-bt-" + mail : null;
+function clearHomeworkFiles() {
+  homeworkFiles.forEach(x => { if (x.preview) URL.revokeObjectURL(x.preview); });
+  homeworkFiles = []; $("#bt-files").value = ""; renderFileQueue();
+}
+function renderFileQueue() {
+  $("#bt-file-list").innerHTML = homeworkFiles.map((x,i) => `<li>${x.preview ? `<img src="${esc(x.preview)}" alt="Xem trước ${esc(x.file.name)}">` : `<span class="file-kind">${esc(fileExt(x.file.name).toUpperCase())}</span>`}<span class="file-detail"><b>${esc(x.file.name)}</b><small>${fileSize(x.file.size)}</small></span><button type="button" class="file-remove" data-remove-file="${i}" aria-label="Bỏ tệp ${esc(x.file.name)}" ${homeworkBusy ? "disabled" : ""}>×</button></li>`).join("");
+  $$("[data-remove-file]").forEach(b => b.onclick = () => {
+    if (homeworkBusy) return;
+    const [x] = homeworkFiles.splice(Number(b.dataset.removeFile),1);
+    if (x.preview) URL.revokeObjectURL(x.preview);
+    $("#bt-file-error").textContent = ""; renderFileQueue();
+  });
+}
+function selectHomeworkFiles(files) {
+  if (homeworkBusy) return;
+  const next = [...homeworkFiles];
+  for (const file of files) {
+    if (next.some(x => x.file.name === file.name && x.file.size === file.size && x.file.lastModified === file.lastModified)) continue;
+    next.push({file});
+  }
+  const error = validateFiles(next.map(x => x.file));
+  $("#bt-file-error").textContent = error;
+  if (!error) {
+    homeworkFiles = next.map(x => x.preview || !['jpg','jpeg','png','webp'].includes(fileExt(x.file.name)) ? x : {...x, preview:URL.createObjectURL(x.file)});
+    renderFileQueue();
+  }
+  $("#bt-files").value = "";
+}
+$("#bt-files").onchange = e => selectHomeworkFiles([...e.target.files]);
+["dragenter","dragover"].forEach(event => $("#bt-drop").addEventListener(event,e => {e.preventDefault(); if (!homeworkBusy) $("#bt-drop").classList.add("dragging");}));
+["dragleave","drop"].forEach(event => $("#bt-drop").addEventListener(event,e => {e.preventDefault(); $("#bt-drop").classList.remove("dragging");}));
+$("#bt-drop").addEventListener("drop",e => selectHomeworkFiles([...e.dataTransfer.files]));
+$("#bt-cancel").onclick = () => { homeworkCanceled = true; homeworkUpload?.cancel(); $("#bt-upload-label").textContent = "Đang hủy tải…"; };
+addEventListener("beforeunload",e => { if (homeworkBusy) {e.preventDefault(); e.returnValue = "";} });
+function homeworkFilesHTML(h) {
+  const files = Array.isArray(h.tepDinhKem) ? h.tepDinhKem : [];
+  return files.length ? `<div class="hw-attachments" aria-label="Tài liệu bài tập">${files.map((f,i) => validAttachmentPath(f.path,h.id) ? `<button class="hw-file" type="button" data-file="${i}" data-homework="${esc(h.id)}" aria-label="Tải ${esc(f.name)}"><span class="file-kind">${esc(fileExt(f.name).toUpperCase())}</span><span><b>${esc(f.name)}</b><small>${fileSize(f.size)} · Tải tài liệu</small></span><i aria-hidden="true">↓</i></button>` : "").join("")}</div>` : "";
+}
+async function downloadHomeworkFile(b) {
+  if (!user || (!approved && !isTeacher)) return;
+  const uid = user.uid;
+  const h = homework.find(h => h.id === b.dataset.homework), f = h?.tepDinhKem?.[Number(b.dataset.file)];
+  if (!f || !validAttachmentPath(f.path,h.id)) return;
+  b.disabled = true; const label = b.querySelector('small'); const old = label.textContent; label.textContent = "Đang tải…";
+  try {
+    const sdk = await attachmentStorage(app);
+    const blob = await sdk.getBlob(sdk.ref(sdk.storage,f.path), FILE_LIMITS.perFile);
+    if (user?.uid !== uid || (!approved && !isTeacher)) return;
+    const url = URL.createObjectURL(blob), a = document.createElement("a");
+    a.href = url; a.download = String(f.name).replace(/[\\/]/g,"_"); document.body.append(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url),60000);
+    toast("Đã tải tài liệu. Kiểm tra mục tải xuống của thiết bị.");
+  } catch (e) { toast(e?.code === 'storage/object-not-found' ? "Tệp không còn trong kho. Nhờ thầy cô cập nhật lại tài liệu." : "Chưa tải được tài liệu. Kiểm tra kết nối hoặc liên hệ thầy cô.","err"); }
+  finally { b.disabled = false; label.textContent = old; }
+}
+async function deleteHomework(id) {
+  const h = homework.find(x => x.id === id);
+  await deleteDoc(doc(db,"baitap",id));
+  const files = (h?.tepDinhKem || []).filter(f => validAttachmentPath(f.path,id));
+  if (!files.length) return;
+  try {
+    const sdk = await attachmentStorage(app);
+    const results = await Promise.allSettled(files.map(f => sdk.deleteObject(sdk.ref(sdk.storage,f.path))));
+    if (results.some(r => r.status === 'rejected' && r.reason?.code !== 'storage/object-not-found')) setTimeout(() => toast("Bài đã xóa. Một số tệp trong kho chưa xóa được; nhờ quản lý kiểm tra.","warn"),100);
+  } catch { setTimeout(() => toast("Bài đã xóa, nhưng tệp trong kho chưa dọn được. Nhờ quản lý kiểm tra.","warn"),100); }
+}
+keepDraft($("#f-bt"), homeworkDraftKey);
+$("#f-bt").addEventListener("submit", async ev => {
+  ev.preventDefault();
+  if (homeworkBusy) return;
+  if (!db || !user || !isTeacher || needVerify) { toast("Đăng nhập tài khoản giáo viên để giao bài.","err"); return; }
+  if (!ev.currentTarget.reportValidity()) return;
+  const files = [...homeworkFiles], error = validateFiles(files.map(x => x.file));
+  if (error) { $("#bt-file-error").textContent = error; return; }
+  const form = ev.currentTarget, st = $("#bt-status"), owner = user.uid, draftKey = homeworkDraftKey();
+  const data = {ten:$("#bt-ten").value.trim(),khoa:$("#bt-khoa").value,han:$("#bt-han").value,lop:$("#bt-lop").value.trim(),mota:$("#bt-mota").value.trim(),taoLuc:Date.now()};
+  if (!data.ten) { st.textContent = "Vui lòng nhập tên bài tập."; st.classList.add("err"); $("#bt-ten").focus(); return; }
+  homeworkBusy = true; homeworkCanceled = false;
+  $("#bt-fields").disabled = true; $("#bt-cancel").disabled = false; $("#bt-upload-progress").value = 0;
+  $("#bt-upload-state").hidden = !files.length;
+  st.classList.remove("err"); st.textContent = files.length ? "Đang gửi tệp. Giữ trang mở cho đến khi hoàn tất." : "Đang giao bài…";
+  const assignment = doc(collection(db,"baitap")), uploaded = [], paths = [];
+  let sdk;
+  try {
+    const assertSession = () => { if (homeworkCanceled || user?.uid !== owner || !isTeacher) throw Object.assign(new Error('canceled'),{code:'storage/canceled'}); };
+    if (files.length) {
+      sdk = await attachmentStorage(app); assertSession();
+      const totalBytes = files.reduce((n,x) => n+x.file.size,0); let finishedBytes = 0;
+      for (let i=0; i<files.length; i++) {
+        assertSession();
+        const f = files[i].file, path = `baitap/${assignment.id}/${crypto.randomUUID()}.${fileExt(f.name)}`;
+        paths.push(path);
+        $("#bt-upload-label").textContent = `Tệp ${i+1}/${files.length}: ${f.name}`;
+        homeworkUpload = sdk.uploadBytesResumable(sdk.ref(sdk.storage,path),f,{contentType:FILE_TYPES[fileExt(f.name)],contentDisposition:'attachment',customMetadata:{uploadedBy:owner}});
+        await new Promise((resolve,reject) => homeworkUpload.on('state_changed',s => { $("#bt-upload-progress").value = Math.round((finishedBytes+s.bytesTransferred)/totalBytes*100); },reject,resolve));
+        finishedBytes += f.size;
+        uploaded.push({name:f.name,size:f.size,type:FILE_TYPES[fileExt(f.name)],path});
+      }
+    }
+    assertSession(); homeworkUpload = null; $("#bt-cancel").disabled = true;
+    $("#bt-upload-label").textContent = "Đang lưu bài tập…"; st.textContent = "Đang lưu bài tập. Chờ xác nhận trước khi đóng trang.";
+    // Await the real Firestore result: no optimistic reset or success message.
+    await setDoc(assignment,{...data,tepDinhKem:uploaded});
+    if (user?.uid === owner) {
+      form.reset(); clearHomeworkFiles(); dropDraft(draftKey);
+      st.textContent = `Đã giao bài${uploaded.length ? ` cùng ${uploaded.length} tệp đính kèm` : ""}.`; toast(st.textContent);
+      hwView = "open"; $("#hw-search").value = ""; $("#hw-course").value = "";
+      $$("#hw-filter .tab").forEach(x => x.setAttribute("aria-selected",x.dataset.h === "open"));
+      renderHomework();
+      if (matchMedia("(max-width:900px)").matches) $("#hw-composer").open = false;
+    }
+  } catch (e) {
+    let cleanupFailed = false;
+    if (sdk) {
+      const results = await Promise.allSettled(paths.map(path => sdk.deleteObject(sdk.ref(sdk.storage,path))));
+      cleanupFailed = results.some(r => r.status === 'rejected' && r.reason?.code !== 'storage/object-not-found');
+    }
+    if (user?.uid === owner) {
+      st.classList.add("err"); st.textContent = uploadError(e) + (cleanupFailed ? " Một số tệp tạm chưa xóa được; nhờ quản lý kiểm tra kho tệp." : "");
+      store.set(draftKey,formValues(form));
+    }
+  } finally {
+    homeworkBusy = false; homeworkUpload = null; $("#bt-fields").disabled = false;
+    $("#bt-upload-state").hidden = true; renderFileQueue();
+  }
 });
 
 // Đổi trên màn hình ngay, lưu lên máy chủ ở phía sau; lỗi thì trả lại như cũ.
@@ -1134,35 +1290,73 @@ function thongKe(dd, hv, fb) {
   const dem = (arr, v) => arr.filter(k => dd[k] === v).length;
   const co = dem(keys, "co"), vang = dem(keys, "vang"), phep = dem(keys, "phep");
   const k28 = keys.filter(k => cach(k.slice(0, 10), today) < 28), k30 = keys.filter(k => cach(k.slice(0, 10), today) < 30);
-  const span = keys.length ? Math.min(28, Math.max(7, cach(keys[0].slice(0, 10), today) + 1)) : 28;
-  const perWeek = dem(k28, "co") / (span / 7);
+  const trackedDays = keys.length ? Math.min(28, cach(keys[0].slice(0, 10), today) + 1) : 0;
+  const span = Math.max(7, trackedDays);
+  const co28 = dem(k28, "co"), records28 = k28.length;
+  const perWeek = co28 / (span / 7);
   const c30 = dem(k30, "co"), v30 = dem(k30, "vang"), att = c30 + v30 ? c30 / (c30 + v30) : null;
   let streak = 0; for (let i = keys.length - 1; i >= 0; i--) { if (dd[keys[i]] === "vang") streak++; else if (dd[keys[i]] === "phep") continue; else break; }
   const khoi = khoiOf(hv), gioCan = MUC_TIEU.gioCan[khoi] || 300, ngayThi = MUC_TIEU.ngayThi[khoi];
   const daysLeft = Math.max(0, daysUntil(ngayThi)), weeksLeft = Math.max(daysLeft / 7, 0.5);
   const gio = co * MUC_TIEU.gioMoiBuoi;
   const need = Math.max(0, (gioCan - gio) / MUC_TIEU.gioMoiBuoi / weeksLeft);
+  // Lịch thực tế dùng số buổi nguyên, đồng thời giữ mức tối thiểu đã cấu hình của lớp.
+  const suggested = daysLeft > 0 && need > 0 ? Math.ceil(Math.max(need, MUC_TIEU.buoiToiThieu)) : null;
   const projected = gio + perWeek * MUC_TIEU.gioMoiBuoi * weeksLeft;
   const readiness = Math.min(1, projected / gioCan);
   const ds = Object.values(fb || {}).filter(x => x && soDiem(x.diem) !== null).sort((a, b) => (b.luc || 0) - (a.luc || 0)).slice(0, 6).map(x => soDiem(x.diem));
   const avg = ds.length ? ds.reduce((a, b) => a + b, 0) / ds.length : null;
   const skill = avg === null ? 0.55 : Math.max(0, Math.min(1, (avg - 5) / (MUC_TIEU.diemDat + 1 - 5)));
   const pass = keys.length ? Math.max(5, Math.min(95, Math.round(100 * (0.45 * readiness + 0.35 * skill + 0.2 * (att === null ? 0.6 : att))))) : null;
-  const canBuoi = Math.round(need * 10) / 10;
   let muc = "ok";
   if (keys.length && (streak >= 2 || perWeek < MUC_TIEU.buoiToiThieu * 0.67)) muc = "bad";
   else if (keys.length && (perWeek + 0.01 < need || perWeek < MUC_TIEU.buoiToiThieu || (avg !== null && avg < MUC_TIEU.diemDat))) muc = "warn";
   const loi = [];
   if (!keys.length) loi.push(["info", "Chưa có buổi điểm danh nào. Thầy cô sẽ điểm danh sau mỗi buổi học, tiến độ của em hiện ở đây."]);
   if (streak >= 2) loi.push(["bad", `Em đã vắng ${streak} buổi liên tiếp. Đi học lại ngay buổi tới để không bị hổng bài nhé.`]);
-  if (keys.length && perWeek + 0.01 < need) loi.push(["warn", `Để kịp ${gioCan} giờ trước ngày thi, em cần khoảng ${nf1(canBuoi)} buổi/tuần — 4 tuần qua em đi ${nf1(perWeek)} buổi/tuần. Thêm ${nf1(Math.max(0.5, canBuoi - perWeek))} buổi mỗi tuần là kịp.`]);
-  else if (keys.length) loi.push(["ok", `Em đang đi ${nf1(perWeek)} buổi/tuần — giữ nhịp này là đủ ${gioCan} giờ trước ngày thi. Cố lên!`]);
+  if (keys.length && !records28) loi.push(["info", "Chưa có điểm danh trong 4 tuần gần đây. Nhờ thầy cô kiểm tra lại trước khi đánh giá số buổi đi học."]);
+  if (keys.length && daysLeft === 0) loi.push(["info", "Đã đến ngày thi mục tiêu. Nhờ thầy cô cập nhật lịch học tiếp theo."]);
+  else if (keys.length && need === 0) loi.push(["ok", "Em đã đủ số giờ học mục tiêu. Tiếp tục luyện bài theo hướng dẫn của thầy cô."]);
+  else if (records28) loi.push([perWeek + 0.01 < suggested ? "warn" : "ok", `4 tuần qua đã ghi nhận em đi ${co28} buổi. Lịch học đề xuất: ${suggested} buổi/tuần, dựa trên số giờ còn thiếu và mức tối thiểu của lớp. Trao đổi với thầy cô để sắp xếp lịch phù hợp.`]);
   if (avg !== null && avg < MUC_TIEU.diemDat) loi.push(["warn", `Điểm bài tập gần đây trung bình ${nf1(avg)}, mục tiêu ${nf1(MUC_TIEU.diemDat)}. Làm đủ bài về nhà và hỏi thầy chỗ chưa vững.`]);
   else if (avg !== null) loi.push(["ok", `Điểm bài tập trung bình ${nf1(avg)} — vượt mục tiêu ${nf1(MUC_TIEU.diemDat)}. Tiếp tục luyện đề theo thời gian thi thật.`]);
   if (daysLeft <= 60 && daysLeft > 0) loi.push(["warn", `Chỉ còn ${daysLeft} ngày. Giai đoạn nước rút: mỗi buổi nghỉ là mất một bài luyện đề.`]);
-  return { keys, co, vang, phep, perWeek, att, streak, khoi, gioCan, ngayThi, daysLeft, gio, need: canBuoi, readiness, avg, pass, muc, loi };
+  return { keys, co, vang, phep, co28, records28, trackedDays, span, perWeek, att, streak, khoi, gioCan, ngayThi, daysLeft, gio, need, suggested, readiness, avg, pass, muc, loi };
 }
 const MUC_TEN = { ok: "Tốt", warn: "Cần nhắc", bad: "Báo động" };
+function lichHocDeXuat(t) {
+  if (!t.keys.length) return "Chưa đủ dữ liệu để đề xuất lịch";
+  if (!t.daysLeft) return "Cần cập nhật lịch sau ngày thi mục tiêu";
+  if (!t.need) return "Đã đủ giờ mục tiêu · tiếp tục luyện bài";
+  return `Đề xuất: ${t.suggested} buổi/tuần`;
+}
+const timTen = s => String(s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/gi, "d").toLowerCase().trim().replace(/\s+/g, " ");
+function hocVienDiemDanh(cs, search, sort) {
+  const words = timTen(search).split(" ").filter(Boolean);
+  return roster.filter(r => (!cs || String(r.coso || "").includes(cs)) && words.every(w => timTen(r.ten).includes(w)))
+    .map(r => ({ r, t: thongKe(diemdanhAll[r.id], r, feedbackAll[r.id]) }))
+    .sort((a, b) => {
+      const name = String(a.r.ten || "").localeCompare(String(b.r.ten || ""), "vi");
+      if (sort === "least" || sort === "most") return Number(!a.t.records28) - Number(!b.t.records28)
+        || (sort === "least" ? a.t.co28 - b.t.co28 : b.t.co28 - a.t.co28) || name;
+      if (sort === "attention") return Number(!a.t.records28) - Number(!b.t.records28)
+        || ({ bad: 0, warn: 1, ok: 2 }[a.t.muc] - { bad: 0, warn: 1, ok: 2 }[b.t.muc]) || a.t.co28 - b.t.co28 || name;
+      return name;
+    });
+}
+function tinNhanPhuHuynh(r, t) {
+  const start = new Date(Date.parse(todayVN()) - 27 * 864e5).toISOString().slice(0, 10);
+  const intro = `Lớp Vẽ Dreamers gửi phụ huynh em ${r.ten}: `;
+  if (!t.records28) return intro + `Lớp chưa có dữ liệu điểm danh của em trong 4 tuần qua (${ngayVN(start)}–${ngayVN(todayVN())}), nên chưa kết luận được số buổi em đi học. Lớp sẽ kiểm tra lại và trao đổi với bố mẹ ạ.`;
+  return intro + `Trong 4 tuần qua (${ngayVN(start)}–${ngayVN(todayVN())}), lớp ghi nhận em đi học ${t.co28} buổi.`
+    + (t.trackedDays < 28 ? ` Dữ liệu mới được theo dõi trong ${t.trackedDays} ngày gần đây.` : "")
+    + (t.streak >= 2 ? ` Em đã vắng ${t.streak} buổi liên tiếp không tính các buổi nghỉ phép.` : "")
+    + (t.daysLeft > 0 ? ` Còn ${t.daysLeft} ngày đến ngày thi mục tiêu (${ngayVN(t.ngayThi)}).` : " Đã đến ngày thi mục tiêu; thầy cô sẽ cập nhật lịch học tiếp theo.")
+    + (t.suggested !== null ? ` Lớp đề xuất em học ${t.suggested} buổi/tuần để bổ sung số giờ còn thiếu và duy trì việc luyện tập.`
+      : t.need === 0 ? " Em đã đủ số giờ học mục tiêu và tiếp tục luyện bài theo hướng dẫn của thầy cô." : "")
+    + (t.avg !== null ? ` Điểm bài tập gần đây trung bình ${nf1(t.avg)}/10.` : "")
+    + " Bố mẹ cùng lớp trao đổi để sắp xếp lịch học phù hợp cho em nhé. Cảm ơn bố mẹ!";
+}
 function renderMyProg() {
   const box = $("#my-prog"); if (!box) return;
   box.hidden = isTeacher || !approved;
@@ -1183,7 +1377,7 @@ function renderMyProg() {
     </div>
     <div class="mp-stats">
       <div><span>Giờ đã học</span><b class="num">${t.gio}<small>/${t.gioCan} giờ</small></b><div class="bar"><i style="width:${pct}%"></i></div></div>
-      <div><span>Buổi/tuần (4 tuần qua)</span><b class="num">${nf1(t.perWeek)}<small> · cần ${nf1(t.need)}</small></b></div>
+      <div><span>Đã đi học trong 4 tuần</span><b class="num">${t.records28 ? t.co28 + " buổi" : "–"}</b><div class="mp-study-plan">${t.records28 ? esc(lichHocDeXuat(t)) : "Chưa có điểm danh trong 4 tuần"}</div></div>
       <div><span>Chuyên cần 30 ngày</span><b class="num">${t.att === null ? "–" : Math.round(t.att * 100) + "%"}</b></div>
       <div><span>Điểm bài tập TB</span><b class="num">${t.avg === null ? "–" : nf1(t.avg)}<small> · mục tiêu ${nf1(MUC_TIEU.diemDat)}</small></b></div>
     </div>
@@ -1195,36 +1389,37 @@ function renderAttend() {
   if (!isTeacher || !$("#dd-list")) return;
   const ngay = $("#dd-ngay").value || todayVN(), ca = $("#dd-ca").value || caMacDinh(), cs = $("#dd-cs").value;
   const key = `${ngay}_${ca}`;
-  const ds = roster.filter(r => !cs || String(r.coso || "").includes(cs)).sort((a, b) => String(a.ten).localeCompare(String(b.ten), "vi"));
+  const search = $("#dd-search").value;
+  const rows = hocVienDiemDanh(cs, search, $("#dd-sort").value);
+  const ds = rows.map(x => x.r);
   const val = r => (diemdanhAll[r.id] || {})[key];
   const n = v => ds.filter(r => val(r) === v).length;
-  $("#dd-sum").innerHTML = ds.length ? `<b>${n("co")}</b> có mặt · <b>${n("vang")}</b> vắng · <b>${n("phep")}</b> phép · <b>${ds.length - n("co") - n("vang") - n("phep")}</b> chưa điểm danh` : "";
-  $("#dd-list").innerHTML = ds.length ? ds.map(r => `<li><div><b>${esc(r.ten)}</b><span class="muted">${esc(r.chuongTrinh || r.lop || "")}${r.coso ? " · " + esc(r.coso) : ""}</span></div>
+  $("#dd-sum").innerHTML = `Đang hiển thị <b>${ds.length}</b>/${roster.length} học viên` + (ds.length ? ` · Ca đã chọn: <b>${n("co")}</b> có mặt · <b>${n("vang")}</b> vắng · <b>${n("phep")}</b> phép · <b>${ds.length - n("co") - n("vang") - n("phep")}</b> chưa điểm danh` : "");
+  const empty = roster.length ? "Không tìm thấy học viên phù hợp. Thử đổi tên tìm kiếm hoặc cơ sở." : "Chưa có học viên nào được duyệt.";
+  $("#dd-list").innerHTML = rows.length ? rows.map(({ r, t }) => `<li><div><b>${esc(r.ten)}</b><span class="muted">${esc(r.chuongTrinh || r.lop || "")}${r.coso ? " · " + esc(r.coso) : ""}</span><span class="dd-history">${t.records28 ? `Đã đi ${t.co28} buổi trong 4 tuần` : "Chưa có điểm danh trong 4 tuần"}</span></div>
     <div class="seg" role="group" aria-label="Điểm danh ${esc(r.ten)}">${[["co", "Có mặt"], ["vang", "Vắng"], ["phep", "Phép"]].map(([v, t]) =>
       `<button type="button" class="${v}" data-dd="${esc(r.id)}" data-v="${v}" aria-pressed="${val(r) === v}">${t}</button>`).join("")}</div></li>`).join("")
-    : `<li class="muted">Chưa có học viên nào${cs ? " ở cơ sở này" : ""}.</li>`;
+    : `<li class="muted">${empty}</li>`;
   $$("#dd-list [data-dd]").forEach(b => b.onclick = () => ghiDiemDanh([b.dataset.dd], key, b.dataset.v));
   // Bảng theo dõi chuyên cần
-  const rows = roster.map(r => ({ r, t: thongKe(diemdanhAll[r.id], r, feedbackAll[r.id]) }))
-    .sort((a, b) => ({ bad: 0, warn: 1, ok: 2 }[a.t.muc] - { bad: 0, warn: 1, ok: 2 }[b.t.muc]) || ((a.t.pass ?? 101) - (b.t.pass ?? 101)));
-  $("#dd-watch").innerHTML = rows.length ? `<div class="dw-wrap"><table class="dw"><thead><tr><th>Học viên</th><th>Buổi/tuần</th><th>Vắng liền</th><th>Giờ học</th><th>Dự báo đỗ</th><th></th></tr></thead><tbody>${rows.map(({ r, t }) => `
+  $("#dd-watch").innerHTML = rows.length ? `<div class="dw-wrap"><table class="dw" aria-describedby="dd-watch-note"><thead><tr><th>Học viên</th><th>Số buổi &amp; lịch đề xuất</th><th>Vắng liền</th><th>Giờ học</th><th>Dự báo đỗ</th><th></th></tr></thead><tbody>${rows.map(({ r, t }) => `
       <tr class="${t.muc}"><td><b>${esc(r.ten)}</b><br><span class="muted">${esc(t.khoi)} · thi ${ngayVN(t.ngayThi)}</span></td>
-      <td class="num">${nf1(t.perWeek)} <span class="muted">/ cần ${nf1(t.need)}</span></td>
+      <td class="num dw-study"><b>${t.records28 ? `Đã đi: ${t.co28} buổi / 4 tuần` : "Chưa có điểm danh trong 4 tuần"}</b>
+        ${t.records28 && t.trackedDays < 28 ? `<span class="muted">Mới theo dõi ${t.trackedDays} ngày</span>` : ""}
+        <span>${esc(lichHocDeXuat(t))}</span></td>
       <td class="num">${t.streak || "–"}</td>
       <td class="num">${t.gio}/${t.gioCan}</td>
       <td><span class="pill ${t.muc}">${t.pass === null ? "Chưa có dữ liệu" : t.pass + "% · " + MUC_TEN[t.muc]}</span></td>
       <td><button type="button" class="btn small" data-msg="${esc(r.id)}">Chép tin nhắn</button></td></tr>`).join("")}</tbody></table></div>`
-    : `<p class="muted">Chưa có học viên nào được duyệt.</p>`;
+    : `<p class="muted">${empty}</p>`;
   $$("#dd-watch [data-msg]").forEach(b => b.onclick = () => {
     const x = rows.find(o => o.r.id === b.dataset.msg); if (!x) return;
     const { r, t } = x;
-    const msg = `Lớp Vẽ Dreamers gửi phụ huynh em ${r.ten}: 4 tuần qua em đi học trung bình ${nf1(t.perWeek)} buổi/tuần`
-      + (t.streak >= 2 ? `, đã vắng ${t.streak} buổi liên tiếp` : "")
-      + `. Còn ${t.daysLeft} ngày đến kỳ thi (${ngayVN(t.ngayThi)}), để kịp chương trình em cần khoảng ${nf1(t.need)} buổi/tuần`
-      + (t.avg !== null ? `; điểm bài tập gần đây trung bình ${nf1(t.avg)}` : "")
-      + `. Nhờ bố mẹ nhắc em đi học đều ạ. Cảm ơn bố mẹ!`;
+    const msg = tinNhanPhuHuynh(r, t);
     const hien = () => { // máy không cho chép tự động: hiện sẵn tin nhắn để bấm giữ chép
-      let ta = $("#dd-msg"); if (!ta) { ta = document.createElement("textarea"); ta.id = "dd-msg"; ta.className = "dd-msg"; ta.readOnly = true; }
+      $$("#dd-watch .dd-msg-row").forEach(row => row.remove());
+      const ta = document.createElement("textarea"); ta.id = "dd-msg"; ta.className = "dd-msg"; ta.readOnly = true;
+      ta.setAttribute("aria-label", `Tin nhắn phụ huynh em ${r.ten}`);
       b.closest("tr").after(Object.assign(document.createElement("tr"), { className: "dd-msg-row" }));
       const row = b.closest("tr").nextElementSibling; const td = document.createElement("td"); td.colSpan = 6; td.appendChild(ta); row.appendChild(td);
       ta.value = msg; ta.focus(); ta.select(); toast("Tin nhắn hiện bên dưới — bấm giữ để sao chép.");
@@ -1247,13 +1442,8 @@ function ghiDiemDanh(ids, key, v) {
   $("#dd-ngay").value = todayVN();
   $("#dd-ca").innerHTML = CA_HOC.map(c => `<option value="${esc(c.ma)}">${esc(c.ten)} ${esc(c.gio)}</option>`).join("");
   $("#dd-ca").value = caMacDinh();
-  ["#dd-ngay", "#dd-ca", "#dd-cs"].forEach(id => $(id).onchange = renderAttend);
-  $("#dd-all").onclick = () => {
-    const ngay = $("#dd-ngay").value || todayVN(), key = `${ngay}_${$("#dd-ca").value}`, cs = $("#dd-cs").value;
-    const ids = roster.filter(r => (!cs || String(r.coso || "").includes(cs)) && !(diemdanhAll[r.id] || {})[key]).map(r => r.id);
-    if (!ids.length) { toast("Các em đều đã được điểm danh."); return; }
-    ghiDiemDanh(ids, key, "co"); toast(`Đã điểm danh có mặt ${ids.length} em.`);
-  };
+  ["#dd-ngay", "#dd-ca", "#dd-cs", "#dd-sort"].forEach(id => $(id).onchange = renderAttend);
+  $("#dd-search").oninput = renderAttend;
 })();
 
 /* ================= Khu Tài khoản: thanh công cụ + ô đi nhanh ================= */
@@ -1597,6 +1787,9 @@ async function onUser(u) {
   loadData(mail);
   // Đổi người dùng thì xoá sạch form đăng ký, tránh gửi nhầm thông tin của người trước (máy dùng chung).
   if (prevMail !== mail) {
+    homeworkCanceled = true; homeworkUpload?.cancel(); clearHomeworkFiles();
+    $("#f-bt").reset(); $("#bt-status").textContent = ""; $("#bt-file-error").textContent = "";
+    fillForm($("#f-bt"), store.get(homeworkDraftKey(), null));
     $("#f-reg").reset(); $("#rg-status").textContent = ""; applyRoleFields(); editingReq = false; regDraftFor = null;
     gradeOpen.clear(); Object.keys(gradeDraft).forEach(k => delete gradeDraft[k]);
   }
@@ -2016,10 +2209,6 @@ function guiEmailThongBao(d, canhBao) {
     })
   }).catch(() => {});
 }
-submitTo($("#f-bt"), $("#bt-status"), "Đang giao bài…", "Đã giao bài.", () => addDoc(collection(db, "baitap"), {
-  ten: $("#bt-ten").value.trim(), khoa: $("#bt-khoa").value, han: $("#bt-han").value,
-  lop: $("#bt-lop").value.trim(), mota: $("#bt-mota").value.trim(), taoLuc: Date.now()
-}));
 submitTo($("#f-gt"), $("#gt-status"), "Đang thêm…", "Đã thêm vào giáo trình.", () => addDoc(collection(db, "giaotrinh"), {
   khoa: $("#gt-khoa").value.trim(), ten: $("#gt-ten").value.trim(), loai: $("#gt-loai").value,
   buoc: $("#gt-buoc").value.split("\n").map(s => s.trim()).filter(Boolean), ghichu: $("#gt-ghichu").value.trim(),
@@ -2036,7 +2225,7 @@ submitTo($("#f-hv"), $("#hv-status"), "Đang duyệt…", "Đã duyệt. Ngườ
 $("#btn-seed").onclick = async () => {
   const st = $("#seed-status"); st.textContent = "Đang nạp…";
   // Chỉ tải giáo trình mẫu khi thầy bấm nạp (đỡ nặng trang cho mọi người khác)
-  const { GIAO_TRINH_MAU } = await import("../../data/giao-trinh-mau.js?v=20261008c");
+  const { GIAO_TRINH_MAU } = await import("../../data/giao-trinh-mau.js?v=20261009b");
   const batch = writeBatch(db);
   GIAO_TRINH_MAU.forEach(([id, khoa, ten, loai, thutu, buoc, ghichu]) => batch.set(doc(db, "giaotrinh", id), { khoa, ten, loai, thutu, buoc, ghichu }));
   try { await timed("Nạp giáo trình", batch.commit()); st.textContent = `Đã nạp ${GIAO_TRINH_MAU.length} bài vào giáo trình.`; }

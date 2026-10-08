@@ -113,3 +113,29 @@ Ai thấy gì trong khu Làm việc:
 | Học viên đã duyệt vẫn bị khoá | Học viên đăng nhập sai Gmail. Gmail duyệt phải trùng Gmail đăng nhập |
 | Bấm "Nạp giáo trình" báo chưa nạp được | Chưa dán luật ở bước 4, hoặc đang đăng nhập không phải Gmail giáo viên |
 | Mở web trong Facebook/Zalo không đăng nhập được | Bấm "Mở bằng trình duyệt" (Chrome/Safari) rồi đăng nhập lại |
+
+## Tệp đính kèm bài tập (bản cập nhật tháng 10/2026)
+
+Giáo viên mở **Bài tập → Giao bài mới**, chọn hoặc kéo thả tài liệu, rồi bấm **Giao bài cho học viên**. Có thể chọn tối đa 5 tệp, mỗi tệp 10 MB, tổng 25 MB. Hỗ trợ PDF, JPG/PNG/WebP, Word, PowerPoint, Excel, TXT và Markdown. Ảnh có xem trước; bỏ từng tệp bằng nút ×. Bản nháp chữ được lưu theo tài khoản; tệp phải chọn lại nếu tải lại trang.
+
+Trong khi tải có tiến độ và nút **Hủy tải**. Khi lưu thông tin bài, chờ xác nhận thành công trước khi đóng trang. Nếu tải lỗi, biểu mẫu và tệp được giữ để thử lại; không tự đăng một bài thiếu tài liệu. Bài không đính kèm vẫn dùng Firestore như trước.
+
+### Thiết lập kho tệp một lần
+
+Việc đưa mã lên GitHub Pages **không tự triển khai Firebase Storage Rules hoặc CORS**. Cần quản lý Firebase thiết lập phần này trước khi dùng tải tệp thật:
+
+1. Mở Firebase Console → dự án `lop-ve-thach-that` → **Storage**. Kiểm tra bucket `lop-ve-thach-that.firebasestorage.app` đã được tạo và đủ điều kiện sử dụng. Nếu Firebase yêu cầu thay đổi gói thanh toán, chủ dự án tự xem và xác nhận; bản cập nhật này không tự thay đổi gói.
+2. Trong **Storage → Rules**, dán `storage.rules` và Publish. Firebase có thể yêu cầu bật quyền đọc Firestore để kiểm tra vai trò; chấp nhận cho đúng dự án này. Không dùng quy tắc công khai `allow read, write: if true`.
+3. Hoặc với Firebase CLI đã đăng nhập đúng tài khoản quản lý:
+   ```sh
+   firebase deploy --only storage --project lop-ve-thach-that
+   ```
+4. Cho phép website tải tệp có xác thực bằng cấu hình CORS (Google Cloud CLI đã đăng nhập):
+   ```sh
+   gcloud storage buckets update gs://lop-ve-thach-that.firebasestorage.app --cors-file=config/storage-cors.json
+   ```
+5. Kiểm tra thật bằng giáo viên: giao một bài thử có PDF, đăng nhập học viên đã duyệt để tải xuống, sau đó xóa bài thử. Người chưa đăng nhập/học viên chưa duyệt không được đọc tệp; học viên không được tải lên hoặc xóa tệp của đề bài.
+
+Quyền: chỉ quản lý/giáo viên đã xác thực được tải lên và xóa; học viên đã duyệt được tải tài liệu của bài đã đăng. Dữ liệu bài chỉ lưu tên, loại, kích thước và đường dẫn; không lưu URL công khai có token tải xuống, không đưa tài liệu bài tập lên kho GitHub công khai.
+
+Khi xóa bài, hệ thống xóa tài liệu kèm theo. Nếu mạng hoặc quyền ngăn dọn tệp, thông báo rõ để quản lý kiểm tra thư mục `baitap/<mã bài>/` trong Storage. Việc đóng trình duyệt giữa lúc tải có thể để lại tệp tạm; quản lý có thể dọn những thư mục không có bài tương ứng trong Firestore.
