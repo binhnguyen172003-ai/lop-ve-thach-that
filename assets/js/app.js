@@ -362,46 +362,23 @@ function renderHonor() {
 }
 renderHonor();
 
-/* ---------- Top các khoá: theo khoá (mùa thi) hoặc theo môn ---------- */
-let tkMode = "khoa";
+/* ---------- Tổng hợp các khoá: mỗi khoá một dòng ---------- */
 function renderTopKhoa() {
   if (!BANG_VANG.length) { $("#tk-grid").innerHTML = ""; $(".tk-head").hidden = true; return; }
-  const row = (i, ten, sub, d, k) => `<li class="r${i + 1}"><span class="tk-rk num">${i + 1}</span>
-    <span class="tk-who"><b>${esc(ten)}</b><small>${sub}</small></span>
-    ${k ? `<i class="tk-tr" style="--c:${esc(tr(k).mau)}">${esc(k)}</i>` : ""}<b class="tk-sc num">${fmtDiem(d)}</b></li>`;
-  const col = (title, note, rows) => `<article class="tk-col"><header><b>${esc(title)}</b><span>${esc(note)}</span></header><ol>${rows || '<li class="muted">Chưa có điểm</li>'}</ol></article>`;
-  let html = "";
-  if (tkMode === "khoa") {
-    html = BV_NAM.map(y => {
-      const ds = gomHocVien(y, "").filter(x => x.top);
-      return col(`KHOÁ ${y}`, `${gomHocVien(y, "").length} học viên vinh danh`,
-        ds.slice(0, 5).map((x, i) => row(i, x.ten, esc(VT_MON[x.top.m] || x.top.m), x.top.d, x.top.tr)).join(""));
-    }).join("");
-    const all = BV_NAM.flatMap(y => gomHocVien(y, "").filter(x => x.top).map(x => ({ ...x, nam: y })))
-      .sort((a, b) => b.top.d - a.top.d || b.sum - a.sum);
-    html += col("KỶ LỤC MỌI KHOÁ", "Điểm vẽ cao nhất từ trước tới nay",
-      all.slice(0, 5).map((x, i) => row(i, x.ten, `Khoá ${x.nam} · ${esc(VT_MON[x.top.m] || x.top.m)}`, x.top.d, x.top.tr)).join(""));
-  } else {
-    const nhom = { "Hình hoạ": "HÌNH HOẠ", "Bố cục màu": "BỐ CỤC MÀU", "Bố cục": "BỐ CỤC MÀU", "Ký hoạ": "KÝ HOẠ", "Khối V": "KHỐI V (VẼ MỸ THUẬT)" };
-    const by = {};
-    BANG_VANG.forEach(r => Object.entries(r.diem || {}).forEach(([m, d]) => {
-      const g = nhom[m]; if (!g || isNaN(Number(d))) return;
-      const k = g + "|" + r.ten.trim().toLowerCase() + "|" + r.nam;
-      const cur = by[k];
-      if (!cur || Number(d) > cur.d) by[k] = { g, ten: r.ten.trim(), nam: r.nam, d: Number(d), tr: r.truong };
-    }));
-    const groups = [...new Set(Object.values(nhom))];
-    html = groups.map(g => {
-      const ds = Object.values(by).filter(x => x.g === g).sort((a, b) => b.d - a.d || a.ten.localeCompare(b.ten, "vi"));
-      return col(g, `${ds.length} lượt có điểm`, ds.slice(0, 5).map((x, i) => row(i, x.ten, `Khoá ${x.nam}`, x.d, x.tr)).join(""));
-    }).join("");
-  }
-  $("#tk-grid").innerHTML = html;
+  const rows = BV_NAM.map(y => {
+    const hv = gomHocVien(y, ""), co = hv.filter(x => x.top), top = co[0];
+    const luot = BANG_VANG.filter(x => Number(x.nam) === y).length;
+    const theoTruong = Object.keys(TRUONG).map(k => [k, hv.filter(x => x.truongs.includes(k)).length]).filter(([, n]) => n);
+    return `<tr>
+      <td class="tk-y"><b>Khoá ${y}</b></td>
+      <td class="num" data-l="Học viên"><b>${hv.length}</b></td>
+      <td class="num" data-l="Lượt đỗ"><b>${luot}</b></td>
+      <td data-l="Thủ khoa">${top ? `<b>${esc(top.ten)}</b> <span class="tk-sc num">${fmtDiem(top.top.d)}</span>` : "–"}</td>
+      <td class="num" data-l="Từ 8,5 điểm"><b>${co.filter(x => x.top.d >= 8.5).length}</b></td>
+      <td data-l="Đỗ theo trường"><div class="tk-trs">${theoTruong.map(([k, n]) => `<span style="--c:${esc(tr(k).mau)}" title="${esc(tr(k).ten)}"><i>${esc(k)}</i>${n}</span>`).join("")}</div></td></tr>`;
+  }).join("");
+  $("#tk-grid").innerHTML = `<table class="tk-table"><thead><tr><th>Khoá</th><th>Học viên</th><th>Lượt đỗ</th><th>Thủ khoa</th><th>Từ 8,5 điểm</th><th>Đỗ theo trường</th></tr></thead><tbody>${rows}</tbody></table>`;
 }
-const VT_MON = { "Hình hoạ": "Hình hoạ", "Bố cục màu": "Bố cục màu", "Bố cục": "Bố cục", "Ký hoạ": "Ký hoạ", "Phỏng vấn": "Phỏng vấn", "Khối V": "Khối V" };
-$$("#tk-tabs .tab").forEach(b => b.onclick = () => {
-  tkMode = b.dataset.tk; $$("#tk-tabs .tab").forEach(x => x.setAttribute("aria-selected", x === b)); renderTopKhoa();
-});
 renderTopKhoa();
 
 /* ================= Đăng ký học thử ================= */
