@@ -1109,3 +1109,5 @@ nav.on-hero .dd-t:hover,nav.on-hero .dd-t[aria-expanded="true"]{color:#fff}
 .dk-cd-n span{font-size:.68rem;text-transform:uppercase;letter-spacing:.12em;color:var(--graphite)}
 .dk-cd-f{margin-top:12px;padding-top:12px;border-top:1px solid rgba(255,255,255,.07);font-size:.86rem;color:var(--graphite);line-height:1.5}
 .dk-cd-f b{color:var(--ink);font-weight:600}
+/* Menu khi đã cuộn qua đầu trang: nền kính tối, không để chữ trang đầu chạy lẫn dưới tên lớp */
+:root[data-theme="dark"] nav:not(.on-hero){background:rgba(21,23,27,.82);-webkit-backdrop-filter:blur(14px) saturate(1.2);backdrop-filter:blur(14px) saturate(1.2)}

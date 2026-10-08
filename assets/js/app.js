@@ -560,7 +560,7 @@ $("#dk-zalo").href = "https://zalo.me/" + SDT_LOP;
   const onScroll = () => {
     ticking = false;
     const home = !$("#v-home").hidden, y = scrollY, h = hero.offsetHeight;
-    nav.classList.toggle("on-hero", home && y < h - nav.offsetHeight - 10 && !$("#menu-ov").classList.contains("open"));
+    nav.classList.toggle("on-hero", home && y < Math.min(60, h - nav.offsetHeight - 10) && !$("#menu-ov").classList.contains("open"));
     const dk = $("#dang-ky").getBoundingClientRect();
     const dock = $("#dock");
     dock.hidden = !home;
@@ -607,16 +607,28 @@ $("#dk-zalo").href = "https://zalo.me/" + SDT_LOP;
       [tranh.slice(0, half), tranh.slice(half).concat(tranh.slice(0, Math.max(0, half - (tranh.length - half))))].forEach((ds, r) => {
         const lap = ds.concat(ds, ds, ds); rows[r].innerHTML = lap.map(tile).join("");
       });
-      let tk = false;
-      const move = () => {
-        tk = false;
-        const r = mq.getBoundingClientRect(); if (r.bottom < -200 || r.top > innerHeight + 200) return;
-        const off = (innerHeight - r.top) * .3;
-        rows[0].style.transform = `translate3d(${off - 420}px,0,0)`;
-        rows[1].style.transform = `translate3d(${-(off) - 120}px,0,0)`;
+      // Tự chạy vòng liên tục (2 hàng ngược chiều), cuộn trang thì chạy nhanh thêm theo cuộn
+      const giam = matchMedia("(prefers-reduced-motion:reduce)").matches;
+      let W = [0, 0], dich = 0, cuonTruoc = scrollY, t0 = 0, raf = 0, thay = false;
+      const doRong = () => { W = rows.map(r => r.scrollWidth / 4); };
+      const buoc = t => {
+        raf = 0; if (!thay || document.hidden) return;
+        const dt = t0 ? Math.min(64, t - t0) : 16; t0 = t;
+        const cuon = scrollY - cuonTruoc; cuonTruoc = scrollY;
+        dich += dt * (innerWidth < 640 ? .035 : .045) + Math.abs(cuon) * .35;
+        if (!W[0]) doRong();
+        if (W[0]) {
+          const x0 = dich % W[0], x1 = dich % W[1];
+          rows[0].style.transform = `translate3d(${-x0}px,0,0)`;
+          rows[1].style.transform = `translate3d(${x1 - W[1]}px,0,0)`;
+        }
+        raf = requestAnimationFrame(buoc);
       };
-      if (!matchMedia("(prefers-reduced-motion:reduce)").matches) addEventListener("scroll", () => { if (!tk) { tk = true; requestAnimationFrame(move); } }, { passive: true });
-      requestAnimationFrame(move);
+      const chay = () => { if (!giam && thay && !document.hidden && !raf) { t0 = 0; cuonTruoc = scrollY; raf = requestAnimationFrame(buoc); } };
+      addEventListener("resize", doRong, { passive: true });
+      document.addEventListener("visibilitychange", chay);
+      new IntersectionObserver(es => { thay = es[0].isIntersecting; chay(); }).observe(mq);
+      $$("#mq img").forEach(i => i.addEventListener("load", doRong, { once: true }));
     }
   }
 
