@@ -293,25 +293,71 @@ renderGallery();
 function renderGiaoVien() {
   const box = $("#gv-grid"); if (!box) return;
   if (!GIAO_VIEN.length) { $("#giao-vien").hidden = true; return; }
-  const IMG = "assets/img/giao-vien/";
-  box.innerHTML = GIAO_VIEN.map((g, i) => {
+  const IMG = "assets/img/giao-vien/", n = GIAO_VIEN.length;
+  box.innerHTML = `<div class="gv-stage" id="gv-stage">${GIAO_VIEN.map((g, i) => {
     const t = g.truong ? TRUONG[g.truong] : null;
-    return `<article class="gv${g.chinh ? " chinh" : ""}">
-      <button type="button" class="gv-in" data-i="${i}" ${g.anh ? "" : "disabled"} aria-label="Xem bài vẽ của ${esc(g.ten)}">
-        ${g.anh ? `<img class="gv-bai" src="${IMG}${esc(g.anh)}-bai.jpg" alt="" loading="lazy" decoding="async" width="348" height="234">` : `<span class="gv-bai gv-bai-trong"><b>6</b><small>năm đứng lớp<br>luyện thi năng khiếu</small></span>`}
-        <span class="gv-ava">${g.anh ? `<img src="${IMG}${esc(g.anh)}.jpg" alt="" loading="lazy" decoding="async" width="96" height="96">` : `<i>${esc(initials(g.ten))}</i>`}</span>
+    return `<article class="gv${g.chinh ? " chinh" : ""}" data-i="${i}" aria-roledescription="thẻ" aria-label="${i + 1} / ${n}: ${esc(g.ten)}">
+      <button type="button" class="gv-in" data-i="${i}" tabindex="-1">
+        ${g.anh ? `<img class="gv-bai" src="${IMG}${esc(g.anh)}-bai.jpg" alt="" loading="lazy" decoding="async" width="348" height="234" draggable="false">` : `<span class="gv-bai gv-bai-trong"><b>6</b><small>năm đứng lớp<br>luyện thi năng khiếu</small></span>`}
+        <span class="gv-ava">${g.anh ? `<img src="${IMG}${esc(g.anh)}.jpg" alt="" loading="lazy" decoding="async" width="96" height="96" draggable="false">` : `<i>${esc(initials(g.ten))}</i>`}</span>
         <span class="gv-txt">
           <span class="gv-vt">${esc(g.vaiTro)} · ${esc(g.khoi)}</span>
           <b class="gv-ten">${esc(g.ten)}</b>
           <span class="gv-ng">${t ? `<i class="gv-tr" style="--c:${esc(t.mau)}" title="${esc(t.ten)}">${esc(g.truong)}</i>` : ""}${esc(g.nganh)}</span>
         </span>
       </button></article>`;
-  }).join("");
-  $$("#gv-grid .gv-in[data-i]").forEach(b => b.onclick = () => {
-    const ds = GIAO_VIEN.filter(g => g.anh);
-    galList = ds.map(g => ({ anh: IMG + g.anh + "-the.jpg", hocVien: g.ten, loai: g.vaiTro + " " + g.khoi, moTa: g.nganh }));
-    showLb(ds.indexOf(GIAO_VIEN[Number(b.dataset.i)]));
+  }).join("")}</div>
+  <div class="gv-ctl">
+    <button type="button" class="gv-nav" id="gv-prev" aria-label="Thầy cô trước">‹</button>
+    <div class="gv-dots" id="gv-dots">${GIAO_VIEN.map((g, i) => `<button type="button" data-i="${i}" aria-label="${esc(g.ten)}"></button>`).join("")}</div>
+    <button type="button" class="gv-nav" id="gv-next" aria-label="Thầy cô sau">›</button>
+  </div>`;
+
+  // Vòng xoay 3D: thẻ giữa to nhất, hai bên xoay nghiêng và lùi ra sau, tự quay mỗi 3,5 giây
+  const cards = $$("#gv-stage .gv"), dots = $$("#gv-dots button");
+  let cur = 0, timer = 0, paused = false, inView = false;
+  const draw = () => {
+    const mob = innerWidth < 640;
+    cards.forEach((c, i) => {
+      let d = i - cur; if (d > n / 2) d -= n; if (d < -n / 2) d += n;
+      const a = Math.abs(d);
+      c.style.transform = `translateX(${d * (mob ? 62 : 72)}%) translateZ(${-a * (mob ? 140 : 180)}px) rotateY(${-d * 28}deg)`;
+      c.style.opacity = a > 2 ? 0 : a === 2 ? .45 : a === 1 ? .85 : 1;
+      c.style.zIndex = 10 - a; c.style.pointerEvents = a > 2 ? "none" : "";
+      c.classList.toggle("on", d === 0); c.setAttribute("aria-hidden", a > 2);
+    });
+    dots.forEach((d, i) => d.setAttribute("aria-current", i === cur));
+  };
+  const go = i => { cur = (i + n) % n; draw(); };
+  const tick = () => { clearTimeout(timer); if (!paused && inView && !document.hidden && !matchMedia("(prefers-reduced-motion:reduce)").matches) timer = setTimeout(() => { go(cur + 1); tick(); }, 3500); };
+  const pause = p => { paused = p; tick(); };
+  $("#gv-prev").onclick = () => { go(cur - 1); tick(); };
+  $("#gv-next").onclick = () => { go(cur + 1); tick(); };
+  dots.forEach(d => d.onclick = () => { go(Number(d.dataset.i)); tick(); });
+  const ds = GIAO_VIEN.filter(g => g.anh);
+  cards.forEach(c => c.querySelector(".gv-in").onclick = () => {
+    const i = Number(c.dataset.i);
+    if (i !== cur) { go(i); tick(); return; }               // bấm thẻ bên cạnh: xoay tới thẻ đó
+    const g = GIAO_VIEN[i]; if (!g.anh) return;               // bấm thẻ giữa: xem cả tấm thẻ + bài vẽ
+    galList = ds.map(x => ({ anh: IMG + x.anh + "-the.jpg", hocVien: x.ten, loai: x.vaiTro + " " + x.khoi, moTa: x.nganh }));
+    pause(true); showLb(ds.indexOf(g));
   });
+  // Vuốt trên điện thoại / kéo chuột
+  const st = $("#gv-stage"); let x0 = null, moved = false;
+  st.addEventListener("pointerdown", e => { x0 = e.clientX; moved = false; pause(true); });
+  st.addEventListener("pointermove", e => { if (x0 !== null && Math.abs(e.clientX - x0) > 8) moved = true; });
+  const end = e => { if (x0 === null) return; const dx = e.clientX - x0; x0 = null; if (Math.abs(dx) > 40) go(cur + (dx < 0 ? 1 : -1)); setTimeout(() => pause(false), 4000); };
+  st.addEventListener("pointerup", end); st.addEventListener("pointercancel", () => { x0 = null; pause(false); });
+  st.addEventListener("click", e => { if (moved) { e.stopPropagation(); e.preventDefault(); moved = false; } }, true);
+  box.addEventListener("mouseenter", () => pause(true)); box.addEventListener("mouseleave", () => pause(false));
+  box.addEventListener("focusin", () => pause(true)); box.addEventListener("focusout", () => pause(false));
+  box.tabIndex = 0;
+  box.addEventListener("keydown", e => { if (e.key === "ArrowRight") { go(cur + 1); e.preventDefault(); } if (e.key === "ArrowLeft") { go(cur - 1); e.preventDefault(); } if (e.key === "Enter" && e.target === box) cards[cur].querySelector(".gv-in").click(); });
+  $("#lb-close").addEventListener("click", () => pause(false));
+  document.addEventListener("visibilitychange", tick);
+  addEventListener("resize", draw, { passive: true });
+  new IntersectionObserver(es => { inView = es[0].isIntersecting; tick(); }, { threshold: .3 }).observe(box);
+  draw();
 }
 
 /* ================= Bảng vàng thi năng khiếu ================= */
