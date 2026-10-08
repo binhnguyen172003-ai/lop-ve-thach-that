@@ -1608,3 +1608,39 @@ nav .acct.has-ka .acct-icon{display:none!important}
 .kt-thanh{left:-3%;width:106%}
 @media (max-width:640px){.kt-goc{width:58px;height:58px}}
 .kt-day{display:none}
+
+/* ===== NÉT CĂNG: bỏ quầng sáng mờ, viền đặc, chữ sắc ===== */
+.rk-chip,.rk-chip.t0,.rk-chip.t1,.rk-chip.t2,.rk-chip.t3,.rk-chip.t4,.rk-chip.t5,.rk-chip.t6,.rk-chip.t7,.rk-chip.t8{animation:none!important;box-shadow:0 2px 0 rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.18)!important}
+.rk-chip::after,.rk-chip .fx{display:none!important}
+.rk-chip{background:linear-gradient(90deg,color-mix(in srgb,var(--rc) 30%,#0c0e14),#0c0e14 55%)!important;border:2px solid var(--rc)!important;padding:4px 12px 4px 8px}
+.rk-chip.t4,.rk-chip.t5,.rk-chip.t6,.rk-chip.t7{border:2px solid transparent!important;background:linear-gradient(90deg,color-mix(in srgb,var(--rc) 34%,#0c0e14),#0c0e14 55%) padding-box,linear-gradient(90deg,#fff,var(--rc) 30%,var(--rc) 70%,#fff) border-box!important}
+.rk-chip.t8{border:2px solid transparent!important;background:linear-gradient(90deg,#24123a,#0c0e14 55%) padding-box,linear-gradient(90deg,#ff5a5a,#ffc400,#3fcf5b,#3ec6e0,#9b5cff) border-box!important}
+.rk-chip svg{filter:none!important}
+.rk-chip b{text-shadow:none!important;filter:none!important;-webkit-text-fill-color:currentColor;background:none!important;color:#fff!important;font-size:1.08rem!important}
+.rk-chip.t3 b,.rk-chip.t4 b,.rk-chip.t5 b,.rk-chip.t6 b,.rk-chip.t7 b{color:var(--rc)!important;-webkit-text-stroke:.4px rgba(255,255,255,.6)}
+.rk-chip.t8 b{background:linear-gradient(90deg,#ff5a5a,#ffc400,#3fcf5b,#3ec6e0,#9b5cff)!important;-webkit-background-clip:text!important;background-clip:text!important;-webkit-text-fill-color:transparent;animation:none!important}
+.rk-chip i{text-shadow:none!important;color:#ffd34d}
+.rk-chip small{color:rgba(255,255,255,.9)}
+.rk-chip em{color:#fff;max-width:none!important;border-left-color:rgba(255,255,255,.35)}
+/* khung thẻ, khung avatar, huy hiệu: bóng đổ gọn thay cho quầng sáng */
+.kt-thanh,.kt-goc,.kt.t3 .kt-thanh,.kt.t4 .kt-thanh,.kt.t5 .kt-thanh,.kt.t6 .kt-thanh,.kt.t7 .kt-thanh,.kt.t8 .kt-thanh,.kt.t5 .kt-goc,.kt.t6 .kt-goc,.kt.t7 .kt-goc,.kt.t8 .kt-goc{filter:drop-shadow(0 1.5px 0 rgba(0,0,0,.75))!important}
+.nb-card.on .kt.t5,.nb-card.on .kt.t6,.nb-card.on .kt.t7,.nb-card.on .kt.t8{box-shadow:none}
+.kt::before{opacity:1}
+.ka svg,.ka.t1 svg,.ka.t2 svg,.ka.t3 svg,.ka.t4 svg,.ka.t5 svg,.ka.t6 svg,.ka.t7 svg{filter:drop-shadow(0 2px 0 rgba(0,0,0,.6))!important;animation:none!important}
+.ka.t8 svg{filter:drop-shadow(0 2px 0 rgba(0,0,0,.6))!important}
+.rk-badge svg,.rk-badge.t3 svg,.rk-badge.t4 svg,.rk-badge.t5 svg,.rk-badge.t6 svg,.rk-badge.t7 svg{filter:drop-shadow(0 1.5px 0 rgba(0,0,0,.6))!important;animation:none!important}
+.tr-list li.t5,.tr-list li.t6,.tr-list li.t7,.tr-list li.t8{animation:none!important;box-shadow:0 0 0 1px color-mix(in srgb,var(--rc) 70%,transparent)!important}
+.tr-list li.t5 .tr-xp,.tr-list li.t6 .tr-xp,.tr-list li.t7 .tr-xp{text-shadow:none}
+.tr-list li.p1 .tr-so{text-shadow:none}
+.rk-chip{overflow:visible;line-height:1.4}
+.rk-chip em,.rk-chip small,.rk-chip b{line-height:1.45!important}
+.rk-chip em{padding-block:1px}
+/* góc khung ôm sát mép thẻ */
+.kt-goc{top:0;width:96px;height:96px}
+.kt-goc.l{left:0}.kt-goc.r{right:0}
+@media (max-width:640px){.kt-goc{width:76px;height:76px}}
+/* Thành tựu nổi nhất: thu nhỏ, nằm gọn ở góc phải */
+.nb-tt,.nb-medal ~ .nb-tt{top:12px;right:12px;bottom:auto;padding:3px;gap:0;border-radius:50%}
+.nb-tt .tt-em.sm{width:34px;height:34px}
+.nb-ttx{display:none!important}
+@media (max-width:640px){.nb-tt,.nb-medal ~ .nb-tt{top:10px;right:10px}.nb-tt .tt-em.sm{width:30px;height:30px}}

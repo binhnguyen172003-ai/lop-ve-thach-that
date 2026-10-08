@@ -396,7 +396,7 @@ function tinhRank(dd, prog, fb, ten) {
 }
 const huyHieu = (r, i, cls = "", ten = "") => cls === "xs"
   ? `<span class="rk-chip t${i}${r.mau === "rainbow" ? " rb" : ""}" data-rk="${esc(ten)}" role="button" tabindex="0" style="--rc:${r.mau === "rainbow" ? "#ffd6ff" : r.mau}" title="Hạng ${r.ma} · ${r.kim} · ${r.ten} — xem cách leo hạng">
-  <svg viewBox="0 0 64 64" aria-hidden="true"><path d="M32 6l20 9v16c0 13-9 22-20 27C21 53 12 44 12 31V15z"/></svg>${i >= 5 ? '<s class="fx" aria-hidden="true"></s>' : ""}<small>RANK</small><b>${r.ma}</b><i>${i >= 3 ? (i + 1) + "★" : "★".repeat(i + 1)}</i><em>${r.kim} · ${r.ten}</em></span>`
+  <svg viewBox="0 0 64 64" aria-hidden="true"><path d="M32 6l20 9v16c0 13-9 22-20 27C21 53 12 44 12 31V15z"/></svg><small>RANK</small><b>${r.ma}</b><i>${i >= 3 ? (i + 1) + "★" : "★".repeat(i + 1)}</i><em>${r.ten}</em></span>`
   : `<span class="rk-badge t${i} ${cls}${r.mau === "rainbow" ? " rb" : ""}" data-rk="${esc(ten)}" style="--rc:${r.mau === "rainbow" ? "#ffd6ff" : r.mau}" title="Hạng ${r.ma} · ${r.kim} · ${r.ten}">
   <svg viewBox="0 0 64 64" aria-hidden="true"><path class="w" d="M6 22c6 2 10 6 12 12-6-1-10-5-12-12zM58 22c-6 2-10 6-12 12 6-1 10-5 12-12z"/><path class="s" d="M32 6l20 9v16c0 13-9 22-20 27C21 53 12 44 12 31V15z"/></svg>
   <b>${r.ma}</b><i>${"★".repeat(i + 1)}</i></span>`;
@@ -434,13 +434,13 @@ function khungThe(r, i) {
   if (i >= 7) t.push(`<path d="M2 15C-2 6 4-2 14-4c-6 5-8 12-4 19zM298 15c4-9-2-17-12-19 6 5 8 12 4 19z" fill="${M}" stroke="${c}" stroke-width=".6"/>`);
   if (i === 8) t.push(`<rect x="8" y="13.5" width="284" height="3.5" rx="1" fill="url(#${id}r)" opacity=".65"/>`);
   const thanh = `<svg class="kt-thanh" viewBox="-6 -8 312 48" aria-hidden="true">${defs}${t.join("")}</svg>`;
-  // góc trên (trái, phải đối xứng)
+  // góc trên (trái, phải đối xứng) — ôm sát mép bo của thẻ
   const g = [];
-  if (i >= 1) g.push(`<path d="M5 60V12q0-7 7-7h48" fill="none" stroke="${M}" stroke-width="${i >= 4 ? 3.5 : 2.5}"/>`);
-  if (i >= 3) g.push(`<path d="M10 54V16q0-6 6-6h38" fill="none" stroke="${c}" stroke-width="1" opacity=".8"/><path d="M2 6l9-4 2 9-9 2z" fill="${A}"/>`);
-  if (i >= 5) g.push(`<path d="M3 46C1 22 14 4 40 0c-6 4-10 7-12 11-12 3-20 14-21 35z" fill="${M}" stroke="${c}" stroke-width=".7"/><path d="M60 5c6-6 12-6 16-4-6 1-10 4-12 8z" fill="${M}"/>`);
-  if (i >= 7) g.push(`<path d="M18 2C20-8 30-14 42-14c-8 4-14 10-16 18z" fill="${A}"/>`);
-  const goc = g.length ? `<svg class="kt-goc l" viewBox="0 -16 80 80" aria-hidden="true">${defs}${g.join("")}</svg><svg class="kt-goc r" viewBox="0 -16 80 80" aria-hidden="true">${defs.replaceAll(id, id + "b")}${g.join("").replaceAll(id, id + "b")}</svg>` : "";
+  if (i >= 1) g.push(`<path d="M2 ${i >= 4 ? 76 : 64}V20A18 18 0 0 1 20 2H${i >= 4 ? 76 : 64}" fill="none" stroke="${M}" stroke-width="${i >= 4 ? 4 : 3}" stroke-linecap="square"/>`);
+  if (i >= 3) g.push(`<path d="M8 58V22a14 14 0 0 1 14-14h36" fill="none" stroke="${c}" stroke-width="1.2"/><path d="M8 8l6-1-1 6-6 1z" fill="${A}" stroke="#fff" stroke-width=".5"/>`);
+  if (i >= 5) g.push(`<path d="M2 52C3 30 14 12 34 5c-5 6-8 10-9 15C13 26 6 37 2 52z" fill="${M}" stroke="${c}" stroke-width=".7"/><path d="M76 2c8 0 13 4 16 10-5-3-10-5-16-5zM2 76c0 8 4 13 10 16-3-5-5-10-5-16z" fill="${M}"/>`);
+  if (i >= 7) g.push(`<path d="M24 2c10-1 18 2 22 9-7-4-14-5-22-4z" fill="${A}"/>`);
+  const goc = g.length ? `<svg class="kt-goc l" viewBox="0 0 96 96" aria-hidden="true">${defs}${g.join("")}</svg><svg class="kt-goc r" viewBox="0 0 96 96" aria-hidden="true">${defs.replaceAll(id, id + "b")}${g.join("").replaceAll(id, id + "b")}</svg>` : "";
   // huy hiệu tròn ở đáy (S+)
   const day = i >= 5 ? `<svg class="kt-day" viewBox="0 0 40 40" aria-hidden="true">${defs.replaceAll(id, id + "c")}<circle cx="20" cy="20" r="15" fill="#0b0d14" stroke="${M.replace(id, id + "c")}" stroke-width="3"/><path d="M20 9l6 11-6 11-6-11z" fill="${A.replace(id, id + "c")}"/></svg>` : "";
   return `<span class="kt t${i}${r.mau === "rainbow" ? " rb" : ""}" style="--rc:${c};--k0:${KL[0]};--k1:${KL[1]};--k2:${KL[2]}" aria-hidden="true">${goc}${thanh}${day}</span>`;
