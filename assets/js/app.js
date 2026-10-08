@@ -3,7 +3,7 @@
 //  Nội dung (liên hệ, lịch thi, thời gian biểu, ảnh) nằm ở data/noi-dung.js
 // =====================================================================
 import { firebaseConfig, ADMIN_EMAIL, EMAIL_NHAN_THONG_BAO } from "../../config/firebase-config.js?v=20261008c";
-import { LIEN_HE, NAM_THI, LICH_THI, BO_LOC_TRUONG, CA_HOC, THOI_GIAN_BIEU, BAI_VE, BANG_VANG, TRUONG, MUC_TIEU, GIAO_VIEN, VIDEO_BIA } from "../../data/noi-dung.js?v=20261008c";
+import { LIEN_HE, NAM_THI, LICH_THI, BO_LOC_TRUONG, CA_HOC, THOI_GIAN_BIEU, BAI_VE, BANG_VANG, TRUONG, MUC_TIEU, GIAO_VIEN, VIDEO_BIA, BAI_NOI_BAT } from "../../data/noi-dung.js?v=20261008c";
 
 // Firebase được tải riêng, để phần giới thiệu vẫn chạy kể cả khi mạng chậm hoặc chưa cấu hình.
 const FB = "https://www.gstatic.com/firebasejs/10.12.2/";
@@ -319,7 +319,7 @@ function vongXoay(box, st, cards, dots, prev, next, onCenter) {
     dots.forEach((d, i) => d.setAttribute("aria-current", i === cur));
   };
   const go = i => { cur = (i + n) % n; draw(); };
-  const tick = () => { clearTimeout(timer); if (!paused && inView && !document.hidden && !matchMedia("(prefers-reduced-motion:reduce)").matches) timer = setTimeout(() => { go(cur + 1); tick(); }, 3500); };
+  const tick = () => { clearTimeout(timer); if (!paused && inView && !document.hidden) timer = setTimeout(() => { go(cur + 1); tick(); }, 3500); };
   const pause = p => { paused = p; tick(); };
   prev.onclick = () => { go(cur - 1); tick(); };
   next.onclick = () => { go(cur + 1); tick(); };
@@ -348,6 +348,36 @@ function vongXoay(box, st, cards, dots, prev, next, onCenter) {
   draw();
   return { pause, go };
 }
+
+/* ================= Bài vẽ nổi bật: tuần / tháng / năm, vòng xoay 3D ================= */
+(function noiBat() {
+  const box = $("#nb-ring"); if (!box) return;
+  const TEN = { tuan: "tuần", thang: "tháng", nam: "năm" };
+  const mau = GIAO_VIEN.filter(g => g.anh).map((g, i) => ({ anh: "assets/img/giao-vien/" + g.anh + "-bai.jpg", hocVien: g.ten, loai: "Bài mẫu giáo viên", mau: true }));
+  let ky = "tuan", vx = null;
+  const ve = () => {
+    let ds = BAI_NOI_BAT.filter(b => b.ky === ky).sort((a, b) => (a.hang || 99) - (b.hang || 99));
+    const tam = !ds.length; if (tam) ds = mau;
+    box.innerHTML = `<div class="gv-stage nb-stage">${ds.map((b, i) => `<figure class="nb-card" data-i="${i}">
+        <img src="${esc(b.anh)}" alt="${esc((b.loai || "Bài vẽ") + " · " + (b.hocVien || ""))}" loading="lazy" decoding="async" draggable="false">
+        ${!tam && i < 3 ? `<span class="nb-hang h${i + 1}">${i + 1}</span>` : ""}
+        <figcaption><b>${esc(b.hocVien || "")}</b><span>${esc([b.loai, b.ghiChu].filter(Boolean).join(" · "))}</span></figcaption></figure>`).join("")}</div>
+      <div class="gv-ctl"><button type="button" class="gv-nav" aria-label="Bài trước">‹</button>
+        <div class="gv-dots">${ds.map((b, i) => `<button type="button" data-i="${i}" aria-label="Bài ${i + 1}"></button>`).join("")}</div>
+        <button type="button" class="gv-nav" aria-label="Bài sau">›</button></div>
+      ${tam ? `<p class="muted nb-note">Bài nổi bật ${TEN[ky]} này đang được thầy chọn. Tạm xem bài mẫu của đội ngũ giáo viên.</p>` : ""}`;
+    const [p, n] = box.querySelectorAll(".gv-nav");
+    const cards = [...box.querySelectorAll(".nb-card")];
+    vx = vongXoay(box, box.querySelector(".nb-stage"), cards, [...box.querySelectorAll(".gv-dots button")], p, n, c => {
+      galList = ds; showLb(Number(c.dataset.i));
+    });
+  };
+  $$("#nb-tabs [data-k]").forEach(t => t.onclick = () => { ky = t.dataset.k; $$("#nb-tabs [data-k]").forEach(x => x.setAttribute("aria-selected", x === t)); ve(); });
+  // Mặc định mở mục có bài gần nhất (tuần → tháng → năm)
+  ky = ["tuan", "thang", "nam"].find(k => BAI_NOI_BAT.some(b => b.ky === k)) || "tuan";
+  $$("#nb-tabs [data-k]").forEach(x => x.setAttribute("aria-selected", x.dataset.k === ky));
+  ve();
+})();
 
 /* Khoá học: biến 6 thẻ khoá học thành vòng xoay giống phần Giáo viên */
 (function khoaHocXoay() {
@@ -657,42 +687,6 @@ $("#dk-zalo").href = "https://zalo.me/" + SDT_LOP;
   });
   document.addEventListener("click", e => { if (!e.target.closest("nav .dd")) dong(); });
   addEventListener("keydown", e => { if (e.key === "Escape") dong(); });
-
-  // Dải bài mẫu: 2 hàng chạy ngược chiều nhau khi cuộn trang
-  const mq = $("#mq");
-  if (mq) {
-    const tranh = GIAO_VIEN.filter(g => g.anh).map(g => ({ src: "assets/img/giao-vien/" + g.anh + "-bai.jpg", ten: g.ten }));
-    if (tranh.length < 2) mq.hidden = true;
-    else {
-      const half = Math.ceil(tranh.length / 2), rows = $$("#mq .mq-row");
-      const tile = x => `<a href="#giao-vien"><img src="${esc(x.src)}" alt="Bài mẫu của ${esc(x.ten)}" loading="lazy" decoding="async" width="340" height="220"><span>Bài mẫu · ${esc(x.ten)}</span></a>`;
-      [tranh.slice(0, half), tranh.slice(half).concat(tranh.slice(0, Math.max(0, half - (tranh.length - half))))].forEach((ds, r) => {
-        const lap = ds.concat(ds, ds, ds); rows[r].innerHTML = lap.map(tile).join("");
-      });
-      // Tự chạy vòng liên tục (2 hàng ngược chiều), cuộn trang thì chạy nhanh thêm theo cuộn
-      const giam = matchMedia("(prefers-reduced-motion:reduce)").matches;
-      let W = [0, 0], dich = 0, cuonTruoc = scrollY, t0 = 0, raf = 0, thay = false;
-      const doRong = () => { W = rows.map(r => r.scrollWidth / 4); };
-      const buoc = t => {
-        raf = 0; if (!thay || document.hidden) return;
-        const dt = t0 ? Math.min(64, t - t0) : 16; t0 = t;
-        const cuon = scrollY - cuonTruoc; cuonTruoc = scrollY;
-        dich += dt * (innerWidth < 640 ? .035 : .045) + Math.abs(cuon) * .35;
-        if (!W[0]) doRong();
-        if (W[0]) {
-          const x0 = dich % W[0], x1 = dich % W[1];
-          rows[0].style.transform = `translate3d(${-x0}px,0,0)`;
-          rows[1].style.transform = `translate3d(${x1 - W[1]}px,0,0)`;
-        }
-        raf = requestAnimationFrame(buoc);
-      };
-      const chay = () => { if (!giam && thay && !document.hidden && !raf) { t0 = 0; cuonTruoc = scrollY; raf = requestAnimationFrame(buoc); } };
-      addEventListener("resize", doRong, { passive: true });
-      document.addEventListener("visibilitychange", chay);
-      new IntersectionObserver(es => { thay = es[0].isIntersecting; chay(); }).observe(mq);
-      $$("#mq img").forEach(i => i.addEventListener("load", doRong, { once: true }));
-    }
-  }
 
   // Hình trang trí mờ hai bên cho các phần khác (giống phần "Về lớp")
   const DECO = { "khoa-hoc": ["deco/khoi.svg", "deco/captoc.svg"], "bang-vang": [null, "deco/cup.svg"], "giao-vien": ["hinh-hoa-nguoi.png", null],

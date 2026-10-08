@@ -93,6 +93,7 @@
       <button type="button" class="dd-t" aria-expanded="false">Thành tích <svg class="chev" viewBox="0 0 8 5" aria-hidden="true"><path d="M1 1l3 3 3-3"/></svg></button>
       <div class="dd-p">
         <a class="link" href="#bang-vang" data-nav="home"><b>Bảng vàng</b><small>Top học viên điểm cao</small></a>
+        <a class="link" href="#noi-bat" data-nav="home"><b>Bài vẽ nổi bật</b><small>Top tuần · tháng · năm</small></a>
         <a class="link" href="#bai-ve" data-nav="home"><b>Bài vẽ</b><small>Bài mẫu và bài học viên</small></a>
       </div>
     </div>
@@ -170,9 +171,17 @@
   </header>
   <script>(function(){var h=document.getElementById("hero-h1");if(!h)return;var i=0,out=[];h.childNodes.forEach(function(n){if(n.nodeType===3){n.textContent.split(/\s+/).forEach(function(w){if(w)out.push('<span class="w" aria-hidden="true" style="--i:'+(i++)+'">'+w+'</span>')})}else{out.push('<span class="w" aria-hidden="true" style="--i:'+(i++)+'">'+n.outerHTML+'</span>')}});h.innerHTML=out.join("");requestAnimationFrame(function(){h.classList.add("in");document.querySelectorAll("#gioi-thieu .fx").forEach(function(e){e.classList.add("in")})})})();</script>
 
-  <div class="mq" id="mq" aria-label="Bài mẫu của đội ngũ giáo viên">
-    <div class="mq-row" data-dir="1"></div>
-    <div class="mq-row" data-dir="-1"></div>
+  <section id="noi-bat" aria-labelledby="h-nb" class="nb">
+    <div class="sec-head">
+      <div><p class="eyebrow">Phòng tranh</p><h2 id="h-nb">Bài vẽ nổi bật</h2></div>
+      <div class="tabs nb-tabs" id="nb-tabs" role="tablist">
+        <button class="tab" type="button" data-k="tuan" aria-selected="true">Tuần</button>
+        <button class="tab" type="button" data-k="thang" aria-selected="false">Tháng</button>
+        <button class="tab" type="button" data-k="nam" aria-selected="false">Năm</button>
+      </div>
+    </div>
+    <div class="gv-ring nb-ring" id="nb-ring" aria-roledescription="vòng xoay" aria-label="Bài vẽ nổi bật"></div>
+  </section>
   </div>
 
   <section aria-labelledby="h-ve-lop" class="ve-lop">

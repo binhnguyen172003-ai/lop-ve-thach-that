@@ -189,3 +189,11 @@ export const GIAO_VIEN = [
 // Có video quay ở lớp (10–20 giây, quay ngang, dưới 6 MB): đặt vào assets/video/ rồi điền tên file, VD: "assets/video/lop.mp4".
 // Để trống "" thì trang chủ dùng ảnh bìa chuyển động chậm.
 export const VIDEO_BIA = "";
+
+// ===== BÀI VẼ NỔI BẬT (tuần / tháng / năm) =====
+// Mỗi tuần thầy chọn bài đẹp: đặt ảnh vào assets/img/noi-bat/ rồi thêm 1 dòng.
+// ky: "tuan" | "thang" | "nam" · hang: 1, 2, 3… · anh: đường dẫn ảnh · hocVien: tên · loai: phần học · ghiChu: lời khen ngắn
+// Mục nào chưa có bài, web tạm hiện bài mẫu của đội ngũ giáo viên.
+export const BAI_NOI_BAT = [
+  // { ky: "tuan", hang: 1, anh: "assets/img/noi-bat/tuan-1.jpg", hocVien: "Nguyễn Văn A", loai: "Hình hoạ tượng", ghiChu: "Khối rõ, sáng tối đẹp" },
+];

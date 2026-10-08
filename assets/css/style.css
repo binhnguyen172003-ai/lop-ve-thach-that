@@ -1162,3 +1162,20 @@ nav.on-hero .nav-search{color:#fff;border-color:rgba(255,255,255,.3);background:
 .tk-rong{padding:18px 12px;color:#9aa3ad;font-size:.9rem}
 .tk-goi{margin:0;padding:10px 16px;border-top:1px solid rgba(255,255,255,.08);font-size:.76rem;color:#7d858f}
 @media (max-width:640px){.tk-ov{padding-top:12px}.tk-kq a i{min-width:62px}}
+
+/* ===== Bài vẽ nổi bật ===== */
+.nb-tabs{margin:0}
+.nb-stage{height:420px}
+.nb-card{position:absolute;top:0;left:50%;width:340px;margin:0 0 0 -170px;height:400px;border-radius:18px;overflow:hidden;background:#0d0f14;cursor:pointer;
+  transition:transform .7s cubic-bezier(.22,1,.36,1),opacity .7s,box-shadow .3s;will-change:transform;backface-visibility:hidden;box-shadow:0 20px 40px -20px rgba(0,0,0,.7)}
+.nb-card img{width:100%;height:100%;object-fit:cover;display:block;-webkit-user-drag:none}
+.nb-card::after{content:"";position:absolute;inset:0;background:linear-gradient(0deg,rgba(5,6,10,.85),rgba(5,6,10,0) 45%);pointer-events:none}
+.nb-card.on{box-shadow:0 0 0 1px rgba(255,255,255,.25),0 26px 50px -18px rgba(0,0,0,.8)}
+.nb-card figcaption{position:absolute;left:16px;right:16px;bottom:14px;z-index:1;display:grid;gap:2px;color:#fff}
+.nb-card figcaption b{font:italic 600 1.3rem var(--f-serif)}
+.nb-card figcaption span{font-size:.78rem;color:rgba(255,255,255,.75)}
+.nb-hang{position:absolute;top:10px;left:12px;z-index:1;font:900 3.2rem/1 var(--f-display);color:#fff;text-shadow:0 4px 18px rgba(0,0,0,.5)}
+.nb-hang.h1{color:#ffc400}.nb-hang.h2{color:#ff5a4f}.nb-hang.h3{color:#3fcf5b}
+.nb-note{text-align:center;margin-top:10px;font-size:.84rem}
+@media (max-width:640px){.nb-stage{height:380px}.nb-card{width:min(74vw,280px);margin-left:calc(min(74vw,280px) / -2);height:360px}}
+@media (prefers-reduced-motion:reduce){.nb-card{transition:none}}
