@@ -4,7 +4,7 @@
 // =====================================================================
 import { firebaseConfig, ADMIN_EMAIL, EMAIL_NHAN_THONG_BAO } from "../../config/firebase-config.js?v=20261009b";
 import { FILE_LIMITS, FILE_TYPES, fileExt, fileSize, validateFiles, attachmentStorage, uploadError, validAttachmentPath } from "./attachments.js?v=20261009b";
-import { LIEN_HE, NAM_THI, LICH_THI, BO_LOC_TRUONG, CA_HOC, THOI_GIAN_BIEU, BAI_VE, BANG_VANG, TRUONG, MUC_TIEU, GIAO_VIEN, VIDEO_BIA, BAI_NOI_BAT } from "../../data/noi-dung.js?v=20261009d";
+import { LIEN_HE, NAM_THI, LICH_THI, BO_LOC_TRUONG, CA_HOC, THOI_GIAN_BIEU, BAI_VE, BANG_VANG, TRUONG, MUC_TIEU, GIAO_VIEN, VIDEO_BIA, BAI_NOI_BAT, THANH_TUU_TRAO, XP_THUONG } from "../../data/noi-dung.js?v=20261009d";
 
 // Firebase được tải riêng, để phần giới thiệu vẫn chạy kể cả khi mạng chậm hoặc chưa cấu hình.
 const FB = "https://www.gstatic.com/firebasejs/10.12.2/";
@@ -364,13 +364,13 @@ function vongXoay(box, st, cards, dots, prev, next, onCenter) {
 const RANK = [
   { ma: "F", xp: 0, mau: "#9aa3ad", kim: "Sắt", ten: "Người Mới", mo: "Vừa vào lớp, bắt đầu hành trình." },
   { ma: "E", xp: 100, mau: "#3fcf5b", kim: "Đồng", ten: "Tập Sự", mo: "Đã có bài đầu tiên được chọn hoặc đi học đều." },
-  { ma: "C", xp: 250, mau: "#3ec6e0", kim: "Bạc", ten: "Chăm Chỉ", mo: "Tiềm năng bắt đầu lộ rõ." },
-  { ma: "B", xp: 500, mau: "#3d6bff", kim: "Vàng", ten: "Dân Chuyên", mo: "Nền tảng chắc, làm bài đầy đủ." },
-  { ma: "A", xp: 800, mau: "#9b5cff", kim: "Bạch Kim", ten: "Lão Làng", mo: "Trên mức trung bình của lớp." },
-  { ma: "S", xp: 1200, mau: "#ffc400", kim: "Kim Cương", ten: "Cao Thủ", mo: "Được cả lớp công nhận." },
-  { ma: "SS", xp: 1700, mau: "#ff8a1f", kim: "Tinh Anh", ten: "Đại Cao Thủ", mo: "Nhóm học viên giỏi nhất." },
-  { ma: "SSS", xp: 2300, mau: "#ff3b3b", kim: "Huyền Thoại", ten: "Bậc Thầy", mo: "Rất ít người đạt được." },
-  { ma: "SSS+", xp: 3000, mau: "rainbow", kim: "Thách Đấu", ten: "Huyền Thoại Dreamers", mo: "Vượt mọi giới hạn." },
+  { ma: "C", xp: 300, mau: "#3ec6e0", kim: "Bạc", ten: "Chăm Chỉ", mo: "Tiềm năng bắt đầu lộ rõ." },
+  { ma: "B", xp: 700, mau: "#3d6bff", kim: "Vàng", ten: "Dân Chuyên", mo: "Nền tảng chắc, làm bài đầy đủ." },
+  { ma: "A", xp: 1400, mau: "#9b5cff", kim: "Bạch Kim", ten: "Lão Làng", mo: "Trên mức trung bình của lớp." },
+  { ma: "S", xp: 2500, mau: "#ffc400", kim: "Kim Cương", ten: "Cao Thủ", mo: "Được cả lớp công nhận." },
+  { ma: "SS", xp: 4000, mau: "#ff8a1f", kim: "Tinh Anh", ten: "Đại Cao Thủ", mo: "Nhóm học viên giỏi nhất." },
+  { ma: "SSS", xp: 6500, mau: "#ff3b3b", kim: "Huyền Thoại", ten: "Bậc Thầy", mo: "Rất ít người đạt được." },
+  { ma: "SSS+", xp: 10000, mau: "rainbow", kim: "Thách Đấu", ten: "Huyền Thoại Dreamers", mo: "Vượt mọi giới hạn." },
 ];
 // Cách tính điểm kinh nghiệm (XP) — thầy sửa số ở đây nếu muốn
 const XP = { buoi: 10, baiTap: 15, baiHoc: 5, diemGioi: 10, noiBat: 100, top1: 25 };
@@ -386,51 +386,147 @@ function tinhRank(dd, prog, fb, ten) {
   const bo = t => String(t || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
   const nb = ten ? BAI_NOI_BAT.filter(b => !b.tg && b.hocVien && b.ngay > RANK_BAT_DAU && bo(ten).endsWith(bo(b.hocVien))) : [];
   const top1 = nb.filter(b => b.hang === 1).length;
-  const xp = buoi * XP.buoi + baiTap * XP.baiTap + baiHoc * XP.baiHoc + gioi * XP.diemGioi + nb.length * XP.noiBat + top1 * XP.top1;
+  const thuongDs = ten ? (XP_THUONG || []).filter(x => x.hocVien && bo(ten).endsWith(bo(x.hocVien))) : [];
+  const thuong = thuongDs.reduce((a, x) => a + (Number(x.xp) || 0), 0);
+  const xp = buoi * XP.buoi + baiTap * XP.baiTap + baiHoc * XP.baiHoc + gioi * XP.diemGioi + nb.length * XP.noiBat + top1 * XP.top1 + thuong;
   let i = 0; RANK.forEach((r, j) => { if (xp >= r.xp) i = j; });
   const r = RANK[i], next = RANK[i + 1] || null;
   const pct = next ? Math.round((xp - r.xp) / (next.xp - r.xp) * 100) : 100;
-  return { xp, r, i, next, pct, buoi, baiTap, baiHoc, gioi, nb: nb.length, top1 };
+  return { xp, r, i, next, pct, buoi, baiTap, baiHoc, gioi, nb: nb.length, top1, thuong, thuongDs };
 }
-const huyHieu = (r, i, cls = "") => cls === "xs"
-  ? `<span class="rk-chip${r.mau === "rainbow" ? " rb" : ""}" style="--rc:${r.mau === "rainbow" ? "#ffd6ff" : r.mau}" title="Hạng ${r.ma} · ${r.kim} · ${r.ten} — xem cách leo hạng">
-  <svg viewBox="0 0 64 64" aria-hidden="true"><path d="M32 6l20 9v16c0 13-9 22-20 27C21 53 12 44 12 31V15z"/></svg><small>RANK</small><b>${r.ma}</b><i>${"★".repeat(i + 1)}</i><em>${r.kim} · ${r.ten}</em></span>`
-  : `<span class="rk-badge ${cls}${r.mau === "rainbow" ? " rb" : ""}" style="--rc:${r.mau === "rainbow" ? "#ffd6ff" : r.mau}" title="Hạng ${r.ma} · ${r.kim} · ${r.ten}">
+const huyHieu = (r, i, cls = "", ten = "") => cls === "xs"
+  ? `<span class="rk-chip t${i}${r.mau === "rainbow" ? " rb" : ""}" data-rk="${esc(ten)}" role="button" tabindex="0" style="--rc:${r.mau === "rainbow" ? "#ffd6ff" : r.mau}" title="Hạng ${r.ma} · ${r.kim} · ${r.ten} — xem cách leo hạng">
+  <svg viewBox="0 0 64 64" aria-hidden="true"><path d="M32 6l20 9v16c0 13-9 22-20 27C21 53 12 44 12 31V15z"/></svg>${i >= 5 ? '<s class="fx" aria-hidden="true"></s>' : ""}<small>RANK</small><b>${r.ma}</b><i>${"★".repeat(i + 1)}</i><em>${r.kim} · ${r.ten}</em></span>`
+  : `<span class="rk-badge t${i} ${cls}${r.mau === "rainbow" ? " rb" : ""}" data-rk="${esc(ten)}" style="--rc:${r.mau === "rainbow" ? "#ffd6ff" : r.mau}" title="Hạng ${r.ma} · ${r.kim} · ${r.ten}">
   <svg viewBox="0 0 64 64" aria-hidden="true"><path class="w" d="M6 22c6 2 10 6 12 12-6-1-10-5-12-12zM58 22c-6 2-10 6-12 12 6-1 10-5 12-12z"/><path class="s" d="M32 6l20 9v16c0 13-9 22-20 27C21 53 12 44 12 31V15z"/></svg>
   <b>${r.ma}</b><i>${"★".repeat(i + 1)}</i></span>`;
 function theRank(t) {
-  return `<div class="rk-card" style="--rc:${t.r.mau === "rainbow" ? "#ffd6ff" : t.r.mau}">
+  return `<div class="rk-card t${t.i}" style="--rc:${t.r.mau === "rainbow" ? "#ffd6ff" : t.r.mau}">
     ${huyHieu(t.r, t.i, "lg")}
     <div class="rk-in"><p class="eyebrow">Hạng của em</p><h3>Hạng ${t.r.ma} <span>· ${t.r.kim} · ${t.r.ten}</span></h3>
       <div class="rk-bar"><i style="width:${t.pct}%"></i></div>
       <p class="rk-sub"><b class="num">${t.xp} XP</b>${t.next ? ` · còn <b class="num">${t.next.xp - t.xp} XP</b> nữa lên hạng ${t.next.ma}` : " · đã đạt hạng cao nhất!"}</p>
-      <ul class="rk-chi"><li>${t.buoi} buổi đi học</li><li>${t.baiTap} bài tập đã nộp</li><li>${t.baiHoc} bài giáo trình</li><li>${t.gioi} bài điểm ≥ 8</li><li>${t.nb} bài nổi bật</li></ul>
+      <ul class="rk-chi"><li>${t.buoi} buổi đi học</li><li>${t.baiTap} bài tập đã nộp</li><li>${t.baiHoc} bài giáo trình</li><li>${t.gioi} bài điểm ≥ 8</li><li>${t.nb} bài nổi bật</li>${t.thuong ? `<li>+${t.thuong} XP thưởng</li>` : ""}</ul>
+      <button class="btn small rk-mo" type="button" data-rk="">Xem bảng hạng & cách leo rank</button>
       <details class="rk-cach"><summary>Cách leo hạng ▾</summary>
         <p>Mỗi buổi đi học +${XP.buoi} XP · nộp 1 bài tập +${XP.baiTap} · học xong 1 bài giáo trình +${XP.baiHoc} · bài được chấm từ 8 điểm +${XP.diemGioi} · có bài lên Top nổi bật +${XP.noiBat} (Top 1 thêm +${XP.top1}).</p>
         <div class="rk-list">${RANK.map((r, j) => `<span class="${j === t.i ? "on" : ""}">${huyHieu(r, j, "sm")}<small>${r.xp}+</small></span>`).join("")}</div>
       </details></div></div>`;
 }
 
+/* ================= Thành tựu (trọn đời, 3 cấp Đồng → Bạc → Vàng) ================= */
+const G = { // biểu tượng tự vẽ cho từng thành tựu
+  mau: '<path d="M32 12c-12 0-22 8-22 19 0 8 6 12 12 12 3 0 4 2 4 4 0 4 3 6 7 6 12 0 21-9 21-21S45 12 32 12z"/><circle cx="21" cy="28" r="3.6" class="h"/><circle cx="30" cy="20" r="3.6" class="h"/><circle cx="41" cy="21" r="3.6" class="h"/><circle cx="46" cy="31" r="3.6" class="h"/>',
+  hinhhoa: '<path d="M44 8l12 12-28 28-15 3 3-15z"/><path d="M16 36l12 12" class="h2"/><path d="M40 12l12 12" class="h2"/><path d="M8 56c8-2 14-2 20 0" class="h2"/>',
+  bocuc: '<circle cx="19" cy="19" r="11"/><rect x="36" y="8" width="20" height="20" rx="2" opacity=".75"/><path d="M32 30l20 26H12z" opacity=".9"/><path d="M6 60h52" class="h2"/>',
+  chuyencan: '<path d="M33 6c2 10 14 14 14 28 0 10-7 18-15 18s-15-8-15-17c0-8 5-12 7-17 2 5 4 7 7 8-1-8 0-14 2-20z"/><path d="M32 52c-5 0-8-4-8-8 0-5 4-7 5-11 3 4 11 7 11 12 0 4-3 7-8 7z" class="h"/>',
+  diemvang: '<circle cx="30" cy="34" r="20"/><circle cx="30" cy="34" r="13" class="h"/><circle cx="30" cy="34" r="6"/><path d="M30 34L54 10M46 10h8v8" class="h2"/>',
+  noibat: '<rect x="8" y="12" width="48" height="40" rx="3"/><rect x="14" y="18" width="36" height="28" rx="1" class="h"/><path d="M32 22l3.2 6.6 7.2 1-5.2 5 1.3 7.2L32 38.4 25.5 41.8l1.3-7.2-5.2-5 7.2-1z"/>',
+  quanquan: '<path d="M8 22l12 10 12-20 12 20 12-10-5 26H13z"/><rect x="13" y="50" width="38" height="6" rx="2"/><circle cx="8" cy="20" r="4"/><circle cx="32" cy="10" r="4"/><circle cx="56" cy="20" r="4"/>',
+  chamchi: '<path d="M18 50C8 42 6 28 12 16M46 50c10-8 12-22 6-34" class="h2"/><path d="M12 22l-5-3M10 30l-6 0M12 38l-6 3M52 22l5-3M54 30l6 0M52 38l6 3" class="h2"/><path d="M34 10L22 34h10l-4 20 14-26H32z"/>',
+  thithu: '<path d="M32 12L4 24l28 12 28-12z"/><path d="M16 30v12c0 5 8 9 16 9s16-4 16-9V30L32 37z" opacity=".85"/><path d="M56 26v16" class="h2"/><circle cx="56" cy="44" r="3"/>',
+};
+const THANH_TUU = [
+  { ma: "mau", ten: "Hoạ Sĩ Sắc Màu", mo: "Nộp bài tập màu / trang trí màu", dv: "bài màu", moc: [5, 15, 30], mau: "#ff5fa2" },
+  { ma: "hinhhoa", ten: "Bàn Tay Than Chì", mo: "Nộp bài hình hoạ: tượng, chân dung, tĩnh vật", dv: "bài hình hoạ", moc: [5, 15, 30], mau: "#c9d1dc" },
+  { ma: "bocuc", ten: "Kiến Trúc Sư Bố Cục", mo: "Nộp bài bố cục, sắc độ, Mỹ thuật 2", dv: "bài bố cục", moc: [5, 15, 30], mau: "#57a6ff" },
+  { ma: "chuyencan", ten: "Ngọn Lửa Chuyên Cần", mo: "Đi học đầy đủ (thầy điểm danh có mặt)", dv: "buổi", moc: [10, 30, 60], mau: "#ff7a2f" },
+  { ma: "diemvang", ten: "Điểm Vàng", mo: "Bài được thầy chấm từ 8 điểm", dv: "bài ≥ 8đ", moc: [3, 10, 25], mau: "#ffd23f" },
+  { ma: "noibat", ten: "Ngôi Sao Phòng Tranh", mo: "Có bài lên mục Bài vẽ nổi bật", dv: "bài nổi bật", moc: [1, 3, 10], mau: "#b98cff" },
+  { ma: "quanquan", ten: "Quán Quân Tuần", mo: "Bài đạt Top 1 Bài vẽ nổi bật", dv: "lần Top 1", moc: [1, 3, 5], mau: "#ffc400" },
+  { ma: "chamchi", ten: "Top Chăm Chỉ", mo: "Thầy trao cho học viên chăm nhất tháng", dv: "lần được trao", moc: [1, 3, 6], mau: "#4fe0a6", trao: true },
+  { ma: "thithu", ten: "Thủ Khoa Thi Thử", mo: "Điểm cao nhất một đợt thi thử", dv: "lần thủ khoa", moc: [1, 2, 3], mau: "#ff4d5e", trao: true },
+];
+const CAP = [{ ten: "Chưa mở", mau: "#3a3f4b" }, { ten: "Đồng", mau: "#d08a52" }, { ten: "Bạc", mau: "#dfe6f0" }, { ten: "Vàng", mau: "#ffcf3a" }];
+function tinhThanhTuu(dd, prog, fb, ten, hw = []) {
+  const bo = t => String(t || "").normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/đ/g, "d").toLowerCase().trim();
+  const cua = x => ten && x && bo(ten).endsWith(bo(x));
+  const loai = t => { t = bo(t); return /bo cuc|my thuat 2|\bmt2\b|sac do/.test(t) ? "bocuc" : /\bmau\b|trang tri/.test(t) ? "mau" : /hinh hoa|tuong|chan dung|tinh vat|ky hoa|dung hinh|khoi|than chi/.test(t) ? "hinhhoa" : ""; };
+  const dem = { mau: 0, hinhhoa: 0, bocuc: 0, chuyencan: 0, diemvang: 0, noibat: 0, quanquan: 0, chamchi: 0, thithu: 0 };
+  const nop = (prog || {}).baitap || {};
+  hw.forEach(h => { if (nop[h.id]) { const l = loai([h.ten, h.khoa, h.lop].join(" ")); if (l) dem[l]++; } });
+  const nb = BAI_NOI_BAT.filter(b => !b.tg && cua(b.hocVien));
+  nb.forEach(b => { const l = loai(b.loai + " " + (b.ghiChu || "")); if (l) dem[l]++; });
+  dem.noibat = nb.length; dem.quanquan = nb.filter(b => b.hang === 1).length;
+  dem.chuyencan = Object.entries(dd || {}).filter(([k, v]) => /^\d{4}-\d{2}-\d{2}_/.test(k) && v === "co").length;
+  dem.diemvang = Object.values(fb || {}).filter(x => x && soDiem(x.diem) !== null && soDiem(x.diem) >= 8).length;
+  const trao = (THANH_TUU_TRAO || []).filter(x => cua(x.hocVien));
+  trao.forEach(x => { if (x.ma in dem) dem[x.ma]++; });
+  return THANH_TUU.map(a => {
+    const n = dem[a.ma], cap = a.moc.filter(m => n >= m).length, toi = a.moc[cap] || null;
+    return { ...a, n, cap, toi, pct: toi ? Math.round(n / toi * 100) : 100, ghi: trao.filter(x => x.ma === a.ma).map(x => x.ghiChu).filter(Boolean) };
+  });
+}
+const huyHieuTT = (a, cap, cls = "") => `<span class="tt-em ${cls}${cap ? "" : " khoa"}" style="--tc:${a.mau};--cc:${CAP[cap].mau}" title="${a.ten}${cap ? " · " + CAP[cap].ten : " · chưa mở khoá"}">
+  <svg viewBox="0 0 64 64" aria-hidden="true"><g class="ray">${[...Array(12)].map((_, k) => `<path d="M32 1l2 7h-4z" transform="rotate(${k * 30} 32 32)"/>`).join("")}</g><circle class="ring" cx="32" cy="32" r="25"/><g class="gl" transform="translate(13.5 13.5) scale(.58)">${G[a.ma]}</g></svg>${cap ? `<i>${"I".repeat(cap)}</i>` : ""}</span>`;
+function theThanhTuu(ds) {
+  const mo = ds.filter(a => a.cap).length;
+  return `<div class="tt-card"><div class="tt-head"><p class="eyebrow">Thành tựu của em</p><b class="num">${mo}/${ds.length}</b></div>
+    <div class="tt-grid">${ds.map(a => `<div class="tt-it${a.cap ? " mo" : ""}">${huyHieuTT(a, a.cap)}<b>${a.ten}</b>
+      <span class="tt-cap" style="--cc:${CAP[a.cap].mau}">${a.cap ? "Cấp " + CAP[a.cap].ten : "Chưa mở"}</span>
+      <small>${a.toi ? `${a.n}/${a.toi} ${a.dv} → ${CAP[a.cap + 1].ten}` : "Đã đạt cấp cao nhất"}</small>
+      <span class="tt-bar"><i style="width:${Math.min(100, a.pct)}%"></i></span>${a.ghi.length ? `<em>${a.ghi.map(esc).join(" · ")}</em>` : ""}</div>`).join("")}</div></div>`;
+}
+
 /* Bảng xếp hạng công khai trên trang chủ */
-(function bangXepHang() {
-  const bang = $("#xh-bang"); if (!bang) return;
-  bang.innerHTML = `<div class="xh-row xh-th" role="row"><span>Hạng</span><span>Huy hiệu</span><span>Mô tả</span><span>Cần</span></div>` +
-    RANK.map((r, i) => `<div class="xh-row" role="row" style="--rc:${r.mau === "rainbow" ? "#ffd6ff" : r.mau}">
+const bangRankHTML = () => `<div class="xh-row xh-th" role="row"><span>Hạng</span><span>Huy hiệu</span><span>Mô tả</span><span>Cần</span></div>` +
+    RANK.map((r, i) => `<div class="xh-row t${i}" role="row" style="--rc:${r.mau === "rainbow" ? "#ffd6ff" : r.mau}">
       <b class="xh-ma${r.mau === "rainbow" ? " rb" : ""}">${r.ma}<small> RANK</small></b>${huyHieu(r, i, "sm")}
       <span class="xh-mo"><b><span class="xh-kim">${r.kim}</span> ${r.ten}</b><span>${r.mo}</span><i>${"★".repeat(i + 1)}</i></span><span class="xh-xp num">${r.xp} XP</span></div>`).join("");
-  $("#xh-cach").innerHTML = `<h3>Cách kiếm XP</h3><ul>
+const cachXpHTML = () => `<ul class="xh-xpl">
     <li><b>+${XP.buoi}</b><span>Mỗi buổi đi học (thầy điểm danh có mặt)</span></li>
     <li><b>+${XP.baiTap}</b><span>Mỗi bài tập đã nộp</span></li>
     <li><b>+${XP.baiHoc}</b><span>Mỗi bài giáo trình học xong</span></li>
     <li><b>+${XP.diemGioi}</b><span>Mỗi bài được chấm từ 8 điểm</span></li>
     <li><b>+${XP.noiBat}</b><span>Có bài lên Bài vẽ nổi bật</span></li>
-    <li><b>+${XP.top1}</b><span>Thêm nếu bài đạt Top 1</span></li></ul>
+    <li><b>+${XP.top1}</b><span>Thêm nếu bài đạt Top 1</span></li></ul>`;
+/* Bấm vào huy hiệu / chip hạng ở bất kỳ đâu → mở bảng ghi chú, bảng hạng và cách leo rank */
+function moBangRank(ten) {
+  let dlg = $("#rk-dlg");
+  if (!dlg) { dlg = document.createElement("dialog"); dlg.id = "rk-dlg"; dlg.className = "rk-dlg"; document.body.append(dlg);
+    dlg.addEventListener("click", e => { if (e.target === dlg || e.target.closest("[data-dong]")) dlg.close(); }); }
+  const t = ten ? tinhRank(null, null, null, ten) : null;
+  dlg.innerHTML = `<div class="rk-dlg-in">
+    <button class="rk-x" type="button" data-dong aria-label="Đóng">✕</button>
+    <p class="eyebrow">Hệ thống hạng Dreamers</p><h2>Bảng hạng & cách leo rank</h2>
+    ${t ? `<div class="rk-ai t${t.i}" style="--rc:${t.r.mau === "rainbow" ? "#ffd6ff" : t.r.mau}">${huyHieu(t.r, t.i, "lg")}<div><b>${esc(ten)}</b>
+      <span>Hạng ${t.r.ma} · ${t.r.kim} · ${t.r.ten} · <b class="num">${t.xp} XP</b></span>
+      <div class="rk-bar"><i style="width:${t.pct}%"></i></div>
+      <small>${t.next ? `Còn <b class="num">${t.next.xp - t.xp} XP</b> nữa lên hạng ${t.next.ma} · ${t.next.kim} · ${t.next.ten}` : "Đã đạt hạng cao nhất!"}</small>
+      ${t.thuongDs.length ? `<small class="rk-th">XP thưởng: ${t.thuongDs.map(x => `+${x.xp} — ${esc(x.ghiChu || "")}`).join(" · ")}</small>` : ""}</div></div>` : ""}
+    <div class="rk-note"><b>📌 Ghi chú</b><ul>
+      <li>Mùa xếp hạng bắt đầu từ <b>${fmtDate(new Date(RANK_BAT_DAU + "T00:00"))}</b>. Mọi học viên khởi đầu ở <b>hạng F · Sắt · Người Mới</b>.</li>
+      <li>Hạng càng cao, huy hiệu càng rực rỡ: từ Sắt xám → Đồng → Bạc → Vàng → Bạch Kim → Kim Cương → … → <b>Thách Đấu cầu vồng</b>.</li>
+      <li><b>Càng lên cao càng khó:</b> mỗi hạng cần nhiều XP hơn hẳn hạng trước (F→E chỉ 100 XP, nhưng SSS→SSS+ cần thêm 3.500 XP). Chỉ những bạn chăm chỉ bền bỉ cả năm mới chạm tới Thách Đấu.</li>
+      <li>XP cộng tự động khi em đi học, nộp bài, được chấm điểm cao hoặc có bài lên Bài vẽ nổi bật. Thầy có thể thưởng thêm XP cho bài xuất sắc.</li>
+      <li>Hạng đầy đủ của em (gồm đi học, bài tập) xem trong mục <b>Tài khoản</b>.</li></ul></div>
+    <h3>Cách kiếm XP</h3>${cachXpHTML()}
+    <h3>Các hạng</h3><div class="xh-bang">${bangRankHTML()}</div></div>`;
+  dlg.showModal ? dlg.showModal() : dlg.setAttribute("open", "");
+}
+document.addEventListener("click", e => {
+  const el = e.target.closest && e.target.closest("[data-rk]"); if (!el || el.closest("#rk-dlg")) return;
+  e.stopPropagation(); e.preventDefault(); moBangRank(el.dataset.rk);
+}, true);
+document.addEventListener("keydown", e => {
+  if (e.key !== "Enter" && e.key !== " ") return;
+  const el = e.target.closest && e.target.closest("[data-rk]"); if (!el || el.closest("#rk-dlg")) return;
+  e.preventDefault(); e.stopPropagation(); moBangRank(el.dataset.rk);
+}, true);
+(function bangXepHang() {
+  const bang = $("#xh-bang"); if (!bang) return;
+  bang.innerHTML = bangRankHTML();
+  $("#xh-cach").innerHTML = `<h3>Cách kiếm XP</h3>${cachXpHTML()}
     <p class="muted">Mùa xếp hạng bắt đầu từ ${fmtDate(new Date(RANK_BAT_DAU + "T00:00"))}. Mọi học viên khởi đầu ở hạng F.</p>`;
   // Học viên có hạng nổi bật (từ Bài vẽ nổi bật)
   const ten = [...new Set(BAI_NOI_BAT.filter(b => !b.tg && b.hocVien).map(b => b.hocVien))];
   const ds = ten.map(t => ({ t, k: tinhRank(null, null, null, t) })).sort((a, b) => b.k.xp - a.k.xp);
-  $("#xh-top").innerHTML = ds.length ? `<h3>Học viên đang leo hạng</h3><div class="xh-hv">${ds.map(({ t, k }) => `<div style="--rc:${k.r.mau === "rainbow" ? "#ffd6ff" : k.r.mau}">${huyHieu(k.r, k.i, "sm")}<b>${esc(t)}</b><span>Hạng ${k.r.ma} · ${k.r.kim} · ${k.r.ten} · ${k.xp} XP</span></div>`).join("")}</div>
+  $("#xh-top").innerHTML = ds.length ? `<h3>Học viên đang leo hạng</h3><div class="xh-hv">${ds.map(({ t, k }) => `<div class="t${k.i}" data-rk="${esc(t)}" role="button" tabindex="0" style="--rc:${k.r.mau === "rainbow" ? "#ffd6ff" : k.r.mau}">${huyHieu(k.r, k.i, "sm", t)}<b>${esc(t)}</b><span>Hạng ${k.r.ma} · ${k.r.kim} · ${k.r.ten} · ${k.xp} XP</span>${(m => m.length ? `<span class="xh-tt">${m.map(a => huyHieuTT(a, a.cap, "xs")).join("")}</span>` : "")(tinhThanhTuu(null, null, null, t).filter(a => a.cap))}</div>`).join("")}</div>
     <p class="muted xh-note">Tính từ bài vẽ nổi bật. Hạng đầy đủ (gồm đi học, bài tập) xem trong Tài khoản của từng em.</p>` : "";
+  const tt = $("#xh-thanhtuu");
+  if (tt) tt.innerHTML = `<h3>Thành tựu cần săn</h3><p class="muted">Thành tựu giữ trọn đời. Mỗi thành tựu có 3 cấp: <b style="color:${CAP[1].mau}">Đồng</b> → <b style="color:${CAP[2].mau}">Bạc</b> → <b style="color:${CAP[3].mau}">Vàng</b>.</p>
+    <div class="tt-show">${THANH_TUU.map(a => `<div class="tt-s" style="--tc:${a.mau}">${huyHieuTT(a, 3, "lg")}<b>${a.ten}</b><span>${a.mo}</span>
+      <ol>${a.moc.map((m, j) => `<li style="--cc:${CAP[j + 1].mau}"><i>${CAP[j + 1].ten}</i>${m} ${a.dv}</li>`).join("")}</ol>${a.trao ? `<small>Thầy trao</small>` : ""}</div>`).join("")}</div>`;
 })();
 /* ================= Bài vẽ nổi bật: tuần / tháng / năm, vòng xoay 3D ================= */
 (function noiBat() {
@@ -451,7 +547,7 @@ function theRank(t) {
     box.innerHTML = `<div class="gv-stage nb-stage">${ds.map((b, i) => `<figure class="nb-card" data-i="${i}">
         <img src="${esc(b.anh)}" alt="${esc((b.loai || "Bài vẽ") + " · " + (b.hocVien || ""))}" loading="lazy" decoding="async" draggable="false">
         ${b.hang && b.hang <= 3 ? `<span class="nb-medal h${Number(b.hang)}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 2h4l1 5-3 1zM17 2h-4l-1 5 3 1z" class="rb"/><circle cx="12" cy="15" r="6.5" class="md"/><text x="12" y="18.2" text-anchor="middle">${Number(b.hang)}</text></svg><b>TOP ${Number(b.hang)}</b><i>${TEN[ky]}</i></span>` : ""}
-        <figcaption><b>${esc(b.hocVien || "")} ${!b.tg && !tam ? (t => huyHieu(t.r, t.i, "xs"))(tinhRank(null, null, null, b.hocVien)) : ""}</b><span>${esc([b.loai, b.ghiChu].filter(Boolean).join(" · "))}</span></figcaption></figure>`).join("")}</div>
+        <figcaption><b>${esc(b.hocVien || "")} ${!b.tg && !tam ? (t => huyHieu(t.r, t.i, "xs", b.hocVien))(tinhRank(null, null, null, b.hocVien)) : ""}</b><span>${esc([b.loai, b.ghiChu].filter(Boolean).join(" · "))}</span></figcaption></figure>`).join("")}</div>
       <div class="gv-ctl"><button type="button" class="gv-nav" aria-label="Bài trước">‹</button>
         <div class="gv-dots">${ds.map((b, i) => `<button type="button" data-i="${i}" aria-label="Bài ${i + 1}"></button>`).join("")}</div>
         <button type="button" class="gv-nav" aria-label="Bài sau">›</button></div>
@@ -1458,7 +1554,7 @@ function renderMyProg() {
     const ks = t.keys.filter(k => { const d = (Date.parse(today) - Date.parse(k.slice(0, 10))) / 864e5; return d >= w * 7 && d < (w + 1) * 7; });
     return `<div class="wk"><div>${ks.map(k => `<i class="${myDiemdanh[k]}" title="${ngayVN(k.slice(0, 10))}"></i>`).join("") || "<i class='none'></i>"}</div><span>${w === 0 ? "Tuần này" : w + "t trước"}</span></div>`;
   }).join("");
-  box.innerHTML = theRank(tinhRank(myDiemdanh, myProgress, myFeedback, (myHv && myHv.ten) || (user && user.displayName))) + `
+  box.innerHTML = theRank(tinhRank(myDiemdanh, myProgress, myFeedback, (myHv && myHv.ten) || (user && user.displayName))) + theThanhTuu(tinhThanhTuu(myDiemdanh, myProgress, myFeedback, (myHv && myHv.ten) || (user && user.displayName), homework)) + `
     <div class="mp-head">
       <div><p class="eyebrow">Tiến độ của em · ${esc(t.khoi)}</p>
         <h3>Còn <b class="num">${t.daysLeft}</b> ngày đến kỳ thi <span class="muted">(${ngayVN(t.ngayThi)})</span></h3></div>
@@ -1485,7 +1581,7 @@ function renderAttend() {
   const n = v => ds.filter(r => val(r) === v).length;
   $("#dd-sum").innerHTML = `Đang hiển thị <b>${ds.length}</b>/${roster.length} học viên` + (ds.length ? ` · Ca đã chọn: <b>${n("co")}</b> có mặt · <b>${n("vang")}</b> vắng · <b>${n("phep")}</b> phép · <b>${ds.length - n("co") - n("vang") - n("phep")}</b> chưa điểm danh` : "");
   const empty = roster.length ? "Không tìm thấy học viên phù hợp. Thử đổi tên tìm kiếm hoặc cơ sở." : "Chưa có học viên nào được duyệt.";
-  $("#dd-list").innerHTML = rows.length ? rows.map(({ r, t }) => `<li><div><b>${esc(r.ten)}</b> ${(t2 => huyHieu(t2.r, t2.i, "xs"))(tinhRank(diemdanhAll[r.id], progressAll[r.id], feedbackAll[r.id], r.ten))}<span class="muted">${esc(r.chuongTrinh || r.lop || "")}${r.coso ? " · " + esc(r.coso) : ""}</span><span class="dd-history">${t.records28 ? `Đã đi ${t.co28} buổi trong 4 tuần` : "Chưa có điểm danh trong 4 tuần"}</span></div>
+  $("#dd-list").innerHTML = rows.length ? rows.map(({ r, t }) => `<li><div><b>${esc(r.ten)}</b> ${(t2 => huyHieu(t2.r, t2.i, "xs", r.ten))(tinhRank(diemdanhAll[r.id], progressAll[r.id], feedbackAll[r.id], r.ten))}<span class="muted">${esc(r.chuongTrinh || r.lop || "")}${r.coso ? " · " + esc(r.coso) : ""}</span><span class="dd-history">${t.records28 ? `Đã đi ${t.co28} buổi trong 4 tuần` : "Chưa có điểm danh trong 4 tuần"}</span></div>
     <div class="seg" role="group" aria-label="Điểm danh ${esc(r.ten)}">${[["co", "Có mặt"], ["vang", "Vắng"], ["phep", "Phép"]].map(([v, t]) =>
       `<button type="button" class="${v}" data-dd="${esc(r.id)}" data-v="${v}" aria-pressed="${val(r) === v}">${t}</button>`).join("")}</div></li>`).join("")
     : `<li class="muted">${empty}</li>`;
@@ -1567,7 +1663,7 @@ function renderTiles() {
     isTeacher && { href: "#diem-danh", t: "Điểm danh", d: "Điểm danh buổi hôm nay, theo dõi chuyên cần" },
     isAdmin && { href: "#duyet", t: "Duyệt học viên", n: reqCount, d: reqCount ? `${reqCount} yêu cầu đang chờ` : "Không có yêu cầu đang chờ" },
   ].filter(Boolean);
-  box.innerHTML = (!isTeacher ? theRank(tinhRank(myDiemdanh, myProgress, myFeedback, (myHv && myHv.ten) || (user && user.displayName))) : "") + tiles.map(x => `<a class="acc-tile" href="${x.href}"><b>${x.t}${x.n ? ` <span class="nbadge num">${x.n}</span>` : ""}</b><span class="muted">${esc(x.d)}</span><i aria-hidden="true">→</i></a>`).join("");
+  box.innerHTML = (!isTeacher ? theRank(tinhRank(myDiemdanh, myProgress, myFeedback, (myHv && myHv.ten) || (user && user.displayName))) + theThanhTuu(tinhThanhTuu(myDiemdanh, myProgress, myFeedback, (myHv && myHv.ten) || (user && user.displayName), homework)) : "") + tiles.map(x => `<a class="acc-tile" href="${x.href}"><b>${x.t}${x.n ? ` <span class="nbadge num">${x.n}</span>` : ""}</b><span class="muted">${esc(x.d)}</span><i aria-hidden="true">→</i></a>`).join("");
 }
 
 /* ================= Làm việc: tin nhắn · thông báo · việc cần làm ================= */

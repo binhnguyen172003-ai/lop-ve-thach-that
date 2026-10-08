@@ -212,3 +212,16 @@ export const BAI_NOI_BAT = [
   { ngay: "2026-10-09", anh: "assets/img/bai-ve/nam-sac-do.webp", hocVien: "Nam", loai: "Mỹ thuật 2", ghiChu: "Bố cục sắc độ" },
   { ngay: "2026-10-09", tg: true, anh: "assets/img/bai-ve/huyen-linh-mau.webp", hocVien: "Kiều Huyền Linh", loai: "Bài mẫu trợ giảng · Màu" },
 ];
+
+// ===== THÀNH TỰU DO THẦY TRAO (thi thử, top chăm chỉ…) =====
+// Mỗi lần trao thêm 1 dòng. ma: "thithu" (Thủ Khoa Thi Thử) hoặc "chamchi" (Top Chăm Chỉ)
+//   VD: { hocVien: "Nguyễn Văn Bảo", ma: "thithu", ghiChu: "Thi thử lần 1 · 8,5 điểm", ngay: "2026-10-20" },
+// Trao càng nhiều lần, huy hiệu càng lên cấp: Đồng → Bạc → Vàng.
+export const THANH_TUU_TRAO = [
+];
+
+// ===== XP THƯỞNG — thầy cộng tay cho học viên (ghi rõ lý do) =====
+//   VD: { hocVien: "Khang", xp: 50, ghiChu: "Hoàn thành xuất sắc bài màu tuần 2" },
+export const XP_THUONG = [
+  { hocVien: "Nguyễn Văn Bảo", xp: 100, ghiChu: "Bài đầu tiên lên Bài vẽ nổi bật (Top 1 & Top 2 tuần)" },
+];
