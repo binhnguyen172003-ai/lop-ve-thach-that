@@ -1569,3 +1569,13 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
 .rk-dlg-tt .tt-s{padding:14px 10px 12px}.rk-dlg-tt .tt-em.lg{width:60px;height:60px}
 .rk-dlg-tt h3{font:italic 600 1.2rem var(--f-serif);margin:8px 0 2px}
 @media (max-width:640px){.rk-dlg-tt .tt-show{grid-template-columns:1fr 1fr}.rk-dlg-tt .tt-s > span{font-size:.72rem}.rk-dlg-tt .tt-s li{font-size:.64rem;padding:2px 6px}}
+/* Cấp Kim Cương: lấp lánh */
+.tt-em[style*="--cc:#7ff3ff"]:not(.khoa){filter:drop-shadow(0 0 10px #7ff3ff) drop-shadow(0 0 3px #fff)}
+.tt-em[style*="--cc:#7ff3ff"] .ray path{fill:#bffaff}
+.rk-chip{max-width:100%}
+.rk-chip em{overflow:hidden;text-overflow:ellipsis;min-width:0}
+.nb-medal ~ .nb-tt{top:64px}
+@media (max-width:640px){.nb-medal ~ .nb-tt{top:10px}.rk-chip em{max-width:9.5em}}
+.rk-chip{min-width:0}.rk-chip em{flex:0 1 auto;white-space:nowrap}
+.rk-chip small,.rk-chip b,.rk-chip i,.rk-chip svg{flex:none}
+.nb-card .rk-chip em{max-width:10.5em}.nb-card .rk-chip{margin-left:0}

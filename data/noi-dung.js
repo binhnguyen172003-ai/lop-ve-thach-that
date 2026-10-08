@@ -210,14 +210,16 @@ export const BAI_NOI_BAT = [
   { ngay: "2026-10-09", anh: "assets/img/bai-ve/linh-mau.webp", hocVien: "Linh", loai: "Màu" },
   { ngay: "2026-10-09", anh: "assets/img/bai-ve/thuy-chan-dung.webp", hocVien: "Thùy", loai: "Hình hoạ người", ghiChu: "Chân dung" },
   { ngay: "2026-10-09", anh: "assets/img/bai-ve/nam-sac-do.webp", hocVien: "Nam", loai: "Mỹ thuật 2", ghiChu: "Bố cục sắc độ" },
+  { ngay: "2026-07-01", hang: 1, anh: "assets/img/bai-ve/hoan-vua.webp", hocVien: "Đặng Huy Hoàn", loai: "Hình hoạ tượng", ghiChu: "Tượng vua · bài khổ lớn" },
   { ngay: "2026-10-09", tg: true, anh: "assets/img/bai-ve/huyen-linh-mau.webp", hocVien: "Kiều Huyền Linh", loai: "Bài mẫu trợ giảng · Màu" },
 ];
 
 // ===== THÀNH TỰU DO THẦY TRAO (thi thử, top chăm chỉ…) =====
 // Mỗi lần trao thêm 1 dòng. ma: "thithu" (Thủ Khoa Thi Thử) hoặc "chamchi" (Top Chăm Chỉ)
 //   VD: { hocVien: "Nguyễn Văn Bảo", ma: "thithu", ghiChu: "Thi thử lần 1 · 8,5 điểm", ngay: "2026-10-20" },
-// Trao càng nhiều lần, huy hiệu càng lên cấp: Đồng → Bạc → Vàng.
+// Trao càng nhiều lần, huy hiệu càng lên cấp: Đồng → Bạc → Vàng → Kim Cương. so: số lần (mặc định 1).
 export const THANH_TUU_TRAO = [
+  { hocVien: "Đặng Huy Hoàn", ma: "quanquan", so: 9, ghiChu: "Quán quân Top 1 nhiều tuần" },
 ];
 
 // ===== XP THƯỞNG — thầy cộng tay cho học viên (ghi rõ lý do) =====

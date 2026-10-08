@@ -396,7 +396,7 @@ function tinhRank(dd, prog, fb, ten) {
 }
 const huyHieu = (r, i, cls = "", ten = "") => cls === "xs"
   ? `<span class="rk-chip t${i}${r.mau === "rainbow" ? " rb" : ""}" data-rk="${esc(ten)}" role="button" tabindex="0" style="--rc:${r.mau === "rainbow" ? "#ffd6ff" : r.mau}" title="Hạng ${r.ma} · ${r.kim} · ${r.ten} — xem cách leo hạng">
-  <svg viewBox="0 0 64 64" aria-hidden="true"><path d="M32 6l20 9v16c0 13-9 22-20 27C21 53 12 44 12 31V15z"/></svg>${i >= 5 ? '<s class="fx" aria-hidden="true"></s>' : ""}<small>RANK</small><b>${r.ma}</b><i>${"★".repeat(i + 1)}</i><em>${r.kim} · ${r.ten}</em></span>`
+  <svg viewBox="0 0 64 64" aria-hidden="true"><path d="M32 6l20 9v16c0 13-9 22-20 27C21 53 12 44 12 31V15z"/></svg>${i >= 5 ? '<s class="fx" aria-hidden="true"></s>' : ""}<small>RANK</small><b>${r.ma}</b><i>${i >= 3 ? (i + 1) + "★" : "★".repeat(i + 1)}</i><em>${r.kim} · ${r.ten}</em></span>`
   : `<span class="rk-badge t${i} ${cls}${r.mau === "rainbow" ? " rb" : ""}" data-rk="${esc(ten)}" style="--rc:${r.mau === "rainbow" ? "#ffd6ff" : r.mau}" title="Hạng ${r.ma} · ${r.kim} · ${r.ten}">
   <svg viewBox="0 0 64 64" aria-hidden="true"><path class="w" d="M6 22c6 2 10 6 12 12-6-1-10-5-12-12zM58 22c-6 2-10 6-12 12 6-1 10-5 12-12z"/><path class="s" d="M32 6l20 9v16c0 13-9 22-20 27C21 53 12 44 12 31V15z"/></svg>
   <b>${r.ma}</b><i>${"★".repeat(i + 1)}</i></span>`;
@@ -458,7 +458,7 @@ function khungAvatar(r, i, ten = "", anh = "", cls = "") {
     <text x="50" y="93.6" text-anchor="middle" class="ka-ma" fill="${i ? A : KL[0]}">${r.ma}</text></svg></span>`;
 }
 
-/* ================= Thành tựu (trọn đời, 3 cấp Đồng → Bạc → Vàng) ================= */
+/* ================= Thành tựu (trọn đời, 4 cấp Đồng → Bạc → Vàng → Kim Cương) ================= */
 const G = { // biểu tượng tự vẽ cho từng thành tựu
   mau: '<path d="M32 12c-12 0-22 8-22 19 0 8 6 12 12 12 3 0 4 2 4 4 0 4 3 6 7 6 12 0 21-9 21-21S45 12 32 12z"/><circle cx="21" cy="28" r="3.6" class="h"/><circle cx="30" cy="20" r="3.6" class="h"/><circle cx="41" cy="21" r="3.6" class="h"/><circle cx="46" cy="31" r="3.6" class="h"/>',
   hinhhoa: '<path d="M44 8l12 12-28 28-15 3 3-15z"/><path d="M16 36l12 12" class="h2"/><path d="M40 12l12 12" class="h2"/><path d="M8 56c8-2 14-2 20 0" class="h2"/>',
@@ -471,17 +471,17 @@ const G = { // biểu tượng tự vẽ cho từng thành tựu
   thithu: '<path d="M32 12L4 24l28 12 28-12z"/><path d="M16 30v12c0 5 8 9 16 9s16-4 16-9V30L32 37z" opacity=".85"/><path d="M56 26v16" class="h2"/><circle cx="56" cy="44" r="3"/>',
 };
 const THANH_TUU = [
-  { ma: "mau", ten: "Hoạ Sĩ Sắc Màu", mo: "Nộp bài tập màu / trang trí màu", dv: "bài màu", moc: [5, 15, 30], mau: "#ff5fa2" },
-  { ma: "hinhhoa", ten: "Bàn Tay Than Chì", mo: "Nộp bài hình hoạ: tượng, chân dung, tĩnh vật", dv: "bài hình hoạ", moc: [5, 15, 30], mau: "#c9d1dc" },
-  { ma: "bocuc", ten: "Kiến Trúc Sư Bố Cục", mo: "Nộp bài bố cục, sắc độ, Mỹ thuật 2", dv: "bài bố cục", moc: [5, 15, 30], mau: "#57a6ff" },
-  { ma: "chuyencan", ten: "Ngọn Lửa Chuyên Cần", mo: "Đi học đầy đủ (thầy điểm danh có mặt)", dv: "buổi", moc: [10, 30, 60], mau: "#ff7a2f" },
-  { ma: "diemvang", ten: "Điểm Vàng", mo: "Bài được thầy chấm từ 8 điểm", dv: "bài ≥ 8đ", moc: [3, 10, 25], mau: "#ffd23f" },
-  { ma: "noibat", ten: "Ngôi Sao Phòng Tranh", mo: "Có bài lên mục Bài vẽ nổi bật", dv: "bài nổi bật", moc: [1, 3, 10], mau: "#b98cff" },
-  { ma: "quanquan", ten: "Quán Quân Tuần", mo: "Bài đạt Top 1 Bài vẽ nổi bật", dv: "lần Top 1", moc: [1, 3, 5], mau: "#ffc400" },
-  { ma: "chamchi", ten: "Top Chăm Chỉ", mo: "Thầy trao cho học viên chăm nhất tháng", dv: "lần được trao", moc: [1, 3, 6], mau: "#4fe0a6", trao: true },
-  { ma: "thithu", ten: "Thủ Khoa Thi Thử", mo: "Điểm cao nhất một đợt thi thử", dv: "lần thủ khoa", moc: [1, 2, 3], mau: "#ff4d5e", trao: true },
+  { ma: "mau", ten: "Hoạ Sĩ Sắc Màu", mo: "Nộp bài tập màu / trang trí màu", dv: "bài màu", moc: [5, 15, 30, 50], mau: "#ff5fa2" },
+  { ma: "hinhhoa", ten: "Bàn Tay Than Chì", mo: "Nộp bài hình hoạ: tượng, chân dung, tĩnh vật", dv: "bài hình hoạ", moc: [5, 15, 30, 50], mau: "#c9d1dc" },
+  { ma: "bocuc", ten: "Kiến Trúc Sư Bố Cục", mo: "Nộp bài bố cục, sắc độ, Mỹ thuật 2", dv: "bài bố cục", moc: [5, 15, 30, 50], mau: "#57a6ff" },
+  { ma: "chuyencan", ten: "Ngọn Lửa Chuyên Cần", mo: "Đi học đầy đủ (thầy điểm danh có mặt)", dv: "buổi", moc: [10, 30, 60, 100], mau: "#ff7a2f" },
+  { ma: "diemvang", ten: "Điểm Vàng", mo: "Bài được thầy chấm từ 8 điểm", dv: "bài ≥ 8đ", moc: [3, 10, 25, 50], mau: "#ffd23f" },
+  { ma: "noibat", ten: "Ngôi Sao Phòng Tranh", mo: "Có bài lên mục Bài vẽ nổi bật", dv: "bài nổi bật", moc: [1, 3, 10, 20], mau: "#b98cff" },
+  { ma: "quanquan", ten: "Quán Quân Tuần", mo: "Bài đạt Top 1 Bài vẽ nổi bật", dv: "lần Top 1", moc: [1, 3, 5, 10], mau: "#ffc400" },
+  { ma: "chamchi", ten: "Top Chăm Chỉ", mo: "Thầy trao cho học viên chăm nhất tháng", dv: "lần được trao", moc: [1, 3, 6, 10], mau: "#4fe0a6", trao: true },
+  { ma: "thithu", ten: "Thủ Khoa Thi Thử", mo: "Điểm cao nhất một đợt thi thử", dv: "lần thủ khoa", moc: [1, 2, 3, 5], mau: "#ff4d5e", trao: true },
 ];
-const CAP = [{ ten: "Chưa mở", mau: "#3a3f4b" }, { ten: "Đồng", mau: "#d08a52" }, { ten: "Bạc", mau: "#dfe6f0" }, { ten: "Vàng", mau: "#ffcf3a" }];
+const CAP = [{ ten: "Chưa mở", mau: "#3a3f4b" }, { ten: "Đồng", mau: "#d08a52" }, { ten: "Bạc", mau: "#dfe6f0" }, { ten: "Vàng", mau: "#ffcf3a" }, { ten: "Kim Cương", mau: "#7ff3ff" }];
 function tinhThanhTuu(dd, prog, fb, ten, hw = []) {
   const bo = t => String(t || "").normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/đ/g, "d").toLowerCase().trim();
   const cua = x => ten && x && bo(ten).endsWith(bo(x));
@@ -495,7 +495,7 @@ function tinhThanhTuu(dd, prog, fb, ten, hw = []) {
   dem.chuyencan = Object.entries(dd || {}).filter(([k, v]) => /^\d{4}-\d{2}-\d{2}_/.test(k) && v === "co").length;
   dem.diemvang = Object.values(fb || {}).filter(x => x && soDiem(x.diem) !== null && soDiem(x.diem) >= 8).length;
   const trao = (THANH_TUU_TRAO || []).filter(x => cua(x.hocVien));
-  trao.forEach(x => { if (x.ma in dem) dem[x.ma]++; });
+  trao.forEach(x => { if (x.ma in dem) dem[x.ma] += Number(x.so) || 1; });
   return THANH_TUU.map(a => {
     const n = dem[a.ma], cap = a.moc.filter(m => n >= m).length, toi = a.moc[cap] || null;
     return { ...a, n, cap, toi, pct: toi ? Math.round(n / toi * 100) : 100, ghi: trao.filter(x => x.ma === a.ma).map(x => x.ghiChu).filter(Boolean) };
@@ -504,7 +504,7 @@ function tinhThanhTuu(dd, prog, fb, ten, hw = []) {
 const UU_TIEN = ["thithu", "quanquan", "chamchi", "noibat", "diemvang", "chuyencan", "mau", "hinhhoa", "bocuc"];
 const ttNoiNhat = ten => tinhThanhTuu(null, null, null, ten).filter(a => a.cap).sort((a, b) => b.cap - a.cap || UU_TIEN.indexOf(a.ma) - UU_TIEN.indexOf(b.ma)).slice(0, 1);
 const huyHieuTT = (a, cap, cls = "") => `<span class="tt-em ${cls}${cap ? "" : " khoa"}" style="--tc:${a.mau};--cc:${CAP[cap].mau}" title="${a.ten}${cap ? " · " + CAP[cap].ten : " · chưa mở khoá"}">
-  <svg viewBox="0 0 64 64" aria-hidden="true"><g class="ray">${[...Array(12)].map((_, k) => `<path d="M32 1l2 7h-4z" transform="rotate(${k * 30} 32 32)"/>`).join("")}</g><circle class="ring" cx="32" cy="32" r="25"/><g class="gl" transform="translate(13.5 13.5) scale(.58)">${G[a.ma]}</g></svg>${cap ? `<i>${"I".repeat(cap)}</i>` : ""}</span>`;
+  <svg viewBox="0 0 64 64" aria-hidden="true"><g class="ray">${[...Array(12)].map((_, k) => `<path d="M32 1l2 7h-4z" transform="rotate(${k * 30} 32 32)"/>`).join("")}</g><circle class="ring" cx="32" cy="32" r="25"/><g class="gl" transform="translate(13.5 13.5) scale(.58)">${G[a.ma]}</g></svg>${cap ? `<i>${["", "I", "II", "III", "IV"][cap]}</i>` : ""}</span>`;
 function theThanhTuu(ds) {
   const mo = ds.filter(a => a.cap).length;
   return `<div class="tt-card"><div class="tt-head"><p class="eyebrow">Thành tựu của em</p><b class="num">${mo}/${ds.length}</b></div>
@@ -526,8 +526,8 @@ const cachXpHTML = () => `<ul class="xh-xpl">
     <li><b>+${XP.diemGioi}</b><span>Mỗi bài được chấm từ 8 điểm</span></li>
     <li><b>+${XP.noiBat}</b><span>Có bài lên Bài vẽ nổi bật</span></li>
     <li><b>+${XP.top1}</b><span>Thêm nếu bài đạt Top 1</span></li></ul>`;
-const thanhTuuSanHTML = () => `<h3>Thành tựu cần săn</h3><p class="muted">Thành tựu giữ trọn đời. Mỗi thành tựu có 3 cấp: <b style="color:${CAP[1].mau}">Đồng</b> → <b style="color:${CAP[2].mau}">Bạc</b> → <b style="color:${CAP[3].mau}">Vàng</b>.</p>
-    <div class="tt-show">${THANH_TUU.map(a => `<div class="tt-s" style="--tc:${a.mau}">${huyHieuTT(a, 3, "lg")}<b>${a.ten}</b><span>${a.mo}</span>
+const thanhTuuSanHTML = () => `<h3>Thành tựu cần săn</h3><p class="muted">Thành tựu giữ trọn đời. Mỗi thành tựu có 4 cấp: <b style="color:${CAP[1].mau}">Đồng</b> → <b style="color:${CAP[2].mau}">Bạc</b> → <b style="color:${CAP[3].mau}">Vàng</b> → <b style="color:${CAP[4].mau}">Kim Cương</b>.</p>
+    <div class="tt-show">${THANH_TUU.map(a => `<div class="tt-s" style="--tc:${a.mau}">${huyHieuTT(a, 4, "lg")}<b>${a.ten}</b><span>${a.mo}</span>
       <ol>${a.moc.map((m, j) => `<li style="--cc:${CAP[j + 1].mau}"><i>${CAP[j + 1].ten}</i>${m} ${a.dv}</li>`).join("")}</ol>${a.trao ? `<small>Thầy trao</small>` : ""}</div>`).join("")}</div>`;
 /* Bấm vào huy hiệu / chip hạng ở bất kỳ đâu → mở bảng ghi chú, bảng hạng và cách leo rank */
 function moBangRank(ten) {
