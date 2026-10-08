@@ -3,7 +3,7 @@
 //  Nội dung (liên hệ, lịch thi, thời gian biểu, ảnh) nằm ở data/noi-dung.js
 // =====================================================================
 import { firebaseConfig, ADMIN_EMAIL, EMAIL_NHAN_THONG_BAO } from "../../config/firebase-config.js?v=20261008c";
-import { LIEN_HE, NAM_THI, LICH_THI, BO_LOC_TRUONG, CA_HOC, THOI_GIAN_BIEU, BAI_VE, BANG_VANG } from "../../data/noi-dung.js?v=20261008c";
+import { LIEN_HE, NAM_THI, LICH_THI, BO_LOC_TRUONG, CA_HOC, THOI_GIAN_BIEU, BAI_VE, BANG_VANG, TRUONG } from "../../data/noi-dung.js?v=20261008c";
 
 // Firebase được tải riêng, để phần giới thiệu vẫn chạy kể cả khi mạng chậm hoặc chưa cấu hình.
 const FB = "https://www.gstatic.com/firebasejs/10.12.2/";
@@ -277,9 +277,25 @@ renderGallery();
 
 /* ================= Bảng vàng thi năng khiếu ================= */
 const BV_NAM = [...new Set(BANG_VANG.map(x => Number(x.nam)))].filter(Boolean).sort((a, b) => b - a);
-let bvYear = BV_NAM[0];
+let bvYear = BV_NAM[0], bvSchool = "";
 const initials = t => String(t || "").trim().split(/\s+/).slice(-2).map(w => w[0] || "").join("").toUpperCase();
-const fmtDiem = d => Number(d).toLocaleString("vi-VN", { maximumFractionDigits: 2 });
+const fmtDiem = d => Number(d).toLocaleString("vi-VN", { minimumFractionDigits: Number(d) % 1 ? 1 : 1, maximumFractionDigits: 2 });
+const tr = k => TRUONG[k] || { ten: k, mau: "#5b6068" };
+const chipTr = k => `<span class="trc" style="--c:${esc(tr(k).mau)}" title="${esc(tr(k).ten)}">${esc(k)}</span>`;
+// Gộp các dòng của cùng một bạn; xếp theo điểm vẽ cao nhất, rồi tổng 2 điểm cao nhất.
+function gomHocVien(nam, truong) {
+  const map = new Map();
+  BANG_VANG.filter(x => Number(x.nam) === nam && (!truong || x.truong === truong)).forEach(r => {
+    const k = r.ten.trim().toLowerCase();
+    if (!map.has(k)) map.set(k, { ten: r.ten.trim(), anh: r.anh, kq: [] });
+    const s = map.get(k); s.kq.push(r); if (r.anh) s.anh = r.anh;
+  });
+  return [...map.values()].map(s => {
+    const ve = s.kq.flatMap(r => Object.entries(r.diem || {}).filter(([m]) => !/phỏng vấn/i.test(m)).map(([m, d]) => ({ m, d: Number(d), tr: r.truong })))
+      .filter(x => !isNaN(x.d)).sort((a, b) => b.d - a.d);
+    return { ...s, top: ve[0] || null, sum: (ve[0] ? ve[0].d : 0) + (ve[1] ? ve[1].d : 0), truongs: [...new Set(s.kq.map(r => r.truong))] };
+  }).sort((a, b) => ((b.top ? b.top.d : -1) - (a.top ? a.top.d : -1)) || (b.sum - a.sum) || a.ten.localeCompare(b.ten, "vi"));
+}
 function renderHonor() {
   if (!BANG_VANG.length) {
     $("#bv-years").hidden = true;
@@ -288,21 +304,52 @@ function renderHonor() {
       <a class="btn primary" href="#dang-ky">Đăng ký học để có tên ở đây</a></div></div>`;
     return;
   }
-  $("#bv-years").hidden = BV_NAM.length < 2;
-  $("#bv-years").innerHTML = BV_NAM.map(y => `<button class="tab" data-y="${y}" aria-selected="${y === bvYear}">Mùa thi ${y}</button>`).join("");
-  $$("#bv-years .tab").forEach(b => b.onclick = () => { bvYear = Number(b.dataset.y); renderHonor(); });
-  const list = BANG_VANG.filter(x => Number(x.nam) === bvYear).sort((a, b) => Number(b.diem) - Number(a.diem));
-  const avatar = x => x.anh ? `<img src="${esc(x.anh)}" alt="" loading="lazy" decoding="async" width="72" height="72">` : `<span>${esc(initials(x.ten))}</span>`;
-  const top = list.slice(0, 3), rest = list.slice(3);
-  const hi = list.filter(x => Number(x.diem) >= 8).length;
-  $("#bv-body").innerHTML = `<p class="bv-sum"><b class="num">${list.length}</b> học viên · cao nhất <b class="num">${fmtDiem(list[0].diem)}</b> điểm · <b class="num">${hi}</b> bạn từ 8 điểm trở lên</p>
-    <ol class="podium">${top.map((x, i) => `<li class="p${i + 1}">
-      <span class="rank">${i + 1}</span><div class="ava">${avatar(x)}</div>
-      <b class="nm">${esc(x.ten)}</b><span class="diem num">${fmtDiem(x.diem)}</span>
-      <span class="muted">${esc(x.mon || "")}</span><span class="tr">${esc([x.truong, x.nganh].filter(Boolean).join(" · "))}</span></li>`).join("")}</ol>
-    ${rest.length ? `<ol class="bv-list" start="4">${rest.map((x, i) => `<li><span class="rk num">${i + 4}</span>
-      <div><b>${esc(x.ten)}</b><span class="muted">${esc([x.truong, x.mon].filter(Boolean).join(" · "))}</span></div>
-      <span class="diem num">${fmtDiem(x.diem)}</span></li>`).join("")}</ol>` : ""}`;
+  $("#bv-years").hidden = false;
+  $("#bv-years").innerHTML = BV_NAM.map(y => `<button class="tab" data-y="${y}" aria-selected="${y === bvYear && !bvSchool}">Mùa thi ${y}</button>`).join("")
+    + `<span class="bv-sep"></span>` + Object.keys(TRUONG).filter(k => BANG_VANG.some(x => Number(x.nam) === bvYear && x.truong === k))
+      .map(k => `<button class="tab trtab" data-t="${esc(k)}" style="--c:${esc(tr(k).mau)}" aria-selected="${bvSchool === k}">${esc(k)}</button>`).join("");
+  $$("#bv-years [data-y]").forEach(b => b.onclick = () => { bvYear = Number(b.dataset.y); bvSchool = ""; renderHonor(); });
+  $$("#bv-years [data-t]").forEach(b => b.onclick = () => { bvSchool = bvSchool === b.dataset.t ? "" : b.dataset.t; renderHonor(); });
+
+  const all = gomHocVien(bvYear, "");
+  const list = bvSchool ? gomHocVien(bvYear, bvSchool) : all;
+  const scored = list.filter(x => x.top);
+  const luot = BANG_VANG.filter(x => Number(x.nam) === bvYear).length;
+  // Biểu đồ cột: số học viên đỗ theo từng trường
+  const perSchool = Object.keys(TRUONG).map(k => ({ k, n: gomHocVien(bvYear, k).length })).filter(x => x.n);
+  const maxN = Math.max(...perSchool.map(x => x.n), 1);
+  const ava = x => x.anh ? `<img src="${esc(x.anh)}" alt="" loading="lazy" decoding="async" width="96" height="96">` : `<span>${esc(initials(x.ten))}</span>`;
+  const diemCua = x => x.top ? `<b class="sc num">${fmtDiem(x.top.d)}</b><span class="sm">${esc(x.top.m)} · ${esc(x.top.tr)}</span>` : `<span class="sm">Đỗ ${esc(x.truongs.join(", "))}</span>`;
+  const chiTiet = x => x.kq.map(r => `<li>${chipTr(r.truong)} <span>${esc(tr(r.truong).ten)}</span>
+      <span class="ds">${Object.entries(r.diem || {}).map(([m, d]) => `${esc(m)} <b class="num">${fmtDiem(d)}</b>`).join(" · ") || "Đỗ"}</span></li>`).join("");
+  const top3 = scored.slice(0, 3);
+  $("#bv-body").innerHTML = `
+    <div class="bv-stats">
+      <div><b class="num">${all.length}</b><span>học viên được vinh danh</span></div>
+      <div><b class="num">${luot}</b><span>lượt đỗ / có điểm</span></div>
+      <div><b class="num">${all[0] && all[0].top ? fmtDiem(all[0].top.d) : "–"}</b><span>điểm vẽ cao nhất</span></div>
+      <div><b class="num">${all.filter(x => x.top && x.top.d >= 8.5).length}</b><span>bạn đạt từ 8,5 điểm</span></div>
+    </div>
+    <div class="bv-chart" role="img" aria-label="Số học viên đỗ theo trường">
+      ${perSchool.map(x => `<button type="button" class="vbar ${bvSchool === x.k ? "on" : ""}" data-t="${esc(x.k)}" style="--c:${esc(tr(x.k).mau)};--h:${Math.round(x.n / maxN * 100)}%">
+        <span class="col"><span class="n num">${x.n}</span></span><span class="vl">${esc(x.k)}</span></button>`).join("")}
+      <p class="cap">Số học viên đỗ theo trường · bấm cột để lọc</p>
+    </div>
+    ${bvSchool ? `<p class="bv-filter">Đang xem: <b>${esc(tr(bvSchool).ten)}</b> <button type="button" class="linkish" id="bv-clear">Xem tất cả</button></p>` : ""}
+    <ol class="hv-podium">${top3.map((x, i) => `<li class="p${i + 1}">
+      <span class="big num" aria-hidden="true">${i + 1}</span>
+      <div class="ava">${ava(x)}</div>
+      <b class="nm">${esc(x.ten)}</b>
+      <div class="trs">${x.truongs.map(chipTr).join("")}</div>
+      <div class="pt">${diemCua(x)}</div></li>`).join("")}</ol>
+    <ol class="hv-table">${list.slice(top3.length).map((x, i) => `<li><details>
+      <summary><span class="rk num">${x.top ? top3.length + i + 1 : "–"}</span>
+        <span class="who"><b>${esc(x.ten)}</b><span class="trs">${x.truongs.map(chipTr).join("")}</span></span>
+        <span class="pt">${diemCua(x)}</span></summary>
+      <ul class="kq">${chiTiet(x)}</ul></details></li>`).join("")}</ol>
+    <p class="muted bv-note">Bấm vào tên để xem điểm từng trường. Xếp theo điểm môn vẽ cao nhất của mỗi bạn.</p>`;
+  $$("#bv-body .vbar").forEach(b => b.onclick = () => { bvSchool = bvSchool === b.dataset.t ? "" : b.dataset.t; renderHonor(); });
+  if ($("#bv-clear")) $("#bv-clear").onclick = () => { bvSchool = ""; renderHonor(); };
 }
 renderHonor();
 

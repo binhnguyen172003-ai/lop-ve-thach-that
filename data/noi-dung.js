@@ -88,11 +88,73 @@ export const BAI_VE = [
 
 
 // ---------- 5. BẢNG VÀNG THI NĂNG KHIẾU (trang chủ) ----------
-// Mỗi học viên một dòng. Web tự xếp điểm từ cao xuống thấp, 3 bạn đầu lên bục vinh danh.
-//   nam:   mùa thi (số)          diem: điểm năng khiếu (số, thang 10)
-//   mon:   môn được điểm đó      truong: trường đã đỗ / dự thi
-//   anh:   (không bắt buộc) ảnh học viên trong assets/img/bang-vang/
-// Ví dụ:
-//   { nam: 2026, ten: "Nguyễn Văn An", diem: 9.25, mon: "Vẽ mỹ thuật", truong: "ĐH Kiến trúc Hà Nội", nganh: "Kiến trúc" },
+// Mỗi dòng = một kết quả của một học viên ở một trường. Cùng một bạn đỗ nhiều trường thì viết nhiều dòng,
+// web tự gộp lại, lấy điểm vẽ cao nhất để xếp hạng (điểm Phỏng vấn chỉ hiện, không dùng để xếp).
+//   truong: mã trường, phải có trong TRUONG bên dưới.
+//   diem:   { "Tên môn": điểm, ... }   — để trống {} nếu chỉ báo đỗ, chưa có điểm.
+//   anh:    (không bắt buộc) ảnh chân dung, ví dụ "assets/img/bang-vang/ten.jpg"
+export const TRUONG = {
+  MTCN: { ten: "ĐH Mỹ thuật Công nghiệp", mau: "#d6332a" },
+  HAU:  { ten: "ĐH Kiến trúc Hà Nội", mau: "#1f5fbf" },
+  HUCE: { ten: "ĐH Xây dựng Hà Nội", mau: "#2a9d6f" },
+  SIS:  { ten: "Trường KH Liên ngành & Nghệ thuật – ĐHQGHN", mau: "#e08a1e" },
+  NUAE: { ten: "ĐH Sư phạm Nghệ thuật TW", mau: "#8a3fb5" },
+};
+
 export const BANG_VANG = [
+  // Mùa thi 2026 — theo bộ thẻ "Vinh danh học viên xuất sắc"
+  { nam: 2026, ten: "Nguyễn Hạnh Liên", truong: "MTCN", diem: { "Bố cục màu": 8.92, "Hình hoạ": 8.0 } },
+  { nam: 2026, ten: "Lê Công Nghiêm", truong: "MTCN", diem: {  } },
+  { nam: 2026, ten: "Nguyễn Thanh Trúc", truong: "MTCN", diem: { "Bố cục màu": 9.0, "Hình hoạ": 7.0 } },
+  { nam: 2026, ten: "Nguyễn Trọng Khôi", truong: "MTCN", diem: { "Bố cục màu": 7.0, "Hình hoạ": 8.75 } },
+  { nam: 2026, ten: "Kiều Bá Dũng", truong: "MTCN", diem: { "Bố cục màu": 8.0, "Hình hoạ": 8.0 } },
+  { nam: 2026, ten: "Bùi Anh Đức", truong: "MTCN", diem: { "Hình hoạ": 8.5 } },
+  { nam: 2026, ten: "Lâm Hữu Dũng", truong: "MTCN", diem: { "Hình hoạ": 8.25 } },
+  { nam: 2026, ten: "Nguyễn Bá Khánh Duy", truong: "MTCN", diem: { "Hình hoạ": 8.0 } },
+  { nam: 2026, ten: "Nguyễn Bảo Châu", truong: "MTCN", diem: { "Hình hoạ": 8.0 } },
+  { nam: 2026, ten: "Phạm Ngọc Đông", truong: "MTCN", diem: { "Hình hoạ": 8.25 } },
+  { nam: 2026, ten: "Kiều Phương Nhài", truong: "MTCN", diem: { "Bố cục màu": 8.5 } },
+  { nam: 2026, ten: "Nguyễn Hạnh Liên", truong: "HAU", diem: { "Bố cục màu": 8.5, "Hình hoạ": 8.5 } },
+  { nam: 2026, ten: "Nguyễn Thảo Chi", truong: "HAU", diem: { "Bố cục màu": 7.5, "Hình hoạ": 8.0 } },
+  { nam: 2026, ten: "Đặng Tú Tâm", truong: "HAU", diem: { "Bố cục màu": 7.5, "Hình hoạ": 8.0 } },
+  { nam: 2026, ten: "Nguyễn Thị Hồng Hạnh", truong: "HAU", diem: { "Bố cục màu": 8.0, "Hình hoạ": 7.0 } },
+  { nam: 2026, ten: "Kiều Nguyễn Hoàng Lan", truong: "HAU", diem: { "Bố cục màu": 7.5, "Hình hoạ": 8.0 } },
+  { nam: 2026, ten: "Đỗ Hữu Trường", truong: "HAU", diem: { "Hình hoạ": 8.5 } },
+  { nam: 2026, ten: "Nguyễn Duy Cường", truong: "HAU", diem: { "Hình hoạ": 8.0 } },
+  { nam: 2026, ten: "Nguyễn Đạt Hoàng", truong: "HAU", diem: { "Hình hoạ": 8.0 } },
+  { nam: 2026, ten: "Nguyễn Thảo Chi", truong: "NUAE", diem: { "Bố cục màu": 7.0, "Hình hoạ": 8.5 } },
+  { nam: 2026, ten: "Nguyễn Ngân Thương", truong: "NUAE", diem: { "Bố cục màu": 7.0, "Hình hoạ": 8.0 } },
+  { nam: 2026, ten: "Kiều Bá Dũng", truong: "NUAE", diem: { "Bố cục màu": 7.5, "Hình hoạ": 8.5 } },
+  { nam: 2026, ten: "Nguyễn Thanh Trúc", truong: "SIS", diem: { "Bố cục màu": 8.6, "Hình hoạ": 8.5 } },
+  { nam: 2026, ten: "Ngô Kiều Trang", truong: "SIS", diem: { "Bố cục màu": 8.5, "Hình hoạ": 8.7 } },
+  { nam: 2026, ten: "Phùng Khánh Ly", truong: "SIS", diem: { "Bố cục": 8.2, "Phỏng vấn": 9.5 } },
+  { nam: 2026, ten: "Đỗ Đăng Sơn", truong: "SIS", diem: { "Bố cục": 7.4, "Phỏng vấn": 9.3 } },
+  { nam: 2026, ten: "Đỗ Hữu Trường", truong: "HUCE", diem: { "Ký hoạ": 7.0, "Hình hoạ": 9.0 } },
+  { nam: 2026, ten: "Nguyễn Đăng Khôi", truong: "HUCE", diem: { "Ký hoạ": 7.5, "Hình hoạ": 9.0 } },
+  { nam: 2026, ten: "Nguyễn Hữu Nguyên", truong: "HUCE", diem: { "Ký hoạ": 7.0, "Hình hoạ": 8.75 } },
+  { nam: 2026, ten: "Nguyễn Đạt Hoàng", truong: "HUCE", diem: { "Ký hoạ": 7.75, "Hình hoạ": 8.5 } },
+  { nam: 2026, ten: "Nguyễn Duy Cường", truong: "HUCE", diem: { "Ký hoạ": 7.0, "Hình hoạ": 8.25 } },
+  { nam: 2026, ten: "Nguyễn Đức Hưng", truong: "HUCE", diem: { "Ký hoạ": 7.25, "Hình hoạ": 8.0 } },
+  { nam: 2026, ten: "Nguyễn Ngân Thương", truong: "HUCE", diem: { "Ký hoạ": 8.25, "Hình hoạ": 8.25 } },
+  { nam: 2026, ten: "Nguyễn Mạnh Nguyên", truong: "HUCE", diem: { "Ký hoạ": 8.75, "Hình hoạ": 8.0 } },
+
+  // Mùa thi 2025 — theo bộ thẻ "Khoá 2025"
+  { nam: 2025, ten: "Hiệp Nguyễn", truong: "MTCN", diem: { "Hình hoạ": 8.25 } },
+  { nam: 2025, ten: "Ngọc Toàn", truong: "MTCN", diem: { "Hình hoạ": 8.5 } },
+  { nam: 2025, ten: "Vũ Minh Tuyến", truong: "MTCN", diem: { "Hình hoạ": 9.5 } },
+  { nam: 2025, ten: "Lê Thị Hoài", truong: "MTCN", diem: { "Bố cục màu": 9.5 } },
+  { nam: 2025, ten: "Hoàng Đình Tùng Dương", truong: "MTCN", diem: { "Hình hoạ": 8.5, "Bố cục màu": 8.5 } },
+  { nam: 2025, ten: "Hữu Phước", truong: "MTCN", diem: { "Hình hoạ": 8.0 } },
+  { nam: 2025, ten: "Nguyễn Thị Hải Yến", truong: "MTCN", diem: { "Hình hoạ": 8.25 } },
+  { nam: 2025, ten: "Nguyễn Thị Hải Yến", truong: "HAU", diem: { "Hình hoạ": 8.0 } },
+  { nam: 2025, ten: "Nguyễn Thị Tú", truong: "MTCN", diem: { "Hình hoạ": 8.0 } },
+  { nam: 2025, ten: "Ngọc Huyền", truong: "HAU", diem: { "Hình hoạ": 8.0 } },
+  { nam: 2025, ten: "Quỳnh Diễm", truong: "HAU", diem: { "Bố cục màu": 8.5 } },
+  { nam: 2025, ten: "Khánh Linh", truong: "HAU", diem: { "Bố cục màu": 8.5 } },
+  { nam: 2025, ten: "Kiều Xuân Thơ", truong: "HAU", diem: { "Hình hoạ": 9.0 } },
+  { nam: 2025, ten: "Bùi Hải Vy", truong: "HAU", diem: { "Hình hoạ": 9.0, "Bố cục màu": 8.0 } },
+  { nam: 2025, ten: "Trần Phương Anh", truong: "HAU", diem: { "Khối V": 8.5 } },
+  { nam: 2025, ten: "Hoàng Khánh Linh", truong: "HAU", diem: { "Khối V": 8.0 } },
+  { nam: 2025, ten: "Phùng Thị Thuỳ", truong: "HAU", diem: { "Khối V": 8.0 } },
+  { nam: 2025, ten: "Nguyễn Văn Trọng Tấn", truong: "HUCE", diem: { "Khối V": 9.0 } },
 ];
