@@ -432,17 +432,40 @@ function confirmButton(btn, act, ask = "Bấm lần nữa để xoá") {
 function stopListeners() { unsubs.forEach(u => u()); unsubs = []; }
 function listen(q, fn) { unsubs.push(onSnapshot(q, fn, () => {})); }
 
+/* ---------- Nhớ phiên đăng nhập để trang hiện ngay, không phải chờ ---------- */
+const SESSION_KEY = "lvkv-phien";
+const cachedSession = store.get(SESSION_KEY, null);
+function saveSession(pending) {
+  store.set(SESSION_KEY, user ? { mail, ten: user.displayName || "", anh: user.photoURL || "", isAdmin, isTeacher, approved,
+    pending: pending ? { guiLuc: pending.guiLuc || Date.now() } : null } : null);
+}
+function showCachedSession() {
+  if (!configured) return;
+  const c = cachedSession;
+  if (!c || !c.mail) { renderLocks("out"); renderAccount(false); return; }
+  user = { displayName: c.ten, photoURL: c.anh, email: c.mail }; mail = c.mail;
+  isAdmin = !!c.isAdmin; isTeacher = !!c.isTeacher; approved = !!c.approved;
+  renderLocks(isTeacher || approved ? "ok" : "pending");
+  renderAccount(c.pending || false);
+  $("#lesson").innerHTML = `<p class="muted">Đang tải giáo trình…</p>`;
+  $("#hw-list").innerHTML = `<div class="empty">Đang tải bài tập…</div>`;
+}
+
 async function onUser(u) {
   stopListeners();
+  const prevMail = mail;
   user = u; mail = u ? String(u.email || "").toLowerCase() : "";
   isAdmin = false; isTeacher = false; approved = false;
   lessons = []; homework = []; roster = []; requests = []; teachers = []; progressAll = {}; feedbackAll = {}; myFeedback = {};
   myProgress = { bai: {}, baitap: {} };
   // Đổi người dùng thì xoá sạch form đăng ký, tránh gửi nhầm thông tin của người trước (máy dùng chung).
-  $("#f-reg").reset(); $("#rg-status").textContent = ""; applyRoleFields(); editingReq = false; pendingReq = null;
-  gradeOpen.clear(); Object.keys(gradeDraft).forEach(k => delete gradeDraft[k]);
-  if (!u) { renderLocks("out"); renderAccount(false); return; }
-  renderLocks("checking");
+  if (prevMail !== mail) {
+    $("#f-reg").reset(); $("#rg-status").textContent = ""; applyRoleFields(); editingReq = false;
+    gradeOpen.clear(); Object.keys(gradeDraft).forEach(k => delete gradeDraft[k]);
+  }
+  pendingReq = null;
+  if (!u) { saveSession(null); renderLocks("out"); renderAccount(false); return; }
+  if (!(cachedSession && cachedSession.mail === mail)) renderLocks("checking");
   const exists = async (col) => { try { return (await getDoc(doc(db, col, mail))).exists(); } catch (e) { return false; } };
   // Hỏi cả 4 thông tin cùng lúc thay vì lần lượt, để trang hiện nhanh hơn.
   const getData = async (col) => { try { const d = await getDoc(doc(db, col, mail)); return d.exists() ? (d.data() || {}) : null; } catch (e) { return null; } };
@@ -455,6 +478,7 @@ async function onUser(u) {
   approved = !isTeacher && !!hvDoc;
   const pending = !isTeacher && !approved && ycDoc ? ycDoc : false;
   const canLearn = isTeacher || approved;
+  saveSession(pending);
   renderLocks(canLearn ? "ok" : "pending");
   renderAccount(pending);
   if (!canLearn) return;
@@ -507,9 +531,12 @@ function loginError(e) {
   return `Chưa đăng nhập được (mã lỗi: ${code}). ${tips[code] || "Thử lại, hoặc mở trang bằng Chrome/Safari."}`;
 }
 
+let wantLogin = false;
 async function startFirebase() {
   if (!configured) { renderLocks("setup"); renderAccount(false); return; }
-  renderLocks("checking");
+  showCachedSession();
+  // Bấm Đăng nhập khi thư viện chưa tải xong: ghi nhớ và mở ngay khi sẵn sàng.
+  $("#btn-login").onclick = () => { wantLogin = true; $("#login-status").textContent = "Đang mở trang đăng nhập Google…"; };
   try {
     await loadFirebase();
     app = initializeApp(firebaseConfig);
@@ -523,7 +550,7 @@ async function startFirebase() {
   }
   getRedirectResult(auth).catch(e => { if (e && e.code) $("#login-status").textContent = loginError(e); });
   onAuthStateChanged(auth, onUser);
-  $("#btn-login").onclick = async () => {
+  const doLogin = async () => {
     const provider = new GoogleAuthProvider();
     provider.setCustomParameters({ prompt: "select_account" });
     $("#login-status").textContent = "";
@@ -533,7 +560,9 @@ async function startFirebase() {
       else if (e && e.code !== "auth/popup-closed-by-user" && e.code !== "auth/cancelled-popup-request") $("#login-status").textContent = loginError(e);
     }
   };
-  $("#btn-switch").onclick = async () => { await signOut(auth); $("#btn-login").click(); };
+  $("#btn-login").onclick = doLogin;
+  if (wantLogin) doLogin();
+  $("#btn-switch").onclick = async () => { await signOut(auth); doLogin(); };
 }
 startFirebase();
 
