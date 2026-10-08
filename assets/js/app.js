@@ -360,17 +360,17 @@ function vongXoay(box, st, cards, dots, prev, next, onCenter) {
   return { pause, go };
 }
 
-/* ================= Hạng học viên (F → SSS+): leo hạng nhờ đi học, làm bài, có bài nổi bật ================= */
+/* ================= Hạng học viên (F → SSS): leo hạng nhờ đi học, làm bài, có bài nổi bật ================= */
 const RANK = [
   { ma: "F", xp: 0, mau: "#9aa3ad", kim: "Sắt", ten: "Người Mới", mo: "Vừa vào lớp, bắt đầu hành trình." },
   { ma: "E", xp: 100, mau: "#3fcf5b", kim: "Đồng", ten: "Tập Sự", mo: "Đã có bài đầu tiên được chọn hoặc đi học đều." },
-  { ma: "C", xp: 300, mau: "#3ec6e0", kim: "Bạc", ten: "Chăm Chỉ", mo: "Tiềm năng bắt đầu lộ rõ." },
+  { ma: "D", xp: 200, mau: "#20c9a6", kim: "Thép", ten: "Học Việc", mo: "Đi học đều, bắt đầu có bài tốt." },
+  { ma: "C", xp: 400, mau: "#3ec6e0", kim: "Bạc", ten: "Chăm Chỉ", mo: "Tiềm năng bắt đầu lộ rõ." },
   { ma: "B", xp: 700, mau: "#3d6bff", kim: "Vàng", ten: "Dân Chuyên", mo: "Nền tảng chắc, làm bài đầy đủ." },
   { ma: "A", xp: 1400, mau: "#9b5cff", kim: "Bạch Kim", ten: "Lão Làng", mo: "Trên mức trung bình của lớp." },
   { ma: "S", xp: 3400, mau: "#ffc400", kim: "Kim Cương", ten: "Cao Thủ", mo: "Được cả lớp công nhận." },
   { ma: "SS", xp: 5400, mau: "#ff8a1f", kim: "Tinh Anh", ten: "Đại Cao Thủ", mo: "Nhóm học viên giỏi nhất." },
-  { ma: "SSS", xp: 7400, mau: "#ff3b3b", kim: "Huyền Thoại", ten: "Bậc Thầy", mo: "Rất ít người đạt được." },
-  { ma: "SSS+", xp: 9400, mau: "rainbow", kim: "Thách Đấu", ten: "Huyền Thoại Thạch Thất", mo: "Vượt mọi giới hạn." },
+  { ma: "SSS", xp: 7400, mau: "#ff3b3b", kim: "Huyền Thoại", ten: "Bậc Thầy", mo: "Đỉnh cao của lớp — rất ít người đạt được." },
 ];
 // Cách tính điểm kinh nghiệm (XP) — thầy sửa số ở đây nếu muốn
 const XP = { buoi: 10, baiTap: 15, baiHoc: 5, diemGioi: 10, noiBat: 100, top1: 25 };
@@ -414,8 +414,8 @@ function theRank(t) {
       </details></div></div>`;
 }
 
-const KIM_LOAI = [["#f2f4f7", "#8c939d", "#3a3f47"], ["#ffe2c4", "#b9774a", "#4a2a17"], ["#ffffff", "#b9c3cf", "#4b535e"], ["#fff3c4", "#d9a63a", "#5a3c0c"],
-  ["#ffffff", "#c9c2e8", "#4a4366"], ["#fff6cf", "#f0b72e", "#6b4300"], ["#ffe6c7", "#f08a2a", "#5c2200"], ["#ffe1d6", "#e0473f", "#4a0508"], ["#ffffff", "#f3b6ff", "#5b2a6e"]];
+const KIM_LOAI = [["#f2f4f7", "#8c939d", "#3a3f47"], ["#ffe2c4", "#b9774a", "#4a2a17"], ["#e6fff9", "#5fb3a3", "#1f4a42"], ["#ffffff", "#b9c3cf", "#4b535e"], ["#fff3c4", "#d9a63a", "#5a3c0c"],
+  ["#ffffff", "#c9c2e8", "#4a4366"], ["#fff6cf", "#f0b72e", "#6b4300"], ["#ffe6c7", "#f08a2a", "#5c2200"], ["#ffe1d6", "#e0473f", "#4a0508"]];
 /* Khung thẻ bài nổi bật theo hạng: viền, góc móc, thanh ngang giữa ảnh và tên (tự vẽ) */
 function khungThe(r, i) {
   const id = "kt" + Math.random().toString(36).slice(2, 8), c = r.mau === "rainbow" ? "#ff9cf5" : r.mau, KL = KIM_LOAI[i];
@@ -432,7 +432,7 @@ function khungThe(r, i) {
   if (i >= 5) t.push(`<circle cx="36" cy="15" r="5" fill="${A}" stroke="${M}" stroke-width="2"/><circle cx="264" cy="15" r="5" fill="${A}" stroke="${M}" stroke-width="2"/><path d="M84 15c20-10 40-12 54-10M216 15c-20-10-40-12-54-10" fill="none" stroke="${M}" stroke-width="2"/>`);
   if (i >= 6) t.push(`<path d="M132 24l18 14 18-14-8 1-10 7-10-7zM96 18l-14 8h20zM204 18l14 8h-20z" fill="${M}"/>`);
   if (i >= 7) t.push(`<path d="M2 15C-2 6 4-2 14-4c-6 5-8 12-4 19zM298 15c4-9-2-17-12-19 6 5 8 12 4 19z" fill="${M}" stroke="${c}" stroke-width=".6"/>`);
-  if (i === 8) t.push(`<rect x="8" y="13.5" width="284" height="3.5" rx="1" fill="url(#${id}r)" opacity=".65"/>`);
+  if (r.mau === "rainbow") t.push(`<rect x="8" y="13.5" width="284" height="3.5" rx="1" fill="url(#${id}r)" opacity=".65"/>`);
   const thanh = `<svg class="kt-thanh" viewBox="-6 -8 312 48" aria-hidden="true">${defs}${t.join("")}</svg>`;
   // góc trên (trái, phải đối xứng) — kim loại 2 tông (mép sáng + mép tối), dải màu khảm, mũi móc vuốt nhọn
   const g = [], d = [], k0 = KL[0], k2 = KL[2], W = i >= 4 ? 7 : 5, L = i >= 4 ? 92 : 70;
@@ -498,7 +498,7 @@ function khungAvatar(r, i, ten = "", anh = "", cls = "") {
   if (i >= 5) g.push(`<path d="M31 11l1-12 8 7 10-12 10 12 8-7 1 12q-19-6-38 0z" fill="${M}" stroke="${KL[2]}" stroke-width=".6"/><circle cx="32" cy="-1" r="1.8" fill="${A}"/><circle cx="68" cy="-1" r="1.8" fill="${A}"/><circle cx="50" cy="-6" r="2.4" fill="${A}" stroke="#fff" stroke-width=".5"/>`);
   // lưỡi lửa phía dưới (SS+)
   if (i >= 6) g.push(`<path d="M20 84C8 82 2 70 5 58c3 8 8 12 14 12-3 5-2 10 1 14zM80 84c12-2 18-14 15-26-3 8-8 12-14 12 3 5 2 10-1 14z" fill="${A}" opacity=".9"/><path d="M27 92c-8 1-14-3-17-9 6 2 11 1 15-3z M73 92c8 1 14-3 17-9-6 2-11 1-15-3z" fill="${M}"/>`);
-  // sừng + ngọc đáy (SSS+)
+  // sừng + ngọc đáy (SS+)
   if (i >= 7) g.push(`<path d="M28 14C15 9 9-2 12-14c3 11 10 17 20 19zM72 14c13-5 19-16 16-28-3 11-10 17-20 19z" fill="${M}" stroke="${KL[2]}" stroke-width=".6"/><circle cx="50" cy="101" r="5.5" fill="#07080c" stroke="${M}" stroke-width="2"/><circle cx="50" cy="101" r="2.4" fill="${A}"/>`);
   const nen = anh ? `<image href="${esc(anh)}" x="14" y="12" width="72" height="72" clip-path="url(#${id}c)" preserveAspectRatio="xMidYMid slice"/>`
     : `<text x="50" y="56.5" text-anchor="middle" class="ka-chu" fill="${M}">${esc(chuCai(ten))}</text>`;
@@ -607,8 +607,8 @@ function moBangRank(ten) {
     ${ten ? (m => `<div class="rk-ttd"><b>🏆 Thành tựu đã đạt</b>${m.length ? `<ul>${m.map(a => `<li>${huyHieuTT(a, a.cap, "sm")}<span><b>${esc(a.ten)} <i style="color:${CAP[a.cap].mau}">· Cấp ${CAP[a.cap].ten}</i></b><small>Cách đạt: ${esc(a.mo)} — đã có <b>${a.n} ${esc(a.dv)}</b>${a.toi ? ` · cần ${a.toi} để lên ${CAP[a.cap + 1].ten}` : " · cấp cao nhất"}</small></span></li>`).join("")}</ul>` : `<p class="muted">Chưa có thành tựu nào. Nộp bài, đi học đều và có bài lên nổi bật để mở khoá!</p>`}</div>`)(tinhThanhTuu(null, null, null, ten).filter(a => a.cap)) : ""}
     <div class="rk-note"><b>📌 Ghi chú</b><ul>
       <li>Mùa xếp hạng bắt đầu từ <b>${fmtDate(new Date(RANK_BAT_DAU + "T00:00"))}</b>. Mọi học viên khởi đầu ở <b>hạng F · Sắt · Người Mới</b>.</li>
-      <li>Hạng càng cao, huy hiệu càng rực rỡ: từ Sắt xám → Đồng → Bạc → Vàng → Bạch Kim → Kim Cương → … → <b>Thách Đấu cầu vồng</b>.</li>
-      <li><b>Càng lên cao càng khó:</b> mỗi hạng cần nhiều XP hơn hẳn hạng trước (F→E chỉ 100 XP). <b>Từ Lão Làng (A) trở lên, mỗi hạng cần thêm 2.000 XP</b>: A 1.400 → S 3.400 → SS 5.400 → SSS 7.400 → SSS+ 9.400. Chỉ những bạn chăm chỉ bền bỉ cả năm mới chạm tới Thách Đấu.</li>
+      <li>Hạng càng cao, huy hiệu càng rực rỡ: từ Sắt xám → Đồng → Thép → Bạc → Vàng → Bạch Kim → Kim Cương → Tinh Anh → <b>Huyền Thoại đỏ rực</b>.</li>
+      <li><b>Càng lên cao càng khó:</b> mỗi hạng cần nhiều XP hơn hẳn hạng trước (F→E chỉ 100 XP). <b>Từ Lão Làng (A) trở lên, mỗi hạng cần thêm 2.000 XP</b>: A 1.400 → S 3.400 → SS 5.400 → SSS 7.400. Chỉ những bạn chăm chỉ bền bỉ cả năm mới chạm tới SSS · Huyền Thoại.</li>
       <li>XP cộng tự động khi em đi học, nộp bài, được chấm điểm cao hoặc có bài lên Bài vẽ nổi bật. Thầy có thể thưởng thêm XP cho bài xuất sắc.</li>
       <li>Hạng đầy đủ của em (gồm đi học, bài tập) xem trong mục <b>Tài khoản</b>.</li></ul></div>
     <h3>Cách kiếm XP</h3>${cachXpHTML()}

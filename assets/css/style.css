@@ -1389,15 +1389,15 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
 .rk-chip.t0::after{display:none}
 .rk-chip.t2,.rk-chip.t3{background:linear-gradient(135deg,color-mix(in srgb,var(--rc) 55%,#0b0d14),#0b0d14 70%,color-mix(in srgb,var(--rc) 30%,#0b0d14))}
 .rk-chip.t3{box-shadow:0 0 0 2px #0b0d14,0 0 0 3.5px color-mix(in srgb,var(--rc) 60%,transparent),0 0 18px var(--rc)}
-.rk-chip.t4,.rk-chip.t5,.rk-chip.t6,.rk-chip.t7,.rk-chip.t8{border:2px solid transparent;
+.rk-chip.t4,.rk-chip.t5,.rk-chip.t6,.rk-chip.t7,.rk-chip.rb{border:2px solid transparent;
   background:linear-gradient(135deg,color-mix(in srgb,var(--rc) 50%,#0b0d14),#0b0d14 75%) padding-box,
   conic-gradient(from var(--ang),var(--rc),#fff,var(--rc),color-mix(in srgb,var(--rc) 30%,#000),var(--rc)) border-box;
   animation:rkSpin 3s linear infinite,rkPulse 2.2s ease-in-out infinite}
 .rk-chip.t5 b,.rk-chip.t6 b,.rk-chip.t7 b{background:linear-gradient(180deg,#fff 10%,var(--rc) 90%);-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:none;filter:drop-shadow(0 0 5px var(--rc))}
 .rk-chip.t6{box-shadow:0 0 22px #ff8a1f,0 0 44px rgba(255,80,0,.45)}
 .rk-chip.t7{background:linear-gradient(135deg,#4a0008,#0b0d14 70%) padding-box,conic-gradient(from var(--ang),#ff3b3b,#ffd34d,#ff3b3b,#2a0000,#ff3b3b) border-box;box-shadow:0 0 26px #ff3b3b,0 0 52px rgba(255,0,40,.5)}
-.rk-chip.t8{background:linear-gradient(135deg,#1d0f2e,#0b0d14) padding-box,conic-gradient(from var(--ang),#ff5a5a,#ffc400,#3fcf5b,#3ec6e0,#9b5cff,#ff5a5a) border-box;box-shadow:0 0 28px rgba(255,120,255,.6)}
-.rk-chip.t8 b{background:linear-gradient(90deg,#ff5a5a,#ffc400,#3fcf5b,#3ec6e0,#9b5cff);-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:none;animation:rkHue 4s linear infinite}
+.rk-chip.rb{background:linear-gradient(135deg,#1d0f2e,#0b0d14) padding-box,conic-gradient(from var(--ang),#ff5a5a,#ffc400,#3fcf5b,#3ec6e0,#9b5cff,#ff5a5a) border-box;box-shadow:0 0 28px rgba(255,120,255,.6)}
+.rk-chip.rb b{background:linear-gradient(90deg,#ff5a5a,#ffc400,#3fcf5b,#3ec6e0,#9b5cff);-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:none;animation:rkHue 4s linear infinite}
 .rk-chip .fx{position:absolute;inset:0;pointer-events:none;text-decoration:none;
   background:radial-gradient(circle at 18% 30%,#fff 0 1px,transparent 2px),radial-gradient(circle at 62% 75%,#fff 0 1px,transparent 2px),radial-gradient(circle at 88% 25%,#fff 0 1.2px,transparent 2.4px);animation:rkTw 1.6s ease-in-out infinite}
 /* Huy hiệu khiên */
@@ -1405,14 +1405,14 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
 .rk-badge.t3 svg,.rk-badge.t4 svg{filter:drop-shadow(0 0 12px var(--rc)) drop-shadow(0 0 2px #fff)}
 .rk-badge.t5 svg,.rk-badge.t6 svg,.rk-badge.t7 svg{filter:drop-shadow(0 0 16px var(--rc)) drop-shadow(0 0 4px #fff);animation:rkPulseB 2s ease-in-out infinite}
 .rk-badge.t5 .s,.rk-badge.t6 .s,.rk-badge.t7 .s{fill:color-mix(in srgb,var(--rc) 28%,#120a00);stroke-width:3.5}
-.rk-badge.t8 svg{animation:rkHue 4s linear infinite;filter:drop-shadow(0 0 16px #ff8cff)}
-.rk-badge.t8 .s{stroke:#ff8cff;stroke-width:3.5}
+.rk-badge.rb svg{animation:rkHue 4s linear infinite;filter:drop-shadow(0 0 16px #ff8cff)}
+.rk-badge.rb .s{stroke:#ff8cff;stroke-width:3.5}
 @keyframes rkPulseB{50%{transform:scale(1.05)}}
 .xh-row.t5,.xh-row.t6,.xh-row.t7,.xh-row.t8{background:linear-gradient(90deg,color-mix(in srgb,var(--rc) 16%,transparent),transparent 60%)}
-.xh-row.t8 .xh-mo b{background:linear-gradient(90deg,#ff5a5a,#ffc400,#3fcf5b,#3ec6e0,#9b5cff);-webkit-background-clip:text;background-clip:text;color:transparent}
-.xh-row.t8 .xh-kim{-webkit-text-fill-color:#0b0d14}
+.xh-row.rb .xh-mo b{background:linear-gradient(90deg,#ff5a5a,#ffc400,#3fcf5b,#3ec6e0,#9b5cff);-webkit-background-clip:text;background-clip:text;color:transparent}
+.xh-row.rb .xh-kim{-webkit-text-fill-color:#0b0d14}
 .rk-card.t5,.rk-card.t6,.rk-card.t7{box-shadow:0 0 0 1px var(--rc),0 0 30px color-mix(in srgb,var(--rc) 40%,transparent)}
-.rk-card.t8{box-shadow:0 0 0 1px #ff8cff,0 0 34px rgba(255,140,255,.4)}
+.rk-card.rb{box-shadow:0 0 0 1px #ff8cff,0 0 34px rgba(255,140,255,.4)}
 .xh-hv > div[data-rk]{transition:transform .2s,box-shadow .2s}.xh-hv > div[data-rk]:hover{transform:translateY(-2px);box-shadow:0 0 16px color-mix(in srgb,var(--rc) 45%,transparent)}
 .rk-mo{margin-top:10px}
 @media (prefers-reduced-motion:reduce){.rk-chip,.rk-chip b,.rk-chip .fx,.rk-badge svg{animation:none!important}}
@@ -1525,7 +1525,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
 .ka.t1 svg,.ka.t2 svg{filter:drop-shadow(0 0 6px color-mix(in srgb,var(--rc) 60%,transparent))}
 .ka.t3 svg,.ka.t4 svg{filter:drop-shadow(0 0 9px var(--rc))}
 .ka.t5 svg,.ka.t6 svg,.ka.t7 svg{filter:drop-shadow(0 0 12px var(--rc)) drop-shadow(0 0 2px #fff);animation:kaPulse 2.4s ease-in-out infinite}
-.ka.t8 svg{filter:drop-shadow(0 0 14px #ff8cff);animation:rkHue 5s linear infinite}
+.ka.rb svg{filter:drop-shadow(0 0 14px #ff8cff);animation:rkHue 5s linear infinite}
 @keyframes kaPulse{50%{filter:drop-shadow(0 0 20px var(--rc)) drop-shadow(0 0 4px #fff)}}
 @media (prefers-reduced-motion:reduce){.ka svg{animation:none!important}}
 .tr-list li .ka{margin-block:-4px}
@@ -1614,11 +1614,11 @@ nav .acct.has-ka .acct-icon{display:none!important}
 .rk-chip::after,.rk-chip .fx{display:none!important}
 .rk-chip{background:linear-gradient(90deg,color-mix(in srgb,var(--rc) 30%,#0c0e14),#0c0e14 55%)!important;border:2px solid var(--rc)!important;padding:4px 12px 4px 8px}
 .rk-chip.t4,.rk-chip.t5,.rk-chip.t6,.rk-chip.t7{border:2px solid transparent!important;background:linear-gradient(90deg,color-mix(in srgb,var(--rc) 34%,#0c0e14),#0c0e14 55%) padding-box,linear-gradient(90deg,#fff,var(--rc) 30%,var(--rc) 70%,#fff) border-box!important}
-.rk-chip.t8{border:2px solid transparent!important;background:linear-gradient(90deg,#24123a,#0c0e14 55%) padding-box,linear-gradient(90deg,#ff5a5a,#ffc400,#3fcf5b,#3ec6e0,#9b5cff) border-box!important}
+.rk-chip.rb{border:2px solid transparent!important;background:linear-gradient(90deg,#24123a,#0c0e14 55%) padding-box,linear-gradient(90deg,#ff5a5a,#ffc400,#3fcf5b,#3ec6e0,#9b5cff) border-box!important}
 .rk-chip svg{filter:none!important}
 .rk-chip b{text-shadow:none!important;filter:none!important;-webkit-text-fill-color:currentColor;background:none!important;color:#fff!important;font-size:1.08rem!important}
 .rk-chip.t3 b,.rk-chip.t4 b,.rk-chip.t5 b,.rk-chip.t6 b,.rk-chip.t7 b{color:var(--rc)!important;-webkit-text-stroke:.4px rgba(255,255,255,.6)}
-.rk-chip.t8 b{background:linear-gradient(90deg,#ff5a5a,#ffc400,#3fcf5b,#3ec6e0,#9b5cff)!important;-webkit-background-clip:text!important;background-clip:text!important;-webkit-text-fill-color:transparent;animation:none!important}
+.rk-chip.rb b{background:linear-gradient(90deg,#ff5a5a,#ffc400,#3fcf5b,#3ec6e0,#9b5cff)!important;-webkit-background-clip:text!important;background-clip:text!important;-webkit-text-fill-color:transparent;animation:none!important}
 .rk-chip i{text-shadow:none!important;color:#ffd34d}
 .rk-chip small{color:rgba(255,255,255,.9)}
 .rk-chip em{color:#fff;max-width:none!important;border-left-color:rgba(255,255,255,.35)}
@@ -1627,7 +1627,7 @@ nav .acct.has-ka .acct-icon{display:none!important}
 .nb-card.on .kt.t5,.nb-card.on .kt.t6,.nb-card.on .kt.t7,.nb-card.on .kt.t8{box-shadow:none}
 .kt::before{opacity:1}
 .ka svg,.ka.t1 svg,.ka.t2 svg,.ka.t3 svg,.ka.t4 svg,.ka.t5 svg,.ka.t6 svg,.ka.t7 svg{filter:drop-shadow(0 2px 0 rgba(0,0,0,.6))!important;animation:none!important}
-.ka.t8 svg{filter:drop-shadow(0 2px 0 rgba(0,0,0,.6))!important}
+.ka.rb svg{filter:drop-shadow(0 2px 0 rgba(0,0,0,.6))!important}
 .rk-badge svg,.rk-badge.t3 svg,.rk-badge.t4 svg,.rk-badge.t5 svg,.rk-badge.t6 svg,.rk-badge.t7 svg{filter:drop-shadow(0 1.5px 0 rgba(0,0,0,.6))!important;animation:none!important}
 .tr-list li.t5,.tr-list li.t6,.tr-list li.t7,.tr-list li.t8{animation:none!important;box-shadow:0 0 0 1px color-mix(in srgb,var(--rc) 70%,transparent)!important}
 .tr-list li.t5 .tr-xp,.tr-list li.t6 .tr-xp,.tr-list li.t7 .tr-xp{text-shadow:none}
@@ -1674,3 +1674,4 @@ nav .acct.has-ka .acct-icon{display:none!important}
 @media (max-width:640px){.tsd i{display:none}.tsd svg{width:26px;height:28px}}
 .tsd svg{width:38px;height:40px}.tsd.sm svg{width:32px;height:34px}
 @media (max-width:640px){.tsd svg{width:32px;height:34px}.tsd.sm svg{width:28px;height:30px}}
+.xh-row:last-child .xh-kim{background:linear-gradient(90deg,#ff3b3b,#ffc400)}

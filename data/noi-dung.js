@@ -227,5 +227,9 @@ export const THANH_TUU_TRAO = [
 //   Thêm huyenThoai: true để trao huy hiệu "HUYỀN THOẠI CỦA LỚP".
 export const XP_THUONG = [
   { hocVien: "Đặng Huy Hoàn", xp: 7400, ghiChu: "Huyền thoại của lớp Thạch Thất — đạt hạng SSS", huyenThoai: true },
-  { hocVien: "Nguyễn Văn Bảo", xp: 100, ghiChu: "Bài đầu tiên lên Bài vẽ nổi bật (Top 1 & Top 2 tuần)" },
+  { hocVien: "Nguyễn Văn Bảo", xp: 200, ghiChu: "Bài đầu tiên lên Bài vẽ nổi bật (Top 1 & Top 2 tuần) · lên hạng D" },
+  { hocVien: "Khang", xp: 100, ghiChu: "Có bài lên Bài vẽ nổi bật · lên hạng E" },
+  { hocVien: "Linh", xp: 100, ghiChu: "Có bài lên Bài vẽ nổi bật · lên hạng E" },
+  { hocVien: "Thùy", xp: 100, ghiChu: "Có bài lên Bài vẽ nổi bật · lên hạng E" },
+  { hocVien: "Nam", xp: 100, ghiChu: "Có bài lên Bài vẽ nổi bật · lên hạng E" },
 ];
