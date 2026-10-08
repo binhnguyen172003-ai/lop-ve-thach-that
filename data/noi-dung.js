@@ -204,5 +204,10 @@ export const VIDEO_BIA = "";
 export const BAI_NOI_BAT = [
   { ky: "tuan", anh: "assets/img/bai-ve/khang-mau.webp", hocVien: "Khang", loai: "Màu" },
   { ky: "tuan", anh: "assets/img/bai-ve/linh-mau.webp", hocVien: "Linh", loai: "Màu" },
+  { ky: "tuan", anh: "assets/img/bai-ve/huyen-linh-mau.webp", hocVien: "Kiều Huyền Linh", loai: "Bài mẫu trợ giảng · Màu" },
+  { ky: "tuan", anh: "assets/img/bai-ve/bao-tuong.webp", hocVien: "Bảo", loai: "Tượng", ghiChu: "Hình hoạ tượng cơ bản" },
+  { ky: "tuan", anh: "assets/img/bai-ve/bao-sac-do.webp", hocVien: "Bảo", loai: "Mỹ thuật 2", ghiChu: "Bố cục sắc độ" },
+  { ky: "tuan", anh: "assets/img/bai-ve/thuy-chan-dung.webp", hocVien: "Thùy", loai: "Hình hoạ người", ghiChu: "Chân dung" },
+  { ky: "tuan", anh: "assets/img/bai-ve/nam-sac-do.webp", hocVien: "Nam", loai: "Mỹ thuật 2", ghiChu: "Bố cục sắc độ" },
   // { ky: "tuan", hang: 1, anh: "assets/img/noi-bat/tuan-1.jpg", hocVien: "Nguyễn Văn A", loai: "Hình hoạ tượng", ghiChu: "Khối rõ, sáng tối đẹp" },
 ];
