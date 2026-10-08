@@ -500,30 +500,40 @@ $("#dk-zalo").href = "https://zalo.me/" + SDT_LOP;
 /* ================= Đếm ngược tới ngày thi ngay trong form đăng ký =================
    Chọn "Trường muốn thi" là đồng hồ đổi sang kỳ thi của trường đó (tính tới 7h sáng ngày thi). */
 (function demNguoc() {
-  const sel = $("#dk-truong"); if (!sel) return;
+  const sel = $("#dk-truong"), lop = $("#dk-lop"); if (!sel || !lop) return;
   const TEN = {}; LICH_THI.forEach(e => { if (e.truong !== "THPT") TEN[e.truong] = TEN[e.truong] || e.ten; });
   sel.insertAdjacentHTML("beforeend", BO_LOC_TRUONG.filter(b => TEN[b.truong]).map(b => `<option value="${esc(TEN[b.truong])}" data-t="${esc(b.truong)}">${esc(TEN[b.truong])}</option>`).join("")
     + `<option value="Trường khác">Trường khác</option>`);
-  const mocThi = e => { const [y, m, d] = e.ngay.split("-").map(Number); return Date.UTC(y, m - 1, d, 0, 0, 0); }; // 7h sáng giờ Việt Nam
+  // Mỗi lớp thi một năm khác nhau: lớp 12 (2k9) thi năm NAM_THI, lớp 11 thi năm sau, lớp 10 sau 2 năm…
+  // Năm sau chưa có lịch chính thức nên lấy theo ngày của mùa thi NAM_THI, ghi rõ "dự kiến".
+  const SAU = { "Lớp 12": 0, "Thi lại": 0, "Lớp 11": 1, "Lớp 10": 2, "Lớp 9": 3, "Lớp 6–8": 4 };
+  const moc = (e, them) => { const [y, m, d] = e.ngay.split("-").map(Number); return Date.UTC(y + them, m - 1, d, 0, 0, 0); }; // 7h sáng giờ VN
   const chon = () => {
-    const t = (sel.selectedOptions[0] || {}).dataset ? sel.selectedOptions[0].dataset.t : "";
-    const ds = LICH_THI.filter(e => e.truong !== "THPT" && (!t || e.truong === t) && mocThi(e) > Date.now()).sort((a, b) => mocThi(a) - mocThi(b));
-    return ds[0] || null;
+    const them = lop.value in SAU ? SAU[lop.value] : 0;
+    if (lop.value === "Người lớn học vẽ") return null;
+    const t = sel.selectedOptions[0] && sel.selectedOptions[0].dataset.t;
+    const ds = LICH_THI.filter(e => e.truong !== "THPT" && (!t || e.truong === t) && moc(e, them) > Date.now()).sort((a, b) => moc(a, them) - moc(b, them));
+    return ds[0] ? { ...ds[0], them, nam: Number(ds[0].ngay.slice(0, 4)) + them } : null;
   };
   let ky = chon(), timer = 0, thay = false;
   const hai = n => String(n).padStart(2, "0");
   const ve = () => {
     if (!ky) { $("#dk-cd").hidden = true; return; }
     $("#dk-cd").hidden = false;
-    const con = Math.max(0, mocThi(ky) - Date.now()), s = Math.floor(con / 1000);
+    const con = Math.max(0, moc(ky, ky.them) - Date.now()), s = Math.floor(con / 1000);
     const d = Math.floor(s / 86400), h = Math.floor(s % 86400 / 3600), m = Math.floor(s % 3600 / 60), giay = s % 60;
     $("#cd-d").textContent = d; $("#cd-h").textContent = hai(h); $("#cd-m").textContent = hai(m); $("#cd-s").textContent = hai(giay);
-    $("#dk-cd-t").textContent = `${sel.value && sel.value !== "Trường khác" ? "Kỳ thi " + ky.ten : "Kỳ thi năng khiếu gần nhất · " + ky.ten} · ${ky.dot} · ${ky.hienThi}/${ky.ngay.slice(0, 4)}`;
+    const ai = lop.value && lop.value in SAU ? `${lop.value} · thi ${lop.value === "Lớp 6–8" ? "từ năm" : "năm"} ${ky.nam}` : `Học sinh lớp 12 · thi năm ${ky.nam}`;
+    const truong = sel.value && sel.value !== "Trường khác" ? ky.ten : "kỳ thi năng khiếu đầu tiên · " + ky.ten;
+    $("#dk-cd-t").textContent = `${ai} · ${truong} · ${ky.them ? "dự kiến " : ""}${ky.hienThi}/${ky.nam}`;
     const buoi = Math.floor(d / 7) * 4;
-    $("#dk-cd-f").innerHTML = `≈ <b>${buoi} buổi học</b> nếu học 4 buổi mỗi tuần. Mỗi tuần chậm trễ là bớt 4 buổi luyện, <b>đăng ký học thử ngay hôm nay</b>.`;
+    $("#dk-cd-f").innerHTML = ky.them
+      ? `≈ <b>${buoi} buổi học</b> nếu học 4 buổi mỗi tuần. Học sớm từ ${lop.value.toLowerCase()} là lợi thế lớn: <b>vững hình hoạ trước, năm cuối chỉ cần luyện đề</b>.`
+      : `≈ <b>${buoi} buổi học</b> nếu học 4 buổi mỗi tuần. Mỗi tuần chậm trễ là bớt 4 buổi luyện, <b>đăng ký học thử ngay hôm nay</b>.`;
   };
   const chay = () => { clearInterval(timer); if (thay && !document.hidden) timer = setInterval(ve, 1000); };
-  sel.addEventListener("change", () => { ky = chon(); ve(); });
+  const doi = () => { ky = chon(); ve(); };
+  sel.addEventListener("change", doi); lop.addEventListener("change", doi);
   document.addEventListener("visibilitychange", chay);
   if ("IntersectionObserver" in window) new IntersectionObserver(es => { thay = es[0].isIntersecting; if (thay) ve(); chay(); }).observe($("#dk-cd"));
   else { thay = true; chay(); }
