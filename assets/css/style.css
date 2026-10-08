@@ -527,15 +527,14 @@ svg.art{display:block;width:100%;height:auto;aspect-ratio:4/3;color:var(--ink)}
 .mg-top{position:relative;overflow:hidden;aspect-ratio:1/1.08;background:var(--bg)}
 .mg-card.c1 .mg-top{aspect-ratio:1/1.22}
 .mg-top::before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(115deg,rgba(255,255,255,.12) 0 2px,transparent 2px 16px)}
-.mg-big{position:absolute;left:-4%;top:-6%;font:900 clamp(6rem,15vw,10.5rem)/1 var(--f-display);color:rgba(255,255,255,.92);letter-spacing:-.06em;z-index:3;text-shadow:0 6px 24px rgba(0,0,0,.18)}
+.mg-big{position:absolute;left:-4%;top:-6%;font:900 clamp(6rem,15vw,10.5rem)/1 var(--f-display);color:rgba(255,255,255,.92);letter-spacing:-.06em;z-index:3;text-shadow:0 6px 24px rgba(0,0,0,.18);top:auto;bottom:34%}
 .mg-card.c1 .mg-big{color:#141414}
 .mg-card.c3 .mg-big{color:#0d2b14}
-/* Ảnh tan dần vào nền thẻ: mép trên, trái, phải, dưới đều nhoè mềm, không còn khung chữ nhật */
-.mg-top img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:55% 22%;z-index:2;filter:saturate(1.05) contrast(1.04);
-  -webkit-mask-image:radial-gradient(ellipse 62% 70% at 60% 46%,#000 38%,rgba(0,0,0,.75) 56%,rgba(0,0,0,.3) 74%,transparent 92%);
-  mask-image:radial-gradient(ellipse 62% 70% at 60% 46%,#000 38%,rgba(0,0,0,.75) 56%,rgba(0,0,0,.3) 74%,transparent 92%)}
-.mg-top::after{content:"";position:absolute;inset:0;z-index:2;pointer-events:none;
-  background:radial-gradient(ellipse 90% 60% at 50% 110%,rgba(0,0,0,.5),transparent 70%)}
+.mg-top img{position:absolute;right:0;bottom:0;width:86%;height:86%;object-fit:cover;object-position:50% 20%;z-index:2;
+  -webkit-mask-image:linear-gradient(180deg,transparent 0,#000 22%,#000 70%,transparent),linear-gradient(90deg,transparent,#000 22%);-webkit-mask-composite:source-in;
+  mask-image:linear-gradient(180deg,transparent 0,#000 22%,#000 70%,transparent),linear-gradient(90deg,transparent,#000 22%);mask-composite:intersect}
+/* Mép trên của thẻ (nền màu + ảnh) mờ dần ra nền tối của bảng, không còn đường cắt ngang */
+.mg-top{-webkit-mask-image:linear-gradient(180deg,transparent 0,rgba(0,0,0,.35) 12%,#000 34%);mask-image:linear-gradient(180deg,transparent 0,rgba(0,0,0,.35) 12%,#000 34%)}
 .mg-ini{position:absolute;right:8%;bottom:14%;z-index:2;font:900 4rem var(--f-display);color:rgba(0,0,0,.35)}
 .mg-badge{position:absolute;left:8px;bottom:10px;z-index:3;display:flex;gap:4px}
 .mg-badge i,.mg-tr i{font:800 .74rem/1 var(--f-display);font-style:normal;letter-spacing:.04em;padding:5px 7px;background:var(--c);color:#fff;border:1.5px solid #fff}
