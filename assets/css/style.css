@@ -191,7 +191,8 @@ textarea{min-height:90px;resize:vertical}
 /* account */
 .acct-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px;padding-bottom:40px}
 .who{display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:center;margin-bottom:28px}
-.who img{width:56px;height:56px;border-radius:50%}
+.who img{width:56px;height:56px;min-width:56px;max-width:none;aspect-ratio:1/1;object-fit:cover;border-radius:50%;align-self:center;display:block}
+.who img[hidden]{display:none}
 .steps-plain{margin:0;padding-left:20px;display:grid;gap:8px}
 .roster-wrap{overflow-x:auto}
 table.roster{border-collapse:collapse;width:100%;min-width:560px;font-size:.92rem}
