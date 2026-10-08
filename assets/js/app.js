@@ -362,6 +362,48 @@ function renderHonor() {
 }
 renderHonor();
 
+/* ---------- Top các khoá: theo khoá (mùa thi) hoặc theo môn ---------- */
+let tkMode = "khoa";
+function renderTopKhoa() {
+  if (!BANG_VANG.length) { $("#tk-grid").innerHTML = ""; $(".tk-head").hidden = true; return; }
+  const row = (i, ten, sub, d, k) => `<li class="r${i + 1}"><span class="tk-rk num">${i + 1}</span>
+    <span class="tk-who"><b>${esc(ten)}</b><small>${sub}</small></span>
+    ${k ? `<i class="tk-tr" style="--c:${esc(tr(k).mau)}">${esc(k)}</i>` : ""}<b class="tk-sc num">${fmtDiem(d)}</b></li>`;
+  const col = (title, note, rows) => `<article class="tk-col"><header><b>${esc(title)}</b><span>${esc(note)}</span></header><ol>${rows || '<li class="muted">Chưa có điểm</li>'}</ol></article>`;
+  let html = "";
+  if (tkMode === "khoa") {
+    html = BV_NAM.map(y => {
+      const ds = gomHocVien(y, "").filter(x => x.top);
+      return col(`KHOÁ ${y}`, `${gomHocVien(y, "").length} học viên vinh danh`,
+        ds.slice(0, 5).map((x, i) => row(i, x.ten, esc(VT_MON[x.top.m] || x.top.m), x.top.d, x.top.tr)).join(""));
+    }).join("");
+    const all = BV_NAM.flatMap(y => gomHocVien(y, "").filter(x => x.top).map(x => ({ ...x, nam: y })))
+      .sort((a, b) => b.top.d - a.top.d || b.sum - a.sum);
+    html += col("KỶ LỤC MỌI KHOÁ", "Điểm vẽ cao nhất từ trước tới nay",
+      all.slice(0, 5).map((x, i) => row(i, x.ten, `Khoá ${x.nam} · ${esc(VT_MON[x.top.m] || x.top.m)}`, x.top.d, x.top.tr)).join(""));
+  } else {
+    const nhom = { "Hình hoạ": "HÌNH HOẠ", "Bố cục màu": "BỐ CỤC MÀU", "Bố cục": "BỐ CỤC MÀU", "Ký hoạ": "KÝ HOẠ", "Khối V": "KHỐI V (VẼ MỸ THUẬT)" };
+    const by = {};
+    BANG_VANG.forEach(r => Object.entries(r.diem || {}).forEach(([m, d]) => {
+      const g = nhom[m]; if (!g || isNaN(Number(d))) return;
+      const k = g + "|" + r.ten.trim().toLowerCase() + "|" + r.nam;
+      const cur = by[k];
+      if (!cur || Number(d) > cur.d) by[k] = { g, ten: r.ten.trim(), nam: r.nam, d: Number(d), tr: r.truong };
+    }));
+    const groups = [...new Set(Object.values(nhom))];
+    html = groups.map(g => {
+      const ds = Object.values(by).filter(x => x.g === g).sort((a, b) => b.d - a.d || a.ten.localeCompare(b.ten, "vi"));
+      return col(g, `${ds.length} lượt có điểm`, ds.slice(0, 5).map((x, i) => row(i, x.ten, `Khoá ${x.nam}`, x.d, x.tr)).join(""));
+    }).join("");
+  }
+  $("#tk-grid").innerHTML = html;
+}
+const VT_MON = { "Hình hoạ": "Hình hoạ", "Bố cục màu": "Bố cục màu", "Bố cục": "Bố cục", "Ký hoạ": "Ký hoạ", "Phỏng vấn": "Phỏng vấn", "Khối V": "Khối V" };
+$$("#tk-tabs .tab").forEach(b => b.onclick = () => {
+  tkMode = b.dataset.tk; $$("#tk-tabs .tab").forEach(x => x.setAttribute("aria-selected", x === b)); renderTopKhoa();
+});
+renderTopKhoa();
+
 /* ================= Đăng ký học thử ================= */
 // Gửi thẳng cho thầy qua email (không bắt phụ huynh tự sao chép), kèm nút Gọi / Zalo dự phòng.
 const SDT_LOP = String(LIEN_HE.sdt || "").replace(/\D/g, "");
