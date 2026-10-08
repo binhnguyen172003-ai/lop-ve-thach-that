@@ -680,28 +680,36 @@ const GHI_CHU = {
 };
 (function ghiChu() {
   let daXem = {}; try { daXem = JSON.parse(sessionStorage.getItem("lvtt-gc") || "{}"); } catch (e) {}
-  const canh = pop => { pop.style.marginLeft = "0px"; const r = pop.getBoundingClientRect(), m = 12;
-    let d = 0; if (r.right > innerWidth - m) d = innerWidth - m - r.right; else if (r.left < m) d = m - r.left;
-    pop.style.marginLeft = d + "px"; pop.style.setProperty("--ax", (22 - d) + "px"); };
-  const mo = (w, tu) => { $$(".gc.mo").forEach(x => x !== w && x.classList.remove("mo")); w.classList.add("mo"); canh(w.querySelector(".gc-pop"));
-    clearTimeout(w._t); if (tu) w._t = setTimeout(() => w.classList.remove("mo"), 6000); };
+  // ô ghi chú nằm trên lớp cao nhất của trang (gắn vào body) để không bị ảnh / vòng xoay đè
+  const pop = document.createElement("div"); pop.className = "gc-pop"; pop.setAttribute("role", "tooltip"); document.body.append(pop);
+  let dang = null, hen = 0;
+  const dat = () => { if (!dang) return; const r = dang.getBoundingClientRect(), m = 12, w = pop.offsetWidth;
+    let x = r.left + r.width / 2 - 26; x = Math.max(m, Math.min(x, innerWidth - m - w));
+    const hr = (dang.closest("h2") || dang).getBoundingClientRect();
+    let y = hr.bottom + 10; if (y + pop.offsetHeight > innerHeight - 90 && r.top - pop.offsetHeight - 10 > 60) { y = r.top - pop.offsetHeight - 10; pop.classList.add("tren"); } else pop.classList.remove("tren");
+    pop.style.left = x + "px"; pop.style.top = y + "px"; pop.style.setProperty("--ax", (r.left + r.width / 2 - x - 5) + "px");
+    if (r.bottom < 0 || r.top > innerHeight) dong(); };
+  const dong = () => { if (dang) dang.setAttribute("aria-expanded", "false"); dang = null; pop.classList.remove("mo"); clearTimeout(hen); };
+  const mo = (b, tu) => { dang = b; b.setAttribute("aria-expanded", "true"); pop.innerHTML = `<b>Mục này là gì?</b>${esc(b.dataset.gc)}`;
+    pop.classList.add("mo"); dat(); clearTimeout(hen); if (tu) hen = setTimeout(dong, 6000); };
+  addEventListener("scroll", dat, { passive: true }); addEventListener("resize", dat, { passive: true });
   const io = "IntersectionObserver" in window ? new IntersectionObserver(es => es.forEach(e => {
-    if (!e.isIntersecting) return; const w = e.target.querySelector(".gc"); io.unobserve(e.target);
-    if (!w || daXem[e.target.id]) return; daXem[e.target.id] = 1; try { sessionStorage.setItem("lvtt-gc", JSON.stringify(daXem)); } catch (x) {}
-    setTimeout(() => mo(w, true), 450);
+    if (!e.isIntersecting) return; const b = e.target.querySelector(".gc-i"); io.unobserve(e.target);
+    if (!b || daXem[e.target.id]) return; daXem[e.target.id] = 1; try { sessionStorage.setItem("lvtt-gc", JSON.stringify(daXem)); } catch (x) {}
+    setTimeout(() => mo(b, true), 450);
   }), { threshold: .6 }) : null;
   Object.entries(GHI_CHU).forEach(([id, nd]) => {
     const h = document.getElementById(id); if (!h || h.querySelector(".gc")) return;
     const w = document.createElement("span"); w.className = "gc";
-    w.innerHTML = `<button type="button" class="gc-i" aria-label="Giải thích mục này" aria-expanded="false">!</button><span class="gc-pop" role="tooltip"><b>Mục này là gì?</b>${esc(nd)}</span>`;
+    w.innerHTML = `<button type="button" class="gc-i" aria-label="Giải thích mục này" aria-expanded="false">!</button>`;
     h.append(w);
-    const b = w.querySelector(".gc-i");
-    b.addEventListener("click", e => { e.stopPropagation(); w.classList.contains("mo") ? w.classList.remove("mo") : mo(w); b.setAttribute("aria-expanded", w.classList.contains("mo")); });
-    w.addEventListener("mouseenter", () => mo(w)); w.addEventListener("mouseleave", () => w.classList.remove("mo"));
+    const b = w.querySelector(".gc-i"); b.dataset.gc = nd;
+    b.addEventListener("click", e => { e.stopPropagation(); dang === b ? dong() : mo(b); });
+    b.addEventListener("mouseenter", () => mo(b)); b.addEventListener("mouseleave", dong);
     if (io) io.observe(h);
   });
-  document.addEventListener("click", e => { if (!e.target.closest(".gc")) $$(".gc.mo").forEach(x => x.classList.remove("mo")); });
-  document.addEventListener("keydown", e => { if (e.key === "Escape") $$(".gc.mo").forEach(x => x.classList.remove("mo")); });
+  document.addEventListener("click", e => { if (!e.target.closest(".gc")) dong(); });
+  document.addEventListener("keydown", e => { if (e.key === "Escape") dong(); });
 })();
 /* ================= Bài vẽ nổi bật: tuần / tháng / năm, vòng xoay 3D ================= */
 (function noiBat() {

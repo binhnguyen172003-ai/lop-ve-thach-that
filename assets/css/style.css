@@ -1705,3 +1705,18 @@ nav .acct.has-ka .acct-icon{display:none!important}
 .gc-pop{background:#12151d!important}.gc-i{background-color:rgba(255,207,58,.12)}
 .gc-i:hover,.gc.mo .gc-i{background-color:#ffcf3a}
 .gc-pop::before{left:var(--ax,22px)}
+/* "!" dóng lên góc trên bên phải, sát chữ cuối */
+.gc{vertical-align:top;margin-left:4px;position:relative;top:-.05em}
+.gc-i{width:22px;height:22px;font-size:.78rem}
+@media (max-width:640px){.gc-i{width:20px;height:20px;font-size:.72rem}.gc{margin-left:3px}}
+/* ô ghi chú: lớp trên cùng */
+.gc-pop{position:fixed;z-index:9000;top:0;left:0;margin:0!important}
+.gc-pop::before{left:var(--ax,22px)}
+.gc-pop.tren::before{top:auto;bottom:-6px;transform:rotate(225deg)}
+.gc{vertical-align:baseline;top:-.62em;margin-left:5px}
+.gc-pop.mo{opacity:1;visibility:visible;transform:none}
+.gc-pop,.gc-pop *{-webkit-text-fill-color:currentColor}
+.gc-i[aria-expanded="true"]{background-color:#ffcf3a;color:#0b0d14;animation:none}
+.gc-pop::before{display:none}
+.gc{vertical-align:middle;top:-.08em;margin-left:12px}
+@media (max-width:640px){.gc{margin-left:9px}}
