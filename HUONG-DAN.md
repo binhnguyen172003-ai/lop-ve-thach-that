@@ -12,11 +12,14 @@ Web được lưu trên GitHub và hiển thị bằng GitHub Pages. Cấu trúc
 2. Bấm **Create a project** (Tạo dự án). Đặt tên, ví dụ `lop-ve-khong-vui`.
 3. Google Analytics: chọn **tắt** cho gọn. Bấm **Create project**.
 
-## Bước 2. Bật đăng nhập bằng Google
+## Bước 2. Bật đăng nhập bằng Gmail + mật khẩu
 
 1. Menu trái: **Build → Authentication → Get started**.
-2. Tab **Sign-in method** → chọn **Google** → bật **Enable**.
-3. Chọn email hỗ trợ là Gmail của anh → **Save**.
+2. Tab **Sign-in method** → **Add new provider** → chọn **Email/Password**.
+3. Bật dòng đầu **Email/Password** → **Save**. (Không cần bật dòng "Email link".)
+
+Web chỉ dùng cách này, chạy được cả khi học viên mở link trong Zalo, Facebook, Messenger.
+Học viên tự tạo tài khoản, bấm link xác nhận gửi vào Gmail, rồi mới gửi yêu cầu duyệt được.
 
 ## Bước 3. Tạo cơ sở dữ liệu Firestore
 
@@ -53,18 +56,18 @@ Mã này không phải mật khẩu, để công khai trên web là bình thư�
 
 Từ đó, mỗi lần có thay đổi trên nhánh main, web tự cập nhật sau 1–2 phút.
 
-## Bước 7. Cho phép đăng nhập Google trên địa chỉ mới
+## Bước 7. Cho phép web dùng địa chỉ mới
 
 1. Quay lại Firebase → **Authentication → Settings → Authorized domains**.
 2. Bấm **Add domain**, nhập `<tên-github>.github.io` (không có https://, không có tên kho) → **Add**.
 
-Bỏ qua bước này, nút "Đăng nhập bằng Google" sẽ báo lỗi.
+Bỏ qua bước này, link xác nhận Gmail sẽ không quay về đúng web.
 
 ## Bước 8. Kiểm tra và nạp giáo trình
 
-1. Mở web, vào **Đăng nhập / Đăng ký** → **Đăng nhập bằng Google** bằng Gmail của anh.
+1. Mở web, vào **Đăng nhập** → gõ Gmail của anh → bấm **Quên mật khẩu?** (nếu trước đây anh đã vào bằng nút Google) hoặc **Tạo tài khoản mới** → làm theo thư trong Gmail để đặt mật khẩu / xác nhận → quay lại đăng nhập.
 2. Trang hiện nhãn **Giáo viên**. Kéo xuống cuối, bấm **Nạp giáo trình có sẵn** để đưa 13 bài vào.
-3. Thử bằng một Gmail khác (hoặc nhờ một học viên): đăng nhập → gửi yêu cầu duyệt. Yêu cầu hiện ở bảng **Yêu cầu chờ duyệt** của anh → bấm **Duyệt**. Học viên tải lại trang là vào học được.
+3. Thử bằng một Gmail khác (hoặc nhờ một học viên): đăng nhập → gửi yêu cầu duyệt. Yêu cầu hiện ở bảng **Yêu cầu chờ duyệt** của anh → bấm **Duyệt**. Màn hình học viên tự mở khoá, không cần tải lại.
 
 ## Bước 9. Để Google tìm thấy web
 

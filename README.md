@@ -1,7 +1,7 @@
 # Lớp Vẽ Không Vui — website
 
 Web tuyển sinh và khu học viên của lớp luyện thi vẽ Khối H, V tại Thạch Thất, Hà Nội.
-Chạy trên **GitHub Pages** (giao diện) và **Firebase** (đăng nhập Google, giáo trình, bài tập).
+Chạy trên **GitHub Pages** (giao diện) và **Firebase** (đăng nhập Gmail + mật khẩu, giáo trình, bài tập).
 Cài đặt lần đầu: xem [`HUONG-DAN.md`](HUONG-DAN.md).
 
 ---
@@ -32,7 +32,7 @@ Nguyên tắc: **mỗi việc chỉ sửa đúng một file**. Nội dung hay đ
 ├── assets/
 │   ├── css/style.css       Giao diện (màu, chữ, bố cục)
 │   ├── js/app.js           Logic: đếm ngày, đăng nhập, giáo trình, bài tập
-│   └── img/bai-ve/         Ảnh bài vẽ học viên
+│   └── img/                Biểu tượng ứng dụng + bai-ve/ (ảnh bài vẽ học viên)
 ├── data/
 │   ├── noi-dung.js         ★ NỘI DUNG HAY ĐỔI: liên hệ, lịch thi, thời gian biểu, ảnh
 │   └── giao-trinh-mau.js   Giáo trình có sẵn, dùng một lần khi nạp
@@ -40,6 +40,8 @@ Nguyên tắc: **mỗi việc chỉ sửa đúng một file**. Nội dung hay đ
 │   └── firebase-config.js  Mã kết nối Firebase
 ├── firestore.rules         Luật bảo mật dữ liệu (dán vào Firebase Console)
 ├── HUONG-DAN.md            Hướng dẫn cài đặt và dùng hằng ngày
+├── sw.js                   Bộ nhớ đệm: mở tức thì lần sau, xem được khi mất mạng
+├── manifest.webmanifest    Cho phép "Thêm vào màn hình chính" như một ứng dụng
 ├── robots.txt              Cho phép Google đọc web
 └── .nojekyll               Giữ GitHub Pages phục vụ file nguyên trạng
 ```

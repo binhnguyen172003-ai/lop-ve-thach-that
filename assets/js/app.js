@@ -8,16 +8,52 @@ import { GIAO_TRINH_MAU } from "../../data/giao-trinh-mau.js?v=20261008c";
 
 // Firebase được tải riêng, để phần giới thiệu vẫn chạy kể cả khi mạng chậm hoặc chưa cấu hình.
 const FB = "https://www.gstatic.com/firebasejs/10.12.2/";
-let initializeApp, getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut;
+let initializeApp, getAuth, onAuthStateChanged, signOut;
+let createUserWithEmailAndPassword, signInWithEmailAndPassword, sendEmailVerification, sendPasswordResetEmail;
 let getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager, collection, doc, getDoc, setDoc, addDoc, deleteDoc, writeBatch, onSnapshot, query, orderBy;
 async function loadFirebase() {
   const [a, au, fs] = await Promise.all([import(FB + "firebase-app.js"), import(FB + "firebase-auth.js"), import(FB + "firebase-firestore.js")]);
   ({ initializeApp } = a);
-  ({ getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut } = au);
+  ({ getAuth, onAuthStateChanged, signOut,
+     createUserWithEmailAndPassword, signInWithEmailAndPassword, sendEmailVerification, sendPasswordResetEmail } = au);
   ({ getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager, collection, doc, getDoc, setDoc, addDoc, deleteDoc, writeBatch, onSnapshot, query, orderBy } = fs);
 }
 
 const $ = s => document.querySelector(s);
+window.__appOk = true;
+document.querySelectorAll(".slow-bar").forEach(el => el.remove());
+
+/* ---------- Thông báo nhỏ ở cuối màn hình: luôn cho người dùng biết đã lưu hay chưa ---------- */
+function toast(text, kind = "") {
+  let t = document.getElementById("toast");
+  if (!t) {
+    t = document.createElement("div"); t.id = "toast"; t.setAttribute("role", "status"); t.setAttribute("aria-live", "polite");
+    document.body.appendChild(t);
+  }
+  t.onclick = () => t.hidden = true;
+  t.textContent = text; t.className = kind; t.hidden = false;
+  clearTimeout(toast.h); toast.h = setTimeout(() => t.hidden = true, kind === "err" ? 6000 : 2800);
+}
+/* ---------- Mất mạng: báo rõ, không để người dùng tưởng web hỏng ---------- */
+function netBar() {
+  let b = document.getElementById("net-bar");
+  if (!b) { b = document.createElement("div"); b.id = "net-bar"; b.setAttribute("role", "status"); document.body.prepend(b); }
+  b.textContent = "Đang mất mạng. Em vẫn xem được những gì đã mở; việc em vừa làm sẽ tự lưu khi có mạng lại (đừng đóng trang).";
+  b.hidden = navigator.onLine;
+}
+addEventListener("offline", netBar);
+addEventListener("online", () => { netBar(); toast("Đã có mạng lại."); });
+if (!navigator.onLine) netBar();
+/* ---------- Lỗi bất ngờ: báo và cho tải lại, không để trang "đứng hình" ---------- */
+addEventListener("error", e => {
+  if (!e.filename || !e.filename.includes(location.host)) return;
+  toast("Có lỗi nhỏ trên trang. Chạm vào đây để tải lại.", "err");
+  $("#toast").onclick = () => location.reload();
+});
+/* ---------- Mở tức thì ở lần sau + dùng được khi mạng yếu ---------- */
+if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost") && !/[?&]khongcache/.test(location.search))
+  addEventListener("load", () => navigator.serviceWorker.register("sw.js?v=20261008c").catch(() => {}));
+
 /* ---------- Đo tốc độ: mở web kèm ?chandoan=1 để xem từng bước mất bao lâu ---------- */
 const DIAG = /[?&]chandoan/.test(location.search);
 const T0 = performance.now();
@@ -68,6 +104,21 @@ const store = {
   get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
   set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
 };
+/* ---------- Tự lưu nháp biểu mẫu: lỡ tắt trang, mất mạng hay chuyển ứng dụng cũng không mất chữ đã gõ ---------- */
+const formFields = form => Array.from(form.querySelectorAll("input[id], select[id], textarea[id]")).filter(i => i.type !== "checkbox" && i.type !== "hidden");
+const formValues = form => Object.fromEntries(formFields(form).map(i => [i.id, i.value]));
+function fillForm(form, vals) {
+  if (!vals) return;
+  formFields(form).forEach(i => { if (vals[i.id] != null && vals[i.id] !== "") i.value = vals[i.id]; });
+}
+function keepDraft(form, keyFn) {
+  let h;
+  form.addEventListener("input", () => {
+    clearTimeout(h);
+    h = setTimeout(() => { const k = keyFn(); if (k) store.set(k, formValues(form)); }, 300);
+  });
+}
+const dropDraft = k => { try { localStorage.removeItem(k); } catch (e) {} };
 function copyText(text, statusEl, okMsg, selectEl) {
   const fallback = () => {
     const r = document.createRange(); r.selectNodeContents(selectEl);
@@ -194,16 +245,44 @@ if (BAI_VE.length) {
 }
 
 /* ================= Đăng ký học thử ================= */
+// Gửi thẳng cho thầy qua email (không bắt phụ huynh tự sao chép), kèm nút Gọi / Zalo dự phòng.
+const SDT_LOP = String(LIEN_HE.sdt || "").replace(/\D/g, "");
+$("#dk-call").href = "tel:" + SDT_LOP;
+$("#dk-zalo").href = "https://zalo.me/" + SDT_LOP;
+keepDraft($("#f-dk"), () => "nhap-hocthu");
+fillForm($("#f-dk"), store.get("nhap-hocthu", null));
+let dkSent = "";
 $("#f-dk").addEventListener("submit", ev => {
   ev.preventDefault();
   const v = id => $(id).value.trim();
+  const st = $("#dk-send"); st.classList.remove("err");
+  const sdt = String(v("#dk-sdt")).replace(/[\s.\-()]/g, "");
+  if (!/^(0|\+84)\d{9,10}$/.test(sdt)) {
+    st.textContent = "Số điện thoại chưa đúng. Viết 10 số, bắt đầu bằng số 0."; st.classList.add("err"); $("#dk-sdt").focus(); return;
+  }
   const lines = ["Chào thầy, em muốn đăng ký học thử / tư vấn:",
-    "- Học sinh: " + v("#dk-ten"), "- SĐT phụ huynh: " + v("#dk-sdt"), "- Đang học: " + v("#dk-lop"),
+    "- Học sinh: " + v("#dk-ten"), "- SĐT phụ huynh: " + sdt, "- Đang học: " + v("#dk-lop"),
     "- Muốn học: " + v("#dk-khoi"), "- Hình thức: " + v("#dk-hinh")];
   if (v("#dk-truong")) lines.push("- Trường muốn thi: " + v("#dk-truong"));
   if (v("#dk-ghichu")) lines.push("- Câu hỏi: " + v("#dk-ghichu"));
-  $("#dk-text").textContent = lines.join("\n");
-  $("#dk-out").hidden = false; $("#dk-status").textContent = "";
+  const text = lines.join("\n");
+  $("#dk-text").textContent = text;
+  $("#dk-out").hidden = false; $("#dk-status").textContent = ""; st.textContent = "";
+  $("#dk-ok").textContent = "Đã gửi cho thầy! Thầy sẽ gọi lại cho bố mẹ em sớm. Cần gấp thì gọi hoặc nhắn Zalo ngay bên dưới.";
+  $("#dk-out").scrollIntoView({ behavior: "smooth", block: "nearest" });
+  dropDraft("nhap-hocthu");
+  if (dkSent === text) return; // bấm 2 lần không gửi trùng
+  dkSent = text;
+  if (!EMAIL_NHAN_THONG_BAO) return;
+  fetch("https://formsubmit.co/ajax/" + EMAIL_NHAN_THONG_BAO, {
+    method: "POST", headers: { "Content-Type": "application/json", "Accept": "application/json" },
+    body: JSON.stringify({ _subject: `Đăng ký học thử: ${v("#dk-ten")} · ${sdt}`, _template: "table", _captcha: "false",
+      "Học sinh": v("#dk-ten"), "SĐT phụ huynh": sdt, "Đang học": v("#dk-lop"), "Muốn học": v("#dk-khoi"),
+      "Hình thức": v("#dk-hinh"), "Trường muốn thi": v("#dk-truong"), "Câu hỏi": v("#dk-ghichu") })
+  }).then(r => { if (!r.ok) throw 0; }).catch(() => {
+    dkSent = "";
+    $("#dk-ok").textContent = "Mạng yếu nên chưa gửi tự động được. Em bấm Gọi thầy hoặc Nhắn Zalo (dán tin nhắn bên dưới) nhé.";
+  });
 });
 $("#dk-copy").onclick = () => copyText($("#dk-text").textContent, $("#dk-status"), "Đã sao chép. Dán vào Zalo hoặc Messenger để gửi cho lớp.", $("#dk-text"));
 
@@ -212,7 +291,7 @@ const configured = !String(firebaseConfig.apiKey || "").startsWith("DAN_");
 let app, auth, db;
 
 // Vai trò: isAdmin = quản lý (toàn quyền); isTeacher = giáo viên hoặc quản lý; approved = học viên đã duyệt.
-let user = null, mail = "", isAdmin = false, isTeacher = false, approved = false;
+let user = null, mail = "", isAdmin = false, isTeacher = false, approved = false, needVerify = false;
 let teachers = [], feedbackAll = {}, myFeedback = {};
 const gradeOpen = new Set(), gradeDraft = {};
 let needRedraw = false;
@@ -234,14 +313,14 @@ function renderLocks(state) {
     el.hidden = state === "ok";
     if (state === "ok") return;
     el.innerHTML = `<svg viewBox="0 0 24 24"><use href="#i-lock"/></svg><h3>${msg[0]}</h3><p class="muted">${msg[1]}</p>
-      ${state === "checking" || state === "setup" ? "" : `<ol><li>Đăng nhập bằng Google với Gmail em dùng để học.</li><li>Gửi yêu cầu duyệt ở trang Đăng nhập / Đăng ký.</li><li>Khi thầy duyệt xong, mở lại trang này.</li></ol>
+      ${state === "checking" || state === "setup" ? "" : `<ol><li>Đăng nhập (lần đầu thì tạo tài khoản) bằng Gmail em dùng để học.</li><li>Gửi yêu cầu duyệt ở trang Đăng nhập / Đăng ký.</li><li>Khi thầy duyệt xong, mở lại trang này.</li></ol>
       <div class="ctas"><a class="btn primary" href="#tai-khoan">Đăng nhập / Đăng ký</a><a class="btn" href="#dang-ky">Chưa là học viên? Đăng ký học</a></div>`}`;
   });
   $("#gt-body").hidden = state !== "ok";
   $("#bt-body").hidden = state !== "ok";
 }
 
-let pendingReq = null, editingReq = false;
+let pendingReq = null, editingReq = false, regDraftFor = null;
 function setStep(n) {
   $$("#stepper li").forEach(li => {
     const k = Number(li.dataset.step);
@@ -250,16 +329,15 @@ function setStep(n) {
 }
 function renderAccount(pending) {
   if (typeof pending === "object") pendingReq = pending; else if (pending === false) pendingReq = null;
-  const inApp = /FBAN|FBAV|FB_IAB|Messenger|Instagram|Zalo|Line\/|TikTok/i.test(navigator.userAgent);
-  $("#inapp").hidden = !(inApp && !user);
   $$("[data-teacher]").forEach(el => el.hidden = !isTeacher);
   $$("[data-admin]").forEach(el => el.hidden = !isAdmin);
   $("#nav-duyet").hidden = !isAdmin;
   $("#duyet-lock").hidden = isAdmin;
-  $("#btn-login").hidden = !!user || !configured;
+  $("#pw-box").hidden = !!user || !configured;
+  $("#card-verify").hidden = !(user && needVerify);
   $("#btn-switch").hidden = !user;
   $("#btn-learn").hidden = !(user && (approved || isTeacher));
-  const canReg = !!user && !approved && !isTeacher;
+  const canReg = !!user && !approved && !isTeacher && !needVerify;
   $("#card-reg").hidden = !(canReg && (!pendingReq || editingReq));
   $("#card-wait").hidden = !(canReg && pendingReq && !editingReq);
   if (!configured) {
@@ -268,8 +346,8 @@ function renderAccount(pending) {
     $("#who-status").innerHTML = ""; setStep(1); return;
   }
   if (!user) {
-    $("#who-name").textContent = "Bước 1: Đăng nhập bằng Gmail";
-    $("#who-mail").textContent = "Dùng Gmail của em (hoặc của bố mẹ). Lần sau vào học cũng dùng đúng Gmail này.";
+    $("#who-name").textContent = "Bước 1: Đăng nhập";
+    $("#who-mail").textContent = "Dùng Gmail của em (hoặc của bố mẹ). Lần sau vào học cũng dùng đúng Gmail và mật khẩu này.";
     $("#who-status").innerHTML = ""; $("#who-avatar").hidden = true;
     $("#nav-acct").textContent = "Đăng nhập";
     setStep(1); return;
@@ -278,15 +356,26 @@ function renderAccount(pending) {
   $("#who-mail").textContent = "Đang dùng Gmail: " + mail;
   if (user.photoURL) { $("#who-avatar").src = user.photoURL; $("#who-avatar").hidden = false; }
   $("#nav-acct").textContent = "Tài khoản";
+  if (needVerify) {
+    $("#who-status").innerHTML = `<span class="chip line">Chưa xác nhận Gmail</span>`;
+    $("#verify-text").textContent = `Thầy đã gửi một thư xác nhận vào ${mail}. Em bấm link trong thư để chứng minh Gmail này là của em.`;
+    setStep(1); return;
+  }
   if (isAdmin) { $("#who-status").innerHTML = `<span class="chip">Quản lý</span> Toàn quyền: duyệt học viên và giáo viên, sửa giáo trình, giao và chấm bài.`; setStep(4); return; }
   if (isTeacher) { $("#who-status").innerHTML = `<span class="chip">Giáo viên</span> Thầy/cô giao bài, xem học viên đã nộp, chấm điểm và nhận xét.`; setStep(4); return; }
   if (approved) { $("#who-status").innerHTML = `<span class="chip ok">Đã duyệt</span> Em đã vào học được rồi.`; setStep(4); return; }
   if (pendingReq && !editingReq) {
     $("#who-status").innerHTML = `<span class="chip line">Chờ duyệt</span>`;
-    $("#wait-text").textContent = `Em đã gửi ngày ${fmtDate(pendingReq.guiLuc)}. Thầy duyệt xong, em mở lại trang này là vào học được.`;
+    $("#wait-text").textContent = `Em đã gửi ngày ${fmtDate(pendingReq.guiLuc)}. Thầy duyệt xong, trang này tự mở khoá, em không cần làm gì thêm.`;
     setStep(3); return;
   }
   $("#who-status").innerHTML = `<span class="chip line">Chưa gửi thông tin</span> Làm tiếp bước 2 ở bên dưới.`;
+  // Lỡ tắt trang giữa chừng: điền lại những gì em đã gõ.
+  if (regDraftFor !== mail) {
+    regDraftFor = mail;
+    const d = store.get("nhap-tk-" + mail, null);
+    if (d) { fillForm($("#f-reg"), d); applyRoleFields(); }
+  }
   if (!$("#rg-ten").value && user.displayName) $("#rg-ten").value = user.displayName;
   setStep(2);
 }
@@ -313,7 +402,12 @@ function renderLessons() {
   if (!list.find(l => l.id === lessonId)) lessonId = list[0].id;
   $("#lesson-nav").innerHTML = list.map(l =>
     `<button data-id="${esc(l.id)}" aria-current="${l.id === lessonId}"><span class="tick ${myProgress.bai[l.id] ? "done" : ""}"></span>${esc(l.ten)}</button>`).join("");
-  $$("#lesson-nav button").forEach(b => b.onclick = () => { lessonId = b.dataset.id; renderLessons(); });
+  $$("#lesson-nav button").forEach(b => b.onclick = () => {
+    lessonId = b.dataset.id; renderLessons();
+    // Trên điện thoại bài học nằm dưới danh sách: tự cuộn tới, để bấm là thấy ngay.
+    const top = $("#lesson").getBoundingClientRect().top;
+    if (top > innerHeight * 0.5 || top < 0) $("#lesson").scrollIntoView({ behavior: "smooth", block: "start" });
+  });
   const l = list.find(x => x.id === lessonId);
   const items = Array.isArray(l.buoc) ? l.buoc : [];
   const body = l.loai === "noi-dung"
@@ -403,7 +497,7 @@ function toggleProgress(kind, id) {
     .catch(() => { myProgress[kind][id] = !myProgress[kind][id]; renderLessons(); renderHomework(); alertStatus("Chưa lưu được tiến độ. Kiểm tra mạng rồi thử lại."); });
   return Promise.resolve();
 }
-function alertStatus(t) { const s = $("#login-status"); if (s) s.textContent = t; }
+function alertStatus(t) { toast(t, "err"); }
 
 /* ---------- Giáo viên: duyệt học viên ---------- */
 function fmtDate(t) { return t ? new Date(t).toLocaleDateString("vi-VN") : ""; }
@@ -436,7 +530,8 @@ function renderRequests() {
     if (vaiTro === "giaovien") batch.set(doc(db, "giaovien", r.id), { ten: r.ten, gmail: r.gmail, sdt: r.sdt || "", coso: r.coso || "", ghiChu: r.ghiChu || "", duyetLuc: Date.now() });
     else batch.set(doc(db, "hocvien", r.id), { ...data, lop: r.chuongTrinh || r.lop || "", duyetLuc: Date.now() });
     batch.delete(doc(db, "yeucau", r.id));
-    timed("Duyệt " + r.ten, batch.commit()).catch(() => { requests.unshift(r); renderRequests(); $("#req-count").textContent = "Lỗi khi duyệt " + r.ten + ", thử lại"; });
+    toast(`Đã duyệt ${r.ten}. ${vaiTro === "giaovien" ? "Thầy/cô" : "Em"} ấy mở lại web là vào được.`);
+    timed("Duyệt " + r.ten, batch.commit()).catch(() => { requests.unshift(r); renderRequests(); toast("Chưa duyệt được " + r.ten + ". Kiểm tra mạng rồi bấm lại.", "err"); });
   });
   $$("#requests [data-no]").forEach(b => confirmButton(b, () => deleteDoc(doc(db, "yeucau", b.dataset.no)), "Bấm lần nữa để từ chối"));
 }
@@ -464,10 +559,12 @@ function renderTeachers() {
 
 function confirmButton(btn, act, ask = "Bấm lần nữa để xoá") {
   if (!btn) return;
-  let armed = false; const label = btn.textContent;
+  let armed = false, h; const label = btn.textContent;
+  const disarm = () => { armed = false; btn.textContent = label; btn.classList.remove("armed"); };
   btn.onclick = () => {
-    if (!armed) { armed = true; btn.textContent = ask; setTimeout(() => { armed = false; btn.textContent = label; }, 3000); return; }
-    act().catch(() => { btn.textContent = "Không thực hiện được"; });
+    if (!armed) { armed = true; btn.textContent = ask; btn.classList.add("armed"); clearTimeout(h); h = setTimeout(disarm, 4000); return; }
+    clearTimeout(h); disarm(); btn.disabled = true; btn.textContent = "Đang xử lý…";
+    timed(label, act()).then(() => toast("Xong."), () => { btn.disabled = false; btn.textContent = label; toast("Chưa làm được. Kiểm tra mạng rồi thử lại.", "err"); });
   };
 }
 
@@ -504,16 +601,20 @@ async function onUser(u) {
   stopListeners();
   const prevMail = mail;
   user = u; mail = u ? String(u.email || "").toLowerCase() : "";
-  isAdmin = false; isTeacher = false; approved = false;
+  isAdmin = false; isTeacher = false; approved = false; needVerify = false;
   lessons = []; homework = []; roster = []; requests = []; teachers = []; progressAll = {}; feedbackAll = {}; myFeedback = {};
   myProgress = { bai: {}, baitap: {} };
   // Đổi người dùng thì xoá sạch form đăng ký, tránh gửi nhầm thông tin của người trước (máy dùng chung).
   if (prevMail !== mail) {
-    $("#f-reg").reset(); $("#rg-status").textContent = ""; applyRoleFields(); editingReq = false;
+    $("#f-reg").reset(); $("#rg-status").textContent = ""; applyRoleFields(); editingReq = false; regDraftFor = null;
     gradeOpen.clear(); Object.keys(gradeDraft).forEach(k => delete gradeDraft[k]);
   }
   pendingReq = null;
   if (!u) { saveSession(null); renderLocks("out"); renderAccount(false); return; }
+  // Tạo tài khoản bằng mật khẩu: phải bấm link xác nhận trong Gmail trước (chống mạo danh Gmail người khác).
+  if (!u.emailVerified) {
+    needVerify = true; saveSession(null); renderLocks("pending"); renderAccount(false); watchVerify(); return;
+  }
   const isAdminMail = mail === ADMIN_EMAIL.toLowerCase();
   // Hiện ngay, không chờ máy chủ: quản lý nhận ra từ Gmail; người mới hiện form đăng ký luôn.
   if (isAdminMail) {
@@ -542,6 +643,18 @@ async function onUser(u) {
   saveSession(pending);
   renderLocks(canLearn ? "ok" : "pending");
   renderAccount(pending);
+  // Theo dõi quyền theo thời gian thực: thầy vừa duyệt là màn hình học viên tự mở khoá,
+  // bị thu hồi thì tự khoá — không phải bấm tải lại.
+  const watchRole = (col, has) => unsubs.push(onSnapshot(doc(db, col, mail), d => {
+    if (user !== u || d.exists() === has) return;
+    if (!has) toast(col === "giaovien" ? "Quản lý đã duyệt thầy/cô làm giáo viên!" : "Thầy đã duyệt! Em vào học được rồi.");
+    onUser(u);
+  }, () => {}));
+  if (!isAdmin) {
+    if (isTeacher) watchRole("giaovien", true);
+    else if (approved) watchRole("hocvien", true);
+    else { watchRole("hocvien", false); watchRole("giaovien", false); }
+  }
   if (!canLearn) return;
 
   if (!isTeacher) {
@@ -575,35 +688,30 @@ async function onUser(u) {
   }
 }
 
-// Giải thích lỗi đăng nhập bằng lời dễ hiểu, kèm mã lỗi để dễ tra.
-function loginError(e) {
-  const code = (e && e.code) || "unknown";
-  const host = location.hostname;
-  const tips = {
-    "auth/unauthorized-domain": `Tên miền ${host} chưa được cho phép. Vào Firebase → Authentication → Settings → Authorized domains, thêm ${host}.`,
-    "auth/operation-not-allowed": "Đăng nhập Google chưa được bật. Vào Firebase → Authentication → Sign-in method → Google → Enable → Save.",
-    "auth/configuration-not-found": "Firebase Authentication chưa được bật. Vào Firebase → Authentication → bấm Get started, rồi bật Google.",
-    "auth/invalid-api-key": "Mã kết nối Firebase không đúng. Kiểm tra lại file config/firebase-config.js.",
-    "auth/api-key-not-valid.-please-pass-a-valid-api-key.": "Mã kết nối Firebase không đúng. Kiểm tra lại file config/firebase-config.js.",
-    "auth/network-request-failed": "Mất kết nối mạng. Kiểm tra mạng rồi thử lại.",
-    "auth/web-storage-unsupported": "Trình duyệt đang chặn lưu dữ liệu. Mở trang bằng Chrome hoặc Safari (không dùng chế độ ẩn danh).",
-    "auth/internal-error": "Lỗi tạm thời từ Google. Thử lại sau ít phút."
-  };
-  return `Chưa đăng nhập được (mã lỗi: ${code}). ${tips[code] || "Thử lại, hoặc mở trang bằng Chrome/Safari."}`;
+let authReadyOk; const authReady = new Promise(r => authReadyOk = r);
+// Khách chỉ xem trang giới thiệu: tải thư viện đăng nhập SAU khi trang đã hiện xong,
+// để điện thoại yếu / mạng 3G không bị khựng. Học viên đã đăng nhập thì tải ngay.
+function fbGate() {
+  if ((cachedSession && cachedSession.mail) || PAGES.includes(location.hash.slice(1)) || DIAG) return Promise.resolve();
+  return new Promise(go => {
+    addEventListener("hashchange", () => { if (PAGES.includes(location.hash.slice(1))) go(); });
+    document.addEventListener("pointerdown", e => { if (e.target.closest && e.target.closest('a[href="#tai-khoan"],a[href="#giao-trinh"],a[href="#bai-tap"]')) go(); }, true);
+    const idle = () => window.requestIdleCallback ? requestIdleCallback(go, { timeout: 2500 }) : setTimeout(go, 1200);
+    if (document.readyState === "complete") idle(); else addEventListener("load", idle);
+  });
 }
-
-let wantLogin = false;
 async function startFirebase() {
   if (!configured) { renderLocks("setup"); renderAccount(false); return; }
   showCachedSession();
-  // Bấm Đăng nhập khi thư viện chưa tải xong: ghi nhớ và mở ngay khi sẵn sàng.
-  $("#btn-login").onclick = () => { wantLogin = true; $("#login-status").textContent = "Đang mở trang đăng nhập Google…"; };
+  await fbGate();
   try {
     const tf = performance.now();
     await loadFirebase();
     mark("Tải thư viện Firebase", tf);
     app = initializeApp(firebaseConfig);
     auth = getAuth(app);
+    auth.languageCode = "vi"; // thư xác nhận / đặt lại mật khẩu bằng tiếng Việt
+    authReadyOk();
     // Lưu dữ liệu trên máy: lần sau mở trang hiện ngay, không phải chờ tải lại.
     // Tự chọn kiểu kết nối ổn định nhất với mạng di động/wifi ở Việt Nam.
     try { db = initializeFirestore(app, { experimentalAutoDetectLongPolling: true }); }
@@ -611,45 +719,136 @@ async function startFirebase() {
     // Mở sẵn kết nối tới máy chủ ngay khi vào trang, để lúc đăng nhập không phải chờ.
     getDoc(doc(db, "admins", "_mo-ket-noi")).catch(() => {});
   } catch (e) {
-    $$("[data-lock]").forEach(el => { el.hidden = false; el.innerHTML = `<h3>Chưa kết nối được máy chủ</h3><p class="muted">Kiểm tra mạng rồi tải lại trang.</p>`; });
+    $$("[data-lock]").forEach(el => { el.hidden = false; el.innerHTML = `<h3>Chưa kết nối được máy chủ</h3><p class="muted">Mạng đang yếu. Có mạng lại, trang sẽ tự tải lại.</p><div class="ctas"><button class="btn primary" type="button" onclick="location.reload()">Tải lại ngay</button></div>`; });
+    $("#login-status").textContent = "Mạng đang yếu nên chưa mở được đăng nhập. Có mạng lại, trang sẽ tự tải lại.";
+    addEventListener("online", () => location.reload(), { once: true });
     return;
   }
-  getRedirectResult(auth).catch(e => { if (e && e.code) $("#login-status").textContent = loginError(e); });
   onAuthStateChanged(auth, onUser);
-  const doLogin = async () => {
-    const provider = new GoogleAuthProvider();
-    provider.setCustomParameters({ prompt: "select_account" });
-    $("#login-status").textContent = "";
-    const tl = performance.now();
-    try { await signInWithPopup(auth, provider); mark("Cửa sổ đăng nhập Google (gồm thời gian chọn Gmail)", tl); }
-    catch (e) {
-      if (e && (e.code === "auth/popup-blocked" || e.code === "auth/operation-not-supported-in-this-environment")) await signInWithRedirect(auth, provider);
-      else if (e && e.code !== "auth/popup-closed-by-user" && e.code !== "auth/cancelled-popup-request") $("#login-status").textContent = loginError(e);
-    }
+  $("#btn-switch").onclick = async () => {
+    await signOut(auth);
+    $("#pw-pass").value = ""; $("#pw-status").textContent = "";
+    toast("Đã đăng xuất.");
   };
-  $("#btn-login").onclick = doLogin;
-  if (wantLogin) doLogin();
-  $("#btn-switch").onclick = async () => { await signOut(auth); doLogin(); };
 }
 startFirebase();
 
+/* ---------- Đăng nhập bằng Gmail + mật khẩu (chạy được cả trong Zalo, Facebook, máy cũ) ---------- */
+const pwMail = () => $("#pw-mail").value.trim().toLowerCase();
+const okMail = m => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(m);
+function pwSay(t, err) { const st = $("#pw-status"); st.textContent = t; st.classList.toggle("err", !!err); }
+function pwError(e) {
+  const c = (e && e.code) || "";
+  return ({
+    "auth/invalid-credential": "Sai Gmail hoặc mật khẩu. Kiểm tra lại, hoặc bấm “Quên mật khẩu?”. Chưa từng tạo tài khoản thì bấm “Tạo tài khoản mới”. Trước đây vào bằng nút Google thì bấm “Quên mật khẩu?” để đặt mật khẩu.",
+    "auth/wrong-password": "Sai mật khẩu. Bấm “Quên mật khẩu?” để đặt lại.",
+    "auth/user-not-found": "Gmail này chưa có tài khoản. Bấm “Tạo tài khoản mới”.",
+    "auth/email-already-in-use": "Gmail này đã có tài khoản rồi. Bấm “Đăng nhập”. Quên mật khẩu (hoặc trước đây vào bằng nút Google) thì bấm “Quên mật khẩu?” để đặt mật khẩu mới.",
+    "auth/weak-password": "Mật khẩu quá ngắn. Dùng ít nhất 6 ký tự.",
+    "auth/invalid-email": "Gmail viết chưa đúng. VD: tenem@gmail.com",
+    "auth/too-many-requests": "Thử sai nhiều lần quá. Chờ vài phút rồi thử lại, hoặc bấm “Quên mật khẩu?”.",
+    "auth/network-request-failed": "Mất kết nối mạng. Kiểm tra wifi/4G rồi thử lại.",
+    "auth/operation-not-allowed": "Đăng nhập bằng mật khẩu chưa được bật. Thầy vào Firebase → Authentication → Sign-in method → Email/Password → Enable → Save.",
+    "auth/configuration-not-found": "Firebase Authentication chưa được bật. Thầy vào Firebase → Authentication → Get started → bật Email/Password.",
+    "auth/invalid-api-key": "Mã kết nối Firebase không đúng. Kiểm tra lại file config/firebase-config.js.",
+    "auth/internal-error": "Lỗi tạm thời từ máy chủ. Thử lại sau ít phút."
+  })[c] || `Chưa làm được (mã lỗi: ${c || "không rõ"}). Thử lại sau ít phút.`;
+}
+function pwCheck(needPass) {
+  const m = pwMail(), p = $("#pw-pass").value;
+  if (!okMail(m)) { pwSay("Gõ Gmail của em trước. VD: tenem@gmail.com", true); $("#pw-mail").focus(); return null; }
+  if (needPass && p.length < 6) { pwSay("Mật khẩu cần ít nhất 6 ký tự.", true); $("#pw-pass").focus(); return null; }
+  return { m, p };
+}
+function verifySay(t, err) { const st = $("#verify-status"); st.textContent = t; st.classList.toggle("err", !!err); }
+async function pwBusy(btn, label, job, say = pwSay) {
+  const old = btn.textContent; btn.disabled = true; btn.textContent = label;
+  // Bấm sớm khi máy chủ chưa kết nối xong: chờ rồi tự làm tiếp, không bắt bấm lại.
+  try { await authReady; await job(); } catch (e) { say(pwError(e), true); } finally { btn.disabled = false; btn.textContent = old; }
+}
+async function sendVerify(u) {
+  const back = { url: location.origin + location.pathname + "#tai-khoan" };
+  try { await sendEmailVerification(u, back); } catch (e) { await sendEmailVerification(u); }
+}
+$("#pw-show").onclick = () => {
+  const i = $("#pw-pass"), show = i.type === "password";
+  i.type = show ? "text" : "password"; $("#pw-show").textContent = show ? "Ẩn" : "Hiện";
+};
+$("#f-pw").addEventListener("submit", ev => {
+  ev.preventDefault(); const v = pwCheck(true); if (!v) return;
+  pwSay("");
+  pwBusy($("#pw-in"), "Đang đăng nhập…", () => signInWithEmailAndPassword(auth, v.m, v.p));
+});
+$("#pw-new").onclick = () => {
+  const v = pwCheck(true); if (!v) return;
+  pwSay("");
+  pwBusy($("#pw-new"), "Đang tạo…", async () => {
+    const c = await createUserWithEmailAndPassword(auth, v.m, v.p);
+    await sendVerify(c.user);
+    toast("Đã tạo tài khoản. Mở Gmail để xác nhận nhé.");
+  });
+};
+$("#pw-forgot").onclick = () => {
+  const v = pwCheck(false); if (!v) return;
+  pwBusy($("#pw-forgot"), "Đang gửi…", async () => {
+    await sendPasswordResetEmail(auth, v.m);
+    pwSay(`Đã gửi thư đặt lại mật khẩu vào ${v.m}. Mở Gmail (xem cả Thư rác), bấm link để đặt mật khẩu mới rồi quay lại đăng nhập.`);
+  });
+};
+// Chờ xác nhận Gmail: tự kiểm tra mỗi vài giây và ngay khi em quay lại từ ứng dụng Gmail.
+let verifyTimer = null;
+async function checkVerified(manual) {
+  const u = auth && auth.currentUser; if (!u || !needVerify) return;
+  const st = $("#verify-status");
+  try { await u.reload(); } catch (e) { if (manual) { st.textContent = "Mạng yếu, thử lại nhé."; st.classList.add("err"); } return; }
+  if (auth.currentUser && auth.currentUser.emailVerified) {
+    clearInterval(verifyTimer);
+    try { await auth.currentUser.getIdToken(true); } catch (e) {}
+    st.textContent = ""; toast("Đã xác nhận Gmail! Làm tiếp bước 2 nhé.");
+    onUser(auth.currentUser);
+  } else if (manual) {
+    st.textContent = "Chưa thấy xác nhận. Em mở thư trong Gmail và bấm vào link nhé (xem cả mục Thư rác)."; st.classList.add("err");
+  }
+}
+function watchVerify() {
+  clearInterval(verifyTimer);
+  verifyTimer = setInterval(() => { if (!needVerify) clearInterval(verifyTimer); else if (document.visibilityState === "visible") checkVerified(false); }, 4000);
+}
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && needVerify) checkVerified(false); });
+$("#btn-verified").onclick = () => pwBusy($("#btn-verified"), "Đang kiểm tra…", () => checkVerified(true), verifySay);
+$("#btn-resend").onclick = () => pwBusy($("#btn-resend"), "Đang gửi…", async () => {
+  await sendVerify(auth.currentUser);
+  verifySay("Đã gửi lại. Xem thư mới nhất trong Gmail (cả mục Thư rác).");
+}, verifySay);
+
 /* ---------- Biểu mẫu ---------- */
 function submitTo(form, statusEl, busy, okMsg, write, keep) {
+  const key = "nhap-" + form.id;
+  keepDraft(form, () => key);
+  fillForm(form, store.get(key, null));
   form.addEventListener("submit", async ev => {
-    ev.preventDefault(); if (!db || !user) return;
+    ev.preventDefault();
+    if (!db || !user) { toast("Đang kết nối máy chủ, chờ 1 giây rồi bấm lại.", "err"); return; }
     statusEl.classList.remove("err");
+    const vals = formValues(form);
     let p;
     try { p = timed("Lưu biểu mẫu", write()); } catch (e) { p = Promise.reject(e); }
     if (!keep) form.reset();
-    statusEl.textContent = okMsg;
-    Promise.resolve(p).catch(() => { statusEl.textContent = "Chưa lưu được. Kiểm tra mạng rồi thử lại."; statusEl.classList.add("err"); });
+    dropDraft(key);
+    statusEl.textContent = okMsg; toast(okMsg);
+    Promise.resolve(p).catch(() => {
+      fillForm(form, vals); store.set(key, vals);
+      statusEl.textContent = "Chưa lưu được, chữ em gõ vẫn còn. Kiểm tra mạng rồi bấm lại."; statusEl.classList.add("err");
+    });
   });
 }
 /* Đăng ký tài khoản: lưu vào Firebase + gửi email báo cho thầy */
 const cleanPhone = x => String(x || "").replace(/[\s.\-()]/g, "");
 const okPhone = x => /^(0|\+84)\d{9,10}$/.test(cleanPhone(x));
+let regSent = "";
 $("#f-reg").addEventListener("submit", async ev => {
-  ev.preventDefault(); if (!db || !user) return;
+  ev.preventDefault();
+  if (!db || !user) { toast("Đang kết nối máy chủ, chờ 1 giây rồi bấm gửi lại.", "err"); return; }
   const st = $("#rg-status"); const v = id => $(id).value.trim();
   const gv = v("#rg-vt") === "giaovien";
   st.classList.remove("err");
@@ -668,13 +867,16 @@ $("#f-reg").addEventListener("submit", async ev => {
     };
   st.textContent = "";
   editingReq = false;
-  renderAccount(data); saveSession(data);
+  renderAccount(data); saveSession(data); dropDraft("nhap-tk-" + mail);
   timed("Gửi đăng ký", setDoc(doc(db, "yeucau", mail), data)).catch(() => {
     editingReq = true; renderAccount(false);
     st.textContent = "Chưa gửi được. Kiểm tra mạng rồi bấm gửi lại."; st.classList.add("err");
   });
   window.scrollTo({ top: 0, behavior: "smooth" });
-  guiEmailThongBao(data);
+  toast("Đã gửi cho thầy. Thầy duyệt xong, trang tự mở khoá.");
+  // Bấm gửi nhiều lần (hoặc sửa mà không đổi gì) thì không gửi email trùng cho thầy.
+  const sig = JSON.stringify({ ...data, guiLuc: 0 });
+  if (sig !== regSent) { regSent = sig; guiEmailThongBao(data); }
 });
 
 // Đổi vai trò trên biểu mẫu: giáo viên không cần điền thông tin học tập.
@@ -695,6 +897,7 @@ function applyRoleFields() {
 $$("#f-reg .chi-hv [required], #f-reg .chi-hv[required]").forEach(i => i.dataset.req = "1");
 $$("#f-reg label.chi-hv > input[required], #f-reg label.chi-hv > select[required]").forEach(i => i.dataset.req = "1");
 $("#rg-vt").onchange = applyRoleFields;
+keepDraft($("#f-reg"), () => mail ? "nhap-tk-" + mail : null);
 applyRoleFields();
 
 // Sửa thông tin đã gửi: điền lại form từ yêu cầu cũ.
@@ -708,8 +911,13 @@ $("#btn-edit").onclick = () => {
   set("#rg-namthi", r.namThi); set("#rg-mt", r.mucTieu); set("#rg-gc", r.ghiChu);
   renderAccount(pendingReq);
 };
-$("#btn-check").onclick = () => location.reload();
-$("#btn-copylink").onclick = () => copyText(location.href, $("#copylink-status"), "Đã chép link. Mở Chrome/Safari rồi dán vào.", $("#btn-copylink"));
+$("#btn-check").onclick = async () => {
+  const b = $("#btn-check");
+  if (!auth || !auth.currentUser) { location.reload(); return; }
+  b.disabled = true; b.textContent = "Đang kiểm tra…";
+  try { await onUser(auth.currentUser); } finally { b.disabled = false; b.textContent = "Kiểm tra lại"; }
+  if (!approved && !isTeacher) toast("Thầy chưa duyệt. Khi thầy duyệt, trang này tự mở khoá, em không cần bấm lại.");
+};
 
 function guiEmailThongBao(d) {
   if (!EMAIL_NHAN_THONG_BAO) return;

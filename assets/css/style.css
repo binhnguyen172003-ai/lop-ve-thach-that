@@ -289,3 +289,38 @@ nav .acct{position:sticky;right:0;background:var(--paper);box-shadow:-14px 0 12p
 #server-issue{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;display:flex;gap:12px;align-items:flex-start;margin-inline:-16px;padding:12px 16px;background:var(--warn);color:#fff;font-weight:600;font-size:.92rem;line-height:1.45}
 #server-issue span{flex:1}
 #server-issue button{background:transparent;border:0;color:#fff;font-size:1.1rem;cursor:pointer;min-width:32px;min-height:32px}
+
+/* ===== Cảm giác mượt khi chạm (điện thoại) ===== */
+html{scroll-padding-top:72px;-webkit-text-size-adjust:100%}
+a,button,.btn,.tab,summary,label{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.btn:active,.tab:active,.lesson-nav button:active,.social a:active{transform:scale(.97)}
+.btn:disabled{opacity:.6;cursor:wait}
+.btn:focus-visible,.tab:focus-visible,a:focus-visible,button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.btn.small{min-height:40px;padding:8px 14px}
+.chip{font-size:.75rem}
+.lesson{scroll-margin-top:72px}
+/* Nút xoá/thu hồi: lần bấm đầu đổi màu cảnh báo, rõ ràng là cần bấm lần nữa */
+.btn.armed{background:var(--warn);border-color:var(--warn);color:#fff}
+
+/* ===== Thông báo nhỏ cuối màn hình ===== */
+#toast{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:40;max-width:min(92vw,460px);width:max-content;padding:12px 18px;border-radius:12px;background:var(--ink);color:var(--paper);font-weight:600;font-size:.95rem;line-height:1.45;box-shadow:0 10px 30px -10px rgba(0,0,0,.45);cursor:pointer}
+#toast.err{background:var(--warn);color:#fff}
+@media (prefers-reduced-motion:no-preference){#toast{animation:toast-in .18s ease-out}}
+@keyframes toast-in{from{opacity:0;transform:translate(-50%,8px)}to{opacity:1;transform:translate(-50%,0)}}
+
+/* ===== Báo mất mạng / tải chậm ===== */
+#net-bar,.slow-bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:21;margin-inline:-16px;padding:10px 16px;background:var(--ink);color:var(--paper);font-weight:600;font-size:.9rem;line-height:1.45}
+.slow-bar button{margin-left:8px;font:600 .9rem var(--f-body);padding:4px 12px;border-radius:999px;border:0;background:var(--paper);color:var(--ink);cursor:pointer}
+
+/* ===== Đăng ký học thử ===== */
+.dk-ok{font-weight:600;color:var(--ok);margin-top:8px}
+
+/* ===== Đăng nhập bằng Gmail + mật khẩu ===== */
+.pw-box{margin-top:18px;border-top:1px dashed var(--rule);padding-top:14px}
+.pw-box summary{cursor:pointer;font-weight:600;color:var(--accent);min-height:44px;display:flex;align-items:center}
+.pw-box form{display:grid;gap:14px;margin-top:10px}
+.pw-row{display:flex;gap:8px;align-items:center}
+.pw-row input{flex:1}
+.linkish{background:none;border:0;padding:8px 0;min-height:40px;font:600 .9rem var(--f-body);color:var(--accent);text-decoration:underline;cursor:pointer;justify-self:start}
+.mini-steps{margin:12px 0 4px;padding-left:20px;display:grid;gap:4px}
+.pw-box{margin-top:0;border-top:0;padding-top:0}.pw-hint{font-size:.9rem;line-height:1.5}
