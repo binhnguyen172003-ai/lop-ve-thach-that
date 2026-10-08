@@ -493,7 +493,6 @@ $("#dk-zalo").href = "https://zalo.me/" + SDT_LOP;
   if (BANG_VANG.length) {
     const diem = BANG_VANG.flatMap(r => Object.entries(r.diem || {}).filter(([m]) => !/phỏng vấn/i.test(m)).map(([, d]) => Number(d))).filter(d => !isNaN(d));
     if (diem.length) $("#hs-top").textContent = fmtDiem(Math.max(...diem));
-    $("#hs-luot").textContent = BANG_VANG.length;
     const co = new Set(BANG_VANG.map(r => r.truong));
     $("#hero-schools").innerHTML = Object.keys(TRUONG).filter(k => co.has(k)).map(k => `<span title="${esc(TRUONG[k].ten)}">${esc(k)}</span>`).join("");
   }
