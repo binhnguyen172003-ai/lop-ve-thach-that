@@ -461,7 +461,9 @@ function renderHonor() {
         <span class="mg-badge">${x.truongs.map(k => `<i style="--c:${esc(tr(k).mau)}">${esc(k)}</i>`).join("")}</span>
         <span class="mg-pts"><b class="num">${x.top ? fmtDiem(x.top.d) : "–"}</b><small>${x.top ? esc(VT[x.top.m] || x.top.m) : ""}</small></span>
       </div>
-      <div class="mg-name"><span>${esc(ho)}</span><b>${esc(ten)}</b>${tatCa ? `<em class="mg-yr">Khoá ${x.nam}</em>` : ""}</div></li>`;
+      <div class="mg-name"><span>${esc(ho)}</span><b>${esc(ten)}</b>${tatCa ? `<em class="mg-yr">Khoá ${x.nam}</em>` : ""}
+        <span class="mg-sub2">${x.top ? `${esc(x.top.m)} · ${esc(x.top.tr)}` : `Đỗ ${esc(x.truongs.join(", "))}`}</span>
+        <details class="mg-kq"><summary>Xem điểm từng trường ▾</summary><ul class="kq">${chiTiet(x)}</ul></details></div></li>`;
   };
   const rest = list.filter(x => !cards.includes(x));
   $("#bv-body").innerHTML = `
@@ -538,6 +540,66 @@ $("#dk-zalo").href = "https://zalo.me/" + SDT_LOP;
   if ("IntersectionObserver" in window) new IntersectionObserver(es => { thay = es[0].isIntersecting; if (thay) ve(); chay(); }).observe($("#dk-cd"));
   else { thay = true; chay(); }
   ve();
+})();
+
+/* ================= Tìm kiếm nhanh trên toàn web (Ctrl + K hoặc nút kính lúp) ================= */
+(function timKiem() {
+  const ov = $("#tk-ov"), q = $("#tk-q"), ul = $("#tk-kq"); if (!ov) return;
+  const bo = t => String(t || "").normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/đ/g, "d").replace(/Đ/g, "D").toLowerCase();
+  let idx = null, sel = 0, kq = [];
+  const lap = () => {
+    const ds = [];
+    const them = (loai, ten, mo, url, chu) => ds.push({ loai, ten, mo, url, k: bo(ten + " " + mo + " " + (chu || "")), kt: bo(ten) });
+    $$("#v-home > section[id], #v-home > header[id]").forEach(sec => {
+      const h = sec.querySelector("h2, h1"); if (!h) return;
+      them("Mục", h.textContent.trim(), (sec.querySelector(".sec-head p.muted, .cine-lede") || {}).textContent || "", "#" + sec.id, sec.textContent.slice(0, 900));
+    });
+    $$(".course").forEach(c => them("Khoá học", (c.querySelector("h3") || {}).textContent || "", [(c.querySelector(".eyebrow") || {}).textContent, (c.querySelector(".len") || {}).textContent].filter(Boolean).join(" · "), "#khoa-hoc", c.textContent));
+    GIAO_VIEN.forEach(g => them("Giáo viên", g.ten, `${g.vaiTro} · ${g.khoi}${g.truong ? " · " + g.truong : ""}`, "#giao-vien", g.nganh));
+    const hv = new Map();
+    BANG_VANG.forEach(r => { const k = r.ten + "|" + r.nam; const d = Object.entries(r.diem || {}).map(([m, v]) => `${m} ${fmtDiem(v)}`).join(", ");
+      hv.set(k, (hv.get(k) || []).concat(`${r.truong}${d ? ": " + d : ""}`)); });
+    hv.forEach((v, k) => { const [ten, nam] = k.split("|"); them("Bảng vàng", ten, `Khoá ${nam} · ${v.join(" · ")}`, "#bang-vang"); });
+    LICH_THI.forEach(e => them("Lịch thi", e.ten, `${e.dot} · ${e.hienThi}/${e.ngay.slice(0, 4)}`, "#lich-thi", e.truong));
+    them("Trang", "Đăng ký học thử", "Gửi thông tin, thầy gọi lại tư vấn · đếm ngược ngày thi", "#dang-ky", "dang ky hoc thu tu van hoc phi lien he so dien thoai zalo");
+    them("Trang", "Tài khoản học viên", "Đăng nhập, giáo trình, bài tập, nhắn tin thầy cô", "#tai-khoan", "dang nhap dang ky tai khoan giao trinh bai tap");
+    them("Liên hệ", "Gọi / Zalo " + (LIEN_HE.sdt || ""), "Cơ sở Bình Phú · Kim Quan, Thạch Thất", "#dang-ky", "lien he dien thoai zalo dia chi co so");
+    return ds;
+  };
+  const tim = s => {
+    idx = idx || lap();
+    const tu = bo(s).split(/\s+/).filter(Boolean);
+    if (!tu.length) return idx.filter(x => x.loai === "Mục" || x.loai === "Trang").slice(0, 8);
+    return idx.map(x => ({ x, d: tu.every(t => x.k.includes(t)) ? (tu.every(t => x.kt.includes(t)) ? 2 : 1) + (x.kt.startsWith(tu[0]) ? 1 : 0) : 0 }))
+      .filter(r => r.d).sort((a, b) => b.d - a.d).slice(0, 12).map(r => r.x);
+  };
+  const to = (t, s) => { // tô đậm chữ khớp
+    const tu = bo(s).split(/\s+/).filter(Boolean); if (!tu.length) return esc(t);
+    const b = bo(t); let out = "", i = 0;
+    while (i < t.length) { const m = tu.find(w => b.startsWith(w, i)); if (m) { out += "<mark>" + esc(t.substr(i, m.length)) + "</mark>"; i += m.length; } else { out += esc(t[i]); i++; } }
+    return out;
+  };
+  const ve = () => {
+    kq = tim(q.value); sel = Math.min(sel, Math.max(0, kq.length - 1));
+    ul.innerHTML = kq.length ? kq.map((x, i) => `<li role="option" aria-selected="${i === sel}"><a href="${x.url}" data-i="${i}"><i>${esc(x.loai)}</i><b>${to(x.ten, q.value)}</b><span>${to(x.mo, q.value)}</span></a></li>`).join("")
+      : `<li class="tk-rong">Không tìm thấy “${esc(q.value)}”. Thử từ khác, hoặc <a href="#dang-ky">nhắn thầy</a>.</li>`;
+    $("#tk-goi").textContent = q.value ? `${kq.length} kết quả · ↑↓ để chọn · Enter để mở` : "Gợi ý: “hình hoạ”, “kiến trúc”, “9,5”, “Kim Quan”, tên học viên…";
+  };
+  const mo = () => { ov.hidden = false; document.body.style.overflow = "hidden"; q.value = ""; sel = 0; ve(); setTimeout(() => q.focus(), 20); };
+  const dong = () => { ov.hidden = true; document.body.style.overflow = ""; };
+  $("#nav-search").onclick = mo; $("#tk-x").onclick = dong;
+  ov.addEventListener("click", e => { if (e.target === ov) dong(); if (e.target.closest("a")) dong(); });
+  q.addEventListener("input", () => { sel = 0; ve(); });
+  q.addEventListener("keydown", e => {
+    if (e.key === "ArrowDown") { sel = Math.min(kq.length - 1, sel + 1); ve(); e.preventDefault(); }
+    if (e.key === "ArrowUp") { sel = Math.max(0, sel - 1); ve(); e.preventDefault(); }
+    if (e.key === "Enter" && kq[sel]) { location.hash = kq[sel].url; dong(); }
+  });
+  addEventListener("keydown", e => {
+    if (e.key === "Escape" && !ov.hidden) dong();
+    const go = e.target.matches && e.target.matches("input, textarea, select, [contenteditable]");
+    if (((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") || (e.key === "/" && !go)) { e.preventDefault(); ov.hidden ? mo() : dong(); }
+  });
 })();
 
 /* ================= Giao diện điện ảnh: hero, menu, thanh gọi nhanh ================= */
@@ -632,11 +694,34 @@ $("#dk-zalo").href = "https://zalo.me/" + SDT_LOP;
     }
   }
 
+  // Hình trang trí mờ hai bên cho các phần khác (giống phần "Về lớp")
+  const DECO = { "khoa-hoc": ["deco/khoi.svg", "deco/captoc.svg"], "bang-vang": [null, "deco/cup.svg"], "giao-vien": ["hinh-hoa-nguoi.png", null],
+    "bai-ve": [null, "deco/mau.svg"], "lich-thi": ["deco/captoc.svg", null], "lich-hoc": [null, "deco/khoi.svg"], "khoi": ["hinh-hoa-tuong.png", null], "dang-ky": [null, "deco/mt2.svg"] };
+  Object.entries(DECO).forEach(([id, [l, r]]) => {
+    const sec = document.getElementById(id); if (!sec) return;
+    sec.classList.add("has-deco");
+    [[l, "deco-l"], [r, "deco-r"]].forEach(([f, c]) => { if (!f) return;
+      const el = document.createElement("span"); el.className = "deco " + c; el.setAttribute("aria-hidden", "true");
+      el.style.webkitMaskImage = el.style.maskImage = `url(assets/img/${f})`; sec.prepend(el); });
+  });
+
   // Hình trang trí phần "Về lớp" trượt vào khi cuộn tới
   if ("IntersectionObserver" in window) {
     const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } }), { threshold: .2 });
     $$(".deco").forEach(d => io.observe(d));
   } else $$(".deco").forEach(d => d.classList.add("in"));
+
+  // Tiêu đề các phần "nổi lên" và nhích theo con trỏ chuột khi rê tới (máy tính)
+  if (matchMedia("(hover:hover) and (pointer:fine)").matches && !matchMedia("(prefers-reduced-motion:reduce)").matches) {
+    $$("#v-home .sec-head, .mg-title").forEach(head => {
+      const t = head.querySelector("h2") || head;
+      head.addEventListener("pointermove", e => {
+        const r = head.getBoundingClientRect(), x = (e.clientX - r.left) / r.width - .5, y = (e.clientY - r.top) / r.height - .5;
+        t.style.transform = `translate(${x * 14}px, ${y * 8 - 4}px) scale(1.03)`; t.classList.add("noi");
+      });
+      head.addEventListener("pointerleave", () => { t.style.transform = ""; t.classList.remove("noi"); });
+    });
+  }
 
   // Thanh gọi nhanh
   $("#dock-call").href = "tel:" + SDT_LOP;

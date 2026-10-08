@@ -97,6 +97,7 @@
       </div>
     </div>
     <a class="link solo" href="#dang-ky" data-nav="home">Học thử</a>
+    <button type="button" class="nav-search" id="nav-search" aria-label="Tìm kiếm trên web" title="Tìm kiếm (Ctrl + K)"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><span>Tìm kiếm</span><kbd>Ctrl K</kbd></button>
     <button type="button" class="burger" id="nav-burger" aria-label="Mở menu" aria-expanded="false" aria-controls="menu-ov"><i></i><i></i><i></i></button>
     <a class="btn small acct" href="#tai-khoan" id="nav-acct"><span id="nav-acct-t">Đăng nhập / Đăng ký</span><span class="nbadge num" id="nav-req" hidden></span></a>
   </div>
@@ -106,6 +107,17 @@
   <div class="menu-top"><span class="brand">Lớp Vẽ Không Vui</span><button type="button" class="menu-x" id="menu-x" aria-label="Đóng menu">✕</button></div>
   <div class="menu-links" id="menu-links"></div>
   <a class="glass-strong cine-btn menu-cta" href="#dang-ky">Đăng ký học thử <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17L17 7M7 7h10v10"/></svg></a>
+</div>
+
+<!-- Tìm kiếm nhanh trên toàn web -->
+<div class="tk-ov" id="tk-ov" hidden>
+  <div class="tk-box" role="dialog" aria-modal="true" aria-label="Tìm kiếm">
+    <div class="tk-in"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+      <input id="tk-q" type="search" placeholder="Tìm khoá học, giáo viên, học viên, lịch thi…" autocomplete="off" enterkeyhint="go" aria-controls="tk-kq">
+      <button type="button" class="tk-x" id="tk-x" aria-label="Đóng">Esc</button></div>
+    <ul class="tk-kq" id="tk-kq" role="listbox"></ul>
+    <p class="tk-goi" id="tk-goi"></p>
+  </div>
 </div>
 
 <!-- Thanh gọi nhanh trên điện thoại -->
