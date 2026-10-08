@@ -57,28 +57,42 @@ export const BO_LOC_TRUONG = [
 // Môn học viết đúng một trong ba chữ: "Hình hoạ", "Màu", "Mỹ thuật 2".
 // Ngày viết: "T2", "T3", "T4", "T5", "T6", "T7", "CN".
 export const CA_HOC = [
-  { ma: "sang",  ten: "Sáng",  gio: "8h30–11h30" },
+  { ma: "sang",  ten: "Sáng",  gio: "9h00–12h30" },
   { ma: "chieu", ten: "Chiều", gio: "14h30–17h30" },
   { ma: "toi",   ten: "Tối",   gio: "18h15–21h00" },
 ];
 
 export const THOI_GIAN_BIEU = {
   "Cơ sở Bình Phú": {
-    sang:  { CN: "Màu" },
-    chieu: { CN: "Hình hoạ" },
-    toi:   { T2: "Hình hoạ", T4: "Màu", T6: "Mỹ thuật 2", T7: "Hình hoạ" },
+    sang:  { CN: "Hình hoạ" },
+    chieu: {},
+    toi:   { T2: "Hình hoạ", T3: "Hình hoạ", T4: "Màu", T5: "Hình hoạ", T6: "Màu", T7: "Hình hoạ", CN: "Hình hoạ" },
   },
   "Cơ sở Kim Quan": {
     sang:  {},
     chieu: { CN: "Hình hoạ" },
-    toi:   { T2: "Hình hoạ", T3: "Hình hoạ", T5: "Hình hoạ", T6: "Màu", T7: "Màu" },
+    toi:   { T3: "Màu", T5: "Màu", T6: "Hình hoạ", T7: "Hình hoạ", CN: "Hình hoạ" },
   },
 };
 
 
-// ---------- 4. ẢNH BÀI VẼ TRÊN TRANG CHỦ ----------
-// Bước 1: đưa ảnh vào thư mục  assets/img/bai-ve/  (nên dưới 300KB, ảnh dọc).
-// Bước 2: thêm một dòng bên dưới. Để trống [] thì mục ảnh tự ẩn.
-// Ví dụ:  { anh: "assets/img/bai-ve/hinh-hoa-01.jpg", moTa: "Hình hoạ người toàn thân · Khối H" },
+// ---------- 4. BÀI VẼ HỌC VIÊN (trang chủ) ----------
+// Bước 1: đưa ảnh vào thư mục  assets/img/bai-ve/  (nên dưới 300KB).
+// Bước 2: thêm một dòng bên dưới.
+// loai: viết đúng một trong: "Cơ bản", "Hình hoạ người", "Tượng", "Màu", "Mỹ thuật 2"
+// Khi chưa có ảnh nào, web hiện hình minh hoạ cho từng phần học.
+// Ví dụ:
+//   { anh: "assets/img/bai-ve/an-chan-dung.jpg", loai: "Hình hoạ người", hocVien: "Nguyễn Văn An", moTa: "Chân dung · 3 giờ" },
 export const BAI_VE = [
+];
+
+
+// ---------- 5. BẢNG VÀNG THI NĂNG KHIẾU (trang chủ) ----------
+// Mỗi học viên một dòng. Web tự xếp điểm từ cao xuống thấp, 3 bạn đầu lên bục vinh danh.
+//   nam:   mùa thi (số)          diem: điểm năng khiếu (số, thang 10)
+//   mon:   môn được điểm đó      truong: trường đã đỗ / dự thi
+//   anh:   (không bắt buộc) ảnh học viên trong assets/img/bang-vang/
+// Ví dụ:
+//   { nam: 2026, ten: "Nguyễn Văn An", diem: 9.25, mon: "Vẽ mỹ thuật", truong: "ĐH Kiến trúc Hà Nội", nganh: "Kiến trúc" },
+export const BANG_VANG = [
 ];

@@ -34,7 +34,7 @@ Nguyên tắc: **mỗi việc chỉ sửa đúng một file**. Nội dung hay đ
 │   ├── js/app.js           Logic: đếm ngày, đăng nhập, giáo trình, bài tập
 │   └── img/                Biểu tượng ứng dụng + bai-ve/ (ảnh bài vẽ học viên)
 ├── data/
-│   ├── noi-dung.js         ★ NỘI DUNG HAY ĐỔI: liên hệ, lịch thi, thời gian biểu, ảnh
+│   ├── noi-dung.js         ★ NỘI DUNG HAY ĐỔI: liên hệ, lịch thi, thời gian biểu, bài vẽ, bảng vàng
 │   └── giao-trinh-mau.js   Giáo trình có sẵn, dùng một lần khi nạp
 ├── config/
 │   └── firebase-config.js  Mã kết nối Firebase

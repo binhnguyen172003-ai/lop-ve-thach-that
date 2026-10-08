@@ -25,12 +25,56 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Be+Vietnam+Pro:wght@400;500;600&display=swap" media="print" onload="this.media='all'">
 <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Be+Vietnam+Pro:wght@400;500;600&display=swap"></noscript>
 <link rel="stylesheet" href="assets/css/style.css?v=20261008c">
+<link rel="modulepreload" href="assets/js/app.js?v=20261008c">
+<link rel="modulepreload" href="config/firebase-config.js?v=20261008c">
+<link rel="modulepreload" href="data/noi-dung.js?v=20261008c">
 <script nomodule>document.addEventListener("DOMContentLoaded",function(){var d=document.createElement("div");d.className="slow-bar";d.innerHTML="Trình duyệt này đã quá cũ nên web chạy không đủ. Hãy cập nhật Chrome hoặc Safari rồi mở lại.";document.body.insertBefore(d,document.body.firstChild)})</script>
 <script>setTimeout(function(){if(window.__appOk)return;var d=document.createElement("div");d.className="slow-bar";d.innerHTML='Mạng đang chậm, trang chưa tải xong. <button type="button" onclick="location.reload()">Tải lại</button>';document.body.insertBefore(d,document.body.firstChild)},12000)</script>
 </head>
 <body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></symbol>
+  <!-- Hình minh hoạ các hạng mục (nét chì + điểm xanh) -->
+  <symbol id="v-khoi" viewBox="0 0 160 120"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M14 46h132" stroke-dasharray="3 5" style="stroke:var(--accent)" opacity=".7"/>
+    <path d="M10 106h140" opacity=".3"/>
+    <path d="M26 58h40v44H26z"/><path d="M26 58l16-14h40L66 58"/><path d="M66 58l16-14v44l-16 14"/>
+    <path d="M70 60v36M74 57v36M78 53v36" opacity=".45" stroke-width="1.6"/>
+    <circle cx="118" cy="78" r="22"/><path d="M106 96c10 5 25 1 32-11M112 99c9 2 18 0 24-6" opacity=".45" stroke-width="1.6"/>
+    <ellipse cx="124" cy="103" rx="22" ry="3.5" opacity=".3"/></g>
+    <circle cx="110" cy="70" r="6" style="fill:var(--accent)" opacity=".22"/></symbol>
+  <symbol id="v-nguoi" viewBox="0 0 160 120"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M66 14v84M38 56h56M42 72h48" stroke-dasharray="3 5" style="stroke:var(--accent)" opacity=".75"/>
+    <ellipse cx="66" cy="54" rx="26" ry="34"/>
+    <path d="M48 55q6-5 12 0M72 55q6-5 12 0M62 64l-2 8h8M58 80q8 4 16 0"/>
+    <path d="M54 86v14M78 86v14M54 100c-14 2-26 8-32 16M78 100c14 2 26 8 32 16"/>
+    <path d="M132 12v100M126 12h12M126 37h12M126 62h12M126 87h12M126 112h12" stroke-width="1.6" opacity=".6"/></g></symbol>
+  <symbol id="v-tuong" viewBox="0 0 160 120"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M22 18l18 12M40 30l-8 1M40 30l-3-7" style="stroke:var(--accent)"/>
+    <path d="M66 32l14-12 18 6 6 18-4 20-12 10H72l-8-16z"/>
+    <path d="M80 20l2 22-16 6M82 42l16 2M82 42l-2 22" opacity=".5" stroke-width="1.6"/>
+    <path d="M92 50l8 4v10M88 52v12" opacity=".45" stroke-width="1.6"/>
+    <path d="M74 74l-2 12M94 74l2 12M54 104c2-10 8-18 18-18h26c10 0 16 8 18 18"/>
+    <path d="M48 104h76l-6 10H54z"/></g></symbol>
+  <symbol id="v-mau" viewBox="0 0 160 120"><path d="M48.3 21.2A40 40 0 0 1 67.7 21.2L61.9 44.5A16 16 0 0 0 54.1 44.5Z" fill="#e63946"/><path d="M69.0 21.5A40 40 0 0 1 85.8 31.2L69.1 48.5A16 16 0 0 0 62.4 44.6Z" fill="#f3722c"/><path d="M86.8 32.2A40 40 0 0 1 96.5 49.0L73.4 55.6A16 16 0 0 0 69.5 48.9Z" fill="#f8961e"/><path d="M96.8 50.3A40 40 0 0 1 96.8 69.7L73.5 63.9A16 16 0 0 0 73.5 56.1Z" fill="#f9c74f"/><path d="M96.5 71.0A40 40 0 0 1 86.8 87.8L69.5 71.1A16 16 0 0 0 73.4 64.4Z" fill="#c5d86d"/><path d="M85.8 88.8A40 40 0 0 1 69.0 98.5L62.4 75.4A16 16 0 0 0 69.1 71.5Z" fill="#90be6d"/><path d="M67.7 98.8A40 40 0 0 1 48.3 98.8L54.1 75.5A16 16 0 0 0 61.9 75.5Z" fill="#43aa8b"/><path d="M47.0 98.5A40 40 0 0 1 30.2 88.8L46.9 71.5A16 16 0 0 0 53.6 75.4Z" fill="#4d908e"/><path d="M29.2 87.8A40 40 0 0 1 19.5 71.0L42.6 64.4A16 16 0 0 0 46.5 71.1Z" fill="#277da1"/><path d="M19.2 69.7A40 40 0 0 1 19.2 50.3L42.5 56.1A16 16 0 0 0 42.5 63.9Z" fill="#3a5fc8"/><path d="M19.5 49.0A40 40 0 0 1 29.2 32.2L46.5 48.9A16 16 0 0 0 42.6 55.6Z" fill="#6a4c93"/><path d="M30.2 31.2A40 40 0 0 1 47.0 21.5L53.6 44.6A16 16 0 0 0 46.9 48.5Z" fill="#b5179e"/>
+    <circle cx="58" cy="60" r="10" style="fill:var(--sheet)"/>
+    <g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M110 98l30-62c2-4 8-2 7 2l-22 64"/><path d="M110 98c-4 6-2 12 6 12 6 0 10-6 9-10" style="fill:#3a5fc8;stroke:currentColor"/></g></symbol>
+  <symbol id="v-mt2" viewBox="0 0 160 120">
+    <circle cx="56" cy="50" r="28" style="fill:var(--accent)" opacity=".18"/>
+    <g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="56" cy="50" r="28"/><path d="M84 96l26-58 26 58z"/><rect x="24" y="74" width="40" height="30" transform="rotate(-12 44 89)"/>
+    <path d="M12 20c30 10 50-10 80 0s40 14 58 4" style="stroke:var(--accent)"/><path d="M96 70h48M100 78h40" opacity=".45" stroke-width="1.6"/></g></symbol>
+  <symbol id="v-captoc" viewBox="0 0 160 120"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="18" y="20" width="62" height="84" rx="3" transform="rotate(-6 49 62)"/><path d="M30 40l40-4M31 52l36-4M32 64l26-3" opacity=".45" stroke-width="1.6"/>
+    <circle cx="108" cy="66" r="32"/><path d="M108 66V44M108 66l14 9" style="stroke:var(--accent)"/><path d="M100 28h16M108 28v6M134 40l5-5"/></g>
+    <path d="M60 12l-8 16h8l-6 14 16-20h-8l6-10z" style="fill:var(--accent)" opacity=".85"/></symbol>
+  <symbol id="v-cup" viewBox="0 0 160 120"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M58 16h44v22c0 16-10 28-22 28S58 54 58 38z" style="fill:#f9c74f;stroke:currentColor"/>
+    <path d="M58 24H44c0 14 6 20 16 22M102 24h14c0 14-6 20-16 22"/><path d="M80 66v16M64 98h32l-4-16H68z"/><path d="M56 106h48"/>
+    <path d="M80 28l4 8 9 1-7 6 2 9-8-5-8 5 2-9-7-6 9-1z" style="fill:#fff;stroke:currentColor" stroke-width="1.6"/>
+    <path d="M30 96c-8-10-10-26-4-40M130 96c8-10 10-26 4-40" style="stroke:var(--accent)"/><path d="M24 74l-8-4M26 62l-8-6M136 74l8-4M134 62l8-6" style="stroke:var(--accent)"/></g></symbol>
+  <symbol id="v-online" viewBox="0 0 160 120"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="28" y="22" width="104" height="66" rx="5"/><path d="M14 98h132l-8 8H22z"/>
+    <path d="M44 72c14-24 30-30 44-14s24 0 30-14" style="stroke:var(--accent)"/><circle cx="58" cy="44" r="8" opacity=".5"/></g></symbol>
 </svg>
 
 <nav aria-label="Menu chính">
@@ -38,7 +82,10 @@
     <a class="brand" href="#gioi-thieu">Lớp Vẽ Không Vui</a>
     <a class="link" href="#gioi-thieu" data-nav="home">Giới thiệu</a>
     <a class="link" href="#khoa-hoc" data-nav="home">Khoá học</a>
+    <a class="link" href="#bang-vang" data-nav="home">Bảng vàng</a>
+    <a class="link" href="#bai-ve" data-nav="home">Bài vẽ</a>
     <a class="link" href="#lich-thi" data-nav="home">Lịch thi 2027</a>
+    <a class="link" href="#lich-hoc" data-nav="home">Lịch học</a>
     <a class="link" href="#giao-trinh" data-nav="giao-trinh"><svg class="ico"><use href="#i-lock"/></svg> Giáo trình</a>
     <a class="link" href="#bai-tap" data-nav="bai-tap"><svg class="ico"><use href="#i-lock"/></svg> Bài tập</a>
     <a class="link" href="#duyet" data-nav="duyet" id="nav-duyet" hidden>Duyệt học viên <span class="chip" id="nav-req" hidden></span></a>
@@ -99,37 +146,80 @@
     </div>
     <div class="courses">
       <article class="course">
+        <svg class="art" aria-hidden="true"><use href="#v-khoi"/></svg>
         <p class="eyebrow">Bắt đầu từ con số 0</p><h3>Hình hoạ cơ bản</h3>
         <p class="len num">20 <small>tuần</small></p>
         <ul><li>Cách gọt chì, phác nét, đan nét</li><li>Khối đơn → tổ hợp khối → tĩnh vật</li><li>Mặt nạ, tượng vạt mảng</li></ul>
       </article>
       <article class="course">
+        <svg class="art" aria-hidden="true"><use href="#v-nguoi"/></svg>
         <p class="eyebrow">Khối H</p><h3>Hình hoạ người</h3>
         <p class="len num">11 <small>chuyên đề</small></p>
         <ul><li>Mắt, mũi, miệng, tai, chân dung</li><li>Thân, tay, chân</li><li>Bán thân, toàn thân</li></ul>
       </article>
       <article class="course">
+        <svg class="art" aria-hidden="true"><use href="#v-tuong"/></svg>
         <p class="eyebrow">Khối V</p><h3>Hình hoạ tượng</h3>
         <p class="len num">20 <small>tuần</small></p>
         <ul><li>Tượng cơ bản, tượng nâng cao</li><li>Tượng thi theo các góc</li><li>Tượng Tây</li></ul>
       </article>
       <article class="course">
+        <svg class="art" aria-hidden="true"><use href="#v-mau"/></svg>
         <p class="eyebrow">Khối H</p><h3>Màu &amp; bố cục màu</h3>
         <p class="len num">36 <small>tuần</small></p>
         <ul><li>Kỹ thuật tô, vòng tròn màu</li><li>Màu nhã, trầm, tương đồng, tương phản</li><li>Bố cục kiến trúc, mỹ thuật, luyện đề</li></ul>
       </article>
       <article class="course">
+        <svg class="art" aria-hidden="true"><use href="#v-mt2"/></svg>
         <p class="eyebrow">Khối V</p><h3>Mỹ thuật 2</h3>
         <p class="len num">13 <small>tuần</small></p>
         <ul><li>Cơ sở tạo hình, đường nét</li><li>Quan hệ tạo hình</li><li>Không gian tạo hình</li></ul>
       </article>
       <article class="course alt">
+        <svg class="art" aria-hidden="true"><use href="#v-captoc"/></svg>
         <p class="eyebrow">Tháng 3 – tháng 5</p><h3>Ôn thi cấp tốc</h3>
         <p class="len">Nước rút</p>
         <ul><li>Dựng hình, sắc độ cơ bản đến nâng cao</li><li>Luyện đề theo thời gian thi thật</li><li>Học ngay tại cơ sở, không phải lên Hà Nội trọ</li></ul>
       </article>
     </div>
-    <p class="note">Lớp luyện thi online đang chuẩn bị khai giảng. Đăng ký để được báo lịch sớm.</p>
+    <a class="online" href="#dang-ky"><svg class="art" aria-hidden="true"><use href="#v-online"/></svg>
+      <div><p class="eyebrow">Sắp khai giảng</p><h3>Lớp luyện thi online</h3><p class="muted">Học trực tiếp với thầy qua video, gửi bài và nhận nhận xét trên web. Đăng ký để được báo lịch sớm.</p></div>
+      <span class="go">Đăng ký nhận lịch →</span></a>
+  </section>
+
+  <section id="bang-vang" aria-labelledby="h-bv">
+    <div class="sec-head">
+      <div><p class="eyebrow">Thành tích</p><h2 id="h-bv">Bảng vàng thi năng khiếu</h2></div>
+      <p class="muted">Học viên Dreamers đạt điểm năng khiếu cao trong các kỳ thi đại học. Điểm theo thang 10, xếp từ cao xuống thấp.</p>
+    </div>
+    <div class="filters" id="bv-years" role="group" aria-label="Chọn mùa thi"></div>
+    <div id="bv-body"></div>
+  </section>
+
+  <section id="bai-ve" aria-labelledby="h-baive">
+    <div class="sec-head">
+      <div><p class="eyebrow">Tác phẩm</p><h2 id="h-baive">Bài vẽ học viên</h2></div>
+      <p class="muted">Bài làm trên lớp của học viên, chia theo từng phần học. Bấm vào ảnh để xem lớn.</p>
+    </div>
+    <div class="filters" id="gal-filters" role="group" aria-label="Lọc theo phần học"></div>
+    <div class="gallery" id="gallery"></div>
+    <div class="social">
+      <a id="link-ig" href="https://www.instagram.com/lop_ve_thach_that/" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r=".8"/></svg>
+        <div><b>Instagram</b><p class="muted" id="ten-ig">@lop_ve_thach_that</p></div>
+        <span class="go">Xem bài vẽ ↗</span>
+      </a>
+      <a id="link-pin" href="https://pin.it/YkmIUW1tr" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M11 8.5c2.5-1 5 .5 4.5 3s-3 3.5-4.5 2.5M11.5 10l-2 10"/></svg>
+        <div><b>Pinterest</b><p class="muted">Bộ sưu tập bài vẽ của lớp</p></div>
+        <span class="go">Xem bộ sưu tập ↗</span>
+      </a>
+    </div>
+    <div class="extra">
+      <div><h3>Nhóm lớp riêng</h3><p>Học viên hỏi đáp, đăng bài, nhận nhận xét trong nhóm lớp và các buổi live.</p></div>
+      <div><h3>Thi thử định kỳ</h3><p>Làm bài trong đúng thời gian thi để quen áp lực phòng thi.</p></div>
+      <div><h3>Ký hoạ ngoài trời</h3><p>Các buổi ngoại khoá ký hoạ giúp các em quan sát và vẽ nhanh hơn.</p></div>
+    </div>
   </section>
 
   <section aria-labelledby="h-qloi">
@@ -167,6 +257,7 @@
     </div>
     <div class="sched-tabs" id="sched-tabs" role="tablist"></div>
     <div class="sched-wrap"><table class="sched" id="sched"></table></div>
+    <div class="sched-days" id="sched-days"></div>
   </section>
 
   <section id="khoi" aria-labelledby="h-khoi">
@@ -192,32 +283,6 @@
       </div>
     </div>
     <p class="khoi-note">Lớp luyện thi cho ĐH Kiến trúc Hà Nội, ĐH Mỹ thuật Công nghiệp, ĐH Sư phạm Nghệ thuật TW, ĐH Xây dựng và các trường xét tuyển ngành vẽ khác. Chúng tôi giúp học sinh biết mình hợp khối nào trước khi đầu tư sâu, và luôn khuyến khích các em giữ vững môn văn hoá.</p>
-  </section>
-
-  <section id="bai-ve" aria-labelledby="h-baive">
-    <div class="sec-head">
-      <div><p class="eyebrow">Tác phẩm</p><h2 id="h-baive">Bài vẽ học viên &amp; giáo viên</h2></div>
-      <p class="muted">Một số bài trên lớp. Xem thêm bài mới nhất trên Instagram và Pinterest.</p>
-    </div>
-    <div class="gallery" id="gallery" hidden></div>
-    <p class="gallery-note" id="gallery-note" hidden>Bấm vào ảnh để xem lớn.</p>
-    <div class="social">
-      <a id="link-ig" href="https://www.instagram.com/lop_ve_thach_that/" target="_blank" rel="noopener">
-        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r=".8"/></svg>
-        <div><b>Instagram</b><p class="muted" id="ten-ig">@lop_ve_thach_that</p></div>
-        <span class="go">Xem bài vẽ ↗</span>
-      </a>
-      <a id="link-pin" href="https://pin.it/YkmIUW1tr" target="_blank" rel="noopener">
-        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M11 8.5c2.5-1 5 .5 4.5 3s-3 3.5-4.5 2.5M11.5 10l-2 10"/></svg>
-        <div><b>Pinterest</b><p class="muted">Bộ sưu tập bài vẽ của lớp</p></div>
-        <span class="go">Xem bộ sưu tập ↗</span>
-      </a>
-    </div>
-    <div class="extra">
-      <div><h3>Nhóm lớp riêng</h3><p>Học viên hỏi đáp, đăng bài, nhận nhận xét trong nhóm lớp và các buổi live.</p></div>
-      <div><h3>Thi thử định kỳ</h3><p>Làm bài trong đúng thời gian thi để quen áp lực phòng thi.</p></div>
-      <div><h3>Ký hoạ ngoài trời</h3><p>Các buổi ngoại khoá ký hoạ giúp các em quan sát và vẽ nhanh hơn.</p></div>
-    </div>
   </section>
 
   <section id="dang-ky" aria-labelledby="h-dk">
