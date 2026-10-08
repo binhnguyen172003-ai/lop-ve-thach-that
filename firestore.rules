@@ -93,6 +93,12 @@ service cloud.firestore {
       allow write: if isStaff();
     }
 
+    // Điểm danh: giáo viên và quản lý ghi; học viên xem của mình.
+    match /diemdanh/{mail} {
+      allow read: if isStaff() || isMe(mail);
+      allow write: if isStaff();
+    }
+
     match /admins/{mail} {
       allow read: if isMe(mail);
       allow write: if false;

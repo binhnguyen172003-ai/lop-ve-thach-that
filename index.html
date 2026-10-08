@@ -81,6 +81,7 @@
     <a class="link" href="#lich-hoc" data-nav="home">Lịch học</a>
     <a class="link" href="#giao-trinh" data-nav="giao-trinh"><svg class="ico"><use href="#i-lock"/></svg> Giáo trình</a>
     <a class="link" href="#bai-tap" data-nav="bai-tap"><svg class="ico"><use href="#i-lock"/></svg> Bài tập</a>
+    <a class="link" href="#diem-danh" data-nav="diem-danh" id="nav-dd" hidden>Điểm danh</a>
     <a class="link" href="#duyet" data-nav="duyet" id="nav-duyet" hidden>Duyệt học viên <span class="chip" id="nav-req" hidden></span></a>
     <a class="btn small acct" href="#tai-khoan" id="nav-acct">Đăng nhập / Đăng ký</a>
   </div>
@@ -314,6 +315,7 @@
   </div>
   <div class="lock" data-lock></div>
   <div id="gt-body" hidden>
+    <section class="my-prog" id="my-prog" hidden aria-label="Tiến độ của em"></section>
     <div class="tabs" id="course-tabs" aria-label="Khoá học"></div>
     <div class="progress"><span id="gt-prog-text"></span><div class="bar"><i id="gt-prog"></i></div></div>
     <div class="lesson-grid">
@@ -484,6 +486,29 @@
   </div>
 
   <p class="note" style="margin-bottom:56px">Chưa là học viên của lớp? <a href="#dang-ky">Đăng ký học thử</a> trước nhé.</p>
+</main>
+
+<!-- ============ ĐIỂM DANH (giáo viên + quản lý) ============ -->
+<main class="wrap" id="v-diem-danh" hidden>
+  <div class="page-head">
+    <p class="eyebrow">Dành cho giáo viên</p>
+    <h1>Điểm danh &amp; chuyên cần</h1>
+    <p class="muted">Mỗi buổi chạm "Có mặt / Vắng / Phép" là xong. Web tự tính số buổi mỗi tuần, giờ đã học và khả năng đỗ của từng em.</p>
+  </div>
+  <div class="lock" id="dd-lock"><h3>Trang dành cho giáo viên</h3><p class="muted">Đăng nhập bằng Gmail giáo viên đã được duyệt để điểm danh.</p><div class="ctas"><a class="btn primary" href="#tai-khoan">Đăng nhập</a></div></div>
+  <div data-teacher hidden id="dd-body">
+    <div class="dd-bar">
+      <label>Ngày học<input type="date" id="dd-ngay"></label>
+      <label>Ca<select id="dd-ca"></select></label>
+      <label>Cơ sở<select id="dd-cs"><option value="">Tất cả</option><option>Bình Phú</option><option>Kim Quan</option><option>Online</option></select></label>
+      <button class="btn" type="button" id="dd-all">Tất cả có mặt</button>
+    </div>
+    <p class="dd-sum" id="dd-sum"></p>
+    <ul class="dd-list" id="dd-list"></ul>
+    <h3 style="margin-top:34px">Theo dõi chuyên cần &amp; dự báo đỗ</h3>
+    <p class="muted" style="margin-bottom:12px">Xếp từ em cần nhắc nhất. Bấm "Chép tin nhắn" rồi dán vào Zalo gửi phụ huynh.</p>
+    <div class="dd-watch" id="dd-watch"></div>
+  </div>
 </main>
 
 <!-- ============ DUYỆT HỌC VIÊN (chỉ giáo viên) ============ -->

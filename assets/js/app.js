@@ -3,7 +3,7 @@
 //  Nội dung (liên hệ, lịch thi, thời gian biểu, ảnh) nằm ở data/noi-dung.js
 // =====================================================================
 import { firebaseConfig, ADMIN_EMAIL, EMAIL_NHAN_THONG_BAO } from "../../config/firebase-config.js?v=20261008c";
-import { LIEN_HE, NAM_THI, LICH_THI, BO_LOC_TRUONG, CA_HOC, THOI_GIAN_BIEU, BAI_VE, BANG_VANG, TRUONG } from "../../data/noi-dung.js?v=20261008c";
+import { LIEN_HE, NAM_THI, LICH_THI, BO_LOC_TRUONG, CA_HOC, THOI_GIAN_BIEU, BAI_VE, BANG_VANG, TRUONG, MUC_TIEU } from "../../data/noi-dung.js?v=20261008c";
 
 // Firebase được tải riêng, để phần giới thiệu vẫn chạy kể cả khi mạng chậm hoặc chưa cấu hình.
 const FB = "https://www.gstatic.com/firebasejs/10.12.2/";
@@ -128,7 +128,7 @@ function copyText(text, statusEl, okMsg, selectEl) {
 }
 
 /* ================= Điều hướng ================= */
-const PAGES = ["giao-trinh", "bai-tap", "tai-khoan", "duyet"];
+const PAGES = ["giao-trinh", "bai-tap", "tai-khoan", "duyet", "diem-danh"];
 function route() {
   const h = location.hash.replace("#", "");
   const page = PAGES.includes(h) ? h : "home";
@@ -411,6 +411,7 @@ let app, auth, db;
 // Vai trò: isAdmin = quản lý (toàn quyền); isTeacher = giáo viên hoặc quản lý; approved = học viên đã duyệt.
 let user = null, mail = "", isAdmin = false, isTeacher = false, approved = false, needVerify = false;
 let teachers = [], feedbackAll = {}, myFeedback = {};
+let diemdanhAll = {}, myDiemdanh = {}, myHv = null;
 const gradeOpen = new Set(), gradeDraft = {};
 let needRedraw = false;
 // Khi giáo viên gõ xong (rời ô nhập), vẽ lại nếu trong lúc gõ có dữ liệu mới.
@@ -450,6 +451,8 @@ function renderAccount(pending) {
   $$("[data-teacher]").forEach(el => el.hidden = !isTeacher);
   $$("[data-admin]").forEach(el => el.hidden = !isAdmin);
   $("#nav-duyet").hidden = !isAdmin;
+  $("#nav-dd").hidden = !isTeacher;
+  $("#dd-lock").hidden = isTeacher;
   $("#duyet-lock").hidden = isAdmin;
   $("#pw-box").hidden = !!user || !configured;
   $("#card-verify").hidden = !(user && needVerify);
@@ -627,6 +630,7 @@ async function checkRules() {
     khuVuc: "", coso: "Bình Phú", chuongTrinh: "Vẽ cơ bản", khoi: "", namThi: "", mucTieu: "", ghiChu: "", guiLuc: Date.now() };
   try {
     await setDoc(ref, mau); await deleteDoc(ref);
+    const ddRef = doc(db, "diemdanh", "_kiem-tra"); await setDoc(ddRef, { thu: "co" }); await deleteDoc(ddRef);
     box.className = "sv-status ok"; box.textContent = "✓ Máy chủ hoạt động tốt: học viên gửi phiếu sẽ hiện ngay ở đây.";
   } catch (e) {
     const code = (e && e.code) || "";
@@ -720,6 +724,155 @@ function confirmButton(btn, act, ask = "Bấm lần nữa để xoá") {
   };
 }
 
+/* ================= Điểm danh, tiến độ & dự báo khả năng đỗ ================= */
+const pad2 = n => String(n).padStart(2, "0");
+function todayVN() {
+  const now = new Date(); const vn = new Date(now.getTime() + (now.getTimezoneOffset() + 420) * 60000);
+  return `${vn.getFullYear()}-${pad2(vn.getMonth() + 1)}-${pad2(vn.getDate())}`;
+}
+function caMacDinh() {
+  const now = new Date(); const vn = new Date(now.getTime() + (now.getTimezoneOffset() + 420) * 60000);
+  const h = vn.getHours() + vn.getMinutes() / 60;
+  return h < 12.5 ? "sang" : h < 17.75 ? "chieu" : "toi";
+}
+const soDiem = x => { const n = parseFloat(String(x ?? "").replace(",", ".")); return isNaN(n) ? null : n; };
+function khoiOf(hv) {
+  const t = `${(hv && hv.khoi) || ""} ${(hv && (hv.chuongTrinh || hv.lop)) || ""}`;
+  if (/kh[ốo]i\s*v/i.test(t)) return "Khối V";
+  if (/kh[ốo]i\s*h|màu|cấp tốc/i.test(t)) return "Khối H";
+  return "Cơ bản";
+}
+const ngayVN = iso => { const [y, m, d] = String(iso).split("-"); return `${Number(d)}/${Number(m)}/${y}`; };
+const nf1 = n => Number(n).toLocaleString("vi-VN", { maximumFractionDigits: 1 });
+// Gộp điểm danh + điểm bài tập thành các chỉ số, khả năng đỗ ước tính và lời khuyên.
+function thongKe(dd, hv, fb) {
+  const today = todayVN(), cach = (a, b) => (Date.parse(b) - Date.parse(a)) / 864e5;
+  const keys = Object.keys(dd || {}).filter(k => /^\d{4}-\d{2}-\d{2}_/.test(k) && cach(k.slice(0, 10), today) >= 0).sort();
+  const dem = (arr, v) => arr.filter(k => dd[k] === v).length;
+  const co = dem(keys, "co"), vang = dem(keys, "vang"), phep = dem(keys, "phep");
+  const k28 = keys.filter(k => cach(k.slice(0, 10), today) < 28), k30 = keys.filter(k => cach(k.slice(0, 10), today) < 30);
+  const span = keys.length ? Math.min(28, Math.max(7, cach(keys[0].slice(0, 10), today) + 1)) : 28;
+  const perWeek = dem(k28, "co") / (span / 7);
+  const c30 = dem(k30, "co"), v30 = dem(k30, "vang"), att = c30 + v30 ? c30 / (c30 + v30) : null;
+  let streak = 0; for (let i = keys.length - 1; i >= 0; i--) { if (dd[keys[i]] === "vang") streak++; else if (dd[keys[i]] === "phep") continue; else break; }
+  const khoi = khoiOf(hv), gioCan = MUC_TIEU.gioCan[khoi] || 300, ngayThi = MUC_TIEU.ngayThi[khoi];
+  const daysLeft = Math.max(0, daysUntil(ngayThi)), weeksLeft = Math.max(daysLeft / 7, 0.5);
+  const gio = co * MUC_TIEU.gioMoiBuoi;
+  const need = Math.max(0, (gioCan - gio) / MUC_TIEU.gioMoiBuoi / weeksLeft);
+  const projected = gio + perWeek * MUC_TIEU.gioMoiBuoi * weeksLeft;
+  const readiness = Math.min(1, projected / gioCan);
+  const ds = Object.values(fb || {}).filter(x => x && soDiem(x.diem) !== null).sort((a, b) => (b.luc || 0) - (a.luc || 0)).slice(0, 6).map(x => soDiem(x.diem));
+  const avg = ds.length ? ds.reduce((a, b) => a + b, 0) / ds.length : null;
+  const skill = avg === null ? 0.55 : Math.max(0, Math.min(1, (avg - 5) / (MUC_TIEU.diemDat + 1 - 5)));
+  const pass = keys.length ? Math.max(5, Math.min(95, Math.round(100 * (0.45 * readiness + 0.35 * skill + 0.2 * (att === null ? 0.6 : att))))) : null;
+  const canBuoi = Math.round(need * 10) / 10;
+  let muc = "ok";
+  if (keys.length && (streak >= 2 || perWeek < MUC_TIEU.buoiToiThieu * 0.67)) muc = "bad";
+  else if (keys.length && (perWeek + 0.01 < need || perWeek < MUC_TIEU.buoiToiThieu || (avg !== null && avg < MUC_TIEU.diemDat))) muc = "warn";
+  const loi = [];
+  if (!keys.length) loi.push(["info", "Chưa có buổi điểm danh nào. Thầy cô sẽ điểm danh sau mỗi buổi học, tiến độ của em hiện ở đây."]);
+  if (streak >= 2) loi.push(["bad", `Em đã vắng ${streak} buổi liên tiếp. Đi học lại ngay buổi tới để không bị hổng bài nhé.`]);
+  if (keys.length && perWeek + 0.01 < need) loi.push(["warn", `Để kịp ${gioCan} giờ trước ngày thi, em cần khoảng ${nf1(canBuoi)} buổi/tuần — 4 tuần qua em đi ${nf1(perWeek)} buổi/tuần. Thêm ${nf1(Math.max(0.5, canBuoi - perWeek))} buổi mỗi tuần là kịp.`]);
+  else if (keys.length) loi.push(["ok", `Em đang đi ${nf1(perWeek)} buổi/tuần — giữ nhịp này là đủ ${gioCan} giờ trước ngày thi. Cố lên!`]);
+  if (avg !== null && avg < MUC_TIEU.diemDat) loi.push(["warn", `Điểm bài tập gần đây trung bình ${nf1(avg)}, mục tiêu ${nf1(MUC_TIEU.diemDat)}. Làm đủ bài về nhà và hỏi thầy chỗ chưa vững.`]);
+  else if (avg !== null) loi.push(["ok", `Điểm bài tập trung bình ${nf1(avg)} — vượt mục tiêu ${nf1(MUC_TIEU.diemDat)}. Tiếp tục luyện đề theo thời gian thi thật.`]);
+  if (daysLeft <= 60 && daysLeft > 0) loi.push(["warn", `Chỉ còn ${daysLeft} ngày. Giai đoạn nước rút: mỗi buổi nghỉ là mất một bài luyện đề.`]);
+  return { keys, co, vang, phep, perWeek, att, streak, khoi, gioCan, ngayThi, daysLeft, gio, need: canBuoi, readiness, avg, pass, muc, loi };
+}
+const MUC_TEN = { ok: "Tốt", warn: "Cần nhắc", bad: "Báo động" };
+function renderMyProg() {
+  const box = $("#my-prog"); if (!box) return;
+  box.hidden = isTeacher || !approved;
+  if (box.hidden) return;
+  const t = thongKe(myDiemdanh, myHv, myFeedback);
+  const pct = Math.min(100, Math.round(t.gio / t.gioCan * 100));
+  const tuan = [...Array(8)].map((_, i) => 7 - i); // 8 tuần gần nhất
+  const today = todayVN();
+  const dots = tuan.map(w => {
+    const ks = t.keys.filter(k => { const d = (Date.parse(today) - Date.parse(k.slice(0, 10))) / 864e5; return d >= w * 7 && d < (w + 1) * 7; });
+    return `<div class="wk"><div>${ks.map(k => `<i class="${myDiemdanh[k]}" title="${ngayVN(k.slice(0, 10))}"></i>`).join("") || "<i class='none'></i>"}</div><span>${w === 0 ? "Tuần này" : w + "t trước"}</span></div>`;
+  }).join("");
+  box.innerHTML = `
+    <div class="mp-head">
+      <div><p class="eyebrow">Tiến độ của em · ${esc(t.khoi)}</p>
+        <h3>Còn <b class="num">${t.daysLeft}</b> ngày đến kỳ thi <span class="muted">(${ngayVN(t.ngayThi)})</span></h3></div>
+      <div class="mp-gauge ${t.muc}" style="--p:${t.pass ?? 0}"><b class="num">${t.pass === null ? "–" : t.pass + "%"}</b><span>khả năng đỗ<br>ước tính</span></div>
+    </div>
+    <div class="mp-stats">
+      <div><span>Giờ đã học</span><b class="num">${t.gio}<small>/${t.gioCan} giờ</small></b><div class="bar"><i style="width:${pct}%"></i></div></div>
+      <div><span>Buổi/tuần (4 tuần qua)</span><b class="num">${nf1(t.perWeek)}<small> · cần ${nf1(t.need)}</small></b></div>
+      <div><span>Chuyên cần 30 ngày</span><b class="num">${t.att === null ? "–" : Math.round(t.att * 100) + "%"}</b></div>
+      <div><span>Điểm bài tập TB</span><b class="num">${t.avg === null ? "–" : nf1(t.avg)}<small> · mục tiêu ${nf1(MUC_TIEU.diemDat)}</small></b></div>
+    </div>
+    <ul class="mp-advice">${t.loi.map(([k, x]) => `<li class="${k}">${esc(x)}</li>`).join("")}</ul>
+    <div class="mp-dots" aria-label="Điểm danh 8 tuần gần nhất">${dots}</div>
+    <p class="mp-note">Chấm xanh: có mặt · đỏ: vắng · xám: nghỉ phép. Khả năng đỗ là ước tính từ chuyên cần, giờ học và điểm bài tập, tự cập nhật sau mỗi buổi — không phải cam kết.</p>`;
+}
+function renderAttend() {
+  if (!isTeacher || !$("#dd-list")) return;
+  const ngay = $("#dd-ngay").value || todayVN(), ca = $("#dd-ca").value || caMacDinh(), cs = $("#dd-cs").value;
+  const key = `${ngay}_${ca}`;
+  const ds = roster.filter(r => !cs || String(r.coso || "").includes(cs)).sort((a, b) => String(a.ten).localeCompare(String(b.ten), "vi"));
+  const val = r => (diemdanhAll[r.id] || {})[key];
+  const n = v => ds.filter(r => val(r) === v).length;
+  $("#dd-sum").innerHTML = ds.length ? `<b>${n("co")}</b> có mặt · <b>${n("vang")}</b> vắng · <b>${n("phep")}</b> phép · <b>${ds.length - n("co") - n("vang") - n("phep")}</b> chưa điểm danh` : "";
+  $("#dd-list").innerHTML = ds.length ? ds.map(r => `<li><div><b>${esc(r.ten)}</b><span class="muted">${esc(r.chuongTrinh || r.lop || "")}${r.coso ? " · " + esc(r.coso) : ""}</span></div>
+    <div class="seg" role="group" aria-label="Điểm danh ${esc(r.ten)}">${[["co", "Có mặt"], ["vang", "Vắng"], ["phep", "Phép"]].map(([v, t]) =>
+      `<button type="button" class="${v}" data-dd="${esc(r.id)}" data-v="${v}" aria-pressed="${val(r) === v}">${t}</button>`).join("")}</div></li>`).join("")
+    : `<li class="muted">Chưa có học viên nào${cs ? " ở cơ sở này" : ""}.</li>`;
+  $$("#dd-list [data-dd]").forEach(b => b.onclick = () => ghiDiemDanh([b.dataset.dd], key, b.dataset.v));
+  // Bảng theo dõi chuyên cần
+  const rows = roster.map(r => ({ r, t: thongKe(diemdanhAll[r.id], r, feedbackAll[r.id]) }))
+    .sort((a, b) => ({ bad: 0, warn: 1, ok: 2 }[a.t.muc] - { bad: 0, warn: 1, ok: 2 }[b.t.muc]) || ((a.t.pass ?? 101) - (b.t.pass ?? 101)));
+  $("#dd-watch").innerHTML = rows.length ? `<div class="dw-wrap"><table class="dw"><thead><tr><th>Học viên</th><th>Buổi/tuần</th><th>Vắng liền</th><th>Giờ học</th><th>Dự báo đỗ</th><th></th></tr></thead><tbody>${rows.map(({ r, t }) => `
+      <tr class="${t.muc}"><td><b>${esc(r.ten)}</b><br><span class="muted">${esc(t.khoi)} · thi ${ngayVN(t.ngayThi)}</span></td>
+      <td class="num">${nf1(t.perWeek)} <span class="muted">/ cần ${nf1(t.need)}</span></td>
+      <td class="num">${t.streak || "–"}</td>
+      <td class="num">${t.gio}/${t.gioCan}</td>
+      <td><span class="pill ${t.muc}">${t.pass === null ? "Chưa có dữ liệu" : t.pass + "% · " + MUC_TEN[t.muc]}</span></td>
+      <td><button type="button" class="btn small" data-msg="${esc(r.id)}">Chép tin nhắn</button></td></tr>`).join("")}</tbody></table></div>`
+    : `<p class="muted">Chưa có học viên nào được duyệt.</p>`;
+  $$("#dd-watch [data-msg]").forEach(b => b.onclick = () => {
+    const x = rows.find(o => o.r.id === b.dataset.msg); if (!x) return;
+    const { r, t } = x;
+    const msg = `Lớp Vẽ Dreamers gửi phụ huynh em ${r.ten}: 4 tuần qua em đi học trung bình ${nf1(t.perWeek)} buổi/tuần`
+      + (t.streak >= 2 ? `, đã vắng ${t.streak} buổi liên tiếp` : "")
+      + `. Còn ${t.daysLeft} ngày đến kỳ thi (${ngayVN(t.ngayThi)}), để kịp chương trình em cần khoảng ${nf1(t.need)} buổi/tuần`
+      + (t.avg !== null ? `; điểm bài tập gần đây trung bình ${nf1(t.avg)}` : "")
+      + `. Nhờ bố mẹ nhắc em đi học đều ạ. Cảm ơn bố mẹ!`;
+    const hien = () => { // máy không cho chép tự động: hiện sẵn tin nhắn để bấm giữ chép
+      let ta = $("#dd-msg"); if (!ta) { ta = document.createElement("textarea"); ta.id = "dd-msg"; ta.className = "dd-msg"; ta.readOnly = true; }
+      b.closest("tr").after(Object.assign(document.createElement("tr"), { className: "dd-msg-row" }));
+      const row = b.closest("tr").nextElementSibling; const td = document.createElement("td"); td.colSpan = 6; td.appendChild(ta); row.appendChild(td);
+      ta.value = msg; ta.focus(); ta.select(); toast("Tin nhắn hiện bên dưới — bấm giữ để sao chép.");
+    };
+    try { navigator.clipboard.writeText(msg).then(() => toast("Đã chép tin nhắn. Dán vào Zalo gửi phụ huynh."), hien); } catch (e) { hien(); }
+  });
+}
+function ghiDiemDanh(ids, key, v) {
+  const cu = ids.map(id => [id, (diemdanhAll[id] || {})[key]]);
+  ids.forEach(id => { diemdanhAll[id] = { ...(diemdanhAll[id] || {}), [key]: v }; });
+  renderAttend();
+  const batch = writeBatch(db);
+  ids.forEach(id => batch.set(doc(db, "diemdanh", id), { [key]: v }, { merge: true }));
+  timed("Điểm danh", batch.commit()).catch(() => {
+    cu.forEach(([id, old]) => { const o = { ...(diemdanhAll[id] || {}) }; if (old) o[key] = old; else delete o[key]; diemdanhAll[id] = o; });
+    renderAttend(); toast("Chưa lưu được điểm danh. Kiểm tra mạng rồi bấm lại.", "err");
+  });
+}
+(function setupDiemDanh() {
+  $("#dd-ngay").value = todayVN();
+  $("#dd-ca").innerHTML = CA_HOC.map(c => `<option value="${esc(c.ma)}">${esc(c.ten)} ${esc(c.gio)}</option>`).join("");
+  $("#dd-ca").value = caMacDinh();
+  ["#dd-ngay", "#dd-ca", "#dd-cs"].forEach(id => $(id).onchange = renderAttend);
+  $("#dd-all").onclick = () => {
+    const ngay = $("#dd-ngay").value || todayVN(), key = `${ngay}_${$("#dd-ca").value}`, cs = $("#dd-cs").value;
+    const ids = roster.filter(r => (!cs || String(r.coso || "").includes(cs)) && !(diemdanhAll[r.id] || {})[key]).map(r => r.id);
+    if (!ids.length) { toast("Các em đều đã được điểm danh."); return; }
+    ghiDiemDanh(ids, key, "co"); toast(`Đã điểm danh có mặt ${ids.length} em.`);
+  };
+})();
+
 /* ---------- Đăng nhập ---------- */
 function stopListeners() { unsubs.forEach(u => u()); unsubs = []; }
 function listen(q, fn) {
@@ -769,6 +922,7 @@ async function onUser(u) {
   user = u; mail = u ? String(u.email || "").toLowerCase() : "";
   isAdmin = false; isTeacher = false; approved = false; needVerify = false;
   roster = []; requests = []; teachers = []; progressAll = {}; feedbackAll = {};
+  diemdanhAll = {}; myDiemdanh = {}; myHv = null;
   if (prevMail && prevMail !== mail) try { localStorage.removeItem(DATA_KEY + prevMail); } catch (e) {} // máy dùng chung: xoá dữ liệu người trước
   loadData(mail);
   // Đổi người dùng thì xoá sạch form đăng ký, tránh gửi nhầm thông tin của người trước (máy dùng chung).
@@ -806,6 +960,7 @@ async function onUser(u) {
   isAdmin = !!isAdm;
   isTeacher = isAdmin || !!gvDoc;
   approved = !isTeacher && !!hvDoc;
+  myHv = hvDoc || null;
   let pending = !isTeacher && !approved && ycDoc ? ycDoc : false;
   // Phiếu lần trước bị máy chủ từ chối: tự gửi lại khi học viên mở web.
   const unsent = !isTeacher && !approved && !ycDoc ? store.get(UNSENT + mail, null) : null;
@@ -842,7 +997,10 @@ async function onUser(u) {
 
   if (!isTeacher) {
     if (tdDoc) myProgress = { bai: tdDoc.bai || {}, baitap: tdDoc.baitap || {} };
-    listen(doc(db, "nhanxet", mail), d => { myFeedback = d.exists() ? d.data() : {}; renderHomework(); saveData(); });
+    listen(doc(db, "nhanxet", mail), d => { myFeedback = d.exists() ? d.data() : {}; renderHomework(); renderMyProg(); saveData(); });
+    // Điểm danh của chính em (lỗi quyền thì im lặng, panel vẫn hiện hướng dẫn)
+    unsubs.push(onSnapshot(doc(db, "diemdanh", mail), d => { myDiemdanh = d.exists() ? d.data() : {}; renderMyProg(); }, () => renderMyProg()));
+    renderMyProg();
   }
   listen(query(collection(db, "giaotrinh"), orderBy("thutu")), snap => {
     lessons = snap.docs.map(d => ({ id: d.id, ...d.data() })); renderLessons(); if (isAdmin) renderRoster(); saveData();
@@ -852,13 +1010,16 @@ async function onUser(u) {
   });
   if (isTeacher) {
     listen(query(collection(db, "hocvien"), orderBy("duyetLuc", "desc")), snap => {
-      roster = snap.docs.map(d => ({ id: d.id, ...d.data() })); renderHomework(); if (isAdmin) renderRoster();
+      roster = snap.docs.map(d => ({ id: d.id, ...d.data() })); renderHomework(); if (isAdmin) renderRoster(); renderAttend();
+    });
+    listen(collection(db, "diemdanh"), snap => {
+      diemdanhAll = {}; snap.docs.forEach(d => diemdanhAll[d.id] = d.data()); renderAttend();
     });
     listen(collection(db, "tiendo"), snap => {
       progressAll = {}; snap.docs.forEach(d => progressAll[d.id] = d.data()); renderHomework(); if (isAdmin) renderRoster();
     });
     listen(collection(db, "nhanxet"), snap => {
-      feedbackAll = {}; snap.docs.forEach(d => feedbackAll[d.id] = d.data()); renderHomework();
+      feedbackAll = {}; snap.docs.forEach(d => feedbackAll[d.id] = d.data()); renderHomework(); renderAttend();
     });
   }
   if (isAdmin) {

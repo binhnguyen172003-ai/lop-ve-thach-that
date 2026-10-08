@@ -576,3 +576,88 @@ svg.art{display:block;width:100%;height:auto;aspect-ratio:4/3;color:var(--ink)}
 }
 .mg-tr{min-width:104px}
 @media (max-width:640px){.mg-tr{min-width:44px}}
+
+/* ===== Điểm danh (giáo viên) ===== */
+.dd-bar{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;padding:16px;background:var(--sheet);border:1px solid var(--rule);border-radius:var(--r)}
+.dd-bar label{min-width:150px;flex:1}
+.dd-bar .btn{flex:0 0 auto}
+.dd-sum{margin:14px 0 8px;color:var(--graphite)}
+.dd-sum b{color:var(--ink)}
+.dd-list{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.dd-list li{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;padding:12px 14px;background:var(--sheet);border:1px solid var(--rule);border-radius:var(--r)}
+.dd-list li > div:first-child{display:grid}
+.dd-list .muted{font-size:.85rem}
+.seg{display:flex;border:1.5px solid var(--rule);border-radius:999px;overflow:hidden}
+.seg button{min-height:44px;min-width:76px;padding:0 14px;border:0;background:transparent;font:600 .9rem var(--f-body);color:var(--graphite);cursor:pointer}
+.seg button + button{border-left:1.5px solid var(--rule)}
+.seg button.co[aria-pressed="true"]{background:#1f9d4a;color:#fff}
+.seg button.vang[aria-pressed="true"]{background:#d7261e;color:#fff}
+.seg button.phep[aria-pressed="true"]{background:#7b8799;color:#fff}
+.dw-wrap{overflow-x:auto;border:1px solid var(--rule);border-radius:var(--r);background:var(--sheet)}
+table.dw{border-collapse:collapse;width:100%;min-width:680px;font-size:.92rem}
+.dw th,.dw td{padding:10px 12px;border-bottom:1px solid var(--rule);text-align:left;vertical-align:middle}
+.dw th{font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:var(--graphite)}
+.dw tr:last-child td{border-bottom:0}
+.dw tr.bad td:first-child{box-shadow:inset 4px 0 0 #d7261e}
+.dw tr.warn td:first-child{box-shadow:inset 4px 0 0 #e0a100}
+.dw tr.ok td:first-child{box-shadow:inset 4px 0 0 #1f9d4a}
+.pill{display:inline-block;padding:4px 10px;border-radius:999px;font-weight:700;font-size:.8rem;white-space:nowrap}
+.pill.ok{background:#e2f5e8;color:#16723a}.pill.warn{background:#fff3d1;color:#8a6100}.pill.bad{background:#fde3e1;color:#a3160f}
+
+/* ===== Tiến độ của em (học viên) ===== */
+.my-prog{margin-bottom:24px;padding:20px;border-radius:14px;background:var(--sheet);border:1px solid var(--rule)}
+.mp-head{display:flex;justify-content:space-between;gap:16px;align-items:center;flex-wrap:wrap}
+.mp-head h3{font-size:1.25rem;margin-top:4px}
+.mp-head h3 b{color:var(--accent);font-size:1.5em}
+.mp-head h3 .muted{font-size:.75em;font-weight:500}
+.mp-gauge{--c:#1f9d4a;width:112px;height:112px;border-radius:50%;display:grid;place-items:center;align-content:center;text-align:center;
+  background:radial-gradient(closest-side,var(--sheet) 76%,transparent 77% 100%),conic-gradient(var(--c) calc(var(--p) * 1%),var(--rule) 0)}
+.mp-gauge.warn{--c:#e0a100}.mp-gauge.bad{--c:#d7261e}
+.mp-gauge b{font:800 1.6rem/1 var(--f-display);color:var(--c)}
+.mp-gauge span{font-size:.66rem;color:var(--graphite);line-height:1.2;margin-top:3px}
+.mp-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:16px}
+.mp-stats > div{padding:12px;border-radius:10px;background:var(--paper);display:grid;gap:4px;align-content:start}
+.mp-stats span{font-size:.78rem;color:var(--graphite)}
+.mp-stats b{font:800 1.4rem/1.1 var(--f-display)}
+.mp-stats small{font-size:.62em;color:var(--graphite);font-weight:600}
+.mp-stats .bar{max-width:none;margin-top:4px}
+.mp-stats .bar i{background:var(--accent)}
+.mp-advice{list-style:none;margin:14px 0 0;padding:0;display:grid;gap:8px}
+.mp-advice li{padding:10px 12px 10px 38px;border-radius:10px;position:relative;font-size:.95rem;background:var(--paper)}
+.mp-advice li::before{position:absolute;left:12px;top:9px;font-weight:800}
+.mp-advice li.ok{background:#e9f7ee;color:#14532d}.mp-advice li.ok::before{content:"✓"}
+.mp-advice li.warn{background:#fff6dc;color:#6b4a00}.mp-advice li.warn::before{content:"!"}
+.mp-advice li.bad{background:#fde7e5;color:#7f1d1d}.mp-advice li.bad::before{content:"!!";left:9px}
+.mp-advice li.info::before{content:"i";color:var(--accent)}
+.mp-dots{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:6px;margin-top:16px}
+.mp-dots .wk{display:grid;gap:4px;justify-items:center}
+.mp-dots .wk > div{display:flex;flex-wrap:wrap;gap:3px;justify-content:center;min-height:14px}
+.mp-dots i{width:11px;height:11px;border-radius:50%;background:var(--rule)}
+.mp-dots i.co{background:#1f9d4a}.mp-dots i.vang{background:#d7261e}.mp-dots i.phep{background:#9aa3ad}.mp-dots i.none{background:transparent;border:1px dashed var(--rule)}
+.mp-dots span{font-size:.62rem;color:var(--graphite);white-space:nowrap}
+.mp-note{font-size:.78rem;color:var(--graphite);margin-top:12px}
+@media (max-width:640px){
+  .mp-stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .mp-gauge{width:96px;height:96px}
+  .mp-dots{grid-template-columns:repeat(4,minmax(0,1fr));row-gap:10px}
+  .dd-list li{flex-direction:column;align-items:stretch}
+  .seg button{flex:1;min-width:0}
+}
+.dd-msg{width:100%;min-height:96px;font-size:.9rem}
+@media (max-width:640px){
+  .dw-wrap{overflow:visible;border:0;background:none}
+  table.dw{min-width:0}
+  .dw thead{display:none}
+  .dw tbody{display:grid;gap:10px}
+  .dw tr{display:grid;grid-template-columns:1fr auto;gap:4px 10px;padding:12px 14px;background:var(--sheet);border:1px solid var(--rule);border-radius:var(--r)}
+  .dw td{border:0;padding:0}
+  .dw td:nth-child(2)::before{content:"Buổi/tuần: ";color:var(--graphite)}
+  .dw td:nth-child(3)::before{content:"Vắng liền: ";color:var(--graphite)}
+  .dw td:nth-child(4)::before{content:"Giờ học: ";color:var(--graphite)}
+  .dw td:nth-child(5){grid-column:1 / -1}
+  .dw td:nth-child(6){grid-column:1 / -1}
+  .dw td:nth-child(6) .btn{width:100%}
+  .dw tr.bad{box-shadow:inset 4px 0 0 #d7261e}.dw tr.warn{box-shadow:inset 4px 0 0 #e0a100}.dw tr.ok{box-shadow:inset 4px 0 0 #1f9d4a}
+  .dw tr td:first-child{box-shadow:none}
+  .dw tr.dd-msg-row{display:block;padding:0;border:0;background:none}
+}

@@ -158,3 +158,14 @@ export const BANG_VANG = [
   { nam: 2025, ten: "Phùng Thị Thuỳ", truong: "HAU", diem: { "Khối V": 8.0 } },
   { nam: 2025, ten: "Nguyễn Văn Trọng Tấn", truong: "HUCE", diem: { "Khối V": 9.0 } },
 ];
+
+
+// ---------- 6. MỤC TIÊU HỌC & DỰ BÁO ĐỖ (trang Điểm danh, Tiến độ của học viên) ----------
+// Thầy chỉnh các con số cho đúng thực tế lớp. Web dùng để tính "cần đi bao nhiêu buổi/tuần" và "khả năng đỗ ước tính".
+export const MUC_TIEU = {
+  gioMoiBuoi: 3,                                   // mỗi buổi học khoảng bao nhiêu giờ
+  gioCan: { "Khối H": 450, "Khối V": 400, "Cơ bản": 150 },             // tổng giờ nên học trước ngày thi
+  ngayThi: { "Khối H": "2027-05-23", "Khối V": "2027-05-23", "Cơ bản": "2027-05-23" }, // ngày thi mục tiêu
+  diemDat: 7.5,                                    // điểm bài tập trung bình cần giữ để tự tin đi thi
+  buoiToiThieu: 3,                                 // dưới số buổi/tuần này là "cần nhắc"
+};
