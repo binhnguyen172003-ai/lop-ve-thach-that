@@ -1278,3 +1278,26 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
 .hw-overview{padding:0}.hw-main{padding:0;border:0}.acct-icon{display:none;width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.6}.menu-top .brand{display:flex;align-items:center;gap:10px}
 @media(max-width:600px){nav .acct{width:36px;height:36px;padding:8px;flex:none;position:relative}nav .acct-icon{display:block}#nav-acct-t{display:none}nav .acct .nbadge{position:absolute;right:-3px;top:-4px}nav .brand .lg-mark{width:32px;height:32px}.lg-t{font-size:1rem}nav .nav-search{margin-left:auto}}
 @media(max-width:360px){.lg-t{font-size:.86rem}nav .brand{gap:6px}.nav-search{width:32px}nav .wrap{padding-inline:10px}}
+/* Huy chương Top trên bài nổi bật: nền tối mờ để nổi bật */
+.nb-medal{position:absolute;top:12px;left:12px;z-index:2;display:inline-flex;align-items:center;gap:8px;padding:6px 14px 6px 6px;border-radius:999px;
+  background:rgba(8,9,13,.62);-webkit-backdrop-filter:blur(12px) saturate(1.3);backdrop-filter:blur(12px) saturate(1.3);
+  box-shadow:inset 0 1px 1px rgba(255,255,255,.15),0 8px 24px -8px rgba(0,0,0,.7);color:#fff}
+.nb-medal svg{width:34px;height:34px;flex:none;filter:drop-shadow(0 2px 6px rgba(0,0,0,.5))}
+.nb-medal .rb{fill:#2c43b0}.nb-medal .md{fill:var(--mc);stroke:rgba(255,255,255,.7);stroke-width:1}
+.nb-medal text{font:900 8px var(--f-display);fill:#1b1300}
+.nb-medal b{font:900 .95rem/1 var(--f-display);letter-spacing:.06em;color:var(--mc)}
+.nb-medal i{font-style:normal;font-size:.68rem;text-transform:uppercase;letter-spacing:.1em;opacity:.7}
+.nb-medal.h1{--mc:#ffc400}.nb-medal.h2{--mc:#d9dee6}.nb-medal.h3{--mc:#e08a4a}
+.nb-medal.h1 .rb{fill:#d6332a}
+.nb-card.on .nb-medal.h1{box-shadow:inset 0 1px 1px rgba(255,255,255,.15),0 0 0 1px rgba(255,196,0,.45),0 8px 28px -6px rgba(255,196,0,.45)}
+.nb-rong{text-align:center;color:var(--graphite);padding:48px 16px;border:1px dashed var(--rule);border-radius:18px}
+/* Vương miện trên thẻ Top 1 Bảng vàng */
+.mg-card{position:relative}
+.mg-crown{position:absolute;left:50%;top:-30px;z-index:5;width:68px;transform:translateX(-50%);pointer-events:none;
+  filter:drop-shadow(0 6px 14px rgba(0,0,0,.55)) drop-shadow(0 0 16px rgba(255,196,0,.45))}
+.mg-crown svg{display:block;width:100%;height:auto}
+.mg-crown path,.mg-crown rect,.mg-crown circle{fill:url(#none);fill:#ffc400;stroke:#7a5500;stroke-width:1.5;stroke-linejoin:round}
+.mg-crown rect{fill:#e0a800}
+@media (prefers-reduced-motion:no-preference){.mg-crown{animation:crown 3s ease-in-out infinite}}
+@keyframes crown{0%,100%{transform:translateX(-50%) translateY(0) rotate(-3deg)}50%{transform:translateX(-50%) translateY(-4px) rotate(3deg)}}
+@media (max-width:640px){.mg-crown{width:44px;top:-20px}}

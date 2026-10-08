@@ -197,17 +197,18 @@ export const GIAO_VIEN = [
 // Để trống "" thì trang chủ dùng ảnh bìa chuyển động chậm.
 export const VIDEO_BIA = "";
 
-// ===== BÀI VẼ NỔI BẬT (tuần / tháng / năm) =====
-// Mỗi tuần thầy chọn bài đẹp: đặt ảnh vào assets/img/noi-bat/ rồi thêm 1 dòng.
-// ky: "tuan" | "thang" | "nam" · hang: 1, 2, 3… · anh: đường dẫn ảnh · hocVien: tên · loai: phần học · ghiChu: lời khen ngắn
-// Mục nào chưa có bài, web tạm hiện bài mẫu của đội ngũ giáo viên.
+// ===== BÀI VẼ NỔI BẬT — tự chuyển Top Tuần → Top Tháng → Top Năm =====
+// Mỗi tuần thầy thêm bài đẹp: đặt ảnh vào assets/img/bai-ve/ rồi thêm 1 dòng.
+//   ngay : ngày chọn bài (năm-tháng-ngày)     hang : 1, 2, 3 (huy chương), bỏ trống nếu không xếp hạng
+//   diem : điểm thầy chấm (không bắt buộc)    tg   : true = bài mẫu trợ giảng (không xếp hạng)
+// Web tự chia theo ngày:  0–7 ngày → Top Tuần · 8–30 ngày → Top Tháng · 31–365 ngày → Top Năm
+// Không cần xoá bài cũ: bài tự chuyển mục khi đủ ngày.
 export const BAI_NOI_BAT = [
-  { ky: "tuan", anh: "assets/img/bai-ve/khang-mau.webp", hocVien: "Khang", loai: "Màu" },
-  { ky: "tuan", anh: "assets/img/bai-ve/linh-mau.webp", hocVien: "Linh", loai: "Màu" },
-  { ky: "tuan", anh: "assets/img/bai-ve/huyen-linh-mau.webp", hocVien: "Kiều Huyền Linh", loai: "Bài mẫu trợ giảng · Màu" },
-  { ky: "tuan", anh: "assets/img/bai-ve/bao-tuong.webp", hocVien: "Bảo", loai: "Tượng", ghiChu: "Hình hoạ tượng cơ bản" },
-  { ky: "tuan", anh: "assets/img/bai-ve/bao-sac-do.webp", hocVien: "Bảo", loai: "Mỹ thuật 2", ghiChu: "Bố cục sắc độ" },
-  { ky: "tuan", anh: "assets/img/bai-ve/thuy-chan-dung.webp", hocVien: "Thùy", loai: "Hình hoạ người", ghiChu: "Chân dung" },
-  { ky: "tuan", anh: "assets/img/bai-ve/nam-sac-do.webp", hocVien: "Nam", loai: "Mỹ thuật 2", ghiChu: "Bố cục sắc độ" },
-  // { ky: "tuan", hang: 1, anh: "assets/img/noi-bat/tuan-1.jpg", hocVien: "Nguyễn Văn A", loai: "Hình hoạ tượng", ghiChu: "Khối rõ, sáng tối đẹp" },
+  { ngay: "2026-10-09", hang: 1, anh: "assets/img/bai-ve/bao-tuong.webp", hocVien: "Bảo", loai: "Tượng", ghiChu: "Hình hoạ tượng cơ bản" },
+  { ngay: "2026-10-09", hang: 2, anh: "assets/img/bai-ve/bao-sac-do.webp", hocVien: "Bảo", loai: "Mỹ thuật 2", ghiChu: "Bố cục sắc độ" },
+  { ngay: "2026-10-09", anh: "assets/img/bai-ve/khang-mau.webp", hocVien: "Khang", loai: "Màu" },
+  { ngay: "2026-10-09", anh: "assets/img/bai-ve/linh-mau.webp", hocVien: "Linh", loai: "Màu" },
+  { ngay: "2026-10-09", anh: "assets/img/bai-ve/thuy-chan-dung.webp", hocVien: "Thùy", loai: "Hình hoạ người", ghiChu: "Chân dung" },
+  { ngay: "2026-10-09", anh: "assets/img/bai-ve/nam-sac-do.webp", hocVien: "Nam", loai: "Mỹ thuật 2", ghiChu: "Bố cục sắc độ" },
+  { ngay: "2026-10-09", tg: true, anh: "assets/img/bai-ve/huyen-linh-mau.webp", hocVien: "Kiều Huyền Linh", loai: "Bài mẫu trợ giảng · Màu" },
 ];

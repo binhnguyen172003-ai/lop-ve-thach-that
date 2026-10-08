@@ -356,12 +356,19 @@ function vongXoay(box, st, cards, dots, prev, next, onCenter) {
   const TEN = { tuan: "tuần", thang: "tháng", nam: "năm" };
   const mau = GIAO_VIEN.filter(g => g.anh).map((g, i) => ({ anh: g.bai || "assets/img/giao-vien/" + g.anh + "-bai.jpg", hocVien: g.ten, loai: "Bài mẫu giáo viên", mau: true }));
   let ky = "tuan", vx = null;
+  // Tự chuyển mục theo ngày chọn bài: 0–7 ngày = tuần, 8–30 = tháng, 31–365 = năm
+  const KHOANG = { tuan: [0, 7], thang: [7, 30], nam: [30, 365] };
+  const tuoi = b => b.ngay ? (Date.now() - new Date(b.ngay + "T00:00:00+07:00").getTime()) / 864e5 : null;
+  const mucCua = b => { const t = tuoi(b); if (t === null) return b.ky || "tuan"; return Object.keys(KHOANG).find(k => t >= KHOANG[k][0] - 1 && t < KHOANG[k][1]) || ""; };
+  const locNoiBat = k => BAI_NOI_BAT.filter(b => mucCua(b) === k)
+    .sort((a, b) => (a.tg ? 1 : 0) - (b.tg ? 1 : 0) || (a.hang || 99) - (b.hang || 99) || (b.diem || 0) - (a.diem || 0) || (tuoi(a) || 0) - (tuoi(b) || 0));
   const ve = () => {
-    let ds = BAI_NOI_BAT.filter(b => b.ky === ky).sort((a, b) => (a.hang || 99) - (b.hang || 99));
-    const tam = !ds.length; if (tam) ds = mau;
+    let ds = locNoiBat(ky);
+    const tam = !ds.length;
+    if (tam) { box.innerHTML = `<p class="nb-rong">Chưa có bài nổi bật ${TEN[ky]}. Bài Top Tuần sẽ tự chuyển sang đây khi ${ky === "thang" ? "qua 1 tuần" : "qua 1 tháng"}.</p>`; return; }
     box.innerHTML = `<div class="gv-stage nb-stage">${ds.map((b, i) => `<figure class="nb-card" data-i="${i}">
         <img src="${esc(b.anh)}" alt="${esc((b.loai || "Bài vẽ") + " · " + (b.hocVien || ""))}" loading="lazy" decoding="async" draggable="false">
-        ${!tam && b.hang ? `<span class="nb-hang h${Number(b.hang)}">${esc(b.hang)}</span>` : ""}
+        ${b.hang && b.hang <= 3 ? `<span class="nb-medal h${Number(b.hang)}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 2h4l1 5-3 1zM17 2h-4l-1 5 3 1z" class="rb"/><circle cx="12" cy="15" r="6.5" class="md"/><text x="12" y="18.2" text-anchor="middle">${Number(b.hang)}</text></svg><b>TOP ${Number(b.hang)}</b><i>${TEN[ky]}</i></span>` : ""}
         <figcaption><b>${esc(b.hocVien || "")}</b><span>${esc([b.loai, b.ghiChu].filter(Boolean).join(" · "))}</span></figcaption></figure>`).join("")}</div>
       <div class="gv-ctl"><button type="button" class="gv-nav" aria-label="Bài trước">‹</button>
         <div class="gv-dots">${ds.map((b, i) => `<button type="button" data-i="${i}" aria-label="Bài ${i + 1}"></button>`).join("")}</div>
@@ -375,7 +382,7 @@ function vongXoay(box, st, cards, dots, prev, next, onCenter) {
   };
   $$("#nb-tabs [data-k]").forEach(t => t.onclick = () => { ky = t.dataset.k; $$("#nb-tabs [data-k]").forEach(x => x.setAttribute("aria-selected", x === t)); ve(); });
   // Mặc định mở mục có bài gần nhất (tuần → tháng → năm)
-  ky = ["tuan", "thang", "nam"].find(k => BAI_NOI_BAT.some(b => b.ky === k)) || "tuan";
+  ky = ["tuan", "thang", "nam"].find(k => locNoiBat(k).length) || "tuan";
   $$("#nb-tabs [data-k]").forEach(x => x.setAttribute("aria-selected", x.dataset.k === ky));
   ve();
 })();
@@ -485,7 +492,7 @@ function renderHonor() {
   const tachTen = t => { const w = String(t).trim().split(/\s+/); return [w.slice(0, -1).join(" "), w.slice(-1)[0] || ""]; };
   const mgCard = x => {
     const r = rankOf.get(x), [ho, ten] = tachTen(x.ten);
-    return `<li class="mg-card c${r}">
+    return `<li class="mg-card c${r}">${r === 1 ? `<span class="mg-crown" aria-hidden="true"><svg viewBox="0 0 64 44"><path d="M6 14l14 12 12-22 12 22 14-12-6 26H12z"/><rect x="12" y="38" width="40" height="5" rx="2"/><circle cx="6" cy="12" r="4"/><circle cx="32" cy="4" r="4"/><circle cx="58" cy="12" r="4"/></svg></span>` : ""}
       <div class="mg-top">
         <span class="mg-big num" aria-hidden="true">${r}</span>
         ${x.anh ? `<img src="${esc(x.anh)}" alt="${esc(x.ten)}" loading="lazy" decoding="async" width="240" height="240">` : `<span class="mg-ini">${esc(initials(x.ten))}</span>`}
