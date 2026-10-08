@@ -180,9 +180,9 @@ export const GIAO_VIEN = [
   { ten: "Đỗ Hữu Trường", vaiTro: "Trợ giảng", khoi: "Khối V", truong: "HUCE", nganh: "Học viên Dreamers khoá 2026 · tượng, Mỹ thuật 2", anh: "do-huu-truong" },
   { ten: "Bùi Anh Đức", vaiTro: "Trợ giảng", khoi: "Khối H", truong: "", nganh: "Hình hoạ Khối H · chân dung và người cơ bản", anh: "bui-anh-duc" },
   { ten: "Kiều Huyền Linh", vaiTro: "Trợ giảng", khoi: "Khối H", truong: "NUAE", nganh: "Sinh viên Sư phạm Mỹ thuật · màu cơ bản", anh: "kieu-huyen-linh" },
-  { ten: "Châu", vaiTro: "Trợ giảng", khoi: "Khối H", truong: "", nganh: "Chân dung và người cơ bản" },
-  { ten: "Cường", vaiTro: "Trợ giảng", khoi: "Khối V", truong: "", nganh: "Tượng, Mỹ thuật 2, tĩnh vật cơ bản" },
-  { ten: "Thương", vaiTro: "Trợ giảng", khoi: "Khối V", truong: "", nganh: "Tượng, Mỹ thuật 2, tĩnh vật cơ bản" },
+  { ten: "Nguyễn Duy Cường", vaiTro: "Trợ giảng", khoi: "Khối V", truong: "HAU", nganh: "Sinh viên Kiến trúc · tượng, Mỹ thuật 2", anh: "nguyen-duy-cuong" },
+  { ten: "Nguyễn Ngân Thương", vaiTro: "Trợ giảng", khoi: "Khối V", truong: "HUCE", nganh: "Sinh viên Kiến trúc · tượng, tĩnh vật", anh: "nguyen-ngan-thuong" },
+  { ten: "Châu", vaiTro: "Trợ giảng", khoi: "Khối H", truong: "MTCN", nganh: "Chân dung và người cơ bản" },
 ];
 
 // ===== VIDEO NỀN TRANG CHỦ =====
