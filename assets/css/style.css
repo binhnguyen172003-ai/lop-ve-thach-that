@@ -956,3 +956,5 @@ html,body{overflow-x:clip}
   .gv-stage .gv{width:min(70vw,260px);margin-left:calc(min(70vw,260px) / -2);height:340px}
 }
 @media (prefers-reduced-motion:reduce){.gv-stage .gv{transition:none}}
+.gv-bai-trong.alt{background:linear-gradient(135deg,#2a2f3a,#4a5468 60%,#7d8799)}
+.gv-bai-trong.alt b{font-family:var(--f-serif);font-style:italic}

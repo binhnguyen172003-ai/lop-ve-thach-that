@@ -170,19 +170,19 @@ export const MUC_TIEU = {
   buoiToiThieu: 3,                                 // dưới số buổi/tuần này là "cần nhắc"
 };
 
-// ===== ĐỘI NGŨ GIÁO VIÊN (lấy từ thẻ "GIẢNG VIÊN KHỐI H" trên Canva) =====
+// ===== ĐỘI NGŨ GIÁO VIÊN (theo buổi họp giáo viên tháng 8 + thẻ trợ giảng trên Canva) =====
 // Thêm giáo viên: chép 1 dòng, sửa chữ, đặt ảnh vào assets/img/giao-vien/.
 // anh = ảnh chân dung vuông · bai = ảnh các bài vẽ · the = cả tấm thẻ (bấm vào để xem to).
 // truong: dùng mã ở bảng TRUONG phía trên (HAU, MTCN…) để có đúng màu trường.
 export const GIAO_VIEN = [
   { ten: "Nguyễn Đình Bình", vaiTro: "Quản lý · Giáo viên chính", khoi: "Khối H, V", truong: "", nganh: "Phụ trách chuyên môn và lộ trình luyện thi của lớp", chinh: true },
-  { ten: "Cấn Hải An", vaiTro: "Giảng viên", khoi: "Khối V", truong: "HAU", nganh: "Sinh viên Kiến trúc", anh: "can-hai-an" },
-  { ten: "Đỗ Kim Khánh", vaiTro: "Giảng viên", khoi: "Khối V", truong: "HAU", nganh: "Sinh viên Kiến trúc", anh: "do-kim-khanh" },
-  { ten: "Trần Lan Anh", vaiTro: "Giảng viên", khoi: "Khối H", truong: "HAU", nganh: "Sinh viên Thiết kế đồ hoạ", anh: "tran-lan-anh" },
-  { ten: "Dương Trần", vaiTro: "Giảng viên", khoi: "Khối H", truong: "MTCN", nganh: "Sinh viên Thiết kế nội thất", anh: "duong-tran" },
-  { ten: "Đình Văn", vaiTro: "Giảng viên", khoi: "Khối H", truong: "MTCN", nganh: "Sinh viên Thiết kế đồ hoạ", anh: "dinh-van" },
-  { ten: "Đỗ Hữu Dũng", vaiTro: "Giảng viên", khoi: "Khối H", truong: "MTCN", nganh: "Cựu sinh viên Thiết kế thời trang", anh: "do-huu-dung" },
-  { ten: "Đặng Huy Hoàn", vaiTro: "Trợ giảng", khoi: "Khối H", truong: "MTCN", nganh: "Sinh viên Thiết kế đồ hoạ", anh: "dang-huy-hoan" },
+  { ten: "Cấn Hải An", vaiTro: "Giảng viên", khoi: "Khối V", truong: "HAU", nganh: "Sinh viên Kiến trúc · kiểm soát chất lượng giảng dạy", anh: "can-hai-an" },
+  { ten: "Đỗ Hữu Trường", vaiTro: "Trợ giảng", khoi: "Khối V", truong: "HUCE", nganh: "Học viên Dreamers khoá 2026 · tượng, Mỹ thuật 2", anh: "do-huu-truong" },
+  { ten: "Bùi Anh Đức", vaiTro: "Trợ giảng", khoi: "Khối H", truong: "", nganh: "Hình hoạ Khối H · chân dung và người cơ bản", anh: "bui-anh-duc" },
+  { ten: "Kiều Huyền Linh", vaiTro: "Trợ giảng", khoi: "Khối H", truong: "NUAE", nganh: "Sinh viên Sư phạm Mỹ thuật · màu cơ bản", anh: "kieu-huyen-linh" },
+  { ten: "Châu", vaiTro: "Trợ giảng", khoi: "Khối H", truong: "", nganh: "Chân dung và người cơ bản" },
+  { ten: "Cường", vaiTro: "Trợ giảng", khoi: "Khối V", truong: "", nganh: "Tượng, Mỹ thuật 2, tĩnh vật cơ bản" },
+  { ten: "Thương", vaiTro: "Trợ giảng", khoi: "Khối V", truong: "", nganh: "Tượng, Mỹ thuật 2, tĩnh vật cơ bản" },
 ];
 
 // ===== VIDEO NỀN TRANG CHỦ =====

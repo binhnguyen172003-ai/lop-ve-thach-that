@@ -298,7 +298,9 @@ function renderGiaoVien() {
     const t = g.truong ? TRUONG[g.truong] : null;
     return `<article class="gv${g.chinh ? " chinh" : ""}" data-i="${i}" aria-roledescription="thẻ" aria-label="${i + 1} / ${n}: ${esc(g.ten)}">
       <button type="button" class="gv-in" data-i="${i}" tabindex="-1">
-        ${g.anh ? `<img class="gv-bai" src="${IMG}${esc(g.anh)}-bai.jpg" alt="" loading="lazy" decoding="async" width="348" height="234" draggable="false">` : `<span class="gv-bai gv-bai-trong"><b>6</b><small>năm đứng lớp<br>luyện thi năng khiếu</small></span>`}
+        ${g.anh ? `<img class="gv-bai" src="${IMG}${esc(g.anh)}-bai.jpg" alt="" loading="lazy" decoding="async" width="348" height="234" draggable="false">`
+          : g.chinh ? `<span class="gv-bai gv-bai-trong"><b>6</b><small>năm đứng lớp<br>luyện thi năng khiếu</small></span>`
+          : `<span class="gv-bai gv-bai-trong alt"><b>${esc(g.khoi.replace("Khối ", ""))}</b><small>${esc(g.vaiTro)} ${esc(g.khoi)}</small></span>`}
         <span class="gv-ava">${g.anh ? `<img src="${IMG}${esc(g.anh)}.jpg" alt="" loading="lazy" decoding="async" width="96" height="96" draggable="false">` : `<i>${esc(initials(g.ten))}</i>`}</span>
         <span class="gv-txt">
           <span class="gv-vt">${esc(g.vaiTro)} · ${esc(g.khoi)}</span>
