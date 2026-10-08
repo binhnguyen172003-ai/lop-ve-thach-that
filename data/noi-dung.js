@@ -219,7 +219,7 @@ export const BAI_NOI_BAT = [
 //   VD: { hocVien: "Nguyễn Văn Bảo", ma: "thithu", ghiChu: "Thi thử lần 1 · 8,5 điểm", ngay: "2026-10-20" },
 // Trao càng nhiều lần, huy hiệu càng lên cấp: Đồng → Bạc → Vàng → Kim Cương. so: số lần (mặc định 1).
 export const THANH_TUU_TRAO = [
-  { hocVien: "Đặng Huy Hoàn", ma: "quanquan", so: 9, ghiChu: "Quán quân Top 1 nhiều tuần" },
+  { hocVien: "Đặng Huy Hoàn", ma: "quanquan", so: 49, ghiChu: "Quán quân Top 1 nhiều tuần" },
 ];
 
 // ===== XP THƯỞNG — thầy cộng tay cho học viên (ghi rõ lý do) =====
