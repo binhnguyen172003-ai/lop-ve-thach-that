@@ -319,15 +319,15 @@ function renderHonor() {
   const diemCua = x => x.top ? `<b class="sc num">${fmtDiem(x.top.d)}</b><span class="sm">${esc(x.top.m)} · ${esc(x.top.tr)}</span>` : `<span class="sm">Đỗ ${esc(x.truongs.join(", "))}</span>`;
   const chiTiet = x => x.kq.map(r => `<li>${chipTr(r.truong)} <span>${esc(tr(r.truong).ten)}</span>
       <span class="ds">${Object.entries(r.diem || {}).map(([m, d]) => `${esc(m)} <b class="num">${fmtDiem(d)}</b>`).join(" · ") || "Đỗ"}</span></li>`).join("");
-  // Thẻ vinh danh: top 3 + mọi bạn có từ 2 điểm 8 trở lên (tính cả các trường, các môn)
+  // Thẻ vinh danh: chỉ 3 bạn điểm cao nhất (vàng – đỏ – xanh lá)
   const diemTatCa = x => x.kq.flatMap(r => Object.entries(r.diem || {}).map(([m, d]) => ({ m, d: Number(d), tr: r.truong })));
   const rankOf = new Map(scored.map((x, i) => [x, i + 1]));
-  const cards = scored.filter((x, i) => i < 3 || diemTatCa(x).filter(d => d.d >= 8).length >= 2);
+  const cards = scored.slice(0, 3);
   const top3 = cards; // các bạn đã có thẻ thì không lặp lại ở danh sách bên dưới
   const VT = { "Hình hoạ": "HH", "Bố cục màu": "BCM", "Bố cục": "BC", "Ký hoạ": "KH", "Phỏng vấn": "PV", "Khối V": "KV" };
   const fCard = x => {
     const r = rankOf.get(x), ds = diemTatCa(x).sort((a, b) => b.d - a.d);
-    const tier = r === 1 ? "gold" : r === 2 ? "silver" : r === 3 ? "bronze" : "steel";
+    const tier = ["gold", "red", "green"][r - 1] || "steel";
     return `<article class="fcard ${tier}" role="listitem"><div class="fc-in">
       ${x.anh ? `<img class="fc-ph" src="${esc(x.anh)}" alt="${esc(x.ten)}" loading="lazy" decoding="async" width="240" height="240">` : `<span class="fc-wm" aria-hidden="true">${esc(initials(x.ten))}</span>`}
       <div class="fc-rtg"><b class="num">${x.top ? fmtDiem(x.top.d) : "–"}</b><span>ĐIỂM</span><em class="fc-rank num">HẠNG ${r}</em></div>

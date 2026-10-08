@@ -500,3 +500,12 @@ svg.art{display:block;width:100%;height:auto;aspect-ratio:4/3;color:var(--ink)}
 }
 .fcards-hint{display:none;font-size:.82rem;color:var(--graphite);margin:4px 0 0}
 @media (max-width:640px){.fcards-hint{display:block}}
+
+/* Màu top 3: vàng – đỏ – xanh lá */
+.fcard.red{--rim:linear-gradient(140deg,#ffb3a8,#d7261e 38%,#ff8a7a 58%,#8f1410);--hi:#ff5a4a}
+.fcard.green{--rim:linear-gradient(140deg,#c9f7cf,#1f9d4a 38%,#9be8ad 58%,#0e6b2e);--hi:#3ddc79}
+.fcard .fc-in{background:radial-gradient(90% 70% at 85% 25%,color-mix(in srgb,var(--hi) 30%,#2a4058) 0%,transparent 62%),linear-gradient(160deg,#243548,#121b28 60%,#0b121c)}
+.fcard.red .fc-rtg b{color:var(--hi)}
+.fcard.green .fc-rtg b{color:var(--hi)}
+.fcard .fc-stats b{color:#fff}
+.fcard.gold .fc-stats div:first-child b,.fcard.red .fc-stats div:first-child b,.fcard.green .fc-stats div:first-child b{color:var(--hi)}
