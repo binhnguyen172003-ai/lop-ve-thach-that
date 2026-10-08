@@ -284,3 +284,8 @@ nav .acct{position:sticky;right:0;background:var(--paper);box-shadow:-14px 0 12p
 .g-in .g-diem{width:80px}
 .g-nx-l{flex:1;min-width:180px}
 .grade .g-nx{min-width:0;width:100%}
+
+/* Thanh báo lỗi máy chủ */
+#server-issue{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;display:flex;gap:12px;align-items:flex-start;margin-inline:-16px;padding:12px 16px;background:var(--warn);color:#fff;font-weight:600;font-size:.92rem;line-height:1.45}
+#server-issue span{flex:1}
+#server-issue button{background:transparent;border:0;color:#fff;font-size:1.1rem;cursor:pointer;min-width:32px;min-height:32px}

@@ -34,8 +34,33 @@ function mark(label, since = T0) {
   }
   box.textContent = "ĐO TỐC ĐỘ (chụp màn hình gửi Claude)\n" + navigator.userAgent.slice(0, 90) + "\n" + diagLines.join("\n");
 }
+/* ---------- Báo lỗi máy chủ rõ ràng, không để người dùng "đứng hình" ---------- */
+function serverIssue(e) {
+  const code = (e && e.code) || "";
+  const msg = String((e && e.message) || "");
+  let text;
+  if (/does not exist|not-found/i.test(code + " " + msg) && /database/i.test(msg))
+    text = "Máy chủ dữ liệu chưa được tạo. Thầy vào Firebase → Firestore Database → bấm Tạo cơ sở dữ liệu.";
+  else if (code === "permission-denied")
+    text = isAdmin ? "Máy chủ từ chối: luật bảo mật chưa đúng. Thầy vào Firebase → Firestore → Quy tắc, dán lại luật mới rồi bấm Xuất bản."
+                   : "Tài khoản này chưa có quyền làm việc đó. Nếu em đã được thầy duyệt, hãy tải lại trang.";
+  else if (code === "unavailable" || /offline|network/i.test(code + msg))
+    text = "Mạng đang chập chờn nên chưa lưu được. Kiểm tra wifi/4G rồi thử lại.";
+  else if (code === "failed-precondition")
+    text = "Máy chủ chưa sẵn sàng. Thầy kiểm tra Firestore Database đã được tạo chưa.";
+  else text = "Có lỗi khi kết nối máy chủ" + (code ? " (mã: " + code + ")" : "") + ". Tải lại trang rồi thử lại.";
+  let bar = document.getElementById("server-issue");
+  if (!bar) {
+    bar = document.createElement("div"); bar.id = "server-issue"; bar.setAttribute("role", "alert");
+    bar.innerHTML = `<span></span><button type="button" aria-label="Đóng">✕</button>`;
+    bar.querySelector("button").onclick = () => bar.hidden = true;
+    document.body.prepend(bar);
+  }
+  bar.querySelector("span").textContent = text; bar.hidden = false;
+  mark("✗ " + text);
+}
 // Đo thời gian chờ máy chủ của mọi thao tác ghi
-const timed = (label, p) => { const t = performance.now(); Promise.resolve(p).then(() => mark("✓ " + label, t), () => mark("✗ LỖI " + label, t)); return p; };
+const timed = (label, p) => { const t = performance.now(); Promise.resolve(p).then(() => mark("✓ " + label, t), e => { mark("✗ LỖI " + label, t); serverIssue(e); }); return p; };
 addEventListener("load", () => mark("Trang tải xong"));
 const $$ = s => Array.from(document.querySelectorAll(s));
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -452,7 +477,7 @@ function listen(q, fn) {
   const t = performance.now(); let first = true;
   const name = q.path || (q._query && q._query.path && q._query.path.segments && q._query.path.segments.join("/")) || "dữ liệu";
   unsubs.push(onSnapshot(q, snap => { if (first) { first = false; mark("Tải " + name, t); } fn(snap); },
-    e => mark("✗ LỖI tải " + name + ": " + (e && e.code), t)));
+    e => { mark("✗ LỖI tải " + name + ": " + (e && e.code), t); serverIssue(e); }));
 }
 
 /* ---------- Nhớ phiên đăng nhập để trang hiện ngay, không phải chờ ---------- */
@@ -499,7 +524,10 @@ async function onUser(u) {
   }
   const exists = async (col) => { try { return (await getDoc(doc(db, col, mail))).exists(); } catch (e) { return false; } };
   // Hỏi cả 4 thông tin cùng lúc thay vì lần lượt, để trang hiện nhanh hơn.
-  const getData = async (col) => { try { const d = await getDoc(doc(db, col, mail)); return d.exists() ? (d.data() || {}) : null; } catch (e) { return null; } };
+  const getData = async (col) => {
+    try { const d = await getDoc(doc(db, col, mail)); return d.exists() ? (d.data() || {}) : null; }
+    catch (e) { if (e && e.code !== "permission-denied") serverIssue(e); return null; }
+  };
   const tr = performance.now();
   const [isAdm, gvDoc, hvDoc, ycDoc, tdDoc] = isAdminMail ? [true, null, null, null, null] : await Promise.all([
     exists("admins"), getData("giaovien"), getData("hocvien"), getData("yeucau"), getData("tiendo")
@@ -723,6 +751,6 @@ $("#btn-seed").onclick = async () => {
   const st = $("#seed-status"); st.textContent = "Đang nạp…";
   const batch = writeBatch(db);
   GIAO_TRINH_MAU.forEach(([id, khoa, ten, loai, thutu, buoc, ghichu]) => batch.set(doc(db, "giaotrinh", id), { khoa, ten, loai, thutu, buoc, ghichu }));
-  try { await batch.commit(); st.textContent = `Đã nạp ${GIAO_TRINH_MAU.length} bài vào giáo trình.`; }
+  try { await timed("Nạp giáo trình", batch.commit()); st.textContent = `Đã nạp ${GIAO_TRINH_MAU.length} bài vào giáo trình.`; }
   catch (e) { st.textContent = "Chưa nạp được. Kiểm tra đã dán luật bảo mật (firestore.rules) chưa."; }
 };
