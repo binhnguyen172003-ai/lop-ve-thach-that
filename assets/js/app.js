@@ -4,6 +4,7 @@
 // =====================================================================
 import { firebaseConfig, ADMIN_EMAIL, EMAIL_NHAN_THONG_BAO } from "../../config/firebase-config.js?v=20261009b";
 import { FILE_LIMITS, FILE_TYPES, fileExt, fileSize, validateFiles, attachmentStorage, uploadError, validAttachmentPath } from "./attachments.js?v=20261009b";
+import { GIAO_TRINH_MAU as GT_LO_TRINH } from "../../data/giao-trinh-mau.js?v=20261009b";
 import { LIEN_HE, NAM_THI, LICH_THI, BO_LOC_TRUONG, CA_HOC, THOI_GIAN_BIEU, BAI_VE, BANG_VANG, TRUONG, MUC_TIEU, GIAO_VIEN, VIDEO_BIA, BAI_NOI_BAT, THANH_TUU_TRAO, XP_THUONG, AVATAR } from "../../data/noi-dung.js?v=20261009d";
 
 // Firebase được tải riêng, để phần giới thiệu vẫn chạy kể cả khi mạng chậm hoặc chưa cấu hình.
@@ -662,11 +663,39 @@ document.addEventListener("keydown", e => {
     <span class="tr-ten"><b>${esc(t)}</b><small>Hạng ${k.r.ma} · ${k.r.kim} · ${k.r.ten}</small></span><span class="tr-xp num">${k.xp} XP</span></li>`).join("");
   $("#top-rank").hidden = !ds.length;
 })();
+/* ================= Lộ trình học: từng môn, theo tuần (lấy từ giáo trình có sẵn) ================= */
+(function loTrinh() {
+  const tabs = $("#lt-tabs"), body = $("#lt-body"); if (!tabs || !body) return;
+  const MON = [
+    { ma: "lt-co-ban", ten: "Hình hoạ cơ bản", cho: "Người mới bắt đầu · nền tảng cho cả Khối H và V", mau: "#c9d1dc" },
+    { ma: "tuong-lo-trinh", ten: "Hình hoạ tượng", cho: "Khối V · thi Kiến trúc, Xây dựng", mau: "#e0b97a", them: "hh-quy-trinh" },
+    { ma: "hhn-lo-trinh", ten: "Hình hoạ người", cho: "Khối H · thi Mỹ thuật Công nghiệp, Sư phạm", mau: "#f39b6d", them: "hhn-11-chuyen-de" },
+    { ma: "mau-lo-trinh", ten: "Màu & bố cục màu", cho: "Khối H, V · bố cục trang trí màu", mau: "#ff5fa2", them: "bcm-trinh-tu" },
+    { ma: "mt2-lo-trinh", ten: "Mỹ thuật 2", cho: "Khối H · tư duy sáng tạo, bố cục", mau: "#57a6ff", them: "mt2-yeu-to" },
+  ].map(m => ({ ...m, d: GT_LO_TRINH.find(x => x[0] === m.ma), p: m.them && GT_LO_TRINH.find(x => x[0] === m.them) })).filter(m => m.d);
+  let chon = 0;
+  const tach = st => { const i = st.indexOf(" · "); return i > 0 ? [st.slice(0, i), st.slice(i + 3)] : ["", st]; };
+  const ve = () => {
+    tabs.innerHTML = MON.map((m, i) => `<button type="button" role="tab" aria-selected="${i === chon}" style="--lc:${m.mau}" data-i="${i}">${esc(m.ten)}</button>`).join("");
+    const m = MON[chon], buoc = m.d[5], loiDan = m.d[6];
+    body.innerHTML = `<div class="lt-head" style="--lc:${m.mau}"><div><b>${esc(m.ten)}</b><span>${esc(m.cho)}</span></div><em>${esc(m.d[2])}</em></div>
+      <ol class="lt-tree" style="--lc:${m.mau}">${buoc.map((st, k) => { const [tuan, nd] = tach(st);
+        return `<li style="--k:${k}"><span class="lt-dot">${k + 1}</span><div><small>${esc(tuan || "Giai đoạn " + (k + 1))}</small><p>${esc(nd)}</p></div></li>`; }).join("")}
+        <li class="lt-dich"><span class="lt-dot">★</span><div><small>Đích đến</small><p>Vào phòng thi tự tin, đủ bài, đủ kỹ năng.</p></div></li></ol>
+      ${loiDan ? `<p class="lt-dan">💡 ${esc(loiDan)}</p>` : ""}
+      ${m.p ? `<details class="lt-them"><summary>${esc(m.p[2])} ▾</summary><ol>${m.p[5].map(x => `<li>${esc(x)}</li>`).join("")}</ol>${m.p[6] ? `<p class="muted">${esc(m.p[6])}</p>` : ""}</details>` : ""}
+      <p class="lt-cta">Muốn biết em nên bắt đầu từ đâu? <a href="#dang-ky">Đăng ký học thử để thầy xếp lộ trình riêng →</a></p>`;
+    tabs.querySelectorAll("button").forEach(b => b.onclick = () => { chon = +b.dataset.i; ve(); });
+  };
+  tabs.addEventListener("keydown", e => { if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return; chon = (chon + (e.key === "ArrowRight" ? 1 : MON.length - 1)) % MON.length; ve(); tabs.querySelectorAll("button")[chon].focus(); });
+  ve();
+})();
 /* ================= Dấu "!" giải thích từng mục cho người mới — tự hiện khi lướt tới ================= */
 const GHI_CHU = {
   "h-nb": "Những bài vẽ đẹp nhất do thầy chọn. Bài mới vào Top Tuần, để lâu sẽ tự chuyển sang Top Tháng rồi Top Năm. Vuốt hoặc bấm vào ảnh bên cạnh để xem bài khác. Bấm vào RANK để xem hạng của bạn đó.",
   "h-tr": "5 học viên có hạng cao nhất lớp. Đi học đều, nộp bài, có bài lên mục nổi bật là được cộng XP để lên hạng. Bấm vào từng bạn để xem chi tiết.",
   "h-ve-lop": "Cách lớp dạy: học có mục tiêu theo trường em muốn thi, đi từ nền tảng đến luyện đề.",
+  "h-lt": "Lộ trình chi tiết từng môn: tuần nào học gì, bao nhiêu bài. Bấm tên môn ở trên để đổi. Bấm “Quy trình…” ở cuối để xem các bước làm một bài.",
   "h-khoa": "Các khoá học của lớp. Vuốt sang hai bên để xem từng khoá, bấm vào khoá để xem chi tiết.",
   "h-bv": "Học viên của lớp đã đỗ đại học và điểm năng khiếu. Chọn năm hoặc trường để lọc, bấm “Xem điểm từng trường” để xem kỹ hơn. Huy hiệu cạnh tên đổi màu theo điểm: 8 · 8,5 · 9 · 9,5.",
   "h-gv": "Thầy cô và trợ giảng đang dạy ở lớp. Vuốt để xem từng người, trường đang học và môn phụ trách.",
