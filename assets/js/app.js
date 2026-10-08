@@ -18,6 +18,25 @@ async function loadFirebase() {
 }
 
 const $ = s => document.querySelector(s);
+/* ---------- Đo tốc độ: mở web kèm ?chandoan=1 để xem từng bước mất bao lâu ---------- */
+const DIAG = /[?&]chandoan/.test(location.search);
+const T0 = performance.now();
+const diagLines = [];
+function mark(label, since = T0) {
+  if (!DIAG) return;
+  const ms = Math.round(performance.now() - since);
+  diagLines.push(`${label}: ${ms >= 1000 ? (ms / 1000).toFixed(1) + " giây" : ms + " ms"}`);
+  let box = document.getElementById("diag");
+  if (!box) {
+    box = document.createElement("pre"); box.id = "diag";
+    box.style.cssText = "position:fixed;left:8px;right:8px;bottom:8px;z-index:99;max-height:45vh;overflow:auto;margin:0;padding:10px 12px;background:#111;color:#9f9;font:12px/1.5 monospace;border-radius:8px;white-space:pre-wrap";
+    document.body.appendChild(box);
+  }
+  box.textContent = "ĐO TỐC ĐỘ (chụp màn hình gửi Claude)\n" + navigator.userAgent.slice(0, 90) + "\n" + diagLines.join("\n");
+}
+// Đo thời gian chờ máy chủ của mọi thao tác ghi
+const timed = (label, p) => { const t = performance.now(); Promise.resolve(p).then(() => mark("✓ " + label, t), () => mark("✗ LỖI " + label, t)); return p; };
+addEventListener("load", () => mark("Trang tải xong"));
 const $$ = s => Array.from(document.querySelectorAll(s));
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 const store = {
@@ -345,7 +364,7 @@ async function saveGrade(btn) {
   const diem = row.querySelector(".g-diem").value.trim(), nhanXet = row.querySelector(".g-nx").value.trim();
   delete gradeDraft[k1]; delete gradeDraft[k2];
   btn.textContent = "Đã lưu ✓";
-  setDoc(doc(db, "nhanxet", email), { [hid]: { diem, nhanXet, nguoiCham: (user && user.displayName) || mail, luc: Date.now() } }, { merge: true })
+  timed("Lưu điểm", setDoc(doc(db, "nhanxet", email), { [hid]: { diem, nhanXet, nguoiCham: (user && user.displayName) || mail, luc: Date.now() } }, { merge: true }))
     .catch(() => { gradeDraft[k1] = diem; gradeDraft[k2] = nhanXet; btn.textContent = "Lỗi, bấm lưu lại"; });
 }
 $$("#hw-filter .tab").forEach(b => b.onclick = () => {
@@ -355,7 +374,7 @@ $$("#hw-filter .tab").forEach(b => b.onclick = () => {
 // Đổi trên màn hình ngay, lưu lên máy chủ ở phía sau; lỗi thì trả lại như cũ.
 function toggleProgress(kind, id) {
   myProgress[kind][id] = !myProgress[kind][id];
-  setDoc(doc(db, "tiendo", mail), { bai: myProgress.bai, baitap: myProgress.baitap, capNhat: Date.now() })
+  timed("Lưu tiến độ", setDoc(doc(db, "tiendo", mail), { bai: myProgress.bai, baitap: myProgress.baitap, capNhat: Date.now() }))
     .catch(() => { myProgress[kind][id] = !myProgress[kind][id]; renderLessons(); renderHomework(); alertStatus("Chưa lưu được tiến độ. Kiểm tra mạng rồi thử lại."); });
   return Promise.resolve();
 }
@@ -392,7 +411,7 @@ function renderRequests() {
     if (vaiTro === "giaovien") batch.set(doc(db, "giaovien", r.id), { ten: r.ten, gmail: r.gmail, sdt: r.sdt || "", coso: r.coso || "", ghiChu: r.ghiChu || "", duyetLuc: Date.now() });
     else batch.set(doc(db, "hocvien", r.id), { ...data, lop: r.chuongTrinh || r.lop || "", duyetLuc: Date.now() });
     batch.delete(doc(db, "yeucau", r.id));
-    batch.commit().catch(() => { requests.unshift(r); renderRequests(); $("#req-count").textContent = "Lỗi khi duyệt " + r.ten + ", thử lại"; });
+    timed("Duyệt " + r.ten, batch.commit()).catch(() => { requests.unshift(r); renderRequests(); $("#req-count").textContent = "Lỗi khi duyệt " + r.ten + ", thử lại"; });
   });
   $$("#requests [data-no]").forEach(b => confirmButton(b, () => deleteDoc(doc(db, "yeucau", b.dataset.no)), "Bấm lần nữa để từ chối"));
 }
@@ -429,7 +448,12 @@ function confirmButton(btn, act, ask = "Bấm lần nữa để xoá") {
 
 /* ---------- Đăng nhập ---------- */
 function stopListeners() { unsubs.forEach(u => u()); unsubs = []; }
-function listen(q, fn) { unsubs.push(onSnapshot(q, fn, () => {})); }
+function listen(q, fn) {
+  const t = performance.now(); let first = true;
+  const name = q.path || (q._query && q._query.path && q._query.path.segments && q._query.path.segments.join("/")) || "dữ liệu";
+  unsubs.push(onSnapshot(q, snap => { if (first) { first = false; mark("Tải " + name, t); } fn(snap); },
+    e => mark("✗ LỖI tải " + name + ": " + (e && e.code), t)));
+}
 
 /* ---------- Nhớ phiên đăng nhập để trang hiện ngay, không phải chờ ---------- */
 const SESSION_KEY = "lvkv-phien";
@@ -451,6 +475,7 @@ function showCachedSession() {
 }
 
 async function onUser(u) {
+  mark(u ? "Khôi phục đăng nhập (" + (u.email || "") + ")" : "Khôi phục đăng nhập (chưa đăng nhập)");
   stopListeners();
   const prevMail = mail;
   user = u; mail = u ? String(u.email || "").toLowerCase() : "";
@@ -464,14 +489,23 @@ async function onUser(u) {
   }
   pendingReq = null;
   if (!u) { saveSession(null); renderLocks("out"); renderAccount(false); return; }
-  if (!(cachedSession && cachedSession.mail === mail)) renderLocks("checking");
+  const isAdminMail = mail === ADMIN_EMAIL.toLowerCase();
+  // Hiện ngay, không chờ máy chủ: quản lý nhận ra từ Gmail; người mới hiện form đăng ký luôn.
+  if (isAdminMail) {
+    isAdmin = true; isTeacher = true; approved = false;
+    saveSession(false); renderLocks("ok"); renderAccount(false);
+  } else if (!(cachedSession && cachedSession.mail === mail)) {
+    renderLocks("pending"); renderAccount(false);
+  }
   const exists = async (col) => { try { return (await getDoc(doc(db, col, mail))).exists(); } catch (e) { return false; } };
   // Hỏi cả 4 thông tin cùng lúc thay vì lần lượt, để trang hiện nhanh hơn.
   const getData = async (col) => { try { const d = await getDoc(doc(db, col, mail)); return d.exists() ? (d.data() || {}) : null; } catch (e) { return null; } };
-  const [isAdm, gvDoc, hvDoc, ycDoc, tdDoc] = await Promise.all([
-    mail === ADMIN_EMAIL.toLowerCase() ? true : exists("admins"),
-    getData("giaovien"), getData("hocvien"), getData("yeucau"), getData("tiendo")
+  const tr = performance.now();
+  const [isAdm, gvDoc, hvDoc, ycDoc, tdDoc] = isAdminMail ? [true, null, null, null, null] : await Promise.all([
+    exists("admins"), getData("giaovien"), getData("hocvien"), getData("yeucau"), getData("tiendo")
   ]);
+  if (mail !== (u.email || "").toLowerCase() || user !== u) return; // người dùng đã đổi trong lúc chờ
+  mark("Kiểm tra vai trò", tr);
   isAdmin = !!isAdm;
   isTeacher = isAdmin || !!gvDoc;
   approved = !isTeacher && !!hvDoc;
@@ -537,13 +571,17 @@ async function startFirebase() {
   // Bấm Đăng nhập khi thư viện chưa tải xong: ghi nhớ và mở ngay khi sẵn sàng.
   $("#btn-login").onclick = () => { wantLogin = true; $("#login-status").textContent = "Đang mở trang đăng nhập Google…"; };
   try {
+    const tf = performance.now();
     await loadFirebase();
+    mark("Tải thư viện Firebase", tf);
     app = initializeApp(firebaseConfig);
     auth = getAuth(app);
     // Lưu dữ liệu trên máy: lần sau mở trang hiện ngay, không phải chờ tải lại.
     // Tự chọn kiểu kết nối ổn định nhất với mạng di động/wifi ở Việt Nam.
     try { db = initializeFirestore(app, { experimentalAutoDetectLongPolling: true }); }
     catch (e) { db = getFirestore(app); }
+    // Mở sẵn kết nối tới máy chủ ngay khi vào trang, để lúc đăng nhập không phải chờ.
+    getDoc(doc(db, "admins", "_mo-ket-noi")).catch(() => {});
   } catch (e) {
     $$("[data-lock]").forEach(el => { el.hidden = false; el.innerHTML = `<h3>Chưa kết nối được máy chủ</h3><p class="muted">Kiểm tra mạng rồi tải lại trang.</p>`; });
     return;
@@ -572,7 +610,7 @@ function submitTo(form, statusEl, busy, okMsg, write, keep) {
     ev.preventDefault(); if (!db || !user) return;
     statusEl.classList.remove("err");
     let p;
-    try { p = write(); } catch (e) { p = Promise.reject(e); }
+    try { p = timed("Lưu biểu mẫu", write()); } catch (e) { p = Promise.reject(e); }
     if (!keep) form.reset();
     statusEl.textContent = okMsg;
     Promise.resolve(p).catch(() => { statusEl.textContent = "Chưa lưu được. Kiểm tra mạng rồi thử lại."; statusEl.classList.add("err"); });
@@ -602,7 +640,7 @@ $("#f-reg").addEventListener("submit", async ev => {
   st.textContent = "";
   editingReq = false;
   renderAccount(data); saveSession(data);
-  setDoc(doc(db, "yeucau", mail), data).catch(() => {
+  timed("Gửi đăng ký", setDoc(doc(db, "yeucau", mail), data)).catch(() => {
     editingReq = true; renderAccount(false);
     st.textContent = "Chưa gửi được. Kiểm tra mạng rồi bấm gửi lại."; st.classList.add("err");
   });
