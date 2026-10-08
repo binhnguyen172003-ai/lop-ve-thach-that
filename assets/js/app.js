@@ -4,7 +4,7 @@
 // =====================================================================
 import { firebaseConfig, ADMIN_EMAIL, EMAIL_NHAN_THONG_BAO } from "../../config/firebase-config.js?v=20261009b";
 import { FILE_LIMITS, FILE_TYPES, fileExt, fileSize, validateFiles, attachmentStorage, uploadError, validAttachmentPath } from "./attachments.js?v=20261009b";
-import { LIEN_HE, NAM_THI, LICH_THI, BO_LOC_TRUONG, CA_HOC, THOI_GIAN_BIEU, BAI_VE, BANG_VANG, TRUONG, MUC_TIEU, GIAO_VIEN, VIDEO_BIA, BAI_NOI_BAT, THANH_TUU_TRAO, XP_THUONG } from "../../data/noi-dung.js?v=20261009d";
+import { LIEN_HE, NAM_THI, LICH_THI, BO_LOC_TRUONG, CA_HOC, THOI_GIAN_BIEU, BAI_VE, BANG_VANG, TRUONG, MUC_TIEU, GIAO_VIEN, VIDEO_BIA, BAI_NOI_BAT, THANH_TUU_TRAO, XP_THUONG, AVATAR } from "../../data/noi-dung.js?v=20261009d";
 
 // Firebase được tải riêng, để phần giới thiệu vẫn chạy kể cả khi mạng chậm hoặc chưa cấu hình.
 const FB = "https://www.gstatic.com/firebasejs/10.12.2/";
@@ -403,7 +403,7 @@ const huyHieu = (r, i, cls = "", ten = "") => cls === "xs"
   <b>${r.ma}</b><i>${"★".repeat(i + 1)}</i></span>`;
 function theRank(t) {
   return `<div class="rk-card t${t.i}" style="--rc:${t.r.mau === "rainbow" ? "#ffd6ff" : t.r.mau}">
-    ${khungAvatar(t.r, t.i, (myHv && myHv.ten) || (user && user.displayName), user && user.photoURL, "lg")}
+    ${khungAvatar(t.r, t.i, (myHv && myHv.ten) || (user && user.displayName), myAvatar || (user && user.photoURL), "lg")}
     <div class="rk-in"><p class="eyebrow">Hạng của em</p><h3>Hạng ${t.r.ma} <span>· ${t.r.kim} · ${t.r.ten}</span></h3>
       <div class="rk-bar"><i style="width:${t.pct}%"></i></div>
       <p class="rk-sub"><b class="num">${t.xp} XP</b>${t.next ? ` · còn <b class="num">${t.next.xp - t.xp} XP</b> nữa lên hạng ${t.next.ma}` : " · đã đạt hạng cao nhất!"}</p>
@@ -479,6 +479,18 @@ function logoHuyenThoai(cls = "") {
 }
 /* Khung avatar theo hạng — tự vẽ, hạng càng cao khung càng cầu kỳ */
 const chuCai = t => String(t || "").trim().split(/\s+/).slice(-2).map(w => w[0] || "").join("").toUpperCase() || "?";
+/* Ảnh đại diện: ảnh em tự đổi (Tài khoản) → ảnh Google → ảnh thầy đặt sẵn trong data */
+let myAvatar = "";
+try { myAvatar = localStorage.getItem("lvtt-avatar") || ""; } catch (e) {}
+const boDau = t => String(t || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").toLowerCase().trim();
+function anhCua(ten) {
+  try { // myHv/user khai báo phía sau: lúc trang mới mở thì bỏ qua
+    const me = (myHv && myHv.ten) || (user && user.displayName);
+    if (ten && me && boDau(ten) === boDau(me) && (myAvatar || (user && user.photoURL))) return myAvatar || user.photoURL;
+  } catch (e) {}
+  const k = Object.keys(AVATAR || {}).find(n => boDau(n) === boDau(ten));
+  return k ? AVATAR[k] : "";
+}
 function khungAvatar(r, i, ten = "", anh = "", cls = "") {
   const id = "ka" + Math.random().toString(36).slice(2, 8), c = r.mau === "rainbow" ? "#ff9cf5" : r.mau;
   // kim loại của khung theo hạng: thép → đồng → bạc → vàng → bạch kim → vàng ròng…
@@ -501,6 +513,7 @@ function khungAvatar(r, i, ten = "", anh = "", cls = "") {
   if (i >= 6) g.push(`<path d="M20 84C8 82 2 70 5 58c3 8 8 12 14 12-3 5-2 10 1 14zM80 84c12-2 18-14 15-26-3 8-8 12-14 12 3 5 2 10-1 14z" fill="${A}" opacity=".9"/><path d="M27 92c-8 1-14-3-17-9 6 2 11 1 15-3z M73 92c8 1 14-3 17-9-6 2-11 1-15-3z" fill="${M}"/>`);
   // sừng + ngọc đáy (SS+)
   if (i >= 7) g.push(`<path d="M28 14C15 9 9-2 12-14c3 11 10 17 20 19zM72 14c13-5 19-16 16-28-3 11-10 17-20 19z" fill="${M}" stroke="${KL[2]}" stroke-width=".6"/><circle cx="50" cy="101" r="5.5" fill="#07080c" stroke="${M}" stroke-width="2"/><circle cx="50" cy="101" r="2.4" fill="${A}"/>`);
+  anh = anh || anhCua(ten);
   const nen = anh ? `<image href="${esc(anh)}" x="14" y="12" width="72" height="72" clip-path="url(#${id}c)" preserveAspectRatio="xMidYMid slice"/>`
     : `<text x="50" y="56.5" text-anchor="middle" class="ka-chu" fill="${M}">${esc(chuCai(ten))}</text>`;
   const notch = i >= 3 ? [...Array(12)].map((_, k) => `<circle cx="50" cy="8.6" r=".9" transform="rotate(${k * 30 + 15} 50 48)"/>`).join("") : "";
@@ -1483,7 +1496,7 @@ $("#f-bt").addEventListener("submit", async ev => {
 // Đổi trên màn hình ngay, lưu lên máy chủ ở phía sau; lỗi thì trả lại như cũ.
 function toggleProgress(kind, id) {
   const cu = myProgress[kind][id]; myProgress[kind][id] = cu ? false : Date.now(); saveData(); // lưu thời điểm để tính hạng
-  timed("Lưu tiến độ", setDoc(doc(db, "tiendo", mail), { bai: myProgress.bai, baitap: myProgress.baitap, capNhat: Date.now() }))
+  timed("Lưu tiến độ", setDoc(doc(db, "tiendo", mail), { bai: myProgress.bai, baitap: myProgress.baitap, anh: myAvatar || "", capNhat: Date.now() }))
     .catch(() => { myProgress[kind][id] = cu; renderLessons(); renderHomework(); alertStatus("Chưa lưu được tiến độ. Kiểm tra mạng rồi thử lại."); });
   return Promise.resolve();
 }
@@ -1804,11 +1817,12 @@ function renderTiles() {
       const t = isTeacher ? (isAdmin ? { r: { ma: "QL", mau: "#ffc400", kim: "Quản lý", ten: "Quản lý lớp" }, i: 5 } : { r: { ma: "GV", mau: "#57a6ff", kim: "Giáo viên", ten: "Giáo viên" }, i: 3 })
         : tinhRank(myDiemdanh, myProgress, myFeedback, ten);
       if (!k) { k = document.createElement("span"); k.id = "nav-ka"; na.prepend(k); }
-      k.innerHTML = khungAvatar(t.r, t.i, ten, user && user.photoURL, "nav"); na.classList.add("has-ka"); na.title = isTeacher ? `Tài khoản · ${t.r.ten}` : `Tài khoản · Hạng ${t.r.ma} · ${t.r.ten}`;
+      k.innerHTML = khungAvatar(t.r, t.i, ten, myAvatar || (user && user.photoURL), "nav"); na.classList.add("has-ka"); na.title = isTeacher ? `Tài khoản · ${t.r.ten}` : `Tài khoản · Hạng ${t.r.ma} · ${t.r.ten}`;
     } else if (k) { k.remove(); na.classList.remove("has-ka"); na.removeAttribute("title"); } }
   { const wr = $("#who-rank"); if (wr) { const hv = show && !isTeacher; wr.hidden = !hv;
     if (hv) { const av = $("#who-avatar"); if (av) av.hidden = true; const ten = (myHv && myHv.ten) || (user && user.displayName), t = tinhRank(myDiemdanh, myProgress, myFeedback, ten), tt = tinhThanhTuu(myDiemdanh, myProgress, myFeedback, ten, homework);
-      wr.innerHTML = `${khungAvatar(t.r, t.i, ten, user && user.photoURL, "md")}${huyHieu(t.r, t.i, "xs", ten)}<span class="muted"><b class="num">${t.xp} XP</b> · ${tt.filter(a => a.cap).length}/${tt.length} thành tựu</span><a href="#xep-hang">Xem hạng & thành tựu ↓</a>`; } } }
+      wr.innerHTML = `${khungAvatar(t.r, t.i, ten, myAvatar || (user && user.photoURL), "md")}${huyHieu(t.r, t.i, "xs", ten)}<span class="muted"><b class="num">${t.xp} XP</b> · ${tt.filter(a => a.cap).length}/${tt.length} thành tựu</span><a href="#xep-hang">Xem hạng & thành tựu ↓</a>`; } } }
+  { const av = $("#av-doi"); if (av) av.hidden = !user; }
   if (!show) { box.innerHTML = ""; return; }
   const today = todayVN();
   const tin = lvUnreadMsgs(), tb = lvUnreadTB(), viec = lvMyOpenTasks();
@@ -1822,6 +1836,34 @@ function renderTiles() {
     isAdmin && { href: "#duyet", t: "Duyệt học viên", n: reqCount, d: reqCount ? `${reqCount} yêu cầu đang chờ` : "Không có yêu cầu đang chờ" },
   ].filter(Boolean);
   box.innerHTML = (!isTeacher ? theRank(tinhRank(myDiemdanh, myProgress, myFeedback, (myHv && myHv.ten) || (user && user.displayName))) + theThanhTuu(tinhThanhTuu(myDiemdanh, myProgress, myFeedback, (myHv && myHv.ten) || (user && user.displayName), homework)) : "") + tiles.map(x => `<a class="acc-tile" href="${x.href}"><b>${x.t}${x.n ? ` <span class="nbadge num">${x.n}</span>` : ""}</b><span class="muted">${esc(x.d)}</span><i aria-hidden="true">→</i></a>`).join("");
+}
+
+/* ================= Đổi ảnh đại diện (tự cắt vuông, thu nhỏ còn ~20 KB) ================= */
+function luuAvatar(url) {
+  myAvatar = url || "";
+  try { url ? localStorage.setItem("lvtt-avatar", url) : localStorage.removeItem("lvtt-avatar"); } catch (e) {}
+  renderTiles(); renderMyProg && renderMyProg();
+  const st = $("#av-st");
+  if (!isTeacher && approved && db && mail) {
+    timed("Lưu ảnh đại diện", setDoc(doc(db, "tiendo", mail), { bai: myProgress.bai, baitap: myProgress.baitap, anh: myAvatar, capNhat: Date.now() }))
+      .then(() => { if (st) st.textContent = url ? "Đã lưu ảnh mới ✓" : "Đã bỏ ảnh ✓"; })
+      .catch(() => { if (st) st.textContent = "Đã đổi trên máy này. Chưa lưu lên lớp được, thử lại sau."; });
+  } else if (st) st.textContent = url ? "Đã đổi ảnh trên máy này ✓" : "Đã bỏ ảnh ✓";
+}
+{ const f = $("#av-file");
+  if (f) f.addEventListener("change", () => {
+    const file = f.files && f.files[0]; f.value = ""; if (!file) return;
+    if (!/^image\//.test(file.type)) { $("#av-st").textContent = "Chọn một tấm ảnh nhé."; return; }
+    const img = new Image(), u = URL.createObjectURL(file);
+    img.onload = () => {
+      const n = Math.min(img.naturalWidth, img.naturalHeight), cv = document.createElement("canvas"); cv.width = cv.height = 192;
+      cv.getContext("2d").drawImage(img, (img.naturalWidth - n) / 2, (img.naturalHeight - n) / 2, n, n, 0, 0, 192, 192);
+      URL.revokeObjectURL(u); luuAvatar(cv.toDataURL("image/jpeg", .85));
+    };
+    img.onerror = () => { URL.revokeObjectURL(u); $("#av-st").textContent = "Không mở được ảnh này, thử ảnh khác."; };
+    img.src = u;
+  });
+  const x = $("#av-xoa"); if (x) x.onclick = () => luuAvatar("");
 }
 
 /* ================= Làm việc: tin nhắn · thông báo · việc cần làm ================= */
@@ -2202,7 +2244,7 @@ async function onUser(u) {
   }
 
   if (!isTeacher) {
-    if (tdDoc) myProgress = { bai: tdDoc.bai || {}, baitap: tdDoc.baitap || {} };
+    if (tdDoc) { myProgress = { bai: tdDoc.bai || {}, baitap: tdDoc.baitap || {} }; if (tdDoc.anh) { myAvatar = tdDoc.anh; try { localStorage.setItem("lvtt-avatar", myAvatar); } catch (e) {} } }
     listen(doc(db, "nhanxet", mail), d => { myFeedback = d.exists() ? d.data() : {}; renderHomework(); renderMyProg(); saveData(); });
     // Điểm danh của chính em (lỗi quyền thì im lặng, panel vẫn hiện hướng dẫn)
     unsubs.push(onSnapshot(doc(db, "diemdanh", mail), d => { myDiemdanh = d.exists() ? d.data() : {}; renderMyProg(); }, () => renderMyProg()));

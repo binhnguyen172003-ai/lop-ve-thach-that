@@ -233,3 +233,9 @@ export const XP_THUONG = [
   { hocVien: "Thùy", xp: 100, ghiChu: "Có bài lên Bài vẽ nổi bật · lên hạng E" },
   { hocVien: "Nam", xp: 100, ghiChu: "Có bài lên Bài vẽ nổi bật · lên hạng E" },
 ];
+
+// ===== ẢNH ĐẠI DIỆN HIỆN CÔNG KHAI (Top rank, bảng hạng) =====
+// Học viên tự đổi ảnh trong Tài khoản; ảnh ở đây dùng cho trang chủ.
+export const AVATAR = {
+  "Đặng Huy Hoàn": "assets/img/avatar/dang-huy-hoan.webp",
+};

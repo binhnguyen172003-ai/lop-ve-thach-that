@@ -1683,3 +1683,7 @@ nav .acct.has-ka .acct-icon{display:none!important}
 .xh-row.t9{background:linear-gradient(90deg,rgba(255,140,255,.16),transparent 60%)}
 .xh-row.t9 .xh-mo b{background:linear-gradient(90deg,#ff5a5a,#ffc400,#3fcf5b,#3ec6e0,#9b5cff);-webkit-background-clip:text;background-clip:text;color:transparent}
 .xh-row.t9 .xh-kim{background:linear-gradient(90deg,#ff5a5a,#ffc400,#3fcf5b,#3ec6e0,#9b5cff);-webkit-text-fill-color:#0b0d14}
+.av-doi{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:10px}
+.av-doi[hidden]{display:none}
+.av-doi span{font-size:.8rem}
+.who-rank .ka.md{width:84px;height:82px}
