@@ -367,10 +367,10 @@ const RANK = [
   { ma: "C", xp: 300, mau: "#3ec6e0", kim: "Bạc", ten: "Chăm Chỉ", mo: "Tiềm năng bắt đầu lộ rõ." },
   { ma: "B", xp: 700, mau: "#3d6bff", kim: "Vàng", ten: "Dân Chuyên", mo: "Nền tảng chắc, làm bài đầy đủ." },
   { ma: "A", xp: 1400, mau: "#9b5cff", kim: "Bạch Kim", ten: "Lão Làng", mo: "Trên mức trung bình của lớp." },
-  { ma: "S", xp: 2500, mau: "#ffc400", kim: "Kim Cương", ten: "Cao Thủ", mo: "Được cả lớp công nhận." },
-  { ma: "SS", xp: 4000, mau: "#ff8a1f", kim: "Tinh Anh", ten: "Đại Cao Thủ", mo: "Nhóm học viên giỏi nhất." },
-  { ma: "SSS", xp: 6500, mau: "#ff3b3b", kim: "Huyền Thoại", ten: "Bậc Thầy", mo: "Rất ít người đạt được." },
-  { ma: "SSS+", xp: 10000, mau: "rainbow", kim: "Thách Đấu", ten: "Huyền Thoại Dreamers", mo: "Vượt mọi giới hạn." },
+  { ma: "S", xp: 3400, mau: "#ffc400", kim: "Kim Cương", ten: "Cao Thủ", mo: "Được cả lớp công nhận." },
+  { ma: "SS", xp: 5400, mau: "#ff8a1f", kim: "Tinh Anh", ten: "Đại Cao Thủ", mo: "Nhóm học viên giỏi nhất." },
+  { ma: "SSS", xp: 7400, mau: "#ff3b3b", kim: "Huyền Thoại", ten: "Bậc Thầy", mo: "Rất ít người đạt được." },
+  { ma: "SSS+", xp: 9400, mau: "rainbow", kim: "Thách Đấu", ten: "Huyền Thoại Dreamers", mo: "Vượt mọi giới hạn." },
 ];
 // Cách tính điểm kinh nghiệm (XP) — thầy sửa số ở đây nếu muốn
 const XP = { buoi: 10, baiTap: 15, baiHoc: 5, diemGioi: 10, noiBat: 100, top1: 25 };
@@ -497,7 +497,7 @@ function moBangRank(ten) {
     <div class="rk-note"><b>📌 Ghi chú</b><ul>
       <li>Mùa xếp hạng bắt đầu từ <b>${fmtDate(new Date(RANK_BAT_DAU + "T00:00"))}</b>. Mọi học viên khởi đầu ở <b>hạng F · Sắt · Người Mới</b>.</li>
       <li>Hạng càng cao, huy hiệu càng rực rỡ: từ Sắt xám → Đồng → Bạc → Vàng → Bạch Kim → Kim Cương → … → <b>Thách Đấu cầu vồng</b>.</li>
-      <li><b>Càng lên cao càng khó:</b> mỗi hạng cần nhiều XP hơn hẳn hạng trước (F→E chỉ 100 XP, nhưng SSS→SSS+ cần thêm 3.500 XP). Chỉ những bạn chăm chỉ bền bỉ cả năm mới chạm tới Thách Đấu.</li>
+      <li><b>Càng lên cao càng khó:</b> mỗi hạng cần nhiều XP hơn hẳn hạng trước (F→E chỉ 100 XP). <b>Từ Lão Làng (A) trở lên, mỗi hạng cần thêm 2.000 XP</b>: A 1.400 → S 3.400 → SS 5.400 → SSS 7.400 → SSS+ 9.400. Chỉ những bạn chăm chỉ bền bỉ cả năm mới chạm tới Thách Đấu.</li>
       <li>XP cộng tự động khi em đi học, nộp bài, được chấm điểm cao hoặc có bài lên Bài vẽ nổi bật. Thầy có thể thưởng thêm XP cho bài xuất sắc.</li>
       <li>Hạng đầy đủ của em (gồm đi học, bài tập) xem trong mục <b>Tài khoản</b>.</li></ul></div>
     <h3>Cách kiếm XP</h3>${cachXpHTML()}
@@ -1651,7 +1651,8 @@ function updBadges() {
 function renderTiles() {
   const box = $("#acc-tiles"); if (!box) return;
   const show = canLearnNow();
-  box.hidden = !show; if (!show) { box.innerHTML = ""; return; }
+  box.hidden = !show; { const xh = $("#xep-hang"); if (xh) xh.hidden = !show; }
+  if (!show) { box.innerHTML = ""; return; }
   const today = todayVN();
   const tin = lvUnreadMsgs(), tb = lvUnreadTB(), viec = lvMyOpenTasks();
   const daHoc = Object.values(myProgress.bai || {}).filter(Boolean).length;

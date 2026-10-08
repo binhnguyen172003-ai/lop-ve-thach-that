@@ -1477,3 +1477,11 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
 .nb-card figcaption b{row-gap:6px}
 @media (max-width:640px){.rk-chip{gap:6px;padding:4px 12px 4px 8px;margin-left:0}.rk-chip small{font-size:.54rem;letter-spacing:.16em}.rk-chip b{font-size:.94rem!important}.rk-chip em{font-size:.58rem;letter-spacing:.08em;padding-left:7px}.rk-chip svg{width:14px;height:14px}}
 @media (max-width:640px){.rk-ai{grid-template-columns:auto 1fr;gap:12px;padding:12px}.rk-ai .rk-badge.lg{width:62px;height:66px}.rk-ai .rk-badge.lg b{font-size:1.1rem}.rk-ai .rk-badge.lg i{font-size:.5rem;bottom:-6px}.rk-dlg h2{font-size:1.4rem}}
+.acc-xh{margin-top:28px;padding-top:24px;border-top:1px solid var(--rule)}
+.acc-xh[hidden]{display:none}
+/* Khung bài nổi bật dài thêm cho tên + chip hạng + mô tả không bị che */
+.nb-stage{height:460px}
+.nb-card{height:440px}
+.nb-card img{height:calc(100% - 112px)}
+.nb-card figcaption{height:auto;min-height:88px;bottom:12px;align-content:center;gap:5px}
+@media (max-width:640px){.nb-stage{height:420px}.nb-card{height:400px}}

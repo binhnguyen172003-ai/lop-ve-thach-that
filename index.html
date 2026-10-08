@@ -183,18 +183,6 @@
     <div class="gv-ring nb-ring" id="nb-ring" aria-roledescription="vòng xoay" aria-label="Bài vẽ nổi bật"></div>
   </section>
 
-  <section id="xep-hang" aria-labelledby="h-xh">
-    <div class="sec-head">
-      <div><p class="eyebrow">Dành cho học viên</p><h2 id="h-xh">Bảng xếp hạng &amp; cách leo hạng</h2></div>
-      <p class="muted keep">Đi học đều, làm bài đầy đủ, có bài lên Top nổi bật là leo hạng. Hạng của em hiện trong mục Tài khoản.</p>
-    </div>
-    <div class="xh-grid">
-      <div class="xh-bang" id="xh-bang" role="table" aria-label="Các hạng"></div>
-      <div class="xh-cach" id="xh-cach"></div>
-    </div>
-    <div class="xh-top" id="xh-top"></div>
-    <div class="xh-thanhtuu" id="xh-thanhtuu"></div>
-  </section>
   </div>
 
   <section aria-labelledby="h-ve-lop" class="ve-lop">
@@ -573,6 +561,20 @@
 
   <!-- Đã vào lớp: các ô đi nhanh tới từng phần -->
   <div class="acc-tiles" id="acc-tiles" hidden></div>
+
+  <!-- Bảng xếp hạng & thành tựu: chỉ hiện trong Tài khoản -->
+  <section class="acc-xh" id="xep-hang" aria-labelledby="h-xh" hidden>
+    <div class="sec-head">
+      <div><p class="eyebrow">Hạng & thành tựu</p><h2 id="h-xh">Bảng xếp hạng &amp; cách leo hạng</h2></div>
+      <p class="muted keep">Đi học đều, làm bài đầy đủ, có bài lên Top nổi bật là leo hạng. Bấm vào huy hiệu bất kỳ để xem ghi chú.</p>
+    </div>
+    <div class="xh-grid">
+      <div class="xh-bang" id="xh-bang" role="table" aria-label="Các hạng"></div>
+      <div class="xh-cach" id="xh-cach"></div>
+    </div>
+    <div class="xh-top" id="xh-top"></div>
+    <div class="xh-thanhtuu" id="xh-thanhtuu"></div>
+  </section>
 
   <!-- Đăng ký bằng mật khẩu: xác nhận Gmail là của em -->
   <div class="card step-card" id="card-verify" hidden>
