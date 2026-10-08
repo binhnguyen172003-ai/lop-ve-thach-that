@@ -177,8 +177,8 @@ export const MUC_TIEU = {
 export const GIAO_VIEN = [
   { ten: "Nguyễn Đình Bình", vaiTro: "Quản lý · Giáo viên chính", khoi: "Khối H, V", truong: "", nganh: "Phụ trách chuyên môn và lộ trình luyện thi của lớp", chinh: true },
   { ten: "Cấn Hải An", vaiTro: "Giảng viên", khoi: "Khối V", truong: "HAU", nganh: "Sinh viên Kiến trúc · kiểm soát chất lượng giảng dạy", anh: "can-hai-an" },
-  { ten: "Đỗ Hữu Trường", vaiTro: "Trợ giảng", khoi: "Khối V", truong: "HUCE", nganh: "Học viên Dreamers khoá 2026 · tượng, Mỹ thuật 2", anh: "do-huu-truong" },
-  { ten: "Bùi Anh Đức", vaiTro: "Trợ giảng", khoi: "Khối H", truong: "", nganh: "Hình hoạ Khối H · chân dung và người cơ bản", anh: "bui-anh-duc" },
+  { ten: "Đỗ Hữu Trường", vaiTro: "Trợ giảng", khoi: "Khối V", truong: "HAU", nganh: "Sinh viên Kiến trúc, học viên Dreamers khoá 2026 · tượng, Mỹ thuật 2", anh: "do-huu-truong" },
+  { ten: "Bùi Anh Đức", vaiTro: "Trợ giảng", khoi: "Khối H", truong: "MTCN", nganh: "Sinh viên Mỹ thuật Công nghiệp · chân dung và người cơ bản", anh: "bui-anh-duc" },
   { ten: "Kiều Huyền Linh", vaiTro: "Trợ giảng", khoi: "Khối H", truong: "NUAE", nganh: "Sinh viên Sư phạm Mỹ thuật · màu cơ bản", anh: "kieu-huyen-linh" },
   { ten: "Nguyễn Duy Cường", vaiTro: "Trợ giảng", khoi: "Khối V", truong: "HAU", nganh: "Sinh viên Kiến trúc · tượng, Mỹ thuật 2", anh: "nguyen-duy-cuong" },
   { ten: "Nguyễn Ngân Thương", vaiTro: "Trợ giảng", khoi: "Khối V", truong: "HUCE", nganh: "Sinh viên Kiến trúc · tượng, tĩnh vật", anh: "nguyen-ngan-thuong" },
