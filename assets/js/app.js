@@ -319,24 +319,23 @@ function renderHonor() {
   const diemCua = x => x.top ? `<b class="sc num">${fmtDiem(x.top.d)}</b><span class="sm">${esc(x.top.m)} · ${esc(x.top.tr)}</span>` : `<span class="sm">Đỗ ${esc(x.truongs.join(", "))}</span>`;
   const chiTiet = x => x.kq.map(r => `<li>${chipTr(r.truong)} <span>${esc(tr(r.truong).ten)}</span>
       <span class="ds">${Object.entries(r.diem || {}).map(([m, d]) => `${esc(m)} <b class="num">${fmtDiem(d)}</b>`).join(" · ") || "Đỗ"}</span></li>`).join("");
-  // Thẻ vinh danh: chỉ 3 bạn điểm cao nhất (vàng – đỏ – xanh lá)
-  const diemTatCa = x => x.kq.flatMap(r => Object.entries(r.diem || {}).map(([m, d]) => ({ m, d: Number(d), tr: r.truong })));
+  // Kiểu MotoGP "Top 9": bục 3 thẻ (vàng – đỏ – xanh lá) + danh sách hạng 4–9, còn lại bấm "Xem tất cả"
   const rankOf = new Map(scored.map((x, i) => [x, i + 1]));
   const cards = scored.slice(0, 3);
-  const top3 = cards; // các bạn đã có thẻ thì không lặp lại ở danh sách bên dưới
   const VT = { "Hình hoạ": "HH", "Bố cục màu": "BCM", "Bố cục": "BC", "Ký hoạ": "KH", "Phỏng vấn": "PV", "Khối V": "KV" };
-  const fCard = x => {
-    const r = rankOf.get(x), ds = diemTatCa(x).sort((a, b) => b.d - a.d);
-    const tier = ["gold", "red", "green"][r - 1] || "steel";
-    return `<article class="fcard ${tier}" role="listitem"><div class="fc-in">
-      ${x.anh ? `<img class="fc-ph" src="${esc(x.anh)}" alt="${esc(x.ten)}" loading="lazy" decoding="async" width="240" height="240">` : `<span class="fc-wm" aria-hidden="true">${esc(initials(x.ten))}</span>`}
-      <div class="fc-rtg"><b class="num">${x.top ? fmtDiem(x.top.d) : "–"}</b><span>ĐIỂM</span><em class="fc-rank num">HẠNG ${r}</em></div>
-      <div class="fc-id"><div class="trs">${x.truongs.map(chipTr).join("")}</div>
-        <h3 class="fc-nm">${esc(x.ten)}</h3>
-        <p class="fc-sub">${x.top ? `${esc(x.top.m)} · ${esc(tr(x.top.tr).ten)}` : ""}</p></div>
-      <div class="fc-stats">${ds.slice(0, 4).map(d => `<div><b class="num">${fmtDiem(d.d)}</b><span>${esc(VT[d.m] || d.m)}·${esc(d.tr)}</span></div>`).join("")}</div>
-      <div class="fc-foot"><span>DREAMERS</span><span class="num">MÙA THI ${bvYear}</span></div></div></article>`;
+  const tachTen = t => { const w = String(t).trim().split(/\s+/); return [w.slice(0, -1).join(" "), w.slice(-1)[0] || ""]; };
+  const mgCard = x => {
+    const r = rankOf.get(x), [ho, ten] = tachTen(x.ten);
+    return `<li class="mg-card c${r}">
+      <div class="mg-top">
+        <span class="mg-big num" aria-hidden="true">${r}</span>
+        ${x.anh ? `<img src="${esc(x.anh)}" alt="${esc(x.ten)}" loading="lazy" decoding="async" width="240" height="240">` : `<span class="mg-ini">${esc(initials(x.ten))}</span>`}
+        <span class="mg-badge">${x.truongs.map(k => `<i style="--c:${esc(tr(k).mau)}">${esc(k)}</i>`).join("")}</span>
+        <span class="mg-pts"><b class="num">${x.top ? fmtDiem(x.top.d) : "–"}</b><small>${x.top ? esc(VT[x.top.m] || x.top.m) : ""}</small></span>
+      </div>
+      <div class="mg-name"><span>${esc(ho)}</span><b>${esc(ten)}</b></div></li>`;
   };
+  const rest = list.filter(x => !cards.includes(x));
   $("#bv-body").innerHTML = `
     <div class="bv-stats">
       <div><b class="num">${all.length}</b><span>học viên được vinh danh</span></div>
@@ -345,14 +344,18 @@ function renderHonor() {
       <div><b class="num">${all.filter(x => x.top && x.top.d >= 8.5).length}</b><span>bạn đạt từ 8,5 điểm</span></div>
     </div>
     ${bvSchool ? `<p class="bv-filter">Đang xem: <b>${esc(tr(bvSchool).ten)}</b> <button type="button" class="linkish" id="bv-clear">Xem tất cả</button></p>` : ""}
-    <div class="fcards" role="list">${cards.map(x => fCard(x)).join("")}</div>
-    <p class="fcards-hint">← Vuốt ngang để xem ${cards.length} thẻ vinh danh →</p>
-    <ol class="hv-table ${bvMore ? "" : "gon"}">${list.filter(x => !cards.includes(x)).map((x, i) => `<li class="${i >= 7 ? "them" : ""}"><details>
-      <summary><span class="rk num">${x.top ? rankOf.get(x) : "–"}</span>
-        <span class="who"><b>${esc(x.ten)}</b><span class="trs">${x.truongs.map(chipTr).join("")}</span></span>
-        <span class="pt">${diemCua(x)}</span></summary>
-      <ul class="kq">${chiTiet(x)}</ul></details></li>`).join("")}</ol>
-    ${list.length - cards.length > 7 ? `<button type="button" class="btn bv-more" id="bv-more">${bvMore ? "Thu gọn" : `Xem tất cả ${list.length} học viên`}</button>` : ""}
+    <div class="mg-board">
+      <h3 class="mg-title">TOP ${Math.min(9, list.length)} <span>· Mùa thi ${bvYear}</span></h3>
+      <ol class="mg-pod">${cards.map(mgCard).join("")}</ol>
+      <ol class="mg-rows ${bvMore ? "" : "gon"}">${rest.map((x, i) => `<li class="${i >= 6 ? "them" : ""}"><details>
+        <summary><span class="mg-rk num">${x.top ? rankOf.get(x) : "–"}</span>
+          <span class="mg-tr">${x.truongs.map(k => `<i style="--c:${esc(tr(k).mau)}">${esc(k)}</i>`).join("")}</span>
+          <b class="mg-nm">${esc(x.ten)}</b>
+          <span class="mg-sub">${x.top ? `${esc(x.top.m)} · ${esc(x.top.tr)}` : `Đỗ ${esc(x.truongs.join(", "))}`}</span>
+          <span class="mg-sc"><b class="num">${x.top ? fmtDiem(x.top.d) : "–"}</b><small>Đ</small></span></summary>
+        <ul class="kq">${chiTiet(x)}</ul></details></li>`).join("")}</ol>
+      ${rest.length > 6 ? `<button type="button" class="mg-more" id="bv-more">${bvMore ? "Thu gọn ▲" : `Xem tất cả ${list.length} học viên ▼`}</button>` : ""}
+    </div>
     <p class="muted bv-note">Bấm vào tên để xem điểm từng trường. Xếp theo điểm môn vẽ cao nhất của mỗi bạn.</p>`;
   if ($("#bv-clear")) $("#bv-clear").onclick = () => { bvSchool = ""; renderHonor(); };
   if ($("#bv-more")) $("#bv-more").onclick = () => { bvMore = !bvMore; renderHonor(); if (!bvMore) $("#bang-vang").scrollIntoView({ block: "start" }); };
