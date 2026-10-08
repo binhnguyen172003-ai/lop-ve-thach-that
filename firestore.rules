@@ -1,0 +1,64 @@
+rules_version = '2';
+
+// Luật bảo mật cho web Lớp Vẽ Không Vui.
+// Dán toàn bộ nội dung file này vào Firebase Console > Firestore Database > Rules > Publish.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null && request.auth.token.email_verified == true;
+    }
+    function myEmail() {
+      return request.auth.token.email.lower();
+    }
+    // Gmail giáo viên quản lý. Muốn thêm giáo viên: tạo document admins/<gmail> trong Firestore.
+    function isAdmin() {
+      return signedIn() && (
+        myEmail() == 'binhnguyen172003@gmail.com' ||
+        exists(/databases/$(database)/documents/admins/$(myEmail()))
+      );
+    }
+    // Học viên đã được duyệt = có document hocvien/<gmail>.
+    function isStudent() {
+      return signedIn() && exists(/databases/$(database)/documents/hocvien/$(myEmail()));
+    }
+
+    // Giáo trình và bài tập: học viên đã duyệt được đọc, chỉ giáo viên được sửa.
+    match /giaotrinh/{id} {
+      allow read: if isStudent() || isAdmin();
+      allow write: if isAdmin();
+    }
+    match /baitap/{id} {
+      allow read: if isStudent() || isAdmin();
+      allow write: if isAdmin();
+    }
+
+    // Danh sách học viên đã duyệt: học viên chỉ đọc được hồ sơ của chính mình.
+    match /hocvien/{mail} {
+      allow read: if isAdmin() || (signedIn() && myEmail() == mail);
+      allow write: if isAdmin();
+    }
+
+    // Yêu cầu duyệt: ai đăng nhập Google cũng gửi được, nhưng chỉ cho Gmail của chính mình.
+    match /yeucau/{mail} {
+      allow read: if isAdmin() || (signedIn() && myEmail() == mail);
+      allow create, update: if signedIn() && myEmail() == mail
+        && request.resource.data.gmail == mail
+        && request.resource.data.keys().hasOnly(['gmail', 'ten', 'lop', 'coso', 'sdt', 'guiLuc'])
+        && request.resource.data.ten is string && request.resource.data.ten.size() < 100
+        && request.resource.data.sdt is string && request.resource.data.sdt.size() < 30;
+      allow delete: if isAdmin();
+    }
+
+    // Tiến độ học: học viên tự ghi của mình, giáo viên xem được tất cả.
+    match /tiendo/{mail} {
+      allow read: if isAdmin() || (signedIn() && myEmail() == mail);
+      allow write: if isStudent() && myEmail() == mail;
+    }
+
+    match /admins/{mail} {
+      allow read: if signedIn() && myEmail() == mail;
+      allow write: if false;
+    }
+  }
+}
