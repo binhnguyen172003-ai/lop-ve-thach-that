@@ -82,16 +82,27 @@ Bỏ qua bước này, link xác nhận Gmail sẽ không quay về đúng web.
 
 ## Dùng hằng ngày
 
+Mọi việc quản lý nằm trong nút **Tài khoản** (góc trên bên phải). Vào đó sẽ thấy thanh công cụ: Tổng quan · Làm việc · Giáo trình · Bài tập · Điểm danh · Duyệt. Số đỏ trên nút Tài khoản = tin nhắn / thông báo / yêu cầu mới.
+
 | Việc | Làm ở đâu |
 |---|---|
-| Duyệt học viên mới | Đăng nhập / Đăng ký → Yêu cầu chờ duyệt → **Duyệt** |
-| Duyệt nhanh không cần học viên gửi | Đăng nhập / Đăng ký → **Thêm học viên trực tiếp** |
-| Học viên nghỉ học | Bảng Học viên đã duyệt → **Thu hồi** |
-| Giao bài tập | Bài tập → khung **Giao bài tập mới** |
-| Thêm bài giáo trình | Giáo trình → khung **Thêm bài vào giáo trình** |
-| Xem ai đã nộp bài | Bài tập → mỗi bài hiện "x/y học viên đã nộp" |
-| Xem tiến độ học | Bảng Học viên đã duyệt → cột **Đã học** |
+| Duyệt học viên mới | Tài khoản → **Duyệt** → Yêu cầu chờ duyệt |
+| Duyệt nhanh không cần học viên gửi | Tài khoản → Duyệt → **Duyệt trực tiếp một Gmail** |
+| Học viên nghỉ học | Duyệt → bảng Học viên đã duyệt → **Thu hồi** |
+| Nhắn tin riêng với học viên / giáo viên | Tài khoản → **Làm việc** → Tin nhắn (ô "Nhắn tin mới cho…" để bắt đầu) |
+| Đăng thông báo (nghỉ học, đổi lịch…) | Làm việc → **Thông báo** → chọn gửi tới Tất cả hoặc Chỉ giáo viên |
+| Giao việc cho giáo viên | Làm việc → **Việc cần làm** → giao cho một người hoặc tất cả, có hạn |
+| Điểm danh | Tài khoản → **Điểm danh** |
+| Giao bài tập | Tài khoản → Bài tập → khung **Giao bài tập mới** |
+| Thêm bài giáo trình | Tài khoản → Giáo trình → khung **Thêm bài vào giáo trình** |
+| Thêm / sửa giáo viên trên trang chủ | File `data/noi-dung.js` → danh sách `GIAO_VIEN`, ảnh đặt trong `assets/img/giao-vien/` |
+| Thêm video nền trang chủ | Đặt video (10–20 giây, dưới 6 MB) vào `assets/video/`, điền tên file vào `VIDEO_BIA` trong `data/noi-dung.js` |
 | Thêm giáo viên quản lý | Firestore → tạo collection `admins`, document ID là Gmail giáo viên (chữ thường), thêm 1 trường bất kỳ |
+
+Ai thấy gì trong khu Làm việc:
+- **Học viên:** nhắn riêng với thầy cô (chỉ thầy cô đọc), xem thông báo chung.
+- **Giáo viên:** nhắn với mọi học viên, nhắn riêng quản lý, đăng thông báo chung, tick xong việc được giao.
+- **Quản lý:** thấy tất cả, đăng thông báo nội bộ chỉ giáo viên đọc, giao và xoá việc.
 
 ## Gặp lỗi thường gặp
 

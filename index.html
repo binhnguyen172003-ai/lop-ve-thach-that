@@ -11,7 +11,6 @@
 <meta property="og:image" content="https://binhnguyen172003-ai.github.io/lop-ve-thach-that/assets/img/bia-share.jpg">
 <meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
-<link rel="preload" as="image" href="assets/img/bia-1280.jpg" imagesrcset="assets/img/bia-800.jpg 800w, assets/img/bia-1280.jpg 1280w" imagesizes="(max-width:1080px) 100vw, 1080px" fetchpriority="high">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%232c43b0'/%3E%3Cpath d='M16 8c5-2 9 2 8 8s-4 9-8 8c-4 1-7-2-8-8s3-10 8-8z' fill='none' stroke='white' stroke-width='2.2'/%3E%3C/svg%3E">
 <style>html{color-scheme:light}:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
 <meta name="theme-color" content="#2c43b0">
@@ -21,18 +20,19 @@
 <meta name="apple-mobile-web-app-title" content="Vẽ Không Vui">
 <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
 <!-- Học viên đã đăng nhập / đang mở trang học: tải sẵn thư viện ngay. Khách xem giới thiệu thì để sau. -->
-<script>try{var h=location.hash.slice(1),c=JSON.parse(localStorage.getItem("lvkv-phien")||"null");if(/^(giao-trinh|bai-tap|tai-khoan|duyet)$/.test(h)||(c&&c.mail)){["app","auth","firestore"].forEach(function(n){var l=document.createElement("link");l.rel="modulepreload";l.href="https://www.gstatic.com/firebasejs/10.12.2/firebase-"+n+".js";document.head.appendChild(l)})}}catch(e){}</script>
+<script>try{var h=location.hash.slice(1),c=JSON.parse(localStorage.getItem("lvkv-phien")||"null");if(/^(giao-trinh|bai-tap|tai-khoan|duyet|diem-danh|lam-viec)$/.test(h)||(c&&c.mail)){["app","auth","firestore"].forEach(function(n){var l=document.createElement("link");l.rel="modulepreload";l.href="https://www.gstatic.com/firebasejs/10.12.2/firebase-"+n+".js";document.head.appendChild(l)})}}catch(e){}</script>
 <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <!-- Phông chữ tải sau, không bắt người xem chờ trắng màn hình -->
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Be+Vietnam+Pro:wght@400;500;600&display=swap" media="print" onload="this.media='all'">
-<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Be+Vietnam+Pro:wght@400;500;600&display=swap"></noscript>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Be+Vietnam+Pro:wght@400;500;600&family=Playfair+Display:ital,wght@1,500;1,600&display=swap" media="print" onload="this.media='all'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Be+Vietnam+Pro:wght@400;500;600&family=Playfair+Display:ital,wght@1,500;1,600&display=swap"></noscript>
 <link rel="stylesheet" href="assets/css/style.css?v=20261008c">
 <link rel="modulepreload" href="assets/js/app.js?v=20261008c">
 <link rel="modulepreload" href="config/firebase-config.js?v=20261008c">
 <link rel="modulepreload" href="data/noi-dung.js?v=20261008c">
 <script nomodule>document.addEventListener("DOMContentLoaded",function(){var d=document.createElement("div");d.className="slow-bar";d.innerHTML="Trình duyệt này đã quá cũ nên web chạy không đủ. Hãy cập nhật Chrome hoặc Safari rồi mở lại.";document.body.insertBefore(d,document.body.firstChild)})</script>
+<script>document.documentElement.classList.add("js-fx");setTimeout(function(){document.querySelectorAll(".fx,.cine-h1").forEach(function(e){e.classList.add("in")})},2600);</script>
 <script>setTimeout(function(){if(window.__appOk)return;var d=document.createElement("div");d.className="slow-bar";d.innerHTML='Mạng đang chậm, trang chưa tải xong. <button type="button" onclick="location.reload()">Tải lại</button>';document.body.insertBefore(d,document.body.firstChild)},12000)</script>
 </head>
 <body>
@@ -76,38 +76,69 @@
     <a class="link" href="#gioi-thieu" data-nav="home">Giới thiệu</a>
     <a class="link" href="#khoa-hoc" data-nav="home">Khoá học</a>
     <a class="link" href="#bang-vang" data-nav="home">Bảng vàng</a>
+    <a class="link" href="#giao-vien" data-nav="home">Giáo viên</a>
     <a class="link" href="#bai-ve" data-nav="home">Bài vẽ</a>
     <a class="link" href="#lich-thi" data-nav="home">Lịch thi 2027</a>
     <a class="link" href="#lich-hoc" data-nav="home">Lịch học</a>
-    <a class="link" href="#giao-trinh" data-nav="giao-trinh"><svg class="ico"><use href="#i-lock"/></svg> Giáo trình</a>
-    <a class="link" href="#bai-tap" data-nav="bai-tap"><svg class="ico"><use href="#i-lock"/></svg> Bài tập</a>
-    <a class="link" href="#diem-danh" data-nav="diem-danh" id="nav-dd" hidden>Điểm danh</a>
-    <a class="link" href="#duyet" data-nav="duyet" id="nav-duyet" hidden>Duyệt học viên <span class="chip" id="nav-req" hidden></span></a>
-    <a class="btn small acct" href="#tai-khoan" id="nav-acct">Đăng nhập / Đăng ký</a>
+    <button type="button" class="burger" id="nav-burger" aria-label="Mở menu" aria-expanded="false" aria-controls="menu-ov"><i></i><i></i><i></i></button>
+    <a class="btn small acct" href="#tai-khoan" id="nav-acct"><span id="nav-acct-t">Đăng nhập / Đăng ký</span><span class="nbadge num" id="nav-req" hidden></span></a>
   </div>
 </nav>
 
+<div class="menu-ov" id="menu-ov" aria-hidden="true">
+  <div class="menu-top"><span class="brand">Lớp Vẽ Không Vui</span><button type="button" class="menu-x" id="menu-x" aria-label="Đóng menu">✕</button></div>
+  <div class="menu-links" id="menu-links"></div>
+  <a class="glass-strong cine-btn menu-cta" href="#dang-ky">Đăng ký học thử <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17L17 7M7 7h10v10"/></svg></a>
+</div>
+
+<!-- Thanh gọi nhanh trên điện thoại -->
+<div class="dock glass" id="dock" hidden>
+  <a class="dock-main" href="#dang-ky">Học thử miễn phí</a>
+  <a class="dock-ico" id="dock-call" href="#" aria-label="Gọi thầy"><svg viewBox="0 0 24 24"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"/></svg></a>
+  <a class="dock-ico" id="dock-zalo" href="#" target="_blank" rel="noopener" aria-label="Nhắn Zalo"><b>Zalo</b></a>
+</div>
+
+<!-- Thanh công cụ trong khu Tài khoản: chỉ hiện các mục người dùng được phép -->
+<div class="acc-nav" id="acc-nav" hidden>
+  <div class="wrap" role="tablist" aria-label="Khu tài khoản">
+    <a href="#tai-khoan" data-acc="tai-khoan">Tổng quan</a>
+    <a href="#lam-viec" data-acc="lam-viec" data-can="learn">Làm việc <span class="nbadge num" id="acc-lv-n" hidden></span></a>
+    <a href="#giao-trinh" data-acc="giao-trinh" data-can="learn">Giáo trình</a>
+    <a href="#bai-tap" data-acc="bai-tap" data-can="learn">Bài tập</a>
+    <a href="#diem-danh" data-acc="diem-danh" data-can="teacher">Điểm danh</a>
+    <a href="#duyet" data-acc="duyet" data-can="admin">Duyệt <span class="nbadge num" id="acc-duyet-n" hidden></span></a>
+  </div>
+</div>
+
 <!-- ============ TRANG CHỦ ============ -->
 <main class="wrap" id="v-home">
-  <header class="hero cover" id="gioi-thieu">
-    <img class="cover-img" src="assets/img/bia-1280.jpg" srcset="assets/img/bia-800.jpg 800w, assets/img/bia-1280.jpg 1280w"
-      sizes="(max-width:1080px) 100vw, 1080px" width="1280" height="960" fetchpriority="high" decoding="async"
-      alt="Học viên Dreamers luyện vẽ hình hoạ tượng tại lớp, giữa phòng tượng thạch cao">
-    <div class="cover-in">
-      <p class="eyebrow">Luyện thi · Năng khiếu · Mỹ thuật — Thạch Thất, Hà Nội</p>
-      <h1>Lớp Vẽ <span class="strike">Không</span> Vui</h1>
-      <p class="lede">Học vẽ nghiêm túc từ con số 0, để ngày nhận kết quả thi năng khiếu mới là ngày vui.</p>
-      <div class="ctas">
-        <a class="btn primary" href="#dang-ky">Đăng ký học thử</a>
-        <a class="btn" href="#tai-khoan">Học viên đăng nhập</a>
+  <header class="hero cine" id="gioi-thieu">
+    <div class="cine-bg" aria-hidden="true">
+      <picture>
+        <source media="(max-width:640px)" srcset="assets/img/bia-doc.jpg">
+        <img class="cover-img" src="assets/img/bia-1280.jpg" srcset="assets/img/bia-800.jpg 800w, assets/img/bia-1280.jpg 1280w" sizes="100vw" width="1280" height="960" fetchpriority="low" decoding="async" alt="">
+      </picture>
+    </div>
+    <div class="cine-in">
+      <a class="glass pill cine-badge fx" style="--d:.3s" href="#lich-thi"><span class="pill-new">2027</span><span id="hero-badge">Mùa thi năng khiếu 2027</span></a>
+      <h1 class="cine-h1" id="hero-h1" aria-label="Lớp Vẽ Không Vui">Lớp Vẽ <span class="strike">Không</span> Vui</h1>
+      <p class="cine-lede fx" style="--d:.9s">Luyện thi năng khiếu Khối H, V tại Thạch Thất. Học nghiêm túc từ con số 0, để ngày nhận kết quả mới là ngày vui.</p>
+      <div class="cine-ctas fx" style="--d:1.1s">
+        <a class="glass-strong cine-btn" href="#dang-ky">Đăng ký học thử <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17L17 7M7 7h10v10"/></svg></a>
+        <a class="cine-link" href="#bang-vang"><svg viewBox="0 0 24 24" aria-hidden="true"><polygon points="6 4 20 12 6 20 6 4"/></svg> Xem bảng vàng</a>
       </div>
-      <div class="facts">
-        <span><b>6 năm</b> giảng dạy &amp; luyện thi</span>
-        <span><b>2 cơ sở</b> Bình Phú · Kim Quan</span>
-        <span><b>Khối H · V</b> và vẽ cơ bản</span>
+      <div class="cine-stats fx" style="--d:1.3s">
+        <a class="glass cine-stat" href="#bang-vang"><b class="num" id="hs-top">9,5</b><span>điểm vẽ cao nhất</span></a>
+        <a class="glass cine-stat" href="#bang-vang"><b class="num" id="hs-luot">52</b><span>lượt đỗ đại học</span></a>
+        <a class="glass cine-stat" href="#giao-vien"><b class="num">6 năm</b><span>luyện thi năng khiếu</span></a>
       </div>
     </div>
+    <div class="cine-partners fx" style="--d:1.5s">
+      <span class="glass pill">Học viên Dreamers đã đỗ</span>
+      <div class="cine-schools" id="hero-schools"><span>MTCN</span><span>HAU</span><span>HUCE</span><span>SIS</span><span>NUAE</span></div>
+    </div>
   </header>
+  <script>(function(){var h=document.getElementById("hero-h1");if(!h)return;var i=0,out=[];h.childNodes.forEach(function(n){if(n.nodeType===3){n.textContent.split(/\s+/).forEach(function(w){if(w)out.push('<span class="w" aria-hidden="true" style="--i:'+(i++)+'">'+w+'</span>')})}else{out.push('<span class="w" aria-hidden="true" style="--i:'+(i++)+'">'+n.outerHTML+'</span>')}});h.innerHTML=out.join("");requestAnimationFrame(function(){h.classList.add("in");document.querySelectorAll("#gioi-thieu .fx").forEach(function(e){e.classList.add("in")})})})();</script>
 
   <section aria-labelledby="h-ve-lop">
     <div class="sec-head">
@@ -180,6 +211,14 @@
     <div id="bv-body"></div>
   </section>
 
+  <section id="giao-vien" aria-labelledby="h-gv">
+    <div class="sec-head">
+      <div><p class="eyebrow">Đội ngũ</p><h2 id="h-gv">Giáo viên của lớp</h2></div>
+      <p class="muted">Sinh viên và cựu sinh viên Kiến trúc Hà Nội, Mỹ thuật Công nghiệp — chính những người đã đỗ các trường các em đang nhắm tới. Bấm vào từng thầy cô để xem bài vẽ.</p>
+    </div>
+    <div class="gv-grid" id="gv-grid"></div>
+  </section>
+
   <section id="bai-ve" aria-labelledby="h-baive">
     <div class="sec-head">
       <div><p class="eyebrow">Tác phẩm</p><h2 id="h-baive">Bài vẽ học viên</h2></div>
@@ -237,7 +276,7 @@
   <section id="lich-hoc" aria-labelledby="h-lich">
     <div class="sec-head">
       <div><p class="eyebrow">Thời gian biểu</p><h2 id="h-lich">Lịch học tại hai cơ sở</h2></div>
-      <p class="muted"><span id="ca-hoc-text"></span> Lịch có thể thay đổi theo từng khoá, thầy sẽ báo khi xếp lớp.</p>
+      <p class="muted keep"><span id="ca-hoc-text"></span> Lịch có thể thay đổi theo từng khoá, thầy sẽ báo khi xếp lớp.</p>
     </div>
     <div class="sched-tabs" id="sched-tabs" role="tablist"></div>
     <div class="sched-wrap"><table class="sched" id="sched"></table></div>
@@ -251,19 +290,21 @@
     <div class="khoi">
       <div>
         <span class="letter">H</span>
-        <dl>
+        <p class="khoi-1"><b>Hình hoạ người + bố cục màu</b> → Thiết kế đồ hoạ, thời trang, nội thất, mỹ thuật ứng dụng</p>
+        <details class="khoi-dl" open><summary>Xem môn thi &amp; ngành học</summary><dl>
           <dt>Môn năng khiếu</dt><dd>Hình hoạ người, bố cục trang trí màu</dd>
           <dt>Môn văn hoá</dt><dd>Tuỳ trường và phương thức xét tuyển</dd>
           <dt>Ngành học</dt><dd>Thiết kế đồ hoạ, thời trang, nội thất, công nghiệp và các ngành mỹ thuật ứng dụng</dd>
-        </dl>
+        </dl></details>
       </div>
       <div>
         <span class="letter">V</span>
-        <dl>
+        <p class="khoi-1"><b>Toán + hình hoạ tượng</b> → Kiến trúc, quy hoạch, nội thất, xây dựng</p>
+        <details class="khoi-dl" open><summary>Xem môn thi &amp; ngành học</summary><dl>
           <dt>Môn thi</dt><dd>Toán, hình hoạ tượng, vẽ mỹ thuật hoặc bố cục tuỳ trường</dd>
           <dt>Ví dụ</dt><dd>ĐH Kiến trúc Hà Nội thi Vẽ mỹ thuật 1 và Vẽ mỹ thuật 2</dd>
           <dt>Ngành học</dt><dd>Kiến trúc, quy hoạch, thiết kế nội thất và một số ngành xây dựng</dd>
-        </dl>
+        </dl></details>
       </div>
     </div>
     <p class="khoi-note">Lớp luyện thi cho ĐH Kiến trúc Hà Nội, ĐH Mỹ thuật Công nghiệp, ĐH Sư phạm Nghệ thuật TW, ĐH Xây dựng và các trường xét tuyển ngành vẽ khác. Chúng tôi giúp học sinh biết mình hợp khối nào trước khi đầu tư sâu, và luôn khuyến khích các em giữ vững môn văn hoá.</p>
@@ -272,7 +313,7 @@
   <section id="dang-ky" aria-labelledby="h-dk">
     <div class="sec-head">
       <div><p class="eyebrow">Tuyển sinh</p><h2 id="h-dk">Đăng ký học thử &amp; tư vấn</h2></div>
-      <p class="muted">Điền 2 ô bắt buộc rồi bấm gửi. Thông tin đến thẳng thầy, thầy gọi lại cho bố mẹ để tư vấn và xếp lớp.</p>
+      <p class="muted keep">Điền 2 ô bắt buộc rồi bấm gửi. Thông tin đến thẳng thầy, thầy gọi lại cho bố mẹ để tư vấn và xếp lớp.</p>
     </div>
     <div class="signup">
       <div class="card">
@@ -434,6 +475,9 @@
     </div>
   </div>
 
+  <!-- Đã vào lớp: các ô đi nhanh tới từng phần -->
+  <div class="acc-tiles" id="acc-tiles" hidden></div>
+
   <!-- Đăng ký bằng mật khẩu: xác nhận Gmail là của em -->
   <div class="card step-card" id="card-verify" hidden>
     <h3 style="margin-bottom:6px">Mở Gmail để xác nhận</h3>
@@ -486,6 +530,79 @@
   </div>
 
   <p class="note" style="margin-bottom:56px">Chưa là học viên của lớp? <a href="#dang-ky">Đăng ký học thử</a> trước nhé.</p>
+</main>
+
+<!-- ============ LÀM VIỆC (quản lý · giáo viên · học viên) ============ -->
+<main class="wrap" id="v-lam-viec" hidden>
+  <div class="page-head">
+    <p class="eyebrow">Tài khoản</p>
+    <h1>Làm việc</h1>
+    <p class="muted" id="lv-intro">Thông báo của lớp và tin nhắn riêng với thầy cô.</p>
+  </div>
+  <div class="lock" data-lock></div>
+  <div id="lv-body" hidden>
+    <div class="tabs" id="lv-tabs" role="tablist">
+      <button class="tab" type="button" data-lv="tin" aria-selected="true">Tin nhắn <span class="nbadge num" id="lv-n-tin" hidden></span></button>
+      <button class="tab" type="button" data-lv="tb" aria-selected="false">Thông báo <span class="nbadge num" id="lv-n-tb" hidden></span></button>
+      <button class="tab" type="button" data-lv="viec" aria-selected="false" data-teacher hidden>Việc cần làm <span class="nbadge num" id="lv-n-viec" hidden></span></button>
+    </div>
+
+    <!-- Tin nhắn -->
+    <section class="lv-pane" id="lv-tin" aria-label="Tin nhắn">
+      <div class="chat">
+        <aside class="chat-list" id="chat-list">
+          <div class="chat-new" data-teacher hidden>
+            <select id="chat-pick" aria-label="Nhắn tin mới cho"><option value="">+ Nhắn tin mới cho…</option></select>
+          </div>
+          <div class="tabs chat-filter" id="chat-filter" data-admin hidden>
+            <button class="tab" type="button" data-cf="hocvien" aria-selected="true">Học viên</button>
+            <button class="tab" type="button" data-cf="giaovien" aria-selected="false">Giáo viên</button>
+          </div>
+          <ul id="chat-threads"></ul>
+        </aside>
+        <div class="chat-pane" id="chat-pane">
+          <div class="chat-head"><button type="button" class="btn small chat-back" id="chat-back">‹ Danh sách</button><div><b id="chat-ten"></b><span class="muted" id="chat-sub"></span></div></div>
+          <div class="chat-msgs" id="chat-msgs" aria-live="polite"></div>
+          <form class="chat-form" id="f-chat">
+            <textarea id="chat-nd" rows="1" maxlength="1000" placeholder="Nhập tin nhắn…" aria-label="Tin nhắn"></textarea>
+            <button class="btn primary" type="submit" id="chat-send">Gửi</button>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <!-- Thông báo -->
+    <section class="lv-pane" id="lv-tb" hidden aria-label="Thông báo">
+      <form class="card lv-form" id="f-tb" data-teacher hidden>
+        <h3>Đăng thông báo</h3>
+        <label for="tb-tieude">Tiêu đề<input id="tb-tieude" maxlength="120" placeholder="VD: Nghỉ học tối thứ 6"></label>
+        <label for="tb-nd">Nội dung<textarea id="tb-nd" maxlength="2000" required placeholder="Viết ngắn gọn, rõ ngày giờ."></textarea></label>
+        <div class="fgrid">
+          <label for="tb-gui">Gửi tới<select id="tb-gui"><option value="tatca">Tất cả học viên và giáo viên</option><option value="giaovien">Chỉ giáo viên</option></select></label>
+        </div>
+        <div><button class="btn primary" type="submit">Đăng thông báo</button> <span class="status" id="tb-status"></span></div>
+      </form>
+      <div class="tb-list" id="tb-list"></div>
+    </section>
+
+    <!-- Việc cần làm (giáo viên + quản lý) -->
+    <section class="lv-pane" id="lv-viec" hidden aria-label="Việc cần làm">
+      <form class="card lv-form" id="f-viec" data-admin hidden>
+        <h3>Giao việc cho giáo viên</h3>
+        <label for="cv-viec">Việc cần làm<input id="cv-viec" maxlength="200" required placeholder="VD: Chấm bài tuần 3 lớp 2k9 Khối H"></label>
+        <div class="fgrid">
+          <label for="cv-cho">Giao cho<select id="cv-cho"><option value="tatca">Tất cả giáo viên</option></select></label>
+          <label for="cv-han">Hạn<input id="cv-han" type="date"></label>
+        </div>
+        <div><button class="btn primary" type="submit">Giao việc</button> <span class="status" id="cv-status"></span></div>
+      </form>
+      <div class="tabs" id="cv-filter">
+        <button class="tab" type="button" data-cv="mo" aria-selected="true">Chưa xong</button>
+        <button class="tab" type="button" data-cv="xong" aria-selected="false">Đã xong</button>
+      </div>
+      <ul class="cv-list" id="cv-list"></ul>
+    </section>
+  </div>
 </main>
 
 <!-- ============ ĐIỂM DANH (giáo viên + quản lý) ============ -->

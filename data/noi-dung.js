@@ -169,3 +169,23 @@ export const MUC_TIEU = {
   diemDat: 7.5,                                    // điểm bài tập trung bình cần giữ để tự tin đi thi
   buoiToiThieu: 3,                                 // dưới số buổi/tuần này là "cần nhắc"
 };
+
+// ===== ĐỘI NGŨ GIÁO VIÊN (lấy từ thẻ "GIẢNG VIÊN KHỐI H" trên Canva) =====
+// Thêm giáo viên: chép 1 dòng, sửa chữ, đặt ảnh vào assets/img/giao-vien/.
+// anh = ảnh chân dung vuông · bai = ảnh các bài vẽ · the = cả tấm thẻ (bấm vào để xem to).
+// truong: dùng mã ở bảng TRUONG phía trên (HAU, MTCN…) để có đúng màu trường.
+export const GIAO_VIEN = [
+  { ten: "Nguyễn Đình Bình", vaiTro: "Quản lý · Giáo viên chính", khoi: "Khối H, V", truong: "", nganh: "Phụ trách chuyên môn và lộ trình luyện thi của lớp", chinh: true },
+  { ten: "Cấn Hải An", vaiTro: "Giảng viên", khoi: "Khối V", truong: "HAU", nganh: "Sinh viên Kiến trúc", anh: "can-hai-an" },
+  { ten: "Đỗ Kim Khánh", vaiTro: "Giảng viên", khoi: "Khối V", truong: "HAU", nganh: "Sinh viên Kiến trúc", anh: "do-kim-khanh" },
+  { ten: "Trần Lan Anh", vaiTro: "Giảng viên", khoi: "Khối H", truong: "HAU", nganh: "Sinh viên Thiết kế đồ hoạ", anh: "tran-lan-anh" },
+  { ten: "Dương Trần", vaiTro: "Giảng viên", khoi: "Khối H", truong: "MTCN", nganh: "Sinh viên Thiết kế nội thất", anh: "duong-tran" },
+  { ten: "Đình Văn", vaiTro: "Giảng viên", khoi: "Khối H", truong: "MTCN", nganh: "Sinh viên Thiết kế đồ hoạ", anh: "dinh-van" },
+  { ten: "Đỗ Hữu Dũng", vaiTro: "Giảng viên", khoi: "Khối H", truong: "MTCN", nganh: "Cựu sinh viên Thiết kế thời trang", anh: "do-huu-dung" },
+  { ten: "Đặng Huy Hoàn", vaiTro: "Trợ giảng", khoi: "Khối H", truong: "MTCN", nganh: "Sinh viên Thiết kế đồ hoạ", anh: "dang-huy-hoan" },
+];
+
+// ===== VIDEO NỀN TRANG CHỦ =====
+// Có video quay ở lớp (10–20 giây, quay ngang, dưới 6 MB): đặt vào assets/video/ rồi điền tên file, VD: "assets/video/lop.mp4".
+// Để trống "" thì trang chủ dùng ảnh bìa chuyển động chậm.
+export const VIDEO_BIA = "";

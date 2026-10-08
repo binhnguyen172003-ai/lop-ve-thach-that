@@ -37,6 +37,9 @@ service cloud.firestore {
     function shortText(d, k, n) {
       return !(k in d) || (d[k] is string && d[k].size() <= n);
     }
+    function hvDaDuyet(mail) {
+      return exists(/databases/$(database)/documents/hocvien/$(mail));
+    }
 
     // Giáo trình: ai đã duyệt cũng đọc được; chỉ quản lý sửa.
     match /giaotrinh/{id} {
@@ -97,6 +100,44 @@ service cloud.firestore {
     match /diemdanh/{mail} {
       allow read: if isStaff() || isMe(mail);
       allow write: if isStaff();
+    }
+
+    // ===== KHU LÀM VIỆC =====
+    // Thông báo: quản lý và giáo viên đăng; "tatca" thì học viên cũng đọc được, "giaovien" chỉ nội bộ.
+    match /thongbao/{id} {
+      allow read: if isStaff() || (isStudent() && resource.data.gui == 'tatca');
+      allow create: if isStaff()
+        && request.resource.data.tacGia == myEmail()
+        && request.resource.data.gui in ['tatca', 'giaovien']
+        && request.resource.data.nd is string && request.resource.data.nd.size() > 0 && request.resource.data.nd.size() <= 2000
+        && shortText(request.resource.data, 'tieuDe', 120);
+      allow delete: if isAdmin() || (isStaff() && resource.data.tacGia == myEmail());
+    }
+
+    // Việc giao cho giáo viên: quản lý giao và xoá; giáo viên chỉ được đánh dấu xong.
+    match /congviec/{id} {
+      allow read: if isStaff();
+      allow create, delete: if isAdmin();
+      allow update: if isAdmin() || (isTeacher()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['xong', 'xongLuc', 'xongBoi']));
+    }
+
+    // Trao đổi riêng: mỗi học viên / giáo viên có một kênh mang Gmail của mình.
+    //   Kênh học viên : học viên đó + giáo viên + quản lý.   Kênh giáo viên: giáo viên đó + quản lý.
+    match /traodoi/{kenh} {
+      allow read: if isAdmin() || isMe(kenh) || (isTeacher() && resource.data.vaiTro == 'hocvien');
+      allow create, update: if isAdmin()
+        || (isMe(kenh) && isStudent() && !isTeacher() && request.resource.data.vaiTro == 'hocvien')
+        || (isMe(kenh) && isTeacher() && !isAdmin() && request.resource.data.vaiTro == 'giaovien')
+        || (isTeacher() && request.resource.data.vaiTro == 'hocvien' && hvDaDuyet(kenh));
+      allow delete: if isAdmin();
+      match /tin/{id} {
+        allow read: if isAdmin() || isMe(kenh) || (isTeacher() && hvDaDuyet(kenh));
+        allow create: if (isAdmin() || (isMe(kenh) && (isStudent() || isTeacher())) || (isTeacher() && hvDaDuyet(kenh)))
+          && request.resource.data.tu == myEmail()
+          && request.resource.data.nd is string && request.resource.data.nd.size() > 0 && request.resource.data.nd.size() <= 1000;
+        allow delete: if isAdmin();
+      }
     }
 
     match /admins/{mail} {
