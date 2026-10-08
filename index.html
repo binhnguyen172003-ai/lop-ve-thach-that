@@ -73,13 +73,30 @@
 <nav aria-label="Menu chính">
   <div class="wrap">
     <a class="brand" href="#gioi-thieu">Lớp Vẽ Không Vui</a>
-    <a class="link" href="#gioi-thieu" data-nav="home">Giới thiệu</a>
-    <a class="link" href="#khoa-hoc" data-nav="home">Khoá học</a>
-    <a class="link" href="#bang-vang" data-nav="home">Bảng vàng</a>
-    <a class="link" href="#giao-vien" data-nav="home">Giáo viên</a>
-    <a class="link" href="#bai-ve" data-nav="home">Bài vẽ</a>
-    <a class="link" href="#lich-thi" data-nav="home">Lịch thi 2027</a>
-    <a class="link" href="#lich-hoc" data-nav="home">Lịch học</a>
+    <div class="dd">
+      <button type="button" class="dd-t" aria-expanded="false">Về lớp <svg class="chev" viewBox="0 0 8 5" aria-hidden="true"><path d="M1 1l3 3 3-3"/></svg></button>
+      <div class="dd-p">
+        <a class="link" href="#gioi-thieu" data-nav="home"><b>Giới thiệu</b><small>Lớp học, cách dạy</small></a>
+        <a class="link" href="#giao-vien" data-nav="home"><b>Giáo viên</b><small>Anh Bình và các anh chị trợ giảng</small></a>
+        <a class="link" href="#khoi" data-nav="home"><b>Khối H, Khối V</b><small>Khác nhau thế nào, thi gì</small></a>
+      </div>
+    </div>
+    <div class="dd">
+      <button type="button" class="dd-t" aria-expanded="false">Học tập <svg class="chev" viewBox="0 0 8 5" aria-hidden="true"><path d="M1 1l3 3 3-3"/></svg></button>
+      <div class="dd-p">
+        <a class="link" href="#khoa-hoc" data-nav="home"><b>Khoá học</b><small>6 khoá từ cơ bản đến luyện đề</small></a>
+        <a class="link" href="#lich-hoc" data-nav="home"><b>Lịch học</b><small>Bình Phú · Kim Quan</small></a>
+        <a class="link" href="#lich-thi" data-nav="home"><b>Lịch thi 2027</b><small>Đếm ngày tới kỳ thi</small></a>
+      </div>
+    </div>
+    <div class="dd">
+      <button type="button" class="dd-t" aria-expanded="false">Thành tích <svg class="chev" viewBox="0 0 8 5" aria-hidden="true"><path d="M1 1l3 3 3-3"/></svg></button>
+      <div class="dd-p">
+        <a class="link" href="#bang-vang" data-nav="home"><b>Bảng vàng</b><small>Top học viên điểm cao</small></a>
+        <a class="link" href="#bai-ve" data-nav="home"><b>Bài vẽ</b><small>Bài mẫu và bài học viên</small></a>
+      </div>
+    </div>
+    <a class="link solo" href="#dang-ky" data-nav="home">Học thử</a>
     <button type="button" class="burger" id="nav-burger" aria-label="Mở menu" aria-expanded="false" aria-controls="menu-ov"><i></i><i></i><i></i></button>
     <a class="btn small acct" href="#tai-khoan" id="nav-acct"><span id="nav-acct-t">Đăng nhập / Đăng ký</span><span class="nbadge num" id="nav-req" hidden></span></a>
   </div>
@@ -133,6 +150,7 @@
         <a class="glass cine-stat" href="#giao-vien"><b class="num">6 năm</b><span>luyện thi năng khiếu</span></a>
       </div>
     </div>
+    <a class="scroll-cue fx" style="--d:1.7s" href="#mq" aria-label="Kéo xuống"><span>(</span><span>kéo xuống</span><span>)</span></a>
     <div class="cine-partners fx" style="--d:1.5s">
       <span class="glass pill">Học viên Dreamers đã đỗ</span>
       <div class="cine-schools" id="hero-schools"><span>MTCN</span><span>HAU</span><span>HUCE</span><span>SIS</span><span>NUAE</span></div>
@@ -140,7 +158,14 @@
   </header>
   <script>(function(){var h=document.getElementById("hero-h1");if(!h)return;var i=0,out=[];h.childNodes.forEach(function(n){if(n.nodeType===3){n.textContent.split(/\s+/).forEach(function(w){if(w)out.push('<span class="w" aria-hidden="true" style="--i:'+(i++)+'">'+w+'</span>')})}else{out.push('<span class="w" aria-hidden="true" style="--i:'+(i++)+'">'+n.outerHTML+'</span>')}});h.innerHTML=out.join("");requestAnimationFrame(function(){h.classList.add("in");document.querySelectorAll("#gioi-thieu .fx").forEach(function(e){e.classList.add("in")})})})();</script>
 
-  <section aria-labelledby="h-ve-lop">
+  <div class="mq" id="mq" aria-label="Bài mẫu của đội ngũ giáo viên">
+    <div class="mq-row" data-dir="1"></div>
+    <div class="mq-row" data-dir="-1"></div>
+  </div>
+
+  <section aria-labelledby="h-ve-lop" class="ve-lop">
+    <span class="deco deco-l" aria-hidden="true" style="-webkit-mask-image:url(assets/img/hinh-hoa-nguoi.png);mask-image:url(assets/img/hinh-hoa-nguoi.png)"></span>
+    <span class="deco deco-r" aria-hidden="true" style="-webkit-mask-image:url(assets/img/hinh-hoa-tuong.png);mask-image:url(assets/img/hinh-hoa-tuong.png)"></span>
     <div class="sec-head">
       <div><p class="eyebrow">Về lớp</p><h2 id="h-ve-lop">Học vẽ có mục tiêu, có quy trình</h2></div>
       <p class="muted">Dành cho bạn mới bắt đầu, học sinh THCS muốn học sớm và học sinh lớp 11–12 luyện thi khối H, V.</p>
@@ -317,6 +342,17 @@
     </div>
     <div class="signup">
       <div class="card">
+        <div class="dk-cd" id="dk-cd">
+          <p class="dk-cd-t"><span class="dk-cd-live" aria-hidden="true"></span><span id="dk-cd-t">Kỳ thi năng khiếu gần nhất</span></p>
+          <p class="dk-cd-lead">Thời gian còn lại để luyện</p>
+          <div class="dk-cd-n" role="timer" aria-live="off">
+            <div><b class="num" id="cd-d">–</b><span>ngày</span></div>
+            <div><b class="num" id="cd-h">–</b><span>giờ</span></div>
+            <div><b class="num" id="cd-m">–</b><span>phút</span></div>
+            <div><b class="num" id="cd-s">–</b><span>giây</span></div>
+          </div>
+          <p class="dk-cd-f" id="dk-cd-f"></p>
+        </div>
         <form id="f-dk">
           <div class="fgrid">
             <label for="dk-ten">Họ tên học sinh<input id="dk-ten" required maxlength="80" autocomplete="name" placeholder="VD: Nguyễn Văn An"></label>
@@ -324,7 +360,7 @@
             <label for="dk-lop">Đang học lớp<select id="dk-lop"><option>Lớp 6–8</option><option>Lớp 9</option><option>Lớp 10</option><option>Lớp 11</option><option>Lớp 12</option><option>Thi lại</option><option>Người lớn học vẽ</option></select></label>
             <label for="dk-khoi">Muốn học<select id="dk-khoi"><option>Chưa rõ, cần tư vấn</option><option>Vẽ cơ bản</option><option>Luyện thi Khối H</option><option>Luyện thi Khối V</option><option>Ôn thi cấp tốc</option></select></label>
             <label for="dk-hinh">Hình thức<select id="dk-hinh"><option>Cơ sở Bình Phú</option><option>Cơ sở Kim Quan</option><option>Học online</option></select></label>
-            <label for="dk-truong">Trường muốn thi<input id="dk-truong" placeholder="VD: ĐH Kiến trúc Hà Nội"></label>
+            <label for="dk-truong">Trường muốn thi<select id="dk-truong"><option value="">Chưa chọn (tính kỳ thi gần nhất)</option></select></label>
           </div>
           <label for="dk-ghichu">Câu hỏi thêm<textarea id="dk-ghichu"></textarea></label>
           <div class="copyline"><button class="btn primary big" type="submit" id="dk-btn">Gửi đăng ký cho thầy</button><span class="status" id="dk-send"></span></div>

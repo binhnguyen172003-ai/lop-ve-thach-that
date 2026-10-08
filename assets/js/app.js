@@ -199,8 +199,8 @@ function renderExams() {
   let more = $("#months-more");
   if (!more) { more = document.createElement("button"); more.type = "button"; more.id = "months-more"; more.className = "btn months-more"; $("#months").after(more);
     more.onclick = () => { $("#months").classList.toggle("gon"); renderExams(); }; }
-  more.hidden = true; // sơ đồ nằm ngang, vuốt để xem hết nên không cần nút thu gọn
-  if (!$("#tl-hint")) $("#months").insertAdjacentHTML("afterend", `<span class="tl-hint" id="tl-hint">Vuốt ngang để xem cả lịch →</span>`);
+  if (!$("#months").dataset.init) { $("#months").dataset.init = "1"; $("#months").classList.add("gon"); }
+  more.hidden = con <= 0;
   more.textContent = $("#months").classList.contains("gon") ? `Xem cả lịch (${shown.length} kỳ thi) ▼` : "Thu gọn ▲";
 }
 $("#exam-filters").innerHTML = [{ truong: "all", ten: "Tất cả" }, ...BO_LOC_TRUONG]
@@ -497,6 +497,39 @@ const SDT_LOP = String(LIEN_HE.sdt || "").replace(/\D/g, "");
 $("#dk-call").href = "tel:" + SDT_LOP;
 $("#dk-zalo").href = "https://zalo.me/" + SDT_LOP;
 
+/* ================= Đếm ngược tới ngày thi ngay trong form đăng ký =================
+   Chọn "Trường muốn thi" là đồng hồ đổi sang kỳ thi của trường đó (tính tới 7h sáng ngày thi). */
+(function demNguoc() {
+  const sel = $("#dk-truong"); if (!sel) return;
+  const TEN = {}; LICH_THI.forEach(e => { if (e.truong !== "THPT") TEN[e.truong] = TEN[e.truong] || e.ten; });
+  sel.insertAdjacentHTML("beforeend", BO_LOC_TRUONG.filter(b => TEN[b.truong]).map(b => `<option value="${esc(TEN[b.truong])}" data-t="${esc(b.truong)}">${esc(TEN[b.truong])}</option>`).join("")
+    + `<option value="Trường khác">Trường khác</option>`);
+  const mocThi = e => { const [y, m, d] = e.ngay.split("-").map(Number); return Date.UTC(y, m - 1, d, 0, 0, 0); }; // 7h sáng giờ Việt Nam
+  const chon = () => {
+    const t = (sel.selectedOptions[0] || {}).dataset ? sel.selectedOptions[0].dataset.t : "";
+    const ds = LICH_THI.filter(e => e.truong !== "THPT" && (!t || e.truong === t) && mocThi(e) > Date.now()).sort((a, b) => mocThi(a) - mocThi(b));
+    return ds[0] || null;
+  };
+  let ky = chon(), timer = 0, thay = false;
+  const hai = n => String(n).padStart(2, "0");
+  const ve = () => {
+    if (!ky) { $("#dk-cd").hidden = true; return; }
+    $("#dk-cd").hidden = false;
+    const con = Math.max(0, mocThi(ky) - Date.now()), s = Math.floor(con / 1000);
+    const d = Math.floor(s / 86400), h = Math.floor(s % 86400 / 3600), m = Math.floor(s % 3600 / 60), giay = s % 60;
+    $("#cd-d").textContent = d; $("#cd-h").textContent = hai(h); $("#cd-m").textContent = hai(m); $("#cd-s").textContent = hai(giay);
+    $("#dk-cd-t").textContent = `${sel.value && sel.value !== "Trường khác" ? "Kỳ thi " + ky.ten : "Kỳ thi năng khiếu gần nhất · " + ky.ten} · ${ky.dot} · ${ky.hienThi}/${ky.ngay.slice(0, 4)}`;
+    const buoi = Math.floor(d / 7) * 4;
+    $("#dk-cd-f").innerHTML = `≈ <b>${buoi} buổi học</b> nếu học 4 buổi mỗi tuần. Mỗi tuần chậm trễ là bớt 4 buổi luyện, <b>đăng ký học thử ngay hôm nay</b>.`;
+  };
+  const chay = () => { clearInterval(timer); if (thay && !document.hidden) timer = setInterval(ve, 1000); };
+  sel.addEventListener("change", () => { ky = chon(); ve(); });
+  document.addEventListener("visibilitychange", chay);
+  if ("IntersectionObserver" in window) new IntersectionObserver(es => { thay = es[0].isIntersecting; if (thay) ve(); chay(); }).observe($("#dk-cd"));
+  else { thay = true; chay(); }
+  ve();
+})();
+
 /* ================= Giao diện điện ảnh: hero, menu, thanh gọi nhanh ================= */
 (function cine() {
   const nav = $("nav"), hero = $("#gioi-thieu"), root = document.documentElement;
@@ -529,7 +562,7 @@ $("#dk-zalo").href = "https://zalo.me/" + SDT_LOP;
 
   // Menu toàn màn hình trên điện thoại
   const ov = $("#menu-ov"), burger = $("#nav-burger");
-  $("#menu-links").innerHTML = $$("nav a.link").map((a, i) => `<a href="${a.getAttribute("href")}" style="--i:${i}">${esc(a.textContent.trim())}</a>`).join("")
+  $("#menu-links").innerHTML = $$("nav a.link").map((a, i) => `<a href="${a.getAttribute("href")}" style="--i:${i}">${esc((a.querySelector("b") || a).textContent.trim())}</a>`).join("")
     + `<a href="#tai-khoan" style="--i:${$$("nav a.link").length}">Tài khoản <small>Học viên · Giáo viên</small></a>`;
   const setMenu = open => {
     ov.classList.toggle("open", open); ov.setAttribute("aria-hidden", !open); burger.setAttribute("aria-expanded", open);
@@ -539,6 +572,49 @@ $("#dk-zalo").href = "https://zalo.me/" + SDT_LOP;
   $("#menu-x").onclick = () => setMenu(false);
   ov.addEventListener("click", e => { if (e.target.closest("a")) setMenu(false); });
   addEventListener("keydown", e => { if (e.key === "Escape" && ov.classList.contains("open")) setMenu(false); });
+
+  // Menu thả xuống (máy tính): rê chuột hoặc bấm để mở, bấm ra ngoài / Esc để đóng
+  const dds = $$("nav .dd"), dong = except => dds.forEach(d => { if (d !== except) { d.classList.remove("open"); d.querySelector(".dd-t").setAttribute("aria-expanded", "false"); } });
+  dds.forEach(d => {
+    const t = d.querySelector(".dd-t"); let hide;
+    const mo = v => { clearTimeout(hide); if (v) dong(d); d.classList.toggle("open", v); t.setAttribute("aria-expanded", v); };
+    d.addEventListener("mouseenter", () => { if (matchMedia("(hover:hover)").matches) mo(true); });
+    d.addEventListener("mouseleave", () => { hide = setTimeout(() => mo(false), 160); });
+    t.addEventListener("click", () => mo(!d.classList.contains("open")));
+    d.querySelectorAll("a").forEach(a => a.addEventListener("click", () => mo(false)));
+  });
+  document.addEventListener("click", e => { if (!e.target.closest("nav .dd")) dong(); });
+  addEventListener("keydown", e => { if (e.key === "Escape") dong(); });
+
+  // Dải bài mẫu: 2 hàng chạy ngược chiều nhau khi cuộn trang
+  const mq = $("#mq");
+  if (mq) {
+    const tranh = GIAO_VIEN.filter(g => g.anh).map(g => ({ src: "assets/img/giao-vien/" + g.anh + "-bai.jpg", ten: g.ten }));
+    if (tranh.length < 2) mq.hidden = true;
+    else {
+      const half = Math.ceil(tranh.length / 2), rows = $$("#mq .mq-row");
+      const tile = x => `<a href="#giao-vien"><img src="${esc(x.src)}" alt="Bài mẫu của ${esc(x.ten)}" loading="lazy" decoding="async" width="340" height="220"><span>Bài mẫu · ${esc(x.ten)}</span></a>`;
+      [tranh.slice(0, half), tranh.slice(half).concat(tranh.slice(0, Math.max(0, half - (tranh.length - half))))].forEach((ds, r) => {
+        const lap = ds.concat(ds, ds, ds); rows[r].innerHTML = lap.map(tile).join("");
+      });
+      let tk = false;
+      const move = () => {
+        tk = false;
+        const r = mq.getBoundingClientRect(); if (r.bottom < -200 || r.top > innerHeight + 200) return;
+        const off = (innerHeight - r.top) * .3;
+        rows[0].style.transform = `translate3d(${off - 420}px,0,0)`;
+        rows[1].style.transform = `translate3d(${-(off) - 120}px,0,0)`;
+      };
+      if (!matchMedia("(prefers-reduced-motion:reduce)").matches) addEventListener("scroll", () => { if (!tk) { tk = true; requestAnimationFrame(move); } }, { passive: true });
+      requestAnimationFrame(move);
+    }
+  }
+
+  // Hình trang trí phần "Về lớp" trượt vào khi cuộn tới
+  if ("IntersectionObserver" in window) {
+    const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } }), { threshold: .2 });
+    $$(".deco").forEach(d => io.observe(d));
+  } else $$(".deco").forEach(d => d.classList.add("in"));
 
   // Thanh gọi nhanh
   $("#dock-call").href = "tel:" + SDT_LOP;
