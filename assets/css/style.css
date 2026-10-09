@@ -2401,3 +2401,21 @@ body.hop-mo{overflow:hidden}
 .gallery .cap .bd{display:block;font-style:normal;font-size:.72rem;font-weight:600;color:#f9c74f;line-height:1.3}
 /* Biệt danh người vẽ (staff) nằm dưới tên trong thẻ bài nổi bật */
 .nb-card figcaption .nb-bd{display:block;font-style:normal;font-size:.74rem;font-weight:700;color:#f9c74f;line-height:1.3;margin:2px 0 3px}
+
+/* ===== Thẻ VIP: trợ giảng / giáo viên / quản lý ===== */
+/* Màu hào quang theo vai trò (dùng chung cho viền và toả sáng) */
+.nb-card.nb-nv{--aura:249,199,79}
+.nb-card.nb-nv.nv-tg{--aura:76,201,240}
+.nb-card.nb-nv.nv-ql{--aura:255,107,107}
+/* Toả hào quang nhịp nhàng quanh thẻ */
+.nb-card.nb-nv{animation:nbAura 2.4s ease-in-out infinite}
+@keyframes nbAura{
+  0%,100%{box-shadow:0 0 0 2px rgba(var(--aura),.7),0 0 22px rgba(var(--aura),.55),0 0 56px rgba(var(--aura),.22)}
+  50%{box-shadow:0 0 0 3px rgba(var(--aura),1),0 0 36px rgba(var(--aura),.9),0 0 88px rgba(var(--aura),.4)}
+}
+/* Lúc hiện ra: thẻ bừng sáng rồi ảnh zoom về như một pose anh hùng */
+.nb-card.nb-nv{animation:nbAura 2.4s ease-in-out infinite,nbVao .9s cubic-bezier(.2,.8,.3,1) both}
+@keyframes nbVao{from{opacity:0;filter:brightness(2.2) saturate(.4)}60%{opacity:1;filter:brightness(1.25)}to{opacity:1;filter:none}}
+.nb-card.nb-nv img{animation:nbPose 1.2s cubic-bezier(.18,.9,.3,1.15) both}
+@keyframes nbPose{from{transform:scale(1.3) translateY(-7%)}to{transform:none}}
+@media (prefers-reduced-motion:reduce){.nb-card.nb-nv,.nb-card.nb-nv img{animation:none}}
