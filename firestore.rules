@@ -250,6 +250,14 @@ service cloud.firestore {
         && (!('anh' in request.resource.data) || (request.resource.data.anh is string && request.resource.data.anh.size() <= 500000))
         && (isAdmin() || request.resource.data.ghim == false);
       allow update: if isAdmin() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['ghim']);
+      // Quản lý sửa nội dung tin (chuyên mục, tiêu đề, nội dung, ảnh, link, ghim); không đổi người đăng
+      allow update: if isAdmin()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['muc', 'tieuDe', 'nd', 'anh', 'link', 'ghim'])
+        && request.resource.data.muc in ['tuyensinh', 'tinlop', 'hoacu', 'lythuyet', 'kinhnghiem']
+        && request.resource.data.tieuDe is string && request.resource.data.tieuDe.size() > 0 && request.resource.data.tieuDe.size() <= 120
+        && request.resource.data.nd is string && request.resource.data.nd.size() > 0 && request.resource.data.nd.size() <= 3000
+        && shortText(request.resource.data, 'link', 300)
+        && (!('anh' in request.resource.data) || (request.resource.data.anh is string && request.resource.data.anh.size() <= 500000));
       allow delete: if isAdmin() || (isStaff() && resource.data.tacGia == myEmail());
     }
 

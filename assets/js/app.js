@@ -64,7 +64,7 @@ addEventListener("error", e => {
 });
 /* ---------- Mở tức thì ở lần sau + dùng được khi mạng yếu ---------- */
 if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost") && !/[?&]khongcache/.test(location.search))
-  addEventListener("load", () => navigator.serviceWorker.register("sw.js?v=20261010ai").catch(() => {}));
+  addEventListener("load", () => navigator.serviceWorker.register("sw.js?v=20261010aj").catch(() => {}));
 
 /* ---------- Đo tốc độ: mở web kèm ?chandoan=1 để xem từng bước mất bao lâu ---------- */
 const DIAG = /[?&]chandoan/.test(location.search);
@@ -3778,7 +3778,7 @@ const tuanNay = b => b.hang >= 1 && b.hang <= 5 && b.ngayTop && (Date.parse(toda
 /* ---------- Đăng bài vẽ học viên ---------- */
 // Menu ⋮ của quản lý trên thẻ bài nổi bật: sửa thông tin/link hoặc xoá bài (xoá phải bấm 2 lần)
 let menuBai = null;
-function moMenuBai(anchor, bai) {
+function moMenuBai(anchor, bai, loai = "baive") {
   if (menuBai) { const cu = menuBai; cu.remove(); menuBai = null; if (cu.dataset.cho === bai?.id) return; }
   if (!bai || !isAdmin) return;
   const m = document.createElement("div"); m.className = "nb-menu"; m.dataset.cho = bai.id;
@@ -3790,9 +3790,10 @@ function moMenuBai(anchor, bai) {
   const fin = () => { m.remove(); if (menuBai === m) menuBai = null; removeEventListener("pointerdown", ngoai, true); };
   const ngoai = e => { if (!m.contains(e.target) && e.target !== anchor) fin(); };
   setTimeout(() => addEventListener("pointerdown", ngoai, true), 0);
-  m.querySelector("[data-sua]").onclick = () => { fin(); moDangBai(bai); };
+  m.querySelector("[data-sua]").onclick = () => { fin(); if (loai === "tin") moDangTin(bai); else moDangBai(bai); };
   const xoa = m.querySelector("[data-xoa]");
-  confirmButton(xoa, () => deleteDoc(doc(db, "baive", bai.id)).then(() => { fin(); toast("Đã xoá bài vẽ."); }), "Bấm lần nữa để xoá");
+  const tenXoa = loai === "tin" ? "bantin" : "baive";
+  confirmButton(xoa, () => deleteDoc(doc(db, tenXoa, bai.id)).then(() => { fin(); toast(loai === "tin" ? "Đã xoá bản tin." : "Đã xoá bài vẽ."); }), "Bấm lần nữa để xoá");
 }
 // sua: bài đang có (quản lý bấm "Sửa"); không có thì là đăng bài mới
 function moDangBai(sua) {
@@ -3909,6 +3910,7 @@ function renderTinNoiBat() {
   const lienKet = x => x.link || "#ban-tin";
   const the = (x, i) => `<figure class="nb-card tb-the${x.anh ? " co-anh" : ""}" data-i="${i}">
       ${x.anh ? `<img src="${esc(x.anh)}" alt="" loading="lazy" decoding="async" draggable="false">` : `<span class="tb-nen m-${esc(x.muc || "tinlop")}" aria-hidden="true"></span>`}
+      ${isAdmin && x.id ? `<button type="button" class="nb-more" data-mt="${esc(x.id)}" aria-label="Tuỳ chọn: sửa hoặc xoá bản tin">⋮</button>` : ""}
       <div class="tb-the-nd"><span class="tb-chip"><span class="tn-muc m-${esc(x.muc || "tinlop")}">${esc(MUC_TIN[x.muc] || "Thông báo")}</span>${x.ghim ? `<span class="tn-ghim">📌 Ghim</span>` : ""}</span>
         <b>${esc(x.tieuDe || "")}</b><small>${esc(String(x.nd || "").split(/\n/)[0].slice(0, 120))}${String(x.nd || "").length > 120 ? "…" : ""}</small>
         <span class="tb-mo">${String(lienKet(x)).startsWith("#") ? "Xem chi tiết →" : "Mở link ↗"} <em class="num">${x.luc ? fmtDate(x.luc) : x.ngay ? ngayVN(x.ngay) : ""}</em></span></div></figure>`;
@@ -3920,6 +3922,11 @@ function renderTinNoiBat() {
       : `<p class="muted">Chưa có tin mới.</p>`}`;
   if (!n) return;
   const ring = box.querySelector(".tb-ring"), [p2, n2] = ring.querySelectorAll(".gv-nav");
+  // Nút ⋮ của quản lý trên bản tin: sửa hoặc xoá (không mở link khi bấm ⋮)
+  ring.querySelectorAll(".nb-more[data-mt]").forEach(bt => {
+    bt.addEventListener("pointerdown", e => e.stopPropagation());
+    bt.addEventListener("click", e => { e.stopPropagation(); e.preventDefault(); moMenuBai(bt, BANTIN_DONG.find(y => y.id === bt.dataset.mt), "tin"); });
+  });
   vongXoay(ring, ring.querySelector(".tb-stage"), [...ring.querySelectorAll(".tb-the")], [...ring.querySelectorAll(".gv-dots button")], p2, n2, c => {
     if (c.dataset.add) { moDangTin(); return; }
     const x = ds[Number(c.dataset.i)], l = lienKet(x);
@@ -3958,20 +3965,23 @@ function renderBanTin() {
     timed("Ghim bản tin", setDoc(doc(db, "bantin", x.id), { ghim: !x.ghim }, { merge: true })).catch(() => toast("Chưa lưu được, thử lại.", "err")); });
   $$("#tn-grid [data-xtin]").forEach(b => confirmButton(b, () => deleteDoc(doc(db, "bantin", b.dataset.xtin)), "Xoá?"));
 }
-function moDangTin() {
+// sua: bản tin đang có (quản lý bấm ⋮ → Sửa); không có thì là đăng tin mới
+function moDangTin(sua) {
   if (!(user && isTeacher && db)) { toast("Đăng nhập tài khoản giáo viên hoặc quản lý để đăng bản tin.", "err"); location.hash = "#tai-khoan"; return; }
-  const { el, dong } = moHop(`<h3>Đăng bản tin</h3>
+  if (sua && !isAdmin) return;
+  const s = sua || {};
+  const { el, dong } = moHop(`<h3>${sua ? "Sửa bản tin" : "Đăng bản tin"}</h3>
     <form id="f-tin" class="hop-f" novalidate>
-      <fieldset class="chon-loai"><legend>Chuyên mục *</legend>${Object.entries(MUC_TIN).map(([k, v], i) => `<label><input type="radio" name="tn-muc" value="${k}"${i === 0 ? " checked" : ""}><span>${v}</span></label>`).join("")}</fieldset>
-      <label>Tiêu đề *<input id="tn-td" maxlength="120" placeholder="VD: ĐH Kiến trúc thay đổi phương thức tuyển sinh 2027"></label>
-      <label>Nội dung *<textarea id="tn-nd" rows="6" maxlength="3000" placeholder="Viết ngắn gọn, mỗi ý một dòng."></textarea></label>
-      <label class="anh-chon nho" for="tn-anh"><img id="tn-xem" alt="" hidden><span id="tn-chu"><b>🖼 Thêm ảnh (không bắt buộc)</b></span><input id="tn-anh" type="file" accept="image/*"></label>
-      <label>Link (không bắt buộc)<input id="tn-link" type="url" inputmode="url" maxlength="300" placeholder="https://…"></label>
-      ${isAdmin ? `<label class="check"><input type="checkbox" id="tn-ghim"> Ghim lên đầu mục Bản tin</label>` : ""}
-      <div class="hop-nut"><button class="btn primary" type="submit" id="tn-gui">Đăng bản tin</button><button class="btn" type="button" data-dong>Huỷ</button></div>
+      <fieldset class="chon-loai"><legend>Chuyên mục *</legend>${Object.entries(MUC_TIN).map(([k, v], i) => `<label><input type="radio" name="tn-muc" value="${k}"${(s.muc ? s.muc === k : i === 0) ? " checked" : ""}><span>${v}</span></label>`).join("")}</fieldset>
+      <label>Tiêu đề *<input id="tn-td" maxlength="120" placeholder="VD: ĐH Kiến trúc thay đổi phương thức tuyển sinh 2027" value="${esc(s.tieuDe || "")}"></label>
+      <label>Nội dung *<textarea id="tn-nd" rows="6" maxlength="3000" placeholder="Viết ngắn gọn, mỗi ý một dòng.">${esc(s.nd || "")}</textarea></label>
+      <label class="anh-chon nho" for="tn-anh"><img id="tn-xem" alt="" ${s.anh ? `src="${esc(s.anh)}"` : "hidden"}><span id="tn-chu" ${s.anh ? "hidden" : ""}><b>🖼 Thêm ảnh (không bắt buộc)</b></span><input id="tn-anh" type="file" accept="image/*"></label>
+      <label>Link (không bắt buộc)<input id="tn-link" type="url" inputmode="url" maxlength="300" placeholder="https://…" value="${esc(s.link || "")}"></label>
+      ${isAdmin ? `<label class="check"><input type="checkbox" id="tn-ghim"${s.ghim ? " checked" : ""}> Ghim lên đầu mục Bản tin</label>` : ""}
+      <div class="hop-nut"><button class="btn primary" type="submit" id="tn-gui">${sua ? "Lưu thay đổi" : "Đăng bản tin"}</button><button class="btn" type="button" data-dong>Huỷ</button></div>
       <p class="status" id="tn-st" role="status"></p>
-    </form>`, "Đăng bản tin");
-  let anh = ""; const st = el.querySelector("#tn-st"), f = el.querySelector("#tn-anh");
+    </form>`, sua ? "Sửa bản tin" : "Đăng bản tin");
+  let anh = s.anh || ""; const st = el.querySelector("#tn-st"), f = el.querySelector("#tn-anh");
   f.onchange = async () => { const file = f.files && f.files[0]; if (!file) return; st.textContent = "Đang thu nhỏ ảnh…";
     try { anh = await nenAnh(file, 1100, 450000); const im = el.querySelector("#tn-xem"); im.src = anh; im.hidden = false; el.querySelector("#tn-chu").hidden = true; st.textContent = ""; }
     catch (e) { anh = ""; st.textContent = e.message; } };
@@ -3981,6 +3991,15 @@ function moDangTin() {
     const loi = !tieuDe ? "Nhập tiêu đề." : !nd ? "Nhập nội dung." : !linkHopLe(link) ? "Link phải bắt đầu bằng https://" : "";
     if (loi) { st.textContent = loi; st.classList.add("err"); return; }
     const nut = el.querySelector("#tn-gui"); nut.disabled = true; st.textContent = "Đang đăng…";
+    if (sua) {
+      try {
+        const patch = { muc: (el.querySelector('[name="tn-muc"]:checked') || {}).value || "tinlop", tieuDe, nd, link, anh };
+        if (isAdmin) patch.ghim = !!(el.querySelector("#tn-ghim") || {}).checked;
+        await timed("Sửa bản tin", setDoc(doc(db, "bantin", sua.id), patch, { merge: true }));
+        toast("Đã lưu bản tin."); dong();
+      } catch (err) { nut.disabled = false; st.classList.add("err"); st.textContent = err && err.code === "permission-denied" ? "Máy chủ chưa cho sửa: quản lý cần dán luật bảo mật mới (firestore.rules) một lần." : "Chưa lưu được, kiểm tra mạng rồi thử lại."; }
+      return;
+    }
     try {
       await timed("Đăng bản tin", addDoc(collection(db, "bantin"), { muc: (el.querySelector('[name="tn-muc"]:checked') || {}).value || "tinlop", tieuDe, nd, anh, link,
         ghim: !!(el.querySelector("#tn-ghim") || {}).checked, tacGia: mail, tenTacGia: tenToi(), luc: Date.now() }));

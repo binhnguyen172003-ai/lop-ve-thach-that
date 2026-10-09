@@ -2426,4 +2426,4 @@ body.hop-mo{overflow:hidden}
 .nb-menu button:hover,.nb-menu button:focus-visible{background:rgba(255,255,255,.08)}
 .nb-menu button.armed{color:#ff8a8a}
 /* ⋮ trong lưới bài vẽ: góc trên bên trái để không đè nút link ở góc phải */
-.gallery .nb-more.gal-more{top:6px;left:6px;right:auto;width:30px;height:30px;font-size:1rem;z-index:3}
+.gallery .gal-o > .nb-more.gal-more{position:absolute;top:8px;left:8px;right:auto;width:32px;height:32px;min-width:0;display:grid;place-items:center;padding:0;margin:0;border:1px solid rgba(255,255,255,.4);border-radius:50%;background:rgba(10,12,18,.8);color:#fff;font:800 1.1rem/1 var(--f-body);cursor:pointer;z-index:3;overflow:visible}
