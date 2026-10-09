@@ -300,9 +300,11 @@ export const SO_DU_THI = { 2025: 0, 2026: 0 };
 
 // ---------- BẢN TIN NỔI BẬT (trang chủ, mục "Bản tin") ----------
 // Bài cố định của lớp. Thầy cô đăng thêm bài mới ngay trên web (nút "+ Đăng bản tin" khi đã đăng nhập).
-// muc: "hoacu" (Hoạ cụ) · "lythuyet" (Lý thuyết) · "kinhnghiem" (Kinh nghiệm thi) · "tinlop" (Tin của lớp)
+// muc: "tuyensinh" (Tin tuyển sinh) · "tinlop" (Thông báo lớp) · "hoacu" (Hoạ cụ) · "lythuyet" (Lý thuyết) · "kinhnghiem" (Kinh nghiệm thi)
 // dsHoaCu: "Cơ bản" / "Khối H" / "Khối V" → tự liệt kê hoạ cụ cần mua theo bảng HOA_CU ở trên.
 export const BAN_TIN = [
+  { muc: "tuyensinh", ngay: "2026-10-09", tieuDe: "Lịch thi năng khiếu 2027 (dự kiến) đã có trên web",
+    nd: "Lớp đã tổng hợp lịch thi năng khiếu dự kiến của ĐH Kiến trúc HN, MTCN, Xây dựng, ĐHQG HN và SP Nghệ thuật TW, kèm đồng hồ đếm ngày.\nLịch chính thức sẽ cập nhật ngay khi các trường công bố.", link: "#lich-thi" },
   { muc: "hoacu", ghim: true, ngay: "2026-10-09", tieuDe: "Hoạ cụ cần chuẩn bị khi bắt đầu học",
     nd: "Buổi đầu em chưa cần mua đắt. Chỉ cần đủ bộ dưới đây là vẽ được hình hoạ cơ bản. Hoạ cụ màu (Khối H) thầy hướng dẫn mua khi bắt đầu học màu.\nLớp có bán sẵn tại cơ sở, giá như dưới đây.",
     dsHoaCu: "Cơ bản" },

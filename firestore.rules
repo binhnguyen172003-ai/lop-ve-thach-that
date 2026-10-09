@@ -190,7 +190,7 @@ service cloud.firestore {
       allow read: if true;
       allow create: if isStaff()
         && request.resource.data.tacGia == myEmail()
-        && request.resource.data.muc in ['hoacu', 'lythuyet', 'kinhnghiem', 'tinlop']
+        && request.resource.data.muc in ['tuyensinh', 'tinlop', 'hoacu', 'lythuyet', 'kinhnghiem']
         && request.resource.data.tieuDe is string && request.resource.data.tieuDe.size() > 0 && request.resource.data.tieuDe.size() <= 120
         && request.resource.data.nd is string && request.resource.data.nd.size() > 0 && request.resource.data.nd.size() <= 3000
         && shortText(request.resource.data, 'link', 300)

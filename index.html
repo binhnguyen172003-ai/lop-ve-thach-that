@@ -206,22 +206,13 @@
       <div><svg class="bl-ic" viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="18"/><circle cx="24" cy="24" r="11"/><circle cx="24" cy="24" r="4" class="ac"/><path d="M24 24L40 8M34 8h6v6"/></svg>
         <h3>Biết rõ mục tiêu</h3><p>Chọn trường, ngành, khối thi trước — rồi mới xếp lộ trình và số buổi phù hợp.</p></div>
       <div><svg class="bl-ic" viewBox="0 0 48 48" aria-hidden="true"><rect x="6" y="8" width="12" height="12" rx="3"/><rect x="30" y="8" width="12" height="12" rx="3"/><rect x="18" y="30" width="12" height="12" rx="3" class="ac"/><path d="M18 14h12M36 20v6a4 4 0 0 1-4 4h-2M12 20v6a4 4 0 0 0 4 4h2"/></svg>
-        <h3>Học theo quy trình</h3><p>Mỗi bài đi đúng 5 bước bên dưới, làm chắc từng bước mới sang bước sau.</p></div>
+        <h3>Học theo quy trình</h3><p>Mỗi bài đi đúng 5 bước: dựng hình, tỷ lệ, cấu trúc, sáng tối, hoàn thiện.</p></div>
       <div><svg class="bl-ic" viewBox="0 0 48 48" aria-hidden="true"><path d="M6 40h36"/><rect x="9" y="28" width="7" height="12" rx="1.5"/><rect x="20.5" y="20" width="7" height="20" rx="1.5"/><rect x="32" y="10" width="7" height="30" rx="1.5" class="ac"/><path d="M9 20l10-7 7 4 12-10"/></svg>
         <h3>Tiến bộ theo sức mình</h3><p>Bài đầu chỉ cần đúng tương đối, yêu cầu tăng dần. Thầy theo dõi tiến độ từng em mỗi tuần.</p></div>
       <div><svg class="bl-ic" viewBox="0 0 48 48" aria-hidden="true"><path d="M24 6c10 0 18 7 18 16 0 5-4 7-8 7h-4a4 4 0 0 0-3 6.5c1.3 1.6.2 4.5-3 4.5C14 40 6 32.5 6 23S14 6 24 6z"/><circle cx="15" cy="21" r="2.6" class="ac"/><circle cx="22" cy="13.5" r="2.6"/><circle cx="31.5" cy="14.5" r="2.6"/></svg>
         <h3>Nâng gu thẩm mỹ</h3><p>Hiểu tỷ lệ, bố cục, màu và sắc độ để nhìn cái đẹp tốt hơn, cả ngoài giờ vẽ.</p></div>
     </div>
-    <div class="qtr" aria-label="Quy trình một bài vẽ">
-      <p class="qtr-t">Quy trình một bài vẽ tại lớp</p>
-      <ol class="qtr-ds">
-        <li><svg viewBox="0 0 48 48" aria-hidden="true"><rect x="7" y="7" width="34" height="34" rx="2" stroke-dasharray="3 4"/><path d="M14 34l8-20 12 10z" class="ac"/></svg><b>Dựng hình</b><span>Bố cục trên giấy, phác khung lớn</span></li>
-        <li><svg viewBox="0 0 48 48" aria-hidden="true"><path d="M8 38L38 8"/><path d="M14 32l3 3M20 26l3 3M26 20l3 3M32 14l3 3"/><circle cx="12" cy="12" r="5" class="ac"/></svg><b>Đo tỷ lệ</b><span>So chiều cao, chiều ngang bằng que đo</span></li>
-        <li><svg viewBox="0 0 48 48" aria-hidden="true"><path d="M10 16l14-8 14 8v16l-14 8-14-8z"/><path d="M10 16l14 8 14-8M24 24v16" class="ac"/></svg><b>Cấu trúc</b><span>Tìm khối, mặt phẳng, đường trục</span></li>
-        <li><svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="22" cy="22" r="14"/><path d="M22 8a14 14 0 0 1 0 28z" class="ac fill"/><ellipse cx="28" cy="40" rx="14" ry="3"/></svg><b>Sáng tối</b><span>Chia mảng đậm nhạt, đẩy sắc độ</span></li>
-        <li><svg viewBox="0 0 48 48" aria-hidden="true"><path d="M24 6l5 11 12 1.5-9 8 2.5 12L24 32.5 13.5 38.5 16 26.5l-9-8L19 17z" class="ac"/></svg><b>Hoàn thiện</b><span>Chỉnh chi tiết, thầy nhận xét, chấm</span></li>
-      </ol>
-    </div>
+    <div class="tb-noi" id="tb-noi" aria-label="Tin nổi bật"></div>
     <p class="quote">Học vẽ không phải 100% năng khiếu bẩm sinh. <span>Tiếp cận càng sớm, vẽ càng nhiều, vẽ sẽ thành sở trường.</span></p>
   </section>
 
@@ -307,7 +298,6 @@
       <div><p class="eyebrow">Tác phẩm</p><h2 id="h-baive">Bài vẽ học viên</h2></div>
       <p class="muted">Bài làm trên lớp của học viên, chia theo từng phần học. Bấm vào ảnh để xem lớn.</p>
     </div>
-    <div class="gal-them" id="gal-them" hidden><button type="button" class="btn primary" data-dang-bai><span aria-hidden="true">+</span> Đăng bài vẽ học viên</button><span class="muted">Chỉ giáo viên và quản lý thấy nút này.</span></div>
     <div class="filters" id="gal-filters" role="group" aria-label="Lọc theo phần học"></div>
     <div class="gallery" id="gallery"></div>
     <div class="social">

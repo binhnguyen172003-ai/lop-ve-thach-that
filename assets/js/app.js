@@ -287,7 +287,6 @@ function galTatCa() {
 function renderGallery() {
   const all = galTatCa(), has = all.length > 0;
   const count = t => all.filter(b => b.loai === t).length;
-  { const g = $("#gal-them"); if (g) g.hidden = !(user && isTeacher); }
   $("#gal-filters").hidden = !has;
   if (has) $("#gal-filters").innerHTML = [`<button class="tab" data-g="all" aria-selected="${galFilter === "all"}">Tất cả <span class="num">${all.length}</span></button>`]
     .concat(LOAI_BAI.map(l => `<button class="tab" data-g="${esc(l.ten)}" aria-selected="${galFilter === l.ten}">${esc(l.ten)} <span class="num">${count(l.ten)}</span></button>`)).join("");
@@ -784,31 +783,34 @@ const GHI_CHU = {
   const tuoi = b => b.ngay ? (Date.now() - new Date(b.ngay + "T00:00:00+07:00").getTime()) / 864e5 : null;
   const mucCua = b => { const t = tuoi(b); if (t === null) return b.ky || "tuan"; return Object.keys(KHOANG).find(k => t >= KHOANG[k][0] - 1 && t < KHOANG[k][1]) || ""; };
   // Mỗi vị trí Top chỉ 1 bài: bài quản lý chọn trên web được ưu tiên hơn bài có sẵn trong file
+  // Tối đa 10 ảnh mỗi mục, trong đó chỉ 5 bài mang huy chương TOP 1–5 (mỗi hạng 1 bài, bài quản lý chọn trên web được ưu tiên)
   const locNoiBat = k => { const daCo = new Set();
-    return nbAll().filter(b => !b.tg && b.hang >= 1 && b.hang <= 5 && mucCua(b) === k)
-      .sort((a, b) => (a.hang || 99) - (b.hang || 99) || (b.dong ? 1 : 0) - (a.dong ? 1 : 0) || (tuoi(a) || 0) - (tuoi(b) || 0))
-      .filter(b => !daCo.has(b.hang) && daCo.add(b.hang)).slice(0, 5); };
-  const nutThem = () => isTeacher && user ? `<div class="nb-them">
-      <button type="button" class="nb-plus" data-dang-bai aria-label="Đăng bài vẽ học viên"><span aria-hidden="true">+</span></button>
-      <span>Đăng bài vẽ học viên${isAdmin ? ` · <a href="#duyet" data-top5>Chọn Top 5 tuần</a>` : ""}</span></div>` : "";
+    const ds = [...BAI_NOI_BAT, ...BAIVE_DONG.map(b => ({ ...b, ngay: (b.hang >= 1 && b.hang <= 5 && b.ngayTop) || b.ngay, dong: true }))].filter(b => mucCua(b) === k)
+      .map(b => ({ ...b, top: !b.tg && b.hang >= 1 && b.hang <= 5 ? b.hang : 0 }))
+      .sort((a, b) => (a.top || 99) - (b.top || 99) || (b.dong ? 1 : 0) - (a.dong ? 1 : 0) || (tuoi(a) || 0) - (tuoi(b) || 0) || (b.luc || 0) - (a.luc || 0));
+    ds.forEach(b => { if (b.top) { if (daCo.has(b.top)) b.top = 0; else daCo.add(b.top); } });
+    return ds.sort((a, b) => (a.top || 99) - (b.top || 99)).slice(0, 10); };
+  const coThem = () => !!(user && isTeacher);
+  const theThem = i => `<figure class="nb-card nb-add" data-i="${i}" data-add="1"><div class="nb-add-in"><span class="nb-plus" aria-hidden="true">+</span><b>Thêm bài vẽ</b><small>Đăng ảnh bài học viên${isAdmin ? "<br>Chọn Top 5 ở trang Quản lý" : ""}</small></div></figure>`;
   let sig = "";
   const ve = () => {
     const ds = locNoiBat(ky);
-    const k = [ky, !!user && isTeacher, isAdmin, XP_DONG.length, TT_DONG.length, ...ds.map(b => (b.id || b.anh) + b.hang)].join("|");
+    const k = [ky, !!user && isTeacher, isAdmin, XP_DONG.length, TT_DONG.length, ...ds.map(b => (b.id || b.anh) + b.top)].join("|");
     if (k === sig) return; sig = k;
-    if (!ds.length) { box.innerHTML = `<p class="nb-rong">Chưa có Top 5 ${TEN[ky]}. ${ky === "tuan" ? "Quản lý sẽ chọn 5 bài đẹp nhất mỗi tuần." : `Bài Top Tuần tự chuyển sang đây khi ${ky === "thang" ? "qua 1 tuần" : "qua 1 tháng"}.`}</p>${nutThem()}`; return; }
+    if (!ds.length && !coThem()) { box.innerHTML = `<p class="nb-rong">Chưa có bài nổi bật ${TEN[ky]}. ${ky === "tuan" ? "Thầy cô sẽ cập nhật bài đẹp mỗi tuần." : `Bài tuần trước tự chuyển sang đây khi ${ky === "thang" ? "qua 1 tuần" : "qua 1 tháng"}.`}</p>`; return; }
     box.innerHTML = `<div class="gv-stage nb-stage">${ds.map((b, i) => `<figure class="nb-card" data-i="${i}">
         <img src="${esc(b.anh)}" alt="${esc((b.loai || "Bài vẽ") + " · " + (b.hocVien || ""))}" loading="lazy" decoding="async" draggable="false">
-        <span class="nb-medal h${Number(b.hang)}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 2h4l1 5-3 1zM17 2h-4l-1 5 3 1z" class="rb"/><circle cx="12" cy="15" r="6.5" class="md"/><text x="12" y="18.2" text-anchor="middle">${Number(b.hang)}</text></svg><b>TOP ${Number(b.hang)}</b><i>${TEN[ky]}</i></span>
-        ${(m => m.length ? (a => `<span class="nb-tt" data-rk="${esc(b.hocVien)}" role="button" tabindex="0" title="${esc(a.ten)} · ${CAP[a.cap].ten} — ${esc(a.mo)}">${huyHieuTT(a, a.cap, "sm")}<span class="nb-ttx"><b>${esc(a.ten)}</b><small>${a.n} ${esc(a.dv)} · ${CAP[a.cap].ten}</small></span></span>`)(m[0]) : "")(ttNoiNhat(b.hocVien))}
-        ${(t => khungThe(t.r, t.i))(tinhRank(null, null, null, b.hocVien))}
-        <figcaption><b>${esc(b.hocVien || "")} ${(t => huyHieu(t.r, t.i, "xs", b.hocVien))(tinhRank(null, null, null, b.hocVien))}</b><span>${esc([b.loai, b.ghiChu].filter(Boolean).join(" · "))}</span></figcaption></figure>`).join("")}</div>
+        ${b.top ? `<span class="nb-medal h${b.top}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 2h4l1 5-3 1zM17 2h-4l-1 5 3 1z" class="rb"/><circle cx="12" cy="15" r="6.5" class="md"/><text x="12" y="18.2" text-anchor="middle">${b.top}</text></svg><b>TOP ${b.top}</b><i>${TEN[ky]}</i></span>` : ""}
+        ${b.tg ? "" : (m => m.length ? (a => `<span class="nb-tt" data-rk="${esc(b.hocVien)}" role="button" tabindex="0" title="${esc(a.ten)} · ${CAP[a.cap].ten} — ${esc(a.mo)}">${huyHieuTT(a, a.cap, "sm")}<span class="nb-ttx"><b>${esc(a.ten)}</b><small>${a.n} ${esc(a.dv)} · ${CAP[a.cap].ten}</small></span></span>`)(m[0]) : "")(ttNoiNhat(b.hocVien))}
+        ${b.tg ? "" : (t => khungThe(t.r, t.i))(tinhRank(null, null, null, b.hocVien))}
+        <figcaption><b>${esc(b.hocVien || "")} ${b.tg ? "" : (t => huyHieu(t.r, t.i, "xs", b.hocVien))(tinhRank(null, null, null, b.hocVien))}</b><span>${esc([b.loai, b.ghiChu].filter(Boolean).join(" · "))}</span></figcaption></figure>`).join("")}${coThem() ? theThem(ds.length) : ""}</div>
       <div class="gv-ctl"><button type="button" class="gv-nav" aria-label="Bài trước">‹</button>
-        <div class="gv-dots">${ds.map((b, i) => `<button type="button" data-i="${i}" aria-label="Bài ${i + 1}"></button>`).join("")}</div>
-        <button type="button" class="gv-nav" aria-label="Bài sau">›</button></div>${nutThem()}`;
+        <div class="gv-dots">${ds.map((b, i) => `<button type="button" data-i="${i}" aria-label="Bài ${i + 1}"></button>`).join("")}${coThem() ? `<button type="button" data-i="${ds.length}" aria-label="Thêm bài vẽ"></button>` : ""}</div>
+        <button type="button" class="gv-nav" aria-label="Bài sau">›</button></div>`;
     const [p, n] = box.querySelectorAll(".gv-nav");
     const cards = [...box.querySelectorAll(".nb-card")];
     vx = vongXoay(box, box.querySelector(".nb-stage"), cards, [...box.querySelectorAll(".gv-dots button")], p, n, c => {
+      if (c.dataset.add) { moDangBai(); return; }
       galList = ds; showLb(Number(c.dataset.i));
     });
   };
@@ -3335,13 +3337,26 @@ async function datTop(id, k) {
 }
 
 /* ---------- Bản tin nổi bật ---------- */
-const MUC_TIN = { hoacu: "Hoạ cụ", lythuyet: "Lý thuyết", kinhnghiem: "Kinh nghiệm thi", tinlop: "Tin của lớp" };
+const MUC_TIN = { tuyensinh: "Tuyển sinh", tinlop: "Thông báo lớp", hoacu: "Hoạ cụ", lythuyet: "Lý thuyết", kinhnghiem: "Kinh nghiệm thi" };
 let tnLoc = "all";
 function banTinTatCa() {
   const t = x => x.luc || Date.parse((x.ngay || "1970-01-01") + "T08:00:00+07:00") || 0;
   return [...BANTIN_DONG, ...BAN_TIN.map((x, i) => ({ ...x, id: "", codinh: i }))].sort((a, b) => (b.ghim ? 1 : 0) - (a.ghim ? 1 : 0) || t(b) - t(a));
 }
+// "Tin nổi bật" ngay dưới mục Về lớp: tin tuyển sinh & thông báo mới nhất
+function renderTinNoiBat() {
+  const box = $("#tb-noi"); if (!box) return;
+  const all = banTinTatCa(), uu = all.filter(x => x.muc === "tuyensinh" || x.muc === "tinlop");
+  const ds = (uu.length ? uu : all).slice(0, 3);
+  box.innerHTML = `<div class="tb-dau"><p class="tb-t"><span class="tb-cham" aria-hidden="true"></span>Tin nổi bật</p>
+      <div class="tb-nut">${user && isTeacher ? `<button type="button" class="btn small primary" data-dang-tin>+ Đăng tin</button>` : ""}<a class="tb-xem" href="#ban-tin">Xem tất cả →</a></div></div>
+    ${ds.length ? `<ul class="tb-ds">${ds.map(x => `<li><a href="${esc(x.link && x.link.startsWith("#") ? x.link : "#ban-tin")}"><span class="tn-muc m-${esc(x.muc || "tinlop")}">${esc(MUC_TIN[x.muc] || "Thông báo")}</span>
+      <b>${esc(x.tieuDe || "")}</b><small>${esc(String(x.nd || "").split(/\n/)[0].slice(0, 110))}${String(x.nd || "").length > 110 ? "…" : ""}</small>
+      <em class="num">${x.luc ? fmtDate(x.luc) : x.ngay ? ngayVN(x.ngay) : ""}</em></a></li>`).join("")}</ul>`
+      : `<p class="muted">Chưa có tin mới.</p>`}`;
+}
 function renderBanTin() {
+  renderTinNoiBat();
   const grid = $("#tn-grid"); if (!grid) return;
   { const n = $("#tn-them"); if (n) n.hidden = !(user && isTeacher); }
   const all = banTinTatCa(), co = Object.keys(MUC_TIN).filter(k => all.some(x => x.muc === k));
@@ -3359,7 +3374,7 @@ function renderBanTin() {
         <h3>${esc(x.tieuDe || "")}</h3>
         <div class="tn-text">${doan(x.nd)}${hoaCu(x)}</div>
         <button type="button" class="linkish tn-them-chu" hidden>Xem thêm ▾</button>
-        <div class="tn-cuoi">${x.link ? `<a class="btn small" href="${esc(x.link)}" target="_blank" rel="noopener">Mở link ↗</a>` : ""}
+        <div class="tn-cuoi">${x.link ? (x.link.startsWith("#") ? `<a class="btn small" href="${esc(x.link)}">Xem chi tiết →</a>` : `<a class="btn small" href="${esc(x.link)}" target="_blank" rel="noopener">Mở link ↗</a>`) : ""}
           <span class="muted tn-meta">${esc(x.tenTacGia || "Lớp Vẽ Thạch Thất")} · ${x.luc ? fmtDate(x.luc) : x.ngay ? ngayVN(x.ngay) : ""}</span>
           ${x.id && user && isAdmin ? `<button type="button" class="linkish" data-ghim="${esc(x.id)}">${x.ghim ? "Bỏ ghim" : "Ghim lên đầu"}</button>` : ""}
           ${x.id && user && (isAdmin || (isTeacher && x.tacGia === mail)) ? `<button type="button" class="linkish" data-xtin="${esc(x.id)}">Xoá</button>` : ""}</div>
@@ -3376,8 +3391,8 @@ function moDangTin() {
   if (!(user && isTeacher && db)) { toast("Đăng nhập tài khoản giáo viên hoặc quản lý để đăng bản tin.", "err"); location.hash = "#tai-khoan"; return; }
   const { el, dong } = moHop(`<h3>Đăng bản tin</h3>
     <form id="f-tin" class="hop-f" novalidate>
-      <fieldset class="chon-loai"><legend>Chuyên mục *</legend>${Object.entries(MUC_TIN).map(([k, v], i) => `<label><input type="radio" name="tn-muc" value="${k}"${i === 3 ? " checked" : ""}><span>${v}</span></label>`).join("")}</fieldset>
-      <label>Tiêu đề *<input id="tn-td" maxlength="120" placeholder="VD: Tin nổi bật tuần · Hoạ cụ cần mua cho bài màu"></label>
+      <fieldset class="chon-loai"><legend>Chuyên mục *</legend>${Object.entries(MUC_TIN).map(([k, v], i) => `<label><input type="radio" name="tn-muc" value="${k}"${i === 0 ? " checked" : ""}><span>${v}</span></label>`).join("")}</fieldset>
+      <label>Tiêu đề *<input id="tn-td" maxlength="120" placeholder="VD: ĐH Kiến trúc thay đổi phương thức tuyển sinh 2027"></label>
       <label>Nội dung *<textarea id="tn-nd" rows="6" maxlength="3000" placeholder="Viết ngắn gọn, mỗi ý một dòng."></textarea></label>
       <label class="anh-chon nho" for="tn-anh"><img id="tn-xem" alt="" hidden><span id="tn-chu"><b>🖼 Thêm ảnh (không bắt buộc)</b></span><input id="tn-anh" type="file" accept="image/*"></label>
       <label>Link (không bắt buộc)<input id="tn-link" type="url" inputmode="url" maxlength="300" placeholder="https://…"></label>
