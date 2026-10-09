@@ -1519,7 +1519,8 @@ function renderLessons() {
   $$("#course-tabs button").forEach(b => b.onclick = () => { course = b.dataset.c; lessonId = null; renderLessons(); });
   const list = lessons.filter(l => l.khoa === course);
   if (!list.find(l => l.id === lessonId)) lessonId = list[0].id;
-  $("#lesson-nav").innerHTML = list.map(l =>
+  // Thẻ "Lộ trình" đã hiện đầy đủ ở khung bài bên trên, nên không lặp lại trong danh sách; vẫn đổi được bằng mũi tên ‹ ›
+  $("#lesson-nav").innerHTML = list.filter(l => !/^lộ trình/i.test(String(l.ten || ""))).map(l =>
     `<button data-id="${esc(l.id)}" aria-current="${l.id === lessonId}"><span class="tick ${myProgress.bai[l.id] ? "done" : ""}"></span>${esc(l.ten)}</button>`).join("");
   $$("#lesson-nav button").forEach(b => b.onclick = () => {
     lessonId = b.dataset.id; renderLessons();
