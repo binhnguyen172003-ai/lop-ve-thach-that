@@ -543,7 +543,10 @@ function diDen(n) {
     const thu = () => {
       const el = document.querySelector(n.dich);
       if (el) {
-        el.scrollIntoView({ behavior: "smooth", block: "center" });
+        // Khối cao hơn nửa màn hình (ví dụ cả phần tiến độ): đưa lên đầu khối, không khung vàng bao cả trang
+        const cao = el.offsetHeight > innerHeight * 0.5;
+        el.scrollIntoView({ behavior: "smooth", block: cao ? "start" : "center" });
+        if (cao) return;
         el.classList.add("nhac-nhay");
         setTimeout(() => el.classList.remove("nhac-nhay"), 2200);
       } else if (++lan < 25) setTimeout(thu, 200);   // chờ dữ liệu Firebase tải xong
