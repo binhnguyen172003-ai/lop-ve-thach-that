@@ -64,7 +64,7 @@ addEventListener("error", e => {
 });
 /* ---------- Mở tức thì ở lần sau + dùng được khi mạng yếu ---------- */
 if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost") && !/[?&]khongcache/.test(location.search))
-  addEventListener("load", () => navigator.serviceWorker.register("sw.js?v=20261010at").catch(() => {}));
+  addEventListener("load", () => navigator.serviceWorker.register("sw.js?v=20261010au").catch(() => {}));
 
 /* ---------- Đo tốc độ: mở web kèm ?chandoan=1 để xem từng bước mất bao lâu ---------- */
 const DIAG = /[?&]chandoan/.test(location.search);
@@ -278,6 +278,7 @@ const LOAI_BAI = [
   { ten: "Tượng", img: "assets/img/hinh-hoa-tuong.png", moTa: "Tượng thạch cao theo các góc thi" },
   { ten: "Màu", art: "v-mau", moTa: "Bố cục trang trí màu Khối H" },
   { ten: "Mỹ thuật 2", art: "v-mt2", moTa: "Bố cục tạo hình Khối V" },
+  { ten: "Tĩnh vật", art: "v-khoi", moTa: "Tĩnh vật: bình, chai, vải, trái cây" },
 ];
 let galFilter = "all", galList = [], galCur = 0;
 const artCard = (l, note) => `<div class="gal-art">${l.img ? `<span class="art art-img" style="-webkit-mask-image:url(${l.img});mask-image:url(${l.img})" aria-hidden="true"></span>` : `<svg class="art" aria-hidden="true"><use href="#${l.art}"/></svg>`}
@@ -350,13 +351,16 @@ function renderGallery() {
   $("#gallery").className = "gallery";
   const xoaDuoc = b => b.id && user && (isAdmin || (isTeacher && b.nguoi === mail));
   // Không dựng lại lưới khi dữ liệu không đổi (mỗi lần tải lại trang Firestore gửi dữ liệu 2 lần, tránh phân tích lại ảnh base64 nhiều lần)
-  const gSig = [galFilter, !!user, isAdmin, galList.map(b => [b.id || "", b.luc || 0, b.anh ? b.anh.length : 0, b.hang, b.hocVien, b.loai, b.moTa, b.ghiChu, b.biDanh, biDanhCua(b), b.chucVu, b.mau].join("~")).join("|")].join("#");
+  const gSig = [galFilter, !!user, isAdmin, !!isTeacher,galList.map(b => [b.id || "", b.luc || 0, b.anh ? b.anh.length : 0, b.hang, b.hocVien, b.loai, b.moTa, b.ghiChu, b.biDanh, biDanhCua(b), b.chucVu, b.mau].join("~")).join("|")].join("#");
   if (gSig === gallerySig) return; gallerySig = gSig;
   $("#gallery").innerHTML = galList.map((b, i) =>
     `<div class="gal-o"><button type="button" class="gal-b" data-gi="${i}" aria-label="Xem lớn bài vẽ ${i + 1}"><img src="${esc(b.anh)}" alt="${esc(b.moTa || b.ghiChu || "Bài vẽ học viên")}" loading="lazy" decoding="async" width="300" height="400">
       <span class="cap">${esc(b.hocVien || "")}${biDanhCua(b) ? `<em class="bd">${esc(biDanhCua(b))}</em>` : ""}${b.loai ? `<small>${esc(b.loai)}</small>` : ""}</span>${b.hang ? `<span class="gal-top">TOP ${Number(b.hang)}</span>` : ""}</button>
       ${b.link ? `<a class="gal-link" href="${esc(b.link)}" target="_blank" rel="noopener" aria-label="Mở link kèm bài">↗</a>` : ""}
       ${isAdmin && b.id ? `<button type="button" class="nb-more gal-more" data-mn="${esc(b.id)}" aria-label="Tuỳ chọn: sửa thông tin, xoá bài">⋮</button>` : xoaDuoc(b) ? `<button type="button" class="gal-x" data-xbv="${esc(b.id)}" aria-label="Xoá bài này">Xoá</button>` : ""}</div>`).join("");
+  // Ô dấu cộng cuối lưới: giáo viên và quản lý bấm để đăng bài vẽ mới
+  if (user && isTeacher) $("#gallery").insertAdjacentHTML("beforeend", `<div class="gal-o"><button type="button" class="gal-b gal-them" data-them aria-label="Thêm bài vẽ mới"><span class="gal-plus" aria-hidden="true">+</span><b>Thêm bài vẽ</b></button></div>`);
+  $$("#gallery [data-them]").forEach(b => b.onclick = () => moDangBai());
   const ds = galList;
   $$("#gallery [data-gi]").forEach(b => b.onclick = () => { galList = ds; showLb(Number(b.dataset.gi)); });
   // Nút ⋮ của quản lý trong lưới bài vẽ: mở menu sửa thông tin/link hoặc xoá

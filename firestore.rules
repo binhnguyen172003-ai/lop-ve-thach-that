@@ -221,7 +221,7 @@ service cloud.firestore {
         && request.resource.data.nguoi == myEmail()
         && request.resource.data.anh is string && request.resource.data.anh.size() <= 950000
         && request.resource.data.hocVien is string && request.resource.data.hocVien.size() > 0 && request.resource.data.hocVien.size() <= 80
-        && request.resource.data.loai in ['Cơ bản', 'Hình hoạ người', 'Tượng', 'Màu', 'Mỹ thuật 2']
+        && request.resource.data.loai in ['Cơ bản', 'Hình hoạ người', 'Tượng', 'Màu', 'Mỹ thuật 2', 'Tĩnh vật']
         && shortText(request.resource.data, 'ghiChu', 120) && shortText(request.resource.data, 'link', 300)
         && (isAdmin() || request.resource.data.hang == 0);
       allow update: if isAdmin()
