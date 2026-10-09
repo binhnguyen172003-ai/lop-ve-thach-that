@@ -64,7 +64,7 @@ addEventListener("error", e => {
 });
 /* ---------- Mở tức thì ở lần sau + dùng được khi mạng yếu ---------- */
 if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost") && !/[?&]khongcache/.test(location.search))
-  addEventListener("load", () => navigator.serviceWorker.register("sw.js?v=20261010bk").catch(() => {}));
+  addEventListener("load", () => navigator.serviceWorker.register("sw.js?v=20261010bl").catch(() => {}));
 
 /* ---------- Đo tốc độ: mở web kèm ?chandoan=1 để xem từng bước mất bao lâu ---------- */
 const DIAG = /[?&]chandoan/.test(location.search);
@@ -3586,6 +3586,7 @@ $("#tab-in").onclick = () => { showTab("in"); if (!$("#pw-mail").value && $("#nw
 const lastMail = store.get(LAST_MAIL, "");
 if (lastMail) { $("#pw-mail").value = lastMail; showTab("in"); } else showTab("new");
 
+let setpassMail = "";
 function nwSay(t, err) { const st = $("#nw-status"); st.textContent = t; st.classList.toggle("err", !!err); }
 $("#nw-show").onclick = () => {
   const show = $("#nw-pass").type === "password";
@@ -3613,13 +3614,14 @@ $("#f-new").addEventListener("submit", ev => {
     } catch (e) {
       if (e && e.code === "auth/email-already-in-use") {
         nwSay("Gmail này đã có tài khoản rồi. Nếu em nhớ mật khẩu, bấm mục “Đã có tài khoản: Đăng nhập”. Nếu chưa từng đặt mật khẩu (trước đây vào bằng nút Google), bấm nút bên dưới để đặt mật khẩu.", true);
-        $("#nw-setpass").hidden = false; $("#pw-mail").value = m;
+        setpassMail = m; $("#nw-setpass").hidden = false; $("#pw-mail").value = m;
       } else nwSay(pwError(e), true);
     }
   }, nwSay);
 });
 $("#nw-setpass").onclick = () => {
-  const m = $("#nw-mail").value.trim().toLowerCase();
+  const m = setpassMail || $("#nw-mail").value.trim().toLowerCase();
+  if (!okMail(m)) { nwSay("Em gõ lại Gmail rồi bấm Tạo tài khoản một lần nữa nhé.", true); $("#nw-mail").focus(); return; }
   pwBusy($("#nw-setpass"), "Đang gửi…", async () => {
     await sendPasswordResetEmail(auth, m);
     $("#nw-setpass").hidden = true;
@@ -3634,13 +3636,13 @@ $("#pw-forgot").onclick = () => {
   });
 };
 // Chờ xác nhận Gmail: tự kiểm tra mỗi vài giây và ngay khi em quay lại từ ứng dụng Gmail.
-let verifyTimer = null;
+let verifyTimer = null, verifyTu = 0;
 async function checkVerified(manual) {
   const u = auth && auth.currentUser; if (!u || !needVerify) return;
   const st = $("#verify-status");
   try { await u.reload(); } catch (e) { if (manual) { st.textContent = "Mạng yếu, thử lại nhé."; st.classList.add("err"); } return; }
   if (auth.currentUser && auth.currentUser.emailVerified) {
-    clearInterval(verifyTimer);
+    clearTimeout(verifyTimer);
     try { await auth.currentUser.getIdToken(true); } catch (e) {}
     st.textContent = ""; toast("Đã xác nhận Gmail! Làm tiếp bước 2 nhé.");
     onUser(auth.currentUser);
@@ -3648,11 +3650,22 @@ async function checkVerified(manual) {
     st.textContent = "Chưa thấy xác nhận. Em mở thư trong Gmail và bấm vào link nhé (xem cả mục Thư rác)."; st.classList.add("err");
   }
 }
+// Nhịp thưa dần: 5 giây trong phút đầu, rồi 30 giây, dừng hẳn sau 10 phút.
+// Quay lại tab là kiểm tra ngay và chạy lại, nên không bỏ sót mà cũng không gọi máy chủ cả buổi.
 function watchVerify() {
-  clearInterval(verifyTimer);
-  verifyTimer = setInterval(() => { if (!needVerify) clearInterval(verifyTimer); else if (document.visibilityState === "visible") checkVerified(false); }, 4000);
+  clearTimeout(verifyTimer); verifyTu = Date.now();
+  const nhip = () => {
+    if (!needVerify) { clearTimeout(verifyTimer); return; }
+    const troi = Date.now() - verifyTu;
+    if (troi > 6e5) return;
+    if (document.visibilityState === "visible") checkVerified(false);
+    verifyTimer = setTimeout(nhip, troi < 6e4 ? 5000 : 30000);
+  };
+  verifyTimer = setTimeout(nhip, 5000);
 }
-document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && needVerify) checkVerified(false); });
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible" && needVerify) { checkVerified(false); watchVerify(); }
+});
 $("#btn-verified").onclick = () => pwBusy($("#btn-verified"), "Đang kiểm tra…", () => checkVerified(true), verifySay);
 $("#btn-resend").onclick = () => pwBusy($("#btn-resend"), "Đang gửi…", async () => {
   await sendVerify(auth.currentUser);
@@ -3691,6 +3704,8 @@ $("#f-reg").addEventListener("submit", async ev => {
   const gv = v("#rg-vt") === "giaovien";
   st.classList.remove("err");
   const bad = (msg, id) => { st.textContent = msg; st.classList.add("err"); if (id) $(id).focus(); };
+  if (!v("#rg-ten")) return bad("Em chưa điền họ và tên.", "#rg-ten");
+  if (!gv && !/^(19|20)\d{2}$/.test(v("#rg-nam"))) return bad("Em chọn năm sinh nhé.", "#rg-nam");
   if (gv && !okPhone(v("#rg-sdtgv"))) return bad("Số điện thoại chưa đúng. Viết 10 số, bắt đầu bằng số 0.", "#rg-sdtgv");
   if (!gv && !okPhone(v("#rg-sdtph"))) return bad("Số điện thoại bố mẹ chưa đúng. Viết 10 số, bắt đầu bằng số 0.", "#rg-sdtph");
   if (!gv && v("#rg-sdt") && !okPhone(v("#rg-sdt"))) { $("#f-reg details").open = true; return bad("Số điện thoại của em chưa đúng. Viết 10 số, hoặc để trống.", "#rg-sdt"); }
