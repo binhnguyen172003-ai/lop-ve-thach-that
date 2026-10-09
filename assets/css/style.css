@@ -2581,3 +2581,16 @@ body.hop-mo{overflow:hidden}
 .req-them summary:hover{color:var(--accent)}
 .req-them .req-body{margin-top:6px;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.03)}
 @media (max-width:640px){.req-sdt{flex:1;justify-content:center}}
+
+/* ===== Ô "+ Đăng tin mới" trong vòng xoay bản tin: thu gọn cho vừa khung thẻ, căn giữa ===== */
+.tb-the.nb-add{display:grid;place-items:center;align-content:center;min-height:0;padding:0}
+.tb-the.nb-add .nb-add-in{padding:16px 14px;gap:8px;align-content:center}
+.tb-the.nb-add .nb-plus{width:56px;height:56px;font-size:2rem}
+.tb-the.nb-add .nb-add-in b{font:700 1rem/1.3 var(--f-display)}
+.tb-the.nb-add .nb-add-in small{font-size:.76rem;line-height:1.4;
+  display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+@media (max-width:640px){
+  .tb-the.nb-add .nb-plus{width:50px;height:50px;font-size:1.75rem}
+  .tb-the.nb-add .nb-add-in{padding:14px 12px;gap:6px}
+  .tb-the.nb-add .nb-add-in small{-webkit-line-clamp:2}
+}
