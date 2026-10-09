@@ -2251,3 +2251,12 @@ body.hop-mo{overflow:hidden}
 .bai-chuyen button{width:46px;height:46px;border-radius:50%;border:1px solid var(--rule);background:var(--paper);color:var(--ink);font:600 1.5rem/1 var(--f-body);cursor:pointer;display:grid;place-items:center}
 .bai-chuyen button:disabled{opacity:.3;cursor:default}
 .bai-chuyen span{font-size:.85rem;color:var(--graphite)}
+
+/* Tổng quan: các phần học xếp 2 cột, gọn trên điện thoại */
+@media (max-width:640px){
+  .acc-tiles{grid-template-columns:1fr 1fr;gap:8px;margin-block:12px}
+  .acc-tile{padding:11px 26px 11px 11px;border-radius:12px;gap:2px;min-height:0}
+  .acc-tile b{font-size:.92rem;line-height:1.25}
+  .acc-tile span{font-size:.74rem;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .acc-tile i{right:9px;font-size:.9rem}
+}
