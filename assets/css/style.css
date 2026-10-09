@@ -2264,7 +2264,7 @@ body.hop-mo{overflow:hidden}
 /* ----- Bìa điện ảnh: màu phim, tia sáng quét, bụi ánh sáng, hạt phim ----- */
 .cine-grade,.cine-sweep,.cine-dust{position:absolute;inset:0;pointer-events:none;display:block}
 .cine-grade{background:linear-gradient(160deg,rgba(24,120,130,.38) 0%,rgba(8,12,20,0) 45%,rgba(255,138,64,.22) 100%);mix-blend-mode:soft-light}
-.cine-sweep{top:-20%;bottom:-20%;left:-60%;right:auto;width:38%;background:linear-gradient(100deg,transparent 0%,rgba(255,236,190,.16) 50%,transparent 100%);transform:skewX(-14deg);mix-blend-mode:screen;opacity:0}
+.cine-sweep{top:-20%;bottom:-20%;left:-60%;right:auto;width:38%;background:linear-gradient(100deg,transparent 0%,rgba(255,236,190,.28) 50%,transparent 100%);transform:skewX(-14deg);mix-blend-mode:screen;opacity:0}
 .cine-dust{background-image:
   radial-gradient(2px 2px at 12% 30%,rgba(255,240,200,.85),transparent),
   radial-gradient(1.5px 1.5px at 40% 70%,rgba(255,240,200,.7),transparent),
@@ -2287,7 +2287,7 @@ body.hop-mo{overflow:hidden}
 .cine-h1{position:relative}
 .spk{position:absolute;left:var(--x,0);top:var(--y,0);width:var(--s,14px);height:var(--s,14px);pointer-events:none;opacity:0;transform:scale(0) rotate(0deg);
   background:linear-gradient(135deg,#fff 0%,#ffe9a6 55%,#ffc83d 100%);clip-path:polygon(50% 0,62% 38%,100% 50%,62% 62%,50% 100%,38% 62%,0 50%,38% 38%);
-  filter:drop-shadow(0 0 5px rgba(255,220,120,.9))}
+  filter:drop-shadow(0 0 8px rgba(255,220,120,1)) drop-shadow(0 0 2px #fff)}
 @media (prefers-reduced-motion:no-preference){.spk{animation:spk 3.6s ease-in-out infinite both;animation-delay:var(--d,0s)}}
 @media (prefers-reduced-motion:reduce){.spk{display:none}}
 @keyframes spk{0%,100%{opacity:0;transform:scale(0) rotate(0deg)}14%{opacity:1;transform:scale(1) rotate(45deg)}28%{opacity:0;transform:scale(.2) rotate(110deg)}}
