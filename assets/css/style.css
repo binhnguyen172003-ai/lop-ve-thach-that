@@ -1948,3 +1948,21 @@ body.tl-dang-keo{-webkit-user-select:none;user-select:none}
 .khoa-cap label{display:inline-flex;align-items:center;gap:5px;font-size:.78rem;padding:3px 9px;border:1px solid var(--rule);border-radius:999px;cursor:pointer;white-space:nowrap}
 .khoa-cap input{margin:0;accent-color:var(--ok)}
 .khoa-cap label:has(input:checked){border-color:var(--ok);background:var(--ok-soft);color:var(--ok)}
+
+/* ===== Bài học đầy đủ (nội dung từ Sách học viên) ===== */
+.bai-md{margin-top:14px;line-height:1.65;font-size:.97rem}
+.bai-md h3,.bai-md h4{font-size:1.08rem;margin:22px 0 8px;color:var(--accent)}
+.bai-md h5{font-size:.98rem;margin:16px 0 6px}
+.bai-md p{margin:0 0 10px}
+.bai-md ul,.bai-md ol{margin:0 0 12px;padding-left:22px}
+.bai-md li{margin:4px 0}
+.bai-md li.con{margin-left:18px;list-style:circle}
+.bai-md li.ck{list-style:none;margin-left:-22px;display:flex;gap:8px;align-items:flex-start}
+.bai-md li.ck .o{flex:none;width:16px;height:16px;margin-top:4px;border:2px solid var(--accent);border-radius:4px}
+.bai-md li.ck .o.x{background:var(--accent)}
+.bai-md blockquote{margin:12px 0;padding:10px 14px;border-left:4px solid var(--accent);background:var(--accent-soft);border-radius:0 10px 10px 0}
+.bai-md code{font-size:.9em;padding:1px 5px;border-radius:5px;background:var(--accent-soft)}
+.bai-bang{overflow-x:auto;margin:10px 0 14px;-webkit-overflow-scrolling:touch}
+.bai-bang table{border-collapse:collapse;width:100%;min-width:420px;font-size:.9rem}
+.bai-bang th,.bai-bang td{border:1px solid var(--rule);padding:7px 9px;text-align:left;vertical-align:top}
+.bai-bang th{background:var(--accent-soft);font-weight:700}

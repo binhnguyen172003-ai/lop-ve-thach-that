@@ -4,7 +4,7 @@
 // =====================================================================
 import { firebaseConfig, ADMIN_EMAIL, EMAIL_NHAN_THONG_BAO } from "../../config/firebase-config.js?v=20261009b";
 import { FILE_LIMITS, FILE_TYPES, fileExt, fileSize, validateFiles, attachmentStorage, uploadError, validAttachmentPath } from "./attachments.js?v=20261009b";
-import { GIAO_TRINH_MAU as GT_LO_TRINH } from "../../data/giao-trinh-mau.js?v=20261009b";
+import { GIAO_TRINH_MAU as GT_LO_TRINH } from "../../data/giao-trinh-mau.js?v=20261009f";
 import { LIEN_HE, NAM_THI, LICH_THI, BO_LOC_TRUONG, CA_HOC, THOI_GIAN_BIEU, BAI_VE, BANG_VANG, TRUONG, MUC_TIEU, GIAO_VIEN, VIDEO_BIA, BAI_NOI_BAT, THANH_TUU_TRAO, XP_THUONG, AVATAR, SO_DU_THI, HOA_CU, TON_DAU_KY } from "../../data/noi-dung.js?v=20261009d";
 
 // Firebase được tải riêng, để phần giới thiệu vẫn chạy kể cả khi mạng chậm hoặc chưa cấu hình.
@@ -55,7 +55,7 @@ addEventListener("error", e => {
 });
 /* ---------- Mở tức thì ở lần sau + dùng được khi mạng yếu ---------- */
 if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost") && !/[?&]khongcache/.test(location.search))
-  addEventListener("load", () => navigator.serviceWorker.register("sw.js?v=20261009e").catch(() => {}));
+  addEventListener("load", () => navigator.serviceWorker.register("sw.js?v=20261009f").catch(() => {}));
 
 /* ---------- Đo tốc độ: mở web kèm ?chandoan=1 để xem từng bước mất bao lâu ---------- */
 const DIAG = /[?&]chandoan/.test(location.search);
@@ -1386,6 +1386,66 @@ function moTheKhoa(c) {
   location.hash = approved ? "#lam-viec" : user && !needVerify ? "#tai-khoan" : "#dang-ky";
 }
 
+/* ---------- Bài học đầy đủ: hiển thị nội dung viết bằng markdown (tiêu đề, bảng, danh sách, trích dẫn) ---------- */
+function mdHTML(md) {
+  const inl = t => esc(t).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>").replace(/(^|[^*])\*([^*\s][^*]*?)\*(?!\*)/g, "$1<i>$2</i>").replace(/`([^`]+)`/g, "<code>$1</code>");
+  const L = String(md || "").split("\n"), out = [];
+  for (let i = 0; i < L.length;) {
+    const l = L[i];
+    if (!l.trim()) { i++; continue; }
+    let m;
+    if ((m = l.match(/^(#{2,4})\s+(.*)/))) { const h = Math.min(m[1].length + 1, 5); out.push(`<h${h}>${inl(m[2])}</h${h}>`); i++; continue; }
+    if (l.trim().startsWith("|")) {
+      const rows = []; while (i < L.length && L[i].trim().startsWith("|")) rows.push(L[i++]);
+      const cells = r => r.trim().replace(/^\||\|$/g, "").split(/(?<!\\)\|/).map(c => c.trim().replace(/\\\|/g, "|"));
+      const hasHead = rows[1] && /^\s*\|?\s*:?-{3}/.test(rows[1]);
+      const head = hasHead ? `<thead><tr>${cells(rows[0]).map(c => `<th>${inl(c)}</th>`).join("")}</tr></thead>` : "";
+      const body = (hasHead ? rows.slice(2) : rows).map(r => `<tr>${cells(r).map(c => `<td>${inl(c)}</td>`).join("")}</tr>`).join("");
+      out.push(`<div class="bai-bang"><table>${head}<tbody>${body}</tbody></table></div>`); continue;
+    }
+    if (l.startsWith(">")) { const q = []; while (i < L.length && L[i].startsWith(">")) q.push(L[i++].replace(/^>\s?/, "")); out.push(`<blockquote>${q.map(inl).join("<br>")}</blockquote>`); continue; }
+    if (/^\s*(?:[-*]|\d+\.)\s/.test(l)) {
+      const so = /^\s*\d+\./.test(l), it = [];
+      while (i < L.length && /^\s*(?:[-*]|\d+\.)\s/.test(L[i])) {
+        const t = L[i++].replace(/^\s*(?:[-*]|\d+\.)\s/, ""), con = /^\s{2,}/.test(L[i - 1]);
+        const ck = t.match(/^\[( |x)\]\s*(.*)/i);
+        it.push(`<li${con ? ' class="con"' : ""}${ck ? ' class="ck"' : ""}>${ck ? `<span class="o${ck[1].trim() ? " x" : ""}"></span>${inl(ck[2])}` : inl(t)}</li>`);
+      }
+      out.push(so ? `<ol>${it.join("")}</ol>` : `<ul>${it.join("")}</ul>`); continue;
+    }
+    const p = []; while (i < L.length && L[i].trim() && !/^(#{2,4}\s|\||>|\s*(?:[-*]|\d+\.)\s)/.test(L[i])) p.push(L[i++]);
+    out.push(`<p>${p.map(inl).join("<br>")}</p>`);
+  }
+  return out.join("");
+}
+/* Quản lý mở trang: tự đưa bài học mới (data/bai-hoc.js) lên giáo trình, không phải bấm nút.
+   Chỉ chạy khi có bản mới (BAN đổi); bài quản lý đã xoá thì không thêm lại. */
+let daDongBo = false;
+const MAU_ID = id => /^bai-/.test(id) || GT_LO_TRINH.some(x => x[0] === id);
+async function dongBoBaiHoc() {
+  if (daDongBo || !isAdmin || !db) return; daDongBo = true;
+  try {
+    const { BAN, BAI_HOC } = await import("../../data/bai-hoc.js?v=20261009f");
+    const meta = (await getDoc(doc(db, "giaotrinh", "_meta"))).data() || {};
+    if (meta.ban === BAN) return;
+    const xoa = new Set(meta.daxoa || []), co = new Set(lessons.map(l => l.id));
+    const batch = writeBatch(db); let n = 0;
+    BAI_HOC.forEach(({ id, ...d }) => { if (!xoa.has(id)) { batch.set(doc(db, "giaotrinh", id), { ...d, buoc: [], ghichu: "" }); n++; } });
+    GT_LO_TRINH.forEach(([id, khoa, ten, loai, thutu, buoc, ghichu]) => { if (!co.has(id) && !xoa.has(id)) batch.set(doc(db, "giaotrinh", id), { khoa, ten, loai, thutu, buoc, ghichu }); });
+    lessons.filter(l => /^pm-/.test(l.id)).forEach(l => batch.delete(doc(db, "giaotrinh", l.id))); // bản tóm tắt cũ, nay đã có bài đầy đủ
+    batch.set(doc(db, "giaotrinh", "_meta"), { ban: BAN, daxoa: [...xoa] }, { merge: true });
+    await timed("Cập nhật bài học", batch.commit());
+    toast(`Đã cập nhật giáo trình: ${n} bài học đầy đủ cho học viên.`);
+  } catch (e) { daDongBo = false; }
+}
+async function ghiDaXoa(id) {
+  if (!MAU_ID(id)) return;
+  try {
+    const meta = (await getDoc(doc(db, "giaotrinh", "_meta"))).data() || {};
+    await setDoc(doc(db, "giaotrinh", "_meta"), { daxoa: [...new Set([...(meta.daxoa || []), id])] }, { merge: true });
+  } catch (e) {}
+}
+
 /* ---------- Giáo trình ---------- */
 function courses() { return [...new Set(lessons.map(l => l.khoa))]; }
 function renderLessons() {
@@ -1427,16 +1487,16 @@ function renderLessons() {
   });
   const l = list.find(x => x.id === lessonId);
   const items = Array.isArray(l.buoc) ? l.buoc : [];
-  const body = l.loai === "noi-dung"
+  const body = (l.noidung ? `<div class="bai-md">${mdHTML(l.noidung)}</div>` : "") + (!items.length ? "" : l.loai === "noi-dung"
     ? `<ul class="points">${items.map(s => `<li>${esc(s)}</li>`).join("")}</ul>`
-    : `<ol class="steps">${items.map(s => `<li>${esc(s)}</li>`).join("")}</ol>`;
+    : `<ol class="steps">${items.map(s => `<li>${esc(s)}</li>`).join("")}</ol>`);
   $("#lesson").innerHTML =
     `<p class="eyebrow">${esc(l.khoa)}</p><h3 style="font-size:1.5rem;margin-top:4px">${esc(l.ten)}</h3>
      ${body}${l.ghichu ? `<p class="gc"><b>Thầy dặn:</b> ${esc(l.ghichu)}</p>` : ""}
      <div class="foot">${isTeacher ? "" : `<button class="btn small" id="mark">${myProgress.bai[l.id] ? "Đã học xong ✓" : "Đánh dấu đã học"}</button>`}
      ${isAdmin ? `<button class="btn small" id="del-l">Xoá bài này</button>` : ""}</div>`;
   if ($("#mark")) $("#mark").onclick = () => toggleProgress("bai", l.id).then(renderLessons);
-  if (isAdmin) confirmButton($("#del-l"), () => deleteDoc(doc(db, "giaotrinh", l.id)));
+  if (isAdmin) confirmButton($("#del-l"), () => { ghiDaXoa(l.id); return deleteDoc(doc(db, "giaotrinh", l.id)); });
 }
 
 /* ---------- Bài tập ---------- */
@@ -2712,7 +2772,7 @@ async function onUser(u) {
     renderMyProg();
   }
   listen(query(collection(db, "giaotrinh"), orderBy("thutu")), snap => {
-    lessons = snap.docs.map(d => ({ id: d.id, ...d.data() })); renderLessons(); if (isAdmin) renderRoster(); saveData(); renderTiles();
+    lessons = snap.docs.filter(d => !d.id.startsWith("_")).map(d => ({ id: d.id, ...d.data() })); renderLessons(); if (isAdmin) { renderRoster(); dongBoBaiHoc(); } saveData(); renderTiles();
   });
   listen(query(collection(db, "baitap"), orderBy("han")), snap => {
     homework = snap.docs.map(d => ({ id: d.id, ...d.data() })); renderHomework(); saveData(); renderTiles();
@@ -3083,9 +3143,12 @@ submitTo($("#f-hv"), $("#hv-status"), "Đang duyệt…", "Đã duyệt. Ngườ
 $("#btn-seed").onclick = async () => {
   const st = $("#seed-status"); st.textContent = "Đang nạp…";
   // Chỉ tải giáo trình mẫu khi thầy bấm nạp (đỡ nặng trang cho mọi người khác)
-  const { GIAO_TRINH_MAU } = await import("../../data/giao-trinh-mau.js?v=20261009b");
+  const { GIAO_TRINH_MAU } = await import("../../data/giao-trinh-mau.js?v=20261009f");
+  const { BAN, BAI_HOC } = await import("../../data/bai-hoc.js?v=20261009f");
   const batch = writeBatch(db);
   GIAO_TRINH_MAU.forEach(([id, khoa, ten, loai, thutu, buoc, ghichu]) => batch.set(doc(db, "giaotrinh", id), { khoa, ten, loai, thutu, buoc, ghichu }));
-  try { await timed("Nạp giáo trình", batch.commit()); st.textContent = `Đã nạp ${GIAO_TRINH_MAU.length} bài vào giáo trình.`; }
+  BAI_HOC.forEach(({ id, ...d }) => batch.set(doc(db, "giaotrinh", id), { ...d, buoc: [], ghichu: "" }));
+  batch.set(doc(db, "giaotrinh", "_meta"), { ban: BAN, daxoa: [] });
+  try { await timed("Nạp giáo trình", batch.commit()); st.textContent = `Đã nạp ${GIAO_TRINH_MAU.length + BAI_HOC.length} bài vào giáo trình.`; }
   catch (e) { st.textContent = "Chưa nạp được. Kiểm tra đã dán luật bảo mật (firestore.rules) chưa."; }
 };

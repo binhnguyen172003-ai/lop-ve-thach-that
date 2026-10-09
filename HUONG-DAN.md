@@ -145,3 +145,8 @@ Khi xóa bài, hệ thống xóa tài liệu kèm theo. Nếu mạng hoặc quy�
 - Muốn đổi sau này: trang **Duyệt → Danh sách học viên**, bấm chọn/bỏ khoá ngay dưới cột Chương trình, web tự lưu.
 - Học viên đăng nhập: thẻ khoá được cấp ở mục "Các khoá học" hiện **✓ Khoá của em** và nút **Vào học →** mở thẳng khoá đó trong Giáo trình. Khoá chưa cấp hiện "Nhắn thầy để học thêm khoá này". Trong Giáo trình, em chỉ thấy các khoá được cấp.
 - Mất mạng / máy chủ không trả lời: học viên đã được duyệt vẫn học bằng quyền và bài đã lưu trên máy, web tự thử lại; không còn bị khoá oan.
+
+## Bài học đầy đủ trong Giáo trình
+- Mỗi khoá có từng bài riêng (Bài 0, Bài 1, … / Chuyên đề 0–11 / Sổ tay), nội dung lấy từ Sách học viên Pro Max: bảng, mẹo, thử thách, tự kiểm tra.
+- Quản lý chỉ cần **mở web bằng tài khoản quản lý một lần**: web tự đưa bài học mới lên (không cần bấm nút). Có bản mới (file `data/bai-hoc.js` đổi mã BAN) thì lần mở sau tự cập nhật.
+- Bài nào thầy xoá trên web sẽ không bị thêm lại.
