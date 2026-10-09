@@ -340,9 +340,4 @@ export const BAN_TIN = [
     nd: "Trường Đại học Kiến trúc Hà Nội công bố thông báo về dự kiến thay đổi trong tuyển sinh trình độ đại học năm 2027.\nBấm \"Mở link\" để đọc chi tiết trên trang chính thức của trường.",
     link: "https://hau.edu.vn/Thong-bao-ve-du-kien-thay-doi-trong-tuyen-sinh-trinh-do-dai-hoc-nam-2027-cua-Truong-Dai-hoc-Kien-truc-Ha-Noi_n4870.html",
     anh: "assets/img/tin/tuyen-sinh-2027.jpg" },
-  { muc: "hoacu", ghim: true, ngay: "2026-10-09", tieuDe: "Hoạ cụ cần chuẩn bị khi bắt đầu học",
-    nd: "Buổi đầu em chưa cần mua đắt. Chỉ cần đủ bộ dưới đây là vẽ được hình hoạ cơ bản. Hoạ cụ màu (Khối H) thầy hướng dẫn mua khi bắt đầu học màu. Lớp có bán sẵn tại cơ sở, giá như dưới đây.",
-    dsHoaCu: "Cơ bản" },
-  { muc: "lythuyet", ngay: "2026-10-09", tieuDe: "5 bước của một bài hình hoạ",
-    nd: "1. Dựng hình: đặt bố cục vừa khổ giấy, phác khung lớn bằng nét nhẹ.\n2. Đo tỷ lệ: so chiều cao, chiều ngang bằng que đo, nheo mắt nhìn tổng thể.\n3. Cấu trúc: tìm đường trục, mặt phẳng, khối chính.\n4. Sáng tối: chia mảng sáng – tối trước, rồi mới đẩy sắc độ trung gian.\n5. Hoàn thiện: chỉnh chi tiết, đứng xa nhìn lại, nhờ thầy nhận xét." },
-];
+
