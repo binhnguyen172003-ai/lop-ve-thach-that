@@ -5,7 +5,7 @@
 import { firebaseConfig, ADMIN_EMAIL, EMAIL_NHAN_THONG_BAO } from "../../config/firebase-config.js?v=20261009b";
 import { FILE_LIMITS, FILE_TYPES, fileExt, fileSize, validateFiles, attachmentStorage, uploadError, validAttachmentPath } from "./attachments.js?v=20261009b";
 import { GIAO_TRINH_MAU as GT_LO_TRINH } from "../../data/giao-trinh-mau.js?v=20261009f";
-import { LIEN_HE, NAM_THI, LICH_THI, BO_LOC_TRUONG, CA_HOC, THOI_GIAN_BIEU, BAI_VE, BANG_VANG, TRUONG, MUC_TIEU, GIAO_VIEN, VIDEO_BIA, BAI_NOI_BAT, THANH_TUU_TRAO, XP_THUONG, AVATAR, SO_DU_THI, HOA_CU, TON_DAU_KY, BAN_TIN, SAN_PHAM } from "../../data/noi-dung.js?v=20261010bc";
+import { LIEN_HE, NAM_THI, LICH_THI, BO_LOC_TRUONG, CA_HOC, THOI_GIAN_BIEU, BAI_VE, BANG_VANG, TRUONG, MUC_TIEU, GIAO_VIEN, VIDEO_BIA, BAI_NOI_BAT, THANH_TUU_TRAO, XP_THUONG, AVATAR, SO_DU_THI, HOA_CU, TON_DAU_KY, BAN_TIN, SAN_PHAM } from "../../data/noi-dung.js?v=20261010bd";
 
 // Firebase được tải riêng, để phần giới thiệu vẫn chạy kể cả khi mạng chậm hoặc chưa cấu hình.
 const FB = "https://www.gstatic.com/firebasejs/10.12.2/";
@@ -64,7 +64,7 @@ addEventListener("error", e => {
 });
 /* ---------- Mở tức thì ở lần sau + dùng được khi mạng yếu ---------- */
 if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost") && !/[?&]khongcache/.test(location.search))
-  addEventListener("load", () => navigator.serviceWorker.register("sw.js?v=20261010bc").catch(() => {}));
+  addEventListener("load", () => navigator.serviceWorker.register("sw.js?v=20261010bd").catch(() => {}));
 
 /* ---------- Đo tốc độ: mở web kèm ?chandoan=1 để xem từng bước mất bao lâu ---------- */
 const DIAG = /[?&]chandoan/.test(location.search);
@@ -4000,40 +4000,7 @@ function banTinTatCa() {
   return [...BANTIN_DONG.filter(t => !String(t.id).startsWith("seed-")), ...BAN_TIN.map((x, i) => ({ ...x, id: "", codinh: i }))].sort((a, b) => (b.ghim ? 1 : 0) - (a.ghim ? 1 : 0) || t(b) - t(a));
 }
 // "Tin nổi bật" ngay dưới mục Về lớp: vòng xoay tin tuyển sinh, thông báo, bài đăng (bấm thẻ giữa để mở link)
-let tbSig = "";
-function renderTinNoiBat() {
-  const box = $("#tb-noi"); if (!box) return;
-  const ds = banTinTatCa().slice(0, 8), them = !!(user && isTeacher);
-  const k = [them, ...ds.map(x => (x.id || x.codinh) + (x.tieuDe || "") + (x.ghim ? 1 : 0))].join("|");
-  if (k === tbSig) return; tbSig = k;
-  const lienKet = x => x.link || "#ban-tin";
-  const the = (x, i) => `<figure class="nb-card tb-the${x.anh ? " co-anh" : ""}" data-i="${i}">
-      ${x.anh ? `<img src="${esc(x.anh)}" alt="" loading="lazy" decoding="async" draggable="false">` : `<span class="tb-nen m-${esc(x.muc || "tinlop")}" aria-hidden="true"></span>`}
-      ${isAdmin && x.id ? `<button type="button" class="nb-more" data-mt="${esc(x.id)}" aria-label="Tuỳ chọn: sửa hoặc xoá bản tin">⋮</button>` : ""}
-      <div class="tb-the-nd"><span class="tb-chip"><span class="tn-muc m-${esc(x.muc || "tinlop")}">${esc(MUC_TIN[x.muc] || "Thông báo")}</span>${x.ghim ? `<span class="tn-ghim">📌 Ghim</span>` : ""}</span>
-        <b>${esc(x.tieuDe || "")}</b><small>${esc(String(x.nd || "").split(/\n/)[0].slice(0, 120))}${String(x.nd || "").length > 120 ? "…" : ""}</small>
-        <span class="tb-mo">${String(lienKet(x)).startsWith("#") ? "Xem chi tiết →" : "Mở link ↗"} <em class="num">${x.luc ? fmtDate(x.luc) : x.ngay ? ngayVN(x.ngay) : ""}</em></span></div></figure>`;
-  const n = ds.length + (them ? 1 : 0);
-  box.innerHTML = `<div class="tb-dau"><p class="tb-t"><span class="tb-cham" aria-hidden="true"></span>Tin nổi bật</p><a class="tb-xem" href="#ban-tin">Xem tất cả →</a></div>
-    ${n ? `<div class="gv-ring tb-ring" aria-roledescription="vòng xoay" aria-label="Tin nổi bật"><div class="gv-stage tb-stage">${ds.map(the).join("")}
-      ${them ? `<figure class="nb-card nb-add tb-the" data-i="${ds.length}" data-add="1"><div class="nb-add-in"><span class="nb-plus" aria-hidden="true">+</span><b>Đăng tin mới</b><small>Tin tuyển sinh, thông báo, hoạ cụ…<br>Có thể kèm ảnh và link</small></div></figure>` : ""}</div>
-      <div class="gv-ctl"><button type="button" class="gv-nav" aria-label="Tin trước">‹</button><div class="gv-dots">${Array.from({ length: n }, (_, i) => `<button type="button" data-i="${i}" aria-label="Tin ${i + 1}"></button>`).join("")}</div><button type="button" class="gv-nav" aria-label="Tin sau">›</button></div></div>`
-      : `<p class="muted">Chưa có tin mới.</p>`}`;
-  if (!n) return;
-  const ring = box.querySelector(".tb-ring"), [p2, n2] = ring.querySelectorAll(".gv-nav");
-  // Nút ⋮ của quản lý trên bản tin: sửa hoặc xoá (không mở link khi bấm ⋮)
-  ring.querySelectorAll(".nb-more[data-mt]").forEach(bt => {
-    bt.addEventListener("pointerdown", e => e.stopPropagation());
-    bt.addEventListener("click", e => { e.stopPropagation(); e.preventDefault(); moMenuBai(bt, BANTIN_DONG.find(y => y.id === bt.dataset.mt), "tin"); });
-  });
-  vongXoay(ring, ring.querySelector(".tb-stage"), [...ring.querySelectorAll(".tb-the")], [...ring.querySelectorAll(".gv-dots button")], p2, n2, c => {
-    if (c.dataset.add) { moDangTin(); return; }
-    const x = ds[Number(c.dataset.i)], l = lienKet(x);
-    if (l.startsWith("#")) location.hash = l; else window.open(l, "_blank", "noopener");
-  });
-}
 function renderBanTin() {
-  renderTinNoiBat();
   const grid = $("#tn-grid"); if (!grid) return;
   { const n = $("#tn-them"); if (n) n.hidden = !(user && isTeacher); }
   const all = banTinTatCa(), co = Object.keys(MUC_TIN).filter(k => all.some(x => x.muc === k));
@@ -4046,6 +4013,7 @@ function renderBanTin() {
     return `<ul class="tn-hc">${l.map(h => `<li><span>${esc(h.ten)}</span><b class="num">${vnd(h.gia)}</b></li>`).join("")}<li class="tong"><span>Tổng cả bộ</span><b class="num">${vnd(l.reduce((a, h) => a + h.gia, 0))}</b></li></ul>`; };
   grid.innerHTML = ds.length ? ds.map(x => `<article class="tn-the${x.ghim ? " ghim" : ""}">
       ${x.anh ? `<img class="tn-anh" src="${esc(x.anh)}" alt="" loading="lazy" decoding="async">` : ""}
+      ${isAdmin && x.id ? `<button type="button" class="nb-more tn-more" data-mt="${esc(x.id)}" aria-label="Tuỳ chọn: sửa hoặc xoá bản tin">⋮</button>` : ""}
       <div class="tn-nd">
         <p class="tn-dau"><span class="tn-muc m-${esc(x.muc || "tinlop")}">${esc(MUC_TIN[x.muc] || "Tin của lớp")}</span>${x.ghim ? `<span class="tn-ghim">📌 Ghim</span>` : ""}</p>
         <h3>${esc(x.tieuDe || "")}</h3>
@@ -4054,7 +4022,7 @@ function renderBanTin() {
         <div class="tn-cuoi">${x.link ? (x.link.startsWith("#") ? `<a class="btn small" href="${esc(x.link)}">Xem chi tiết →</a>` : `<a class="btn small" href="${esc(x.link)}" target="_blank" rel="noopener">Mở link ↗</a>`) : ""}
           <span class="muted tn-meta">${esc(x.tenTacGia || "Lớp Vẽ Thạch Thất")} · ${x.luc ? fmtDate(x.luc) : x.ngay ? ngayVN(x.ngay) : ""}</span>
           ${x.id && user && isAdmin ? `<button type="button" class="linkish" data-ghim="${esc(x.id)}">${x.ghim ? "Bỏ ghim" : "Ghim lên đầu"}</button>` : ""}
-          ${x.id && user && (isAdmin || (isTeacher && x.tacGia === mail)) ? `<button type="button" class="linkish" data-xtin="${esc(x.id)}">Xoá</button>` : ""}</div>
+          ${x.id && user && !isAdmin && isTeacher && x.tacGia === mail ? `<button type="button" class="linkish" data-xtin="${esc(x.id)}">Xoá</button>` : ""}</div>
       </div></article>`).join("")
     : `<p class="muted">Chưa có bản tin trong mục này.</p>`;
   // Bài dài: thu gọn, bấm "Xem thêm" để mở
@@ -4063,6 +4031,10 @@ function renderBanTin() {
   $$("#tn-grid [data-ghim]").forEach(b => b.onclick = () => { const x = BANTIN_DONG.find(t => t.id === b.dataset.ghim); if (!x) return;
     timed("Ghim bản tin", setDoc(doc(db, "bantin", x.id), { ghim: !x.ghim }, { merge: true })).catch(() => toast("Chưa lưu được, thử lại.", "err")); });
   $$("#tn-grid [data-xtin]").forEach(b => confirmButton(b, () => deleteDoc(doc(db, "bantin", b.dataset.xtin)), "Xoá?"));
+  $$("#tn-grid .nb-more[data-mt]").forEach(bt => bt.onclick = e => {
+    e.preventDefault(); e.stopPropagation();
+    moMenuBai(bt, BANTIN_DONG.find(y => y.id === bt.dataset.mt), "tin");
+  });
 }
 // sua: bản tin đang có (quản lý bấm ⋮ → Sửa); không có thì là đăng tin mới
 function moDangTin(sua) {
