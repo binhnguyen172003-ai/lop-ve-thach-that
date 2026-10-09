@@ -64,7 +64,7 @@ addEventListener("error", e => {
 });
 /* ---------- Mở tức thì ở lần sau + dùng được khi mạng yếu ---------- */
 if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost") && !/[?&]khongcache/.test(location.search))
-  addEventListener("load", () => navigator.serviceWorker.register("sw.js?v=20261010aj").catch(() => {}));
+  addEventListener("load", () => navigator.serviceWorker.register("sw.js?v=20261010ak").catch(() => {}));
 
 /* ---------- Đo tốc độ: mở web kèm ?chandoan=1 để xem từng bước mất bao lâu ---------- */
 const DIAG = /[?&]chandoan/.test(location.search);
@@ -284,7 +284,8 @@ const artCard = (l, note) => `<div class="gal-art">${l.img ? `<span class="art a
   <b>${esc(l.ten)}</b><span class="muted">${esc(l.moTa)}</span><span class="soon">${note}</span></div>`;
 function galTatCa() {
   // Bài thầy cô đăng trên web (mới nhất trước) + bài có sẵn trong file data
-  return [...BAIVE_DONG.slice().sort((x, y) => (y.luc || 0) - (x.luc || 0)), ...BAI_VE];
+  // Bài viết sẵn đã chuyển thành bài web (mã seed-ve-i) thì không hiện lần nữa
+  return [...BAIVE_DONG.slice().sort((x, y) => (y.luc || 0) - (x.luc || 0)), ...BAI_VE.filter((b, i) => !BAIVE_DONG.some(x => x.id === "seed-ve-" + i))];
 }
 function renderGallery() {
   const all = galTatCa(), has = all.length > 0;
@@ -834,7 +835,7 @@ const GHI_CHU = {
   const nhanVienTen = b => (b.chucVu && b.chucVu !== "Học viên" ? b.chucVu : "Giáo viên");
   const nhanVienLop = b => ({ "Trợ giảng": "tg", "Quản lý": "ql" })[b.chucVu] || "gv"; // mỗi vai trò một khung màu
   const locNoiBat = k => { const daCo = new Set();
-    const ds = [...BAI_NOI_BAT, ...BAIVE_DONG.map(b => ({ ...b, ngay: (b.hang >= 1 && b.hang <= 5 && b.ngayTop) || b.ngay, dong: true }))].filter(b => mucCua(b) === k)
+    const ds = [...BAI_NOI_BAT.filter((b, i) => !BAIVE_DONG.some(x => x.id === "seed-nb-" + i)), ...BAIVE_DONG.map(b => ({ ...b, ngay: (b.hang >= 1 && b.hang <= 5 && b.ngayTop) || b.ngay, dong: true }))].filter(b => mucCua(b) === k)
       .map(b => ({ ...b, nv: nhanVienBai(b), top: !b.tg && !nhanVienBai(b) && b.hang >= 1 && b.hang <= 5 ? b.hang : 0 }))
       .sort((a, b) => (a.top || 99) - (b.top || 99) || (b.dong ? 1 : 0) - (a.dong ? 1 : 0) || (tuoi(a) || 0) - (tuoi(b) || 0) || (b.luc || 0) - (a.luc || 0));
     ds.forEach(b => { if (b.top) { if (daCo.has(b.top)) b.top = 0; else daCo.add(b.top); } });
@@ -3415,6 +3416,7 @@ async function startFirebase() {
       BAIVE_DONG = snap.docs.map(d => ({ id: d.id, ...d.data() })).map(b => ({ ...b, hang: Number(b.hang) || 0 })); baiVeLoi = false;
       renderGallery(); veTopRank(); dispatchEvent(new Event("baive-doi"));
       try { renderTop5(); renderTiles(); } catch (e) {}
+      if (isAdmin) setTimeout(chuyenBaiTinhSangWeb, 2000);
     }, () => { baiVeLoi = true; try { renderTop5(); } catch (e) {} });
     // Bản tin nổi bật
     onSnapshot(collection(db, "bantin"), snap => { BANTIN_DONG = snap.docs.map(d => ({ id: d.id, ...d.data() })); banTinLoi = false; renderBanTin(); },
@@ -3871,6 +3873,43 @@ function moDangBai(sua) {
     }
   };
 }
+// Chuyển 18 bài/bản tin viết sẵn trong file dữ liệu thành bài đăng web (Firestore) để quản lý sửa, xoá được.
+// Chạy trên máy quản lý khi mở web; mỗi mục có mã cố định nên không tạo trùng; chạy xong một lần thì thôi.
+let dangChuyenWeb = false;
+async function chuyenBaiTinhSangWeb() {
+  if (!isAdmin || !db || !mail || dangChuyenWeb || localStorage.getItem("lvkv-chuyen-web-v1")) return;
+  dangChuyenWeb = true;
+  const layFile = async u => { const bl = await (await fetch(new URL(u, location.href))).blob(); return new File([bl], "anh.jpg", { type: bl.type || "image/jpeg" }); };
+  const ds = [
+    ...BAI_VE.map((b, i) => ({ kind: "baive", id: "seed-ve-" + i, b })).filter(x => x.b.anh),
+    ...BAI_NOI_BAT.map((b, i) => ({ kind: "baive", id: "seed-nb-" + i, b })),
+    ...BAN_TIN.map((t, i) => ({ kind: "bantin", id: "seed-tin-" + i, t })),
+  ];
+  let xong = 0, loi = 0;
+  for (const x of ds) {
+    try {
+      const ref = doc(db, x.kind, x.id);
+      if ((await getDoc(ref)).exists()) { xong++; continue; }
+      if (x.kind === "baive") {
+        const b = x.b, anh = await nenAnh(await layFile(b.anh));
+        const data = { anh, hocVien: b.hocVien || "", loai: b.loai, ghiChu: b.ghiChu || "", link: "", ngay: b.ngay || "", hang: 0, ngayTop: "",
+          nguoi: mail, tenNguoi: tenToi(), luc: Date.parse((b.ngay || "2026-10-09") + "T08:00:00+07:00") || Date.now() };
+        if (b.hang) { data.hang = b.hang; data.ngayTop = b.ngay; }
+        if (b.tg) data.chucVu = "Trợ giảng";
+        await setDoc(ref, data);
+      } else {
+        const t = x.t, data = { muc: t.muc || "tinlop", tieuDe: t.tieuDe, nd: t.nd || "", link: t.link || "", tacGia: mail, tenTacGia: tenToi(),
+          ghim: !!t.ghim, luc: Date.parse((t.ngay || "2026-10-09") + "T08:00:00+07:00") || Date.now() };
+        if (t.anh) data.anh = await nenAnh(await layFile(t.anh), 1100, 450000);
+        await setDoc(ref, data);
+      }
+      xong++;
+    } catch (e) { loi++; console.warn("Chưa chuyển được", x.id, e); }
+  }
+  dangChuyenWeb = false;
+  if (!loi) { try { localStorage.setItem("lvkv-chuyen-web-v1", "1"); } catch (e) {} toast(`Đã chuyển ${xong} mục sang bài đăng web.`); }
+  else toast(`Mới chuyển được ${xong} mục, còn ${loi} mục lỗi. Tải lại trang để thử tiếp.`, "err");
+}
 // Quản lý đặt hạng Top k cho một bài (k = 0: bỏ khỏi Top). Mỗi vị trí trong tuần chỉ có 1 bài.
 async function datTop(id, k) {
   const b = writeBatch(db), hom = todayVN();
@@ -3898,7 +3937,7 @@ const MUC_TIN = { tuyensinh: "Tuyển sinh", tinlop: "Thông báo lớp", hoacu:
 let tnLoc = "all";
 function banTinTatCa() {
   const t = x => x.luc || Date.parse((x.ngay || "1970-01-01") + "T08:00:00+07:00") || 0;
-  return [...BANTIN_DONG, ...BAN_TIN.map((x, i) => ({ ...x, id: "", codinh: i }))].sort((a, b) => (b.ghim ? 1 : 0) - (a.ghim ? 1 : 0) || t(b) - t(a));
+  return [...BANTIN_DONG, ...BAN_TIN.filter((x, i) => !BANTIN_DONG.some(y => y.id === "seed-tin-" + i)).map(x => ({ ...x, id: "", codinh: BAN_TIN.indexOf(x) }))].sort((a, b) => (b.ghim ? 1 : 0) - (a.ghim ? 1 : 0) || t(b) - t(a));
 }
 // "Tin nổi bật" ngay dưới mục Về lớp: vòng xoay tin tuyển sinh, thông báo, bài đăng (bấm thẻ giữa để mở link)
 let tbSig = "";
