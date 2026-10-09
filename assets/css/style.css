@@ -1340,7 +1340,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
 .rk-list small{font-size:.66rem;color:var(--graphite)}
 @media (max-width:520px){.rk-card{grid-template-columns:1fr;justify-items:start}}
 /* Điện thoại: huy hiệu hạng nằm chồng xuống mép trên của khung chữ, bớt khoảng trống */
-@media (max-width:520px){.rk-card{justify-items:center}.rk-card > .ka.lg{position:relative;z-index:2;margin-bottom:-44px}.rk-card > .rk-in{padding-top:54px}}
+@media (max-width:520px){.rk-card:not(.rk-stage .rk-card){justify-items:center}.rk-card:not(.rk-stage .rk-card) > .ka.lg{position:relative;z-index:2;margin-bottom:-44px}.rk-card:not(.rk-stage .rk-card) > .rk-in{padding-top:54px}}
 
 /* Huy chương tròn nhỏ cạnh tên trên bài nổi bật */
 .nb-card figcaption b{display:flex;align-items:center;gap:6px}
