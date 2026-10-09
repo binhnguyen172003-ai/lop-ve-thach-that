@@ -2245,3 +2245,9 @@ body.hop-mo{overflow:hidden}
 .bt-tong th{font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;color:var(--graphite);font-weight:700}
 .bt-tong td.num,.bt-tong th:not(:first-child){text-align:right;white-space:nowrap}
 .bt-tong td small{display:block;color:var(--graphite);font-size:.75rem}
+
+/* Đổi bài ngay trong khung bài học bằng mũi tên trái/phải */
+.bai-chuyen{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px}
+.bai-chuyen button{width:46px;height:46px;border-radius:50%;border:1px solid var(--rule);background:var(--paper);color:var(--ink);font:600 1.5rem/1 var(--f-body);cursor:pointer;display:grid;place-items:center}
+.bai-chuyen button:disabled{opacity:.3;cursor:default}
+.bai-chuyen span{font-size:.85rem;color:var(--graphite)}

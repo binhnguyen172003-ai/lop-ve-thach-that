@@ -1532,12 +1532,18 @@ function renderLessons() {
   const body = (l.noidung ? `<div class="bai-md">${mdHTML(l.noidung)}</div>` : "") + (!items.length ? "" : l.loai === "noi-dung"
     ? `<ul class="points">${items.map(s => `<li>${esc(s)}</li>`).join("")}</ul>`
     : `<ol class="steps">${items.map(s => `<li>${esc(s)}</li>`).join("")}</ol>`);
+  const idx = list.findIndex(x => x.id === lessonId);
   $("#lesson").innerHTML =
-    `<p class="eyebrow">${esc(l.khoa)}</p><h3 style="font-size:1.5rem;margin-top:4px">${esc(l.ten)}</h3>
+    `<div class="bai-chuyen"><button type="button" data-go="-1" aria-label="Bài trước" ${idx <= 0 ? "disabled" : ""}>‹</button><span class="num">Bài ${idx + 1}/${list.length}</span><button type="button" data-go="1" aria-label="Bài sau" ${idx >= list.length - 1 ? "disabled" : ""}>›</button></div>
+     <p class="eyebrow">${esc(l.khoa)}</p><h3 style="font-size:1.5rem;margin-top:4px">${esc(l.ten)}</h3>
      ${body}${l.ghichu ? `<p class="gc"><b>Thầy dặn:</b> ${esc(l.ghichu)}</p>` : ""}
      <div class="foot">${isTeacher ? "" : `<button class="btn small" id="mark">${myProgress.bai[l.id] ? "Đã học xong ✓" : "Đánh dấu đã học"}</button>`}
      ${isAdmin ? `<button class="btn small" id="del-l">Xoá bài này</button>` : ""}</div>`;
   if ($("#mark")) $("#mark").onclick = () => toggleProgress("bai", l.id).then(renderLessons);
+  $$("#lesson [data-go]").forEach(b => b.onclick = () => {
+    const k = idx + Number(b.dataset.go); if (k < 0 || k >= list.length) return;
+    lessonId = list[k].id; renderLessons(); $("#lesson").scrollIntoView({ behavior: "smooth", block: "start" });
+  });
   if (isAdmin) confirmButton($("#del-l"), () => { ghiDaXoa(l.id); return deleteDoc(doc(db, "giaotrinh", l.id)); });
 }
 
