@@ -64,7 +64,7 @@ addEventListener("error", e => {
 });
 /* ---------- Mở tức thì ở lần sau + dùng được khi mạng yếu ---------- */
 if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost") && !/[?&]khongcache/.test(location.search))
-  addEventListener("load", () => navigator.serviceWorker.register("sw.js?v=20261010aa").catch(() => {}));
+  addEventListener("load", () => navigator.serviceWorker.register("sw.js?v=20261010ab").catch(() => {}));
 
 /* ---------- Đo tốc độ: mở web kèm ?chandoan=1 để xem từng bước mất bao lâu ---------- */
 const DIAG = /[?&]chandoan/.test(location.search);
@@ -825,7 +825,8 @@ const GHI_CHU = {
   // Tối đa 10 ảnh mỗi mục, trong đó chỉ 5 bài mang huy chương TOP 1–5 (mỗi hạng 1 bài, bài quản lý chọn trên web được ưu tiên)
   // Bài của trợ giảng, giáo viên, quản lý (hoặc bài mẫu giáo viên): không có hạng, có khung riêng
   const nhanVienBai = b => ["Trợ giảng", "Giáo viên", "Quản lý"].includes(b.chucVu) || !!b.mau;
-  const nhanVienTen = b => (b.chucVu && b.chucVu !== "Học viên" ? b.chucVu : "Giáo viên") + (biDanhCua(b) ? " · " + biDanhCua(b) : "");
+  // Nhãn trên góc ảnh chỉ ghi vai trò ngắn gọn; biệt danh chuyển xuống dưới tên
+  const nhanVienTen = b => (b.chucVu && b.chucVu !== "Học viên" ? b.chucVu : "Giáo viên");
   const nhanVienLop = b => ({ "Trợ giảng": "tg", "Quản lý": "ql" })[b.chucVu] || "gv"; // mỗi vai trò một khung màu
   const locNoiBat = k => { const daCo = new Set();
     const ds = [...BAI_NOI_BAT, ...BAIVE_DONG.map(b => ({ ...b, ngay: (b.hang >= 1 && b.hang <= 5 && b.ngayTop) || b.ngay, dong: true }))].filter(b => mucCua(b) === k)
@@ -849,7 +850,7 @@ const GHI_CHU = {
         ${b.top ? `<span class="nb-medal h${b.top}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 2h4l1 5-3 1zM17 2h-4l-1 5 3 1z" class="rb"/><circle cx="12" cy="15" r="6.5" class="md"/><text x="12" y="18.2" text-anchor="middle">${b.top}</text></svg><b>TOP ${b.top}</b><i>${TEN[ky]}</i></span>` : ""}
         ${b.tg ? "" : (m => m.length ? (a => `<span class="nb-tt" data-rk="${esc(b.hocVien)}" role="button" tabindex="0" title="${esc(a.ten)} · ${CAP[a.cap].ten} — ${esc(a.mo)}">${huyHieuTT(a, a.cap, "sm")}<span class="nb-ttx"><b>${esc(a.ten)}</b><small>${a.n} ${esc(a.dv)} · ${CAP[a.cap].ten}</small></span></span>`)(m[0]) : "")(ttNoiNhat(b.hocVien))}
         ${b.tg ? "" : (t => khungThe(t.r, t.i))(tinhRank(null, null, null, b.hocVien))}
-        <figcaption><b>${esc(b.hocVien || "")} ${b.tg ? "" : (t => huyHieu(t.r, t.i, "xs", b.hocVien))(tinhRank(null, null, null, b.hocVien))}</b><span>${esc([b.loai, b.ghiChu].filter(Boolean).join(" · "))}</span></figcaption></figure>`).join("")}${coThem() ? theThem(ds.length) : ""}</div>
+        <figcaption><b>${esc(b.hocVien || "")} ${b.tg ? "" : (t => huyHieu(t.r, t.i, "xs", b.hocVien))(tinhRank(null, null, null, b.hocVien))}</b>${b.nv && biDanhCua(b) ? `<em class="nb-bd">${esc(biDanhCua(b))}</em>` : ""}<span>${esc([b.loai, b.ghiChu].filter(Boolean).join(" · "))}</span></figcaption></figure>`).join("")}${coThem() ? theThem(ds.length) : ""}</div>
       <div class="gv-ctl"><button type="button" class="gv-nav" aria-label="Bài trước">‹</button>
         <div class="gv-dots">${ds.map((b, i) => `<button type="button" data-i="${i}" aria-label="Bài ${i + 1}"></button>`).join("")}${coThem() ? `<button type="button" data-i="${ds.length}" aria-label="Thêm bài vẽ"></button>` : ""}</div>
         <button type="button" class="gv-nav" aria-label="Bài sau">›</button></div>`;

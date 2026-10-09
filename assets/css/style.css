@@ -2399,3 +2399,5 @@ body.hop-mo{overflow:hidden}
 .gallery .gal-s{position:absolute;top:6px;left:6px;width:auto;padding:3px 10px;border-radius:999px;border:0;background:rgba(20,90,160,.9);color:#fff;font:600 .72rem var(--f-body);cursor:pointer;z-index:2}
 /* Biệt danh người vẽ hiện dưới tên trong bảng bài vẽ */
 .gallery .cap .bd{display:block;font-style:normal;font-size:.72rem;font-weight:600;color:#f9c74f;line-height:1.3}
+/* Biệt danh người vẽ (staff) nằm dưới tên trong thẻ bài nổi bật */
+.nb-card figcaption .nb-bd{display:block;font-style:normal;font-size:.74rem;font-weight:700;color:#f9c74f;line-height:1.3;margin:2px 0 3px}
