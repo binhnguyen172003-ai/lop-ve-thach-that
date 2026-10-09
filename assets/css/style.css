@@ -1314,6 +1314,9 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
 @media (max-width:640px){.mg-crown{width:44px;top:-8px}}
 
 /* ===== Hạng học viên ===== */
+/* Bài của trợ giảng, giáo viên, quản lý: khung vàng riêng, không có hạng */
+.nb-card.nb-nv{border:2px solid #f9c74f;border-radius:18px;box-shadow:0 0 0 1px rgba(249,199,79,.35),0 0 26px rgba(249,199,79,.35)}
+.nb-nv-tag{position:absolute;top:10px;left:10px;z-index:3;padding:4px 10px;border-radius:999px;background:linear-gradient(90deg,#f9c74f,#ffb703);color:#1a1200;font:800 .68rem/1 var(--f-body);letter-spacing:.06em;text-transform:uppercase}
 .rk-badge{position:relative;display:inline-grid;place-items:center;width:58px;height:62px;flex:none;vertical-align:middle}
 .rk-badge svg{position:absolute;inset:0;width:100%;height:100%;filter:drop-shadow(0 0 10px color-mix(in srgb,var(--rc) 55%,transparent))}
 .rk-badge .s{fill:#121520;stroke:var(--rc);stroke-width:2.5}

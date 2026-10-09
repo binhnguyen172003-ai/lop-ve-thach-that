@@ -62,7 +62,7 @@ addEventListener("error", e => {
 });
 /* ---------- Mở tức thì ở lần sau + dùng được khi mạng yếu ---------- */
 if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost") && !/[?&]khongcache/.test(location.search))
-  addEventListener("load", () => navigator.serviceWorker.register("sw.js?v=20261010p").catch(() => {}));
+  addEventListener("load", () => navigator.serviceWorker.register("sw.js?v=20261010q").catch(() => {}));
 
 /* ---------- Đo tốc độ: mở web kèm ?chandoan=1 để xem từng bước mất bao lâu ---------- */
 const DIAG = /[?&]chandoan/.test(location.search);
@@ -818,12 +818,17 @@ const GHI_CHU = {
   const mucCua = b => { const t = tuoi(b); if (t === null) return b.ky || "tuan"; return Object.keys(KHOANG).find(k => t >= KHOANG[k][0] - 1 && t < KHOANG[k][1]) || ""; };
   // Mỗi vị trí Top chỉ 1 bài: bài quản lý chọn trên web được ưu tiên hơn bài có sẵn trong file
   // Tối đa 10 ảnh mỗi mục, trong đó chỉ 5 bài mang huy chương TOP 1–5 (mỗi hạng 1 bài, bài quản lý chọn trên web được ưu tiên)
+  // Bài của trợ giảng, giáo viên, quản lý (hoặc bài mẫu giáo viên): không có hạng, có khung riêng
+  const nhanVienBai = b => ["Trợ giảng", "Giáo viên", "Quản lý"].includes(b.chucVu) || !!b.mau;
+  const nhanVienTen = b => b.chucVu && b.chucVu !== "Học viên" ? b.chucVu : "Giáo viên";
   const locNoiBat = k => { const daCo = new Set();
     const ds = [...BAI_NOI_BAT, ...BAIVE_DONG.map(b => ({ ...b, ngay: (b.hang >= 1 && b.hang <= 5 && b.ngayTop) || b.ngay, dong: true }))].filter(b => mucCua(b) === k)
-      .map(b => ({ ...b, top: !b.tg && b.hang >= 1 && b.hang <= 5 ? b.hang : 0 }))
+      .map(b => ({ ...b, nv: nhanVienBai(b), top: !b.tg && !nhanVienBai(b) && b.hang >= 1 && b.hang <= 5 ? b.hang : 0 }))
       .sort((a, b) => (a.top || 99) - (b.top || 99) || (b.dong ? 1 : 0) - (a.dong ? 1 : 0) || (tuoi(a) || 0) - (tuoi(b) || 0) || (b.luc || 0) - (a.luc || 0));
     ds.forEach(b => { if (b.top) { if (daCo.has(b.top)) b.top = 0; else daCo.add(b.top); } });
-    return ds.sort((a, b) => (a.top || 99) - (b.top || 99)).slice(0, 10); };
+    // Bài của trợ giảng, giáo viên, quản lý: không xếp hạng, đứng trước Top 1 và có khung riêng
+    const thu = x => x.nv ? 0 : (x.top || 99);
+    return ds.sort((a, b) => thu(a) - thu(b)).slice(0, 10).map(b => b.nv ? { ...b, tg: true, top: 0 } : b); };
   const coThem = () => !!(user && isTeacher);
   const theThem = i => `<figure class="nb-card nb-add" data-i="${i}" data-add="1"><div class="nb-add-in"><span class="nb-plus" aria-hidden="true">+</span><b>Thêm bài vẽ</b><small>Đăng ảnh bài học viên${isAdmin ? "<br>Chọn Top 5 ở trang Quản lý" : ""}</small></div></figure>`;
   let sig = "";
@@ -832,7 +837,8 @@ const GHI_CHU = {
     const k = [ky, !!user && isTeacher, isAdmin, XP_DONG.length, TT_DONG.length, ...ds.map(b => (b.id || b.anh) + b.top)].join("|");
     if (k === sig) return; sig = k;
     if (!ds.length && !coThem()) { box.innerHTML = `<p class="nb-rong">Chưa có bài nổi bật ${TEN[ky]}. ${ky === "tuan" ? "Thầy cô sẽ cập nhật bài đẹp mỗi tuần." : `Bài tuần trước tự chuyển sang đây khi ${ky === "thang" ? "qua 1 tuần" : "qua 1 tháng"}.`}</p>`; return; }
-    box.innerHTML = `<div class="gv-stage nb-stage">${ds.map((b, i) => `<figure class="nb-card" data-i="${i}">
+    box.innerHTML = `<div class="gv-stage nb-stage">${ds.map((b, i) => `<figure class="nb-card${b.nv ? " nb-nv" : ""}" data-i="${i}">
+        ${b.nv ? `<span class="nb-nv-tag">${esc(nhanVienTen(b))}</span>` : ""}
         <img src="${esc(b.anh)}" alt="${esc((b.loai || "Bài vẽ") + " · " + (b.hocVien || ""))}" loading="lazy" decoding="async" draggable="false">
         ${b.top ? `<span class="nb-medal h${b.top}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 2h4l1 5-3 1zM17 2h-4l-1 5 3 1z" class="rb"/><circle cx="12" cy="15" r="6.5" class="md"/><text x="12" y="18.2" text-anchor="middle">${b.top}</text></svg><b>TOP ${b.top}</b><i>${TEN[ky]}</i></span>` : ""}
         ${b.tg ? "" : (m => m.length ? (a => `<span class="nb-tt" data-rk="${esc(b.hocVien)}" role="button" tabindex="0" title="${esc(a.ten)} · ${CAP[a.cap].ten} — ${esc(a.mo)}">${huyHieuTT(a, a.cap, "sm")}<span class="nb-ttx"><b>${esc(a.ten)}</b><small>${a.n} ${esc(a.dv)} · ${CAP[a.cap].ten}</small></span></span>`)(m[0]) : "")(ttNoiNhat(b.hocVien))}
@@ -3760,7 +3766,7 @@ function moDangBai() {
       <label>Họ và tên *<input id="bv-ten" list="bv-ds" maxlength="80" autocomplete="off" placeholder="VD: Nguyễn Văn An"></label>
       <datalist id="bv-ds">${tenHV.map(t => `<option value="${esc(t)}">`).join("")}</datalist>
       <fieldset class="chon-loai"><legend>Đây là bài gì? *</legend>${LOAI_BAI.map((l, i) => `<label><input type="radio" name="bv-loai" value="${esc(l.ten)}"${i === 0 ? "" : ""}><span>${esc(l.ten)}</span></label>`).join("")}</fieldset>
-      <label>Người vẽ là<select id="bv-vaitro"><option>Học viên</option><option>Trợ giảng</option><option>Giáo viên</option></select></label>
+      <label>Người vẽ là<select id="bv-vaitro"><option>Học viên</option><option>Trợ giảng</option><option>Giáo viên</option><option>Quản lý</option></select></label>
       <label>Ghi chú<input id="bv-gc" maxlength="120" placeholder="VD: Bố cục màu tuần 3 · 8,5 điểm"></label>
       <label>Giáo viên hướng dẫn<input id="bv-gvhd" list="bv-gv" maxlength="80" autocomplete="off" placeholder="VD: Nguyễn Văn Hùng"></label>
       <label>Trợ giảng<input id="bv-tg" list="bv-gv" maxlength="80" autocomplete="off" placeholder="VD: Đỗ Hữu Trường"></label>
