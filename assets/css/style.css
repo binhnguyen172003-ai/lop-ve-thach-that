@@ -2350,3 +2350,12 @@ body.hop-mo{overflow:hidden}
 .hv-form input,.hv-form select,.hv-doiten input{min-height:44px;padding:8px 12px;border-radius:10px;border:1px solid var(--rule);background:#0c0e14;color:var(--ink);font:500 .95rem var(--f-body)}
 .hv-doiten form{display:grid;gap:10px}
 @media (max-width:640px){.hv-dl{grid-template-columns:1fr 1fr}}
+
+/* ===== Khung xem bài vẽ: thanh dưới gọn, không đè lên nút Bé Chì ===== */
+.lb .lb-bar{flex-wrap:wrap;justify-content:center;width:min(100%,560px);row-gap:10px}
+.lb #lb-cap{flex:1 1 100%;text-align:center;line-height:1.4;font-size:.86rem;color:#e9ebef}
+.lb #lb-close{margin-left:auto}
+@media (max-width:640px){
+  body.da-dn .lb{padding-bottom:calc(96px + env(safe-area-inset-bottom,0px))}
+  .lb .lb-bar{padding-right:0}
+}

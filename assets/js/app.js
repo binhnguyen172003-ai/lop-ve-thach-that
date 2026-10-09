@@ -24,7 +24,7 @@ async function loadFirebase() {
   ({ initializeApp } = a);
   ({ getAuth, onAuthStateChanged, signOut,
      createUserWithEmailAndPassword, signInWithEmailAndPassword, sendEmailVerification, sendPasswordResetEmail, updateProfile } = au);
-  ({ getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager, collection, doc, getDoc, setDoc, addDoc, deleteDoc, writeBatch, onSnapshot, query, orderBy, where } = fs);
+  ({ getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager, collection, doc, getDoc, setDoc, addDoc, deleteDoc, writeBatch, onSnapshot, query, orderBy, where, runTransaction } = fs);
 }
 
 const $ = s => document.querySelector(s);
@@ -310,14 +310,16 @@ function showLb(i) {
   $("#lb-img").src = b.anh; $("#lb-img").alt = b.moTa || "";
   $("#lb-cap").textContent = `${galCur + 1} / ${galList.length} · ${[b.hocVien, b.loai, b.moTa || b.ghiChu].filter(Boolean).join(" · ")}`;
   $("#lb").hidden = false;
+  window.__troLy?.goiYBai(b.hocVien ? `bài của ${b.hocVien}` : (b.loai || "bài vẽ này"));
 }
 $("#lb-prev").onclick = () => showLb(galCur - 1);
 $("#lb-next").onclick = () => showLb(galCur + 1);
-$("#lb-close").onclick = () => $("#lb").hidden = true;
-$("#lb").addEventListener("click", e => { if (e.target === $("#lb")) $("#lb").hidden = true; });
+const dongLb = () => { $("#lb").hidden = true; window.__troLy?.anGoiYBai(); };
+$("#lb-close").onclick = dongLb;
+$("#lb").addEventListener("click", e => { if (e.target === $("#lb")) dongLb(); });
 document.addEventListener("keydown", e => {
   if ($("#lb").hidden) return;
-  if (e.key === "Escape") $("#lb").hidden = true;
+  if (e.key === "Escape") dongLb();
   if (e.key === "ArrowLeft") showLb(galCur - 1);
   if (e.key === "ArrowRight") showLb(galCur + 1);
 });
@@ -2032,11 +2034,13 @@ function renderHvInfo() {
       <label>Trường thi dự kiến<select id="hv-truong-thi"><option value="">Chưa chọn</option>${TRUONG_THI.map(t => `<option${t === tt ? " selected" : ""}>${esc(t)}</option>`).join("")}</select></label>
       <div><button class="btn primary" type="submit">Lưu thông tin</button> <span class="status" id="hv-info-st" role="status"></span></div>
     </form>
+    ${donCuaToiHTML()}
     <div class="hv-doiten">${dang
       ? `<p class="muted">Đã gửi yêu cầu đổi tên thành <b>${esc(dang.tenMoi)}</b>. Đang chờ thầy duyệt.</p>`
       : `<form id="f-doiten" novalidate><label>Xin đổi họ tên (thầy duyệt trước khi đổi)<input id="doiten-moi" maxlength="80" autocomplete="name" placeholder="Họ và tên mới"></label>
          <div><button class="btn" type="submit">Gửi yêu cầu đổi tên</button> <span class="status" id="doiten-st" role="status"></span></div></form>`}
     </div>`;
+  $$("#hv-info [data-dadong]").forEach(b => b.onclick = () => danhDauDaChuyen(b.dataset.dadong));
   $("#f-hv-info").onsubmit = e => {
     e.preventDefault();
     const sdt = cleanPhone($("#hv-sdt").value), truongThi = $("#hv-truong-thi").value, st = $("#hv-info-st");
@@ -2450,6 +2454,99 @@ function khoStart() {
 }
 const monKho = () => Object.values(khoMon).filter(m => m.ma !== "_caidat").sort((a, b) => String(a.loai).localeCompare(String(b.loai), "vi") || String(a.ten).localeCompare(String(b.ten), "vi"));
 function khoSapHet() { return monKho().filter(m => (Number(m.ton) || 0) <= 3 && (m.daBan || 0) > 0).map(m => m.ten); }
+/* ===== Đơn hoạ cụ: quản lý tạo đơn → học viên chuyển khoản rồi báo → quản lý xác nhận đã nhận tiền thì kho tự trừ ===== */
+let donAll = [], donCuaToi = [], donNhap = [], donTam = {};
+const TRANG_DON = { cho: "Chờ chuyển khoản", da_bao: "Đã báo chuyển khoản", da_thu: "Đã nhận tiền" };
+const tongDon = items => items.reduce((a, it) => a + (Number(it.sl) || 0) * (Number(it.gia) || 0), 0);
+const tenMon = items => (items || []).map(it => esc(it.ten) + " × " + it.sl).join(", ");
+function donHTML() {
+  const cho = donAll.filter(d => d.trangThai !== "da_thu");
+  const thu = donAll.filter(d => d.trangThai === "da_thu").slice(0, 10);
+  const dongMon = donNhap.length ? donNhap.map((it, i) => `<li><b>${esc(it.ten)} × ${it.sl}</b><span>${vnd(it.sl * it.gia)}</span><button type="button" class="linkish" data-dnb="${i}">Bỏ</button></li>`).join("") : `<li class="muted">Chưa chọn món nào.</li>`;
+  const hocVien = roster.map(h => `<option value="${esc(h.id)}">${esc(h.ten || "")}</option>`).join("");
+  return `
+    <form id="f-don" class="kho-f" novalidate>
+      <h4 class="kho-h4">Tạo đơn cho học viên</h4>
+      <label>Gmail học viên<input id="don-mail" maxlength="100" list="don-ds" autocapitalize="off" spellcheck="false" value="${esc(donTam.mail || "")}" placeholder="Gmail của học viên"></label>
+      <datalist id="don-ds">${hocVien}</datalist>
+      <label>Tên học viên<input id="don-ten" maxlength="80" value="${esc(donTam.ten || "")}" placeholder="VD: Nguyễn Văn An"></label>
+      <label>Món<select id="don-mon">${monKho().map(m => `<option value="${esc(m.ma)}">${esc(m.ten)} · tồn ${m.ton || 0}</option>`).join("")}</select></label>
+      <label>Số lượng<input id="don-sl" type="number" min="1" max="99" value="1" inputmode="numeric"></label>
+      <div><button class="btn small" type="button" id="don-them">+ Thêm món vào đơn</button></div>
+      <ul class="kho-gd">${dongMon}</ul>
+      <p><b>Tổng đơn: ${vnd(tongDon(donNhap))}</b></p>
+      <button class="btn primary" type="submit">Lưu đơn chờ chuyển khoản</button> <span class="status" id="don-st" role="status"></span>
+    </form>
+    <h4 class="kho-h4">Đơn đang chờ tiền (${cho.length})</h4>
+    <ul class="kho-gd">${cho.map(d => `<li class="${d.trangThai === "da_bao" ? "ban" : ""}">
+        <span>${TRANG_DON[d.trangThai] || ""}</span>
+        <b>${esc(d.ten || d.mail)} · ${tenMon(d.items)}</b>
+        <span>${vnd(d.tong)} · nội dung CK <b class="num">${esc(d.ma)}</b></span>
+        <button type="button" class="btn small" data-dxn="${esc(d.id)}">Xác nhận đã nhận tiền</button>
+        <button type="button" class="linkish" data-dxoa="${esc(d.id)}">Huỷ đơn</button></li>`).join("") || `<li class="muted">Không có đơn nào đang chờ.</li>`}</ul>
+    <h4 class="kho-h4">Đã nhận tiền gần đây</h4>
+    <ul class="kho-gd">${thu.map(d => `<li><span>Đã thu</span><b>${esc(d.ten || d.mail)} · ${tenMon(d.items)}</b><span>${vnd(d.tong)}</span><small>${fmtDate(d.thuLuc)}</small></li>`).join("") || `<li class="muted">Chưa có đơn đã thu.</li>`}</ul>`;
+}
+function bindDon() {
+  const f = $("#f-don"); if (!f) return;
+  $("#don-mail").oninput = e => { donTam.mail = e.target.value; };
+  $("#don-ten").oninput = e => { donTam.ten = e.target.value; };
+  $("#don-them").onclick = () => {
+    const m = khoMon[$("#don-mon").value], sl = Math.max(1, Math.min(99, Math.round(Number($("#don-sl").value) || 0)));
+    if (!m) return;
+    const co = donNhap.find(x => x.ma === m.ma);
+    if (co) co.sl = Math.min(99, co.sl + sl); else donNhap.push({ ma: m.ma, ten: m.ten, sl, gia: m.gia || 0, von: m.von || 0 });
+    renderKho();
+  };
+  $$("#kho-body [data-dnb]").forEach(b => b.onclick = () => { donNhap.splice(Number(b.dataset.dnb), 1); renderKho(); });
+  $$("#kho-body [data-dxn]").forEach(b => b.onclick = () => xacNhanDon(b.dataset.dxn));
+  $$("#kho-body [data-dxoa]").forEach(b => confirmButton(b, () => deleteDoc(doc(db, "dondh", b.dataset.dxoa)), "Bấm lần nữa để huỷ đơn"));
+  f.onsubmit = e => { e.preventDefault(); taoDon(); };
+}
+async function taoDon() {
+  const st = $("#don-st"), mailHv = $("#don-mail").value.trim().toLowerCase(), ten = $("#don-ten").value.trim();
+  if (!mailHv.includes("@")) { st.textContent = "Nhập Gmail học viên."; return; }
+  if (!donNhap.length) { st.textContent = "Thêm ít nhất một món."; return; }
+  const ma = "HV" + Math.random().toString(36).slice(2, 6).toUpperCase();
+  st.textContent = "Đang lưu…";
+  try {
+    await timed("Tạo đơn", addDoc(collection(db, "dondh"), { mail: mailHv, ten: ten || mailHv, items: donNhap, tong: tongDon(donNhap), ma, trangThai: "cho", tao: Date.now(), nguoi: mail }));
+    donNhap = []; donTam = {}; toast("Đã tạo đơn. Nội dung chuyển khoản: " + ma); renderKho();
+  } catch (e) { st.textContent = "Chưa lưu được: " + (e.code || "lỗi mạng"); }
+}
+async function xacNhanDon(id) {
+  const d = donAll.find(x => x.id === id); if (!d) return;
+  try {
+    await timed("Xác nhận đơn", runTransaction(db, async tx => {
+      const ref = doc(db, "dondh", id), snap = await tx.get(ref);
+      if (!snap.exists() || snap.data().trangThai === "da_thu") throw new Error("da-thu");
+      const don = snap.data(), items = don.items || [];
+      const mons = await Promise.all(items.map(it => tx.get(doc(db, "kho", it.ma))));
+      mons.forEach((ms, i) => { const ton = Number(ms.data()?.ton) || 0; if (ton < items[i].sl) throw new Error("het:" + items[i].ten); });
+      mons.forEach((ms, i) => { const m = ms.data(); tx.update(ms.ref, { ton: (Number(m.ton) || 0) - items[i].sl, daBan: (Number(m.daBan) || 0) + items[i].sl }); });
+      items.forEach(it => tx.set(doc(collection(db, "khogd")), { loai: "ban", ma: it.ma, ten: it.ten, sl: it.sl, gia: it.gia, von: it.von || 0, ai: don.ten || don.mail, ngay: todayVN(), luc: Date.now(), nguoi: mail, donId: id }));
+      tx.update(ref, { trangThai: "da_thu", thuLuc: Date.now() });
+    }));
+    toast(`Đã nhận ${vnd(d.tong)} từ ${d.ten || d.mail}. Kho đã trừ.`);
+  } catch (e) {
+    const m = String(e.message || "");
+    toast(m.startsWith("het:") ? `Kho không đủ ${m.slice(4)}. Nhập thêm rồi xác nhận lại.` : m === "da-thu" ? "Đơn này đã xử lý rồi." : "Chưa xác nhận được. Kiểm tra mạng rồi bấm lại.", "err");
+  }
+}
+async function danhDauDaChuyen(id) {
+  const b = writeBatch(db); b.update(doc(db, "dondh", id), { trangThai: "da_bao", baoLuc: Date.now() });
+  try { await timed("Báo đã chuyển khoản", b.commit()); toast("Đã báo. Thầy kiểm tra và xác nhận nhé."); }
+  catch (e) { toast("Chưa báo được. Kiểm tra mạng rồi bấm lại.", "err"); }
+}
+function donCuaToiHTML() {
+  const cho = donCuaToi.filter(d => d.trangThai !== "da_thu");
+  if (!cho.length) return "";
+  return `<div class="hv-don"><h4 class="kho-h4">Đơn hoạ cụ của em</h4>${cho.map(d => `<div class="hv-don-i">
+    <div><b>${tenMon(d.items)}</b></div>
+    <div>Tổng <b class="num">${vnd(d.tong)}</b> · Nội dung chuyển khoản: <b class="num">${esc(d.ma)}</b></div>
+    ${d.trangThai === "da_bao" ? `<p class="muted">Em đã báo chuyển khoản. Thầy xác nhận xong là đơn tự đóng.</p>` : `<button class="btn small" type="button" data-dadong="${esc(d.id)}">Em đã chuyển khoản</button>`}
+  </div>`).join("")}</div>`;
+}
 function laiLoThang(th) {
   const gd = khoGD.filter(g => thangCua(g.ngay) === th);
   const ban = gd.filter(g => g.loai === "ban"), nhap = gd.filter(g => g.loai === "nhap");
@@ -2482,7 +2579,7 @@ function renderKho() {
   const cacThang = [...new Set([thangNay, ...khoGD.map(g => thangCua(g.ngay))])].filter(Boolean).sort().reverse();
   const tongVon = ds.reduce((a, m) => a + (m.ton || 0) * (m.von || 0), 0), tongBan = ds.reduce((a, m) => a + (m.ton || 0) * (m.gia || 0), 0);
   const ll = laiLoThang(khoThang);
-  body.innerHTML = `<div class="kho-tabs" role="tablist">${[["ton", "📦 Tồn kho"], ["gd", "➕ Nhập · Bán"], ["ll", "📈 Lãi lỗ tháng"]].map(([k, t]) => `<button type="button" data-kt="${k}" aria-selected="${khoTab === k}">${t}</button>`).join("")}</div>
+  body.innerHTML = `<div class="kho-tabs" role="tablist">${[["ton", "📦 Tồn kho"], ["gd", "➕ Nhập · Bán"], ["don", "🧾 Đơn chờ tiền"], ["ll", "📈 Lãi lỗ tháng"]].map(([k, t]) => `<button type="button" data-kt="${k}" aria-selected="${khoTab === k}">${t}</button>`).join("")}</div>
     <div class="kho-p" ${khoTab === "ton" ? "" : "hidden"}>
       <div class="kho-so"><div><b>${ds.reduce((a, m) => a + (m.ton || 0), 0)}</b><span>món đang tồn</span></div><div><b>${vnd(tongVon)}</b><span>vốn nằm trong kho</span></div><div><b>${vnd(tongBan)}</b><span>nếu bán hết thu về</span></div><div><b>${khoSapHet().length}</b><span>món sắp hết (≤3)</span></div></div>
       <div class="kho-bang"><div class="kho-r kho-h"><span>Món</span><span>Vốn</span><span>Giá bán</span><span>Tồn</span><span></span></div>
@@ -2511,6 +2608,8 @@ function renderKho() {
       ${Object.keys(ll.theoMon).length ? `<div class="kho-bang"><div class="kho-r kho-h"><span>Món bán chạy</span><span>Số lượng</span><span>Doanh thu</span><span>Lãi</span><span></span></div>${Object.entries(ll.theoMon).sort((a, b) => b[1].tien - a[1].tien).map(([t, m]) => `<div class="kho-r"><span><b>${esc(t)}</b></span><span>${m.sl}</span><span>${vnd(m.tien)}</span><span>${vnd(m.lai)}</span><span></span></div>`).join("")}</div>` : `<p class="muted">Tháng này chưa bán món nào.</p>`}
       <p><button type="button" class="btn small" id="kho-csv-thang">Tải giao dịch tháng (CSV)</button> <button type="button" class="btn small" id="kho-gui">📧 Gửi báo cáo tháng này vào Gmail</button></p>
     </div>`;
+  body.insertAdjacentHTML("beforeend", `<div class="kho-p" ${khoTab === "don" ? "" : "hidden"}>${donHTML()}</div>`);
+  bindDon();
   body.querySelectorAll("[data-kt]").forEach(b => b.onclick = () => { khoTab = b.dataset.kt; renderKho(); });
   body.querySelectorAll("[data-ks]").forEach(b => b.onclick = () => suaMon(b.dataset.ks));
   body.querySelectorAll("[data-kx]").forEach(b => confirmButton(b, () => xoaGD(b.dataset.kx)));
@@ -3051,7 +3150,7 @@ async function onUser(u) {
   isAdmin = false; isTeacher = false; approved = false; needVerify = false;
   napAvatarMay(mail);
   roster = []; requests = []; teachers = []; progressAll = {}; feedbackAll = {};
-  diemdanhAll = {}; myDiemdanh = {}; myHv = null; troLyDaTai = { diemDanh: false, diem: false, bai: false }; lvReset(); khoMon = {}; khoGD = []; khoLoi = ""; khoDaTai = false;
+  diemdanhAll = {}; myDiemdanh = {}; myHv = null; troLyDaTai = { diemDanh: false, diem: false, bai: false }; lvReset(); khoMon = {}; khoGD = []; donAll = []; donCuaToi = []; donNhap = []; donTam = {}; khoLoi = ""; khoDaTai = false;
   if (prevMail && prevMail !== mail) try { localStorage.removeItem(DATA_KEY + prevMail); } catch (e) {} // máy dùng chung: xoá dữ liệu người trước
   loadData(mail);
   // Đổi người dùng thì xoá sạch form đăng ký, tránh gửi nhầm thông tin của người trước (máy dùng chung).
@@ -3176,11 +3275,13 @@ async function onUser(u) {
   }
   lvStart();
   if (!$("#v-lam-viec").hidden) lvOnShow();
+  if (!isAdmin && !isTeacher) listen(query(collection(db, "dondh"), where("mail", "==", mail)), snap => { donCuaToi = snap.docs.map(d => ({ id: d.id, ...d.data() })); renderHvInfo(); });
   if (isAdmin) {
     listen(query(collection(db, "yeucau"), orderBy("guiLuc", "desc")), snap => {
       requests = snap.docs.filter(d => d.id !== mail).map(d => ({ id: d.id, ...d.data() })); renderRequests();
       if (!svChecked) { svChecked = true; checkRules(); }
     });
+    listen(collection(db, "dondh"), snap => { donAll = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (b.tao || 0) - (a.tao || 0)); renderKho(); });
     listen(collection(db, "doiten"), snap => {
       doiTen = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (a.luc || 0) - (b.luc || 0)); renderDoiTen();
     });

@@ -50,6 +50,7 @@ HOẠ CỤ BÁN TẠI LỚP: ${hoaCuText()}.
 HẠNG (RANK) trên web: F→E→D→C→B→A→S→SS→SSS→SSS+, kiếm XP bằng đi học (+10/buổi), nộp bài (+15), bài ≥8 điểm (+10), bài lên Bài vẽ nổi bật (+100, Top 1 thêm +25). Từ hạng A mỗi hạng cần thêm 2.000 XP.
 BÀI TẬP: thầy chấm 3 tiêu chí hình cơ bản, sắc độ, tổng thể; chưa đạt tiêu chí nào thì phải làm lại và bấm "Nộp lại".
 HỌC PHÍ: không công bố trên web vì tuỳ khoá, số buổi và ưu đãi từng đợt; để lại SĐT hoặc nhắn Zalo ${ZALO_HT} để thầy báo đúng mức và ưu đãi hiện có. Học thử MIỄN PHÍ.
+ƯU ĐÃI HIỆN TẠI: học thử MỘT TUẦN ưu đãi, có tặng HỘP TÚI BÚT. Đây là ưu đãi trước mắt; các ưu đãi khác sẽ cập nhật sau. Nếu khách hỏi thêm về ưu đãi thì nói đúng những gì trên và mời để lại SĐT để thầy báo chi tiết, không tự bịa thêm.
 ĐIỂM MẠNH: học gần nhà tại Thạch Thất (không phải lên Hà Nội trọ); miễn phí giấy A3–A1; kiểm tra tiến độ hằng tuần; thi thử như thi thật (cả tại phòng thi trường ĐH); học bổng 25–200% học phí tháng cho học viên xuất sắc, hỗ trợ bạn khó khăn; 100+ lượt đỗ đại học, điểm vẽ cao nhất 9,5; giáo viên là sinh viên Kiến trúc, MTCN, Xây dựng, Sư phạm Nghệ thuật; web học viên có giáo trình, bài tập, điểm danh, theo dõi tiến độ và dự báo khả năng đỗ.
 LỚP ONLINE: sắp khai giảng — học trực tiếp với thầy qua video, gửi bài và nhận nhận xét trên web; đăng ký sớm để được báo lịch và ưu đãi.`;
 }
@@ -136,7 +137,7 @@ function traLoiTuVan(b) {
   if (/hoc phi|bao nhieu tien|gia|chi phi|dat qua|dong tien/.test(b)) return P(`Học phí của lớp tuỳ khoá (cơ bản, Khối H, Khối V, cấp tốc) và số buổi mỗi tuần, nên thầy sẽ báo đúng mức kèm ưu đãi đang có ạ.`) + UL([`Học thử <b>miễn phí</b> trước khi đóng học phí`, `Miễn phí giấy A3–A1 suốt khoá`, `Học bổng <b>25–200%</b> học phí tháng cho bạn xuất sắc, có hỗ trợ bạn khó khăn`, `Học ngay tại Thạch Thất — đỡ hẳn tiền trọ, đi lại lên Hà Nội`]) + moi;
   if (/online|truc tuyen|hoc tu xa|o xa/.test(b)) return P(`Lớp luyện thi <b>online</b> sắp khai giảng ạ: học trực tiếp với thầy qua video, gửi bài và nhận nhận xét ngay trên web.`) + P(`Đăng ký sớm để được báo lịch đầu tiên và ưu đãi khai giảng.`) + moi;
   if (/chua biet ve|mat goc|khong biet ve|moi bat dau|tu so 0|nang khieu/.test(b)) return P(`Hoàn toàn học được ạ! Lớp dạy <b>từ con số 0</b>: cách cầm chì, phác nét, dựng khối rồi mới lên tĩnh vật, tượng, màu.`) + UL([`Mỗi bài đi đúng 5 bước, thầy sửa trực tiếp từng em`, `Kiểm tra tiến độ hằng tuần, bố mẹ xem được em đi học đều không`, `Học vẽ không phải 100% năng khiếu — vẽ đều đặn là tiến bộ rõ`]) + moi;
-  if (/hoc thu|dang ky|tu van|lien he|goi lai/.test(b)) return P(`Lớp có <b>học thử miễn phí</b> ở cả 2 cơ sở Bình Phú và Kim Quan ạ.`) + moi;
+  if (/hoc thu|dang ky|tu van|lien he|goi lai|uu dai|tui but|hop but|khuyen mai/.test(b)) return P(`Lớp có <b>học thử miễn phí</b> ở cả 2 cơ sở Bình Phú và Kim Quan ạ.`) + P(`🎁 Ưu đãi hiện tại: <b>học thử 1 tuần</b> và <b>tặng hộp túi bút</b>. Các ưu đãi khác thầy sẽ cập nhật sau ạ.`) + moi;
   if (/do khong|ti le do|ty le do|ket qua|thanh tich|diem cao/.test(b)) return P(`Học viên lớp đã có <b>100+ lượt đỗ đại học</b>, điểm vẽ cao nhất <b>9,5</b> (MTCN, Kiến trúc HN, Xây dựng, ĐHQG…). Anh/chị xem <a href="#bang-vang">Bảng vàng</a> để thấy điểm thật của các anh chị khoá trước.`) + P(`Lớp không hứa chắc đỗ, nhưng có theo dõi chuyên cần, điểm bài và thi thử để biết em đang ở đâu.`) + moi;
   if (/si so|bao nhieu ban|lop dong/.test(b)) return P(`Lớp chia theo ca, thầy cô và trợ giảng kèm sát để sửa bài cho từng em. Sĩ số cụ thể từng ca thầy báo khi xếp lớp ạ.`) + moi;
   return "";
@@ -318,7 +319,13 @@ function dung() {
   $("#tl-chat-nut").onclick = () => { if (!vuaKeo) mo(chat); };
   $("#tl-nhac-nut").onclick = () => { if (!vuaKeo) mo(pNhac); };
   ganKeo(w, chat, pNhac);
-  $("#tl-bong").onclick = () => mo(pNhac);
+  $("#tl-bong").onclick = () => {
+    const b = $("#tl-bong"), ten = b.dataset.hoiBai;
+    if (!ten) return mo(pNhac);
+    b.hidden = true; delete b.dataset.hoiBai;
+    if (chat.hidden) mo(chat);
+    $("#tl-nd").value = `Chì ơi, em muốn hỏi về bài "${ten}": `; $("#tl-nd").focus({ preventScroll: true });
+  };
   w.querySelectorAll("[data-dong]").forEach(b => b.onclick = () => { chat.hidden = pNhac.hidden = true; });
   document.addEventListener("keydown", e => { if (e.key === "Escape") chat.hidden = pNhac.hidden = true; });
   w.querySelectorAll("[data-tab]").forEach(b => b.onclick = () => {
@@ -584,6 +591,14 @@ window.__troLy = {
   },
   hocTap(data) { hocTap = nguoi?.vaiTro === "hv" && data?.mail === nguoi.mail ? data : null; },
   nhacViec(ds) { nhac = ds || []; dung(); veNhac(); capNhatDem(); },
+  // Khi xem bài vẽ trong khung phóng to: Chì hỏi có muốn hỏi về bài này không
+  goiYBai(ten) {
+    const b = $("#tl-bong"); if (!b || !nguoi || !$("#tl-chat").hidden || !$("#tl-nhac").hidden) return;
+    b.innerHTML = `<b>✏️ Hỏi Chì về bài này?</b><small>${esc(ten)} · bấm để hỏi</small>`;
+    b.dataset.hoiBai = ten; b.hidden = false;
+    clearTimeout(this._h); this._h = setTimeout(() => { b.hidden = true; delete b.dataset.hoiBai; }, 12000);
+  },
+  anGoiYBai() { const b = $("#tl-bong"); if (b) { b.hidden = true; delete b.dataset.hoiBai; } },
   trangThaiAI: () => (aiModel ? "ai" : aiLoi ? "san" : "chua"),
 };
 // Khung chat đổi theo người xem: khách = tư vấn tuyển sinh, học viên = Bé Chì trợ lý học tập

@@ -74,6 +74,19 @@ service cloud.firestore {
       allow delete: if isStaff() || isMe(mail);
     }
 
+    // Đơn hoạ cụ: quản lý tạo và xác nhận đã nhận tiền (kho tự trừ); học viên xem đơn của mình và báo đã chuyển khoản.
+    match /dondh/{id} {
+      allow read: if isStaff() || (signedIn() && resource.data.mail == myEmail());
+      allow create: if isAdmin() && request.resource.data.trangThai == 'cho'
+        && request.resource.data.mail is string && request.resource.data.items is list
+        && request.resource.data.items.size() > 0 && request.resource.data.items.size() <= 30;
+      allow update: if (isAdmin() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['trangThai', 'thuLuc']))
+        || (isStudent() && resource.data.mail == myEmail() && resource.data.trangThai == 'cho'
+            && request.resource.data.trangThai == 'da_bao'
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['trangThai', 'baoLuc']));
+      allow delete: if isAdmin();
+    }
+
     // Giáo viên đã duyệt: chỉ quản lý xem và duyệt; giáo viên xem hồ sơ của chính mình.
     match /giaovien/{mail} {
       allow read: if isAdmin() || isMe(mail);
