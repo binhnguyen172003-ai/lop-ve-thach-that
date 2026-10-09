@@ -2291,3 +2291,9 @@ body.hop-mo{overflow:hidden}
 @media (prefers-reduced-motion:no-preference){.spk{animation:spk 3.6s ease-in-out infinite both;animation-delay:var(--d,0s)}}
 @media (prefers-reduced-motion:reduce){.spk{display:none}}
 @keyframes spk{0%,100%{opacity:0;transform:scale(0) rotate(0deg)}14%{opacity:1;transform:scale(1) rotate(45deg)}28%{opacity:0;transform:scale(.2) rotate(110deg)}}
+
+/* ----- Điện thoại: khối nội dung hiện dần khi cuộn tới (JS gắn class, máy tính không đổi) ----- */
+@media (prefers-reduced-motion:no-preference){
+  .rv-pre{opacity:0;transform:translateY(16px);transition:opacity .55s ease,transform .7s cubic-bezier(.22,1,.36,1)}
+  .rv-pre.rv-in{opacity:1;transform:none}
+}

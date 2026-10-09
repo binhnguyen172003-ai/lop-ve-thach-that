@@ -1200,6 +1200,22 @@ $("#dk-zalo").href = ZALO_LINK;
     $$(".deco").forEach(d => io.observe(d));
   } else $$(".deco").forEach(d => d.classList.add("in"));
 
+  // Điện thoại: mỗi khối nội dung trượt nhẹ và hiện dần khi cuộn tới, để đỡ bị rối mắt. Máy tính giữ nguyên.
+  const diDon = matchMedia("(max-width:640px)"), nghiGiam = matchMedia("(prefers-reduced-motion:reduce)");
+  const BO_QUA = ".gv-stage,.tb-stage,.tb-noi,.tt-grid,.cs-stage,.courses,.lesson-nav,.cine-bg,.tk-box,nav,header";
+  if ("IntersectionObserver" in window) {
+    const hien = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add("rv-in"); hien.unobserve(e.target); } }), { rootMargin: "0px 0px -8% 0px", threshold: .08 });
+    const quetRv = () => {
+      if (!diDon.matches || nghiGiam.matches) return;
+      $$("main > section, main > .page-head, main .sec-head, main .card").forEach(el => {
+        if (el.dataset.rv || el.closest(BO_QUA)) return;
+        el.dataset.rv = "1"; el.classList.add("rv-pre"); hien.observe(el);
+      });
+    };
+    quetRv(); addEventListener("hashchange", () => setTimeout(quetRv, 60));
+    let hen = 0; new MutationObserver(() => { clearTimeout(hen); hen = setTimeout(quetRv, 250); }).observe(document.querySelector("main") || document.body, { childList: true, subtree: true });
+  }
+
   // Tiêu đề các phần "nổi lên" và nhích theo con trỏ chuột khi rê tới (máy tính)
   if (matchMedia("(hover:hover) and (pointer:fine)").matches && !matchMedia("(prefers-reduced-motion:reduce)").matches) {
     $$("#v-home .sec-head, .mg-title").forEach(head => {
