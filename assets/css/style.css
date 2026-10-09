@@ -1406,7 +1406,6 @@ body.lb-mo #tl-bong{position:fixed!important;top:12px!important;left:12px!import
 @property --ang{syntax:"<angle>";initial-value:0deg;inherits:false}
 @keyframes rkSpin{to{--ang:360deg}}
 @keyframes rkHue{to{filter:hue-rotate(360deg)}}
-@keyframes rkTw{0%,100%{opacity:.2;transform:scale(.6)}50%{opacity:1;transform:scale(1)}}
 [data-rk]{cursor:pointer}
 .rk-chip.t0{animation:none;box-shadow:inset 0 1px 0 rgba(255,255,255,.18);border-color:#7d8590}
 .rk-chip.t0::after{display:none}
@@ -1422,7 +1421,7 @@ body.lb-mo #tl-bong{position:fixed!important;top:12px!important;left:12px!import
 .rk-chip.rb{background:linear-gradient(135deg,#1d0f2e,#0b0d14) padding-box,conic-gradient(from var(--ang),#ff5a5a,#ffc400,#3fcf5b,#3ec6e0,#9b5cff,#ff5a5a) border-box;box-shadow:0 0 28px rgba(255,120,255,.6)}
 .rk-chip.rb b{background:linear-gradient(90deg,#ff5a5a,#ffc400,#3fcf5b,#3ec6e0,#9b5cff);-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:none;animation:rkHue 4s linear infinite}
 .rk-chip .fx{position:absolute;inset:0;pointer-events:none;text-decoration:none;
-  background:radial-gradient(circle at 18% 30%,#fff 0 1px,transparent 2px),radial-gradient(circle at 62% 75%,#fff 0 1px,transparent 2px),radial-gradient(circle at 88% 25%,#fff 0 1.2px,transparent 2.4px);animation:rkTw 1.6s ease-in-out infinite}
+  display:none}
 /* Huy hiệu khiên */
 .rk-badge.t0 svg{filter:none}.rk-badge.t0 .w{display:none}
 .rk-badge.t3 svg,.rk-badge.t4 svg{filter:drop-shadow(0 0 12px var(--rc)) drop-shadow(0 0 2px #fff)}
@@ -2277,35 +2276,9 @@ body.hop-mo{overflow:hidden}
 }
 
 /* ----- Bìa điện ảnh: màu phim, tia sáng quét, bụi ánh sáng, hạt phim ----- */
-.cine-grade,.cine-sweep,.cine-dust{position:absolute;inset:0;pointer-events:none;display:block}
-.cine-grade{background:linear-gradient(160deg,rgba(24,120,130,.38) 0%,rgba(8,12,20,0) 45%,rgba(255,138,64,.22) 100%);mix-blend-mode:soft-light}
-.cine-sweep{top:-20%;bottom:-20%;left:-60%;right:auto;width:38%;background:linear-gradient(100deg,transparent 0%,rgba(255,236,190,.28) 50%,transparent 100%);transform:skewX(-14deg);mix-blend-mode:screen;opacity:0}
-.cine-dust{background-image:
-  radial-gradient(2px 2px at 12% 30%,rgba(255,240,200,.85),transparent),
-  radial-gradient(1.5px 1.5px at 40% 70%,rgba(255,240,200,.7),transparent),
-  radial-gradient(2.5px 2.5px at 74% 22%,rgba(255,240,200,.6),transparent),
-  radial-gradient(1.5px 1.5px at 88% 62%,rgba(255,240,200,.7),transparent),
-  radial-gradient(2px 2px at 58% 86%,rgba(255,240,200,.6),transparent),
-  radial-gradient(1px 1px at 26% 52%,rgba(255,255,255,.8),transparent)}
-.cine-dust::after{content:"";position:absolute;inset:0;opacity:.07;mix-blend-mode:overlay;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>")}
-@media (prefers-reduced-motion:no-preference){
-  .cine-sweep{animation:cineSweep 9s ease-in-out infinite}
-  .cine-dust{animation:cineDust 24s linear infinite alternate}
-  .cine-grade{animation:cineGrade 7s ease-in-out infinite alternate}
-}
-@keyframes cineSweep{0%{left:-60%;opacity:0}15%{opacity:1}45%,100%{left:125%;opacity:0}}
-@keyframes cineDust{from{transform:translate(0,0)}to{transform:translate(-3%,-4%)}}
-@keyframes cineGrade{from{opacity:.7}to{opacity:1}}
-@media (prefers-reduced-motion:reduce){.cine-sweep{display:none}}
-
-/* ----- Lấp lánh quanh tiêu đề bìa: hiện lên rồi mất, lệch pha nhau ----- */
+/* Bìa: chỉ giữ lớp màu tĩnh (không animation, không blend) để trang nhẹ, không giật khi tải lại */
+.cine-grade{position:absolute;inset:0;pointer-events:none;display:block;background:linear-gradient(160deg,rgba(24,120,130,.3) 0%,rgba(8,12,20,0) 45%,rgba(255,138,64,.18) 100%)}
 .cine-h1{position:relative}
-.spk{position:absolute;left:var(--x,0);top:var(--y,0);width:var(--s,14px);height:var(--s,14px);pointer-events:none;opacity:0;transform:scale(0) rotate(0deg);
-  background:linear-gradient(135deg,#fff 0%,#ffe9a6 55%,#ffc83d 100%);clip-path:polygon(50% 0,62% 38%,100% 50%,62% 62%,50% 100%,38% 62%,0 50%,38% 38%);
-  filter:drop-shadow(0 0 8px rgba(255,220,120,1)) drop-shadow(0 0 2px #fff)}
-@media (prefers-reduced-motion:no-preference){.spk{animation:spk 3.6s ease-in-out infinite both;animation-delay:var(--d,0s)}}
-@media (prefers-reduced-motion:reduce){.spk{display:none}}
-@keyframes spk{0%,100%{opacity:0;transform:scale(0) rotate(0deg)}14%{opacity:1;transform:scale(1) rotate(45deg)}28%{opacity:0;transform:scale(.2) rotate(110deg)}}
 
 /* ----- Điện thoại: khối nội dung hiện dần khi cuộn tới (JS gắn class, máy tính không đổi) ----- */
 @media (prefers-reduced-motion:no-preference){
