@@ -22,7 +22,7 @@ async function loadFirebase() {
 
 const $ = s => document.querySelector(s);
 // Trợ lý (chat + nhắc việc) tải riêng, không làm chậm trang
-const troLyPromise = import("./tro-ly.js?v=20261009f").catch(e => console.warn("Chưa tải được trợ lý", e));
+const troLyPromise = import("./tro-ly.js?v=20261009g").catch(e => console.warn("Chưa tải được trợ lý", e));
 window.__appOk = true;
 document.querySelectorAll(".slow-bar").forEach(el => el.remove());
 
@@ -55,7 +55,7 @@ addEventListener("error", e => {
 });
 /* ---------- Mở tức thì ở lần sau + dùng được khi mạng yếu ---------- */
 if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost") && !/[?&]khongcache/.test(location.search))
-  addEventListener("load", () => navigator.serviceWorker.register("sw.js?v=20261009f").catch(() => {}));
+  addEventListener("load", () => navigator.serviceWorker.register("sw.js?v=20261009g").catch(() => {}));
 
 /* ---------- Đo tốc độ: mở web kèm ?chandoan=1 để xem từng bước mất bao lâu ---------- */
 const DIAG = /[?&]chandoan/.test(location.search);
@@ -1244,6 +1244,7 @@ let app, auth, db;
 let user = null, mail = "", isAdmin = false, isTeacher = false, approved = false, needVerify = false;
 let teachers = [], feedbackAll = {}, myFeedback = {};
 let diemdanhAll = {}, myDiemdanh = {}, myHv = null;
+let troLyDaTai = { diemDanh: false, diem: false, bai: false };
 const gradeOpen = new Set(), gradeDraft = {};
 let needRedraw = false;
 // Khi giáo viên gõ xong (rời ô nhập), vẽ lại nếu trong lúc gõ có dữ liệu mới.
@@ -1962,6 +1963,7 @@ function tinNhanPhuHuynh(r, t) {
     + " Bố mẹ cùng lớp trao đổi để sắp xếp lịch học phù hợp cho em nhé. Cảm ơn bố mẹ!";
 }
 function renderMyProg() {
+  capNhatHocTapTroLy();
   const box = $("#my-prog"); if (!box) return;
   box.hidden = isTeacher || !approved;
   if (box.hidden) return;
@@ -2329,9 +2331,26 @@ function baoTroLy(show) {
     capNhatNhac();
   });
 }
+function capNhatHocTapTroLy() {
+  const bot = window.__troLy;
+  if (!bot || !user || isTeacher || !approved) { bot?.hocTap(null); return; }
+  const t = thongKe(myDiemdanh, myHv, myFeedback), today = todayVN();
+  const keys = t.keys.filter(k => (Date.parse(today) - Date.parse(k.slice(0, 10))) / 864e5 < 28);
+  const diem = Object.values(myFeedback).filter(x => x && soDiem(x.diem) !== null && soDiem(x.diem) >= 0 && soDiem(x.diem) <= 10).sort((a, b) => (b.luc || 0) - (a.luc || 0)).slice(0, 6);
+  bot.hocTap({ mail, sanSang: troLyDaTai.diemDanh && troLyDaTai.diem && troLyDaTai.bai,
+    records28: keys.length, co28: keys.filter(k => myDiemdanh[k] === 'co').length,
+    vang28: keys.filter(k => myDiemdanh[k] === 'vang').length, phep28: keys.filter(k => myDiemdanh[k] === 'phep').length,
+    tongBai: homework.length, daNop: homework.filter(h => myProgress.baitap[h.id]).length,
+    quaHan: homework.filter(h => h.han && daysUntil(h.han) < 0 && !myProgress.baitap[h.id]).length,
+    lamLai: homework.filter(h => canLamLai(myFeedback[h.id], myProgress.baitap[h.id])).length,
+    avg: diem.length ? diem.reduce((n, x) => n + soDiem(x.diem), 0) / diem.length : null,
+    soDiem: diem.length, diemMucTieu: MUC_TIEU.diemDat, daysLeft: t.daysLeft, ngayThi: t.ngayThi, suggested: t.suggested,
+    nhanXetGanNhat: diem.slice(0, 3).map(x => ({ diem: soDiem(x.diem), nhanXet: String(x.nhanXet || '').slice(0, 350) })) });
+}
 const THU = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"];
 function capNhatNhac() {
   const t = window.__troLy; if (!t || !user) return;
+  capNhatHocTapTroLy();
   const ds = [], hom = todayVN(), thu = THU[new Date(hom + "T12:00:00").getDay()];
   try {
     if (!isTeacher) {
@@ -2673,7 +2692,7 @@ async function onUser(u) {
   user = u; mail = u ? String(u.email || "").toLowerCase() : "";
   isAdmin = false; isTeacher = false; approved = false; needVerify = false;
   roster = []; requests = []; teachers = []; progressAll = {}; feedbackAll = {};
-  diemdanhAll = {}; myDiemdanh = {}; myHv = null; lvReset(); khoMon = {}; khoGD = []; khoLoi = ""; khoDaTai = false;
+  diemdanhAll = {}; myDiemdanh = {}; myHv = null; troLyDaTai = { diemDanh: false, diem: false, bai: false }; lvReset(); khoMon = {}; khoGD = []; khoLoi = ""; khoDaTai = false;
   if (prevMail && prevMail !== mail) try { localStorage.removeItem(DATA_KEY + prevMail); } catch (e) {} // máy dùng chung: xoá dữ liệu người trước
   loadData(mail);
   // Đổi người dùng thì xoá sạch form đăng ký, tránh gửi nhầm thông tin của người trước (máy dùng chung).
@@ -2766,16 +2785,16 @@ async function onUser(u) {
 
   if (!isTeacher) {
     if (tdDoc) { myProgress = { bai: tdDoc.bai || {}, baitap: tdDoc.baitap || {} }; if (tdDoc.anh) { myAvatar = tdDoc.anh; try { localStorage.setItem("lvtt-avatar", myAvatar); } catch (e) {} } }
-    listen(doc(db, "nhanxet", mail), d => { myFeedback = d.exists() ? d.data() : {}; renderHomework(); renderMyProg(); saveData(); });
+    listen(doc(db, "nhanxet", mail), d => { troLyDaTai.diem = true; myFeedback = d.exists() ? d.data() : {}; renderHomework(); renderMyProg(); saveData(); });
     // Điểm danh của chính em (lỗi quyền thì im lặng, panel vẫn hiện hướng dẫn)
-    unsubs.push(onSnapshot(doc(db, "diemdanh", mail), d => { myDiemdanh = d.exists() ? d.data() : {}; renderMyProg(); }, () => renderMyProg()));
+    unsubs.push(onSnapshot(doc(db, "diemdanh", mail), d => { troLyDaTai.diemDanh = true; myDiemdanh = d.exists() ? d.data() : {}; renderMyProg(); }, () => renderMyProg()));
     renderMyProg();
   }
   listen(query(collection(db, "giaotrinh"), orderBy("thutu")), snap => {
     lessons = snap.docs.filter(d => !d.id.startsWith("_")).map(d => ({ id: d.id, ...d.data() })); renderLessons(); if (isAdmin) { renderRoster(); dongBoBaiHoc(); } saveData(); renderTiles();
   });
   listen(query(collection(db, "baitap"), orderBy("han")), snap => {
-    homework = snap.docs.map(d => ({ id: d.id, ...d.data() })); renderHomework(); saveData(); renderTiles();
+    troLyDaTai.bai = true; homework = snap.docs.map(d => ({ id: d.id, ...d.data() })); renderHomework(); saveData(); renderTiles();
   });
   if (isTeacher) {
     listen(query(collection(db, "hocvien"), orderBy("duyetLuc", "desc")), snap => {
