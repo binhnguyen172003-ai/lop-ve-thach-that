@@ -62,7 +62,7 @@ addEventListener("error", e => {
 });
 /* ---------- Mở tức thì ở lần sau + dùng được khi mạng yếu ---------- */
 if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost") && !/[?&]khongcache/.test(location.search))
-  addEventListener("load", () => navigator.serviceWorker.register("sw.js?v=20261010f").catch(() => {}));
+  addEventListener("load", () => navigator.serviceWorker.register("sw.js?v=20261010g").catch(() => {}));
 
 /* ---------- Đo tốc độ: mở web kèm ?chandoan=1 để xem từng bước mất bao lâu ---------- */
 const DIAG = /[?&]chandoan/.test(location.search);
@@ -2051,6 +2051,7 @@ function renderHvInfo() {
     </dl>
     <form class="hv-form" id="f-hv-info" novalidate>
       <label>Số điện thoại của em<input id="hv-sdt" inputmode="tel" maxlength="15" autocomplete="tel" value="${esc(myHv.sdt || "")}" placeholder="VD: 0912345678"></label>
+      <label>Khối học<select id="hv-khoi"><option value="">Chưa chọn</option>${["Khối H", "Khối V", "Cơ bản"].map(k => `<option${k === (myHv.khoi || "") ? " selected" : ""}>${k}</option>`).join("")}</select></label>
       <label>Trường thi dự kiến<select id="hv-truong-thi"><option value="">Chưa chọn</option>${TRUONG_THI.map(t => `<option${t === tt ? " selected" : ""}>${esc(t)}</option>`).join("")}</select></label>
       <div><button class="btn primary" type="submit">Lưu thông tin</button> <span class="status" id="hv-info-st" role="status"></span></div>
     </form>
@@ -2063,11 +2064,13 @@ function renderHvInfo() {
   $$("#hv-info [data-dadong]").forEach(b => b.onclick = () => danhDauDaChuyen(b.dataset.dadong));
   $("#f-hv-info").onsubmit = e => {
     e.preventDefault();
-    const sdt = cleanPhone($("#hv-sdt").value), truongThi = $("#hv-truong-thi").value, st = $("#hv-info-st");
+    const sdt = cleanPhone($("#hv-sdt").value), truongThi = $("#hv-truong-thi").value, khoi = $("#hv-khoi").value, st = $("#hv-info-st");
     if (sdt && !/^\d{9,11}$/.test(sdt)) { st.textContent = "Số điện thoại chưa đúng (9–11 số)."; return; }
     st.textContent = "Đang lưu…";
-    const b = writeBatch(db); b.update(doc(db, "hocvien", mail), { sdt, truongThi });
-    timed("Lưu thông tin học viên", b.commit()).then(() => { myHv = { ...myHv, sdt, truongThi }; st.textContent = "Đã lưu."; toast("Đã lưu thông tin của em."); renderHvInfo(); })
+    const capNhat = { sdt, truongThi };
+    if (khoi) capNhat.khoi = khoi; // chỉ ghi khi học viên chọn khối; chưa chọn thì giữ khối cũ
+    const b = writeBatch(db); b.update(doc(db, "hocvien", mail), capNhat);
+    timed("Lưu thông tin học viên", b.commit()).then(() => { myHv = { ...myHv, ...capNhat }; st.textContent = "Đã lưu."; toast("Đã lưu thông tin của em."); renderHvInfo(); })
       .catch(() => { st.textContent = "Chưa lưu được. Kiểm tra mạng rồi bấm lại."; });
   };
   const fd = $("#f-doiten");

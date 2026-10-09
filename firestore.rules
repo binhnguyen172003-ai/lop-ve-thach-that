@@ -59,8 +59,9 @@ service cloud.firestore {
       allow create, delete: if isAdmin();
       // Học viên tự sửa SĐT và trường thi của mình; quản lý sửa mọi thứ; giáo viên chỉ đổi tên khi quản lý/giáo viên duyệt yêu cầu
       allow update: if isAdmin()
-        || (isMe(mail) && isStudent() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['sdt', 'truongThi'])
-            && shortText(request.resource.data, 'sdt', 15) && shortText(request.resource.data, 'truongThi', 20))
+        || (isMe(mail) && isStudent() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['sdt', 'truongThi', 'khoi'])
+            && shortText(request.resource.data, 'sdt', 15) && shortText(request.resource.data, 'truongThi', 20)
+            && (!('khoi' in request.resource.data) || request.resource.data.khoi in ['Khối H', 'Khối V', 'Cơ bản']))
         || (isStaff() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['ten'])
             && request.resource.data.ten is string && request.resource.data.ten.size() > 0 && request.resource.data.ten.size() <= 80);
     }
