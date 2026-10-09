@@ -64,7 +64,7 @@ addEventListener("error", e => {
 });
 /* ---------- Mở tức thì ở lần sau + dùng được khi mạng yếu ---------- */
 if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost") && !/[?&]khongcache/.test(location.search))
-  addEventListener("load", () => navigator.serviceWorker.register("sw.js?v=20261010au").catch(() => {}));
+  addEventListener("load", () => navigator.serviceWorker.register("sw.js?v=20261010av").catch(() => {}));
 
 /* ---------- Đo tốc độ: mở web kèm ?chandoan=1 để xem từng bước mất bao lâu ---------- */
 const DIAG = /[?&]chandoan/.test(location.search);
@@ -262,7 +262,7 @@ const ZALO_LOP = String(LIEN_HE.zalo || LIEN_HE.sdt || "").replace(/\D/g, "");
 const ZALO_LINK = LIEN_HE.zaloLink || "https://zalo.me/" + ZALO_LOP;
 const mapCua = c => c.map || "https://maps.google.com/?q=" + encodeURIComponent(c.diaChi || "");
 $("#lien-he").innerHTML =
-  `<div><dt>Gọi thầy</dt><dd class="num"><a href="tel:${esc(String(LIEN_HE.sdt || "").replace(/\D/g, ""))}">${esc(LIEN_HE.sdt)}</a></dd></div>
+  `<div><dt>Gọi quản lý</dt><dd class="num"><a href="tel:${esc(String(LIEN_HE.sdt || "").replace(/\D/g, ""))}">${esc(LIEN_HE.sdt)}</a></dd></div>
    <div><dt>Zalo tư vấn</dt><dd class="num"><a href="${esc(ZALO_LINK)}" target="_blank" rel="noopener">${esc(LIEN_HE.zaloHienThi || LIEN_HE.zalo)}</a></dd></div>
    <div><dt>Email</dt><dd>${esc(LIEN_HE.email)}</dd></div>
    ${LIEN_HE.coSo.map(c => `<div><dt>${esc(c.ten)}</dt><dd>${esc(c.diaChi)} <a class="map-link" href="${esc(mapCua(c))}" target="_blank" rel="noopener">📍 Chỉ đường</a></dd></div>`).join("")}
