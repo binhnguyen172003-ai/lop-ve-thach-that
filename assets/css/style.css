@@ -216,7 +216,8 @@ footer{padding-block:32px;border-top:1px solid var(--rule);color:var(--graphite)
 .lb .lb-bar{display:flex;gap:10px;align-items:center;color:#e9ebef;font-size:.9rem}
 .lb .lb-bar button{min-height:44px;min-width:44px;border-radius:999px;border:1px solid #6b7180;background:transparent;color:#e9ebef;font:600 .95rem var(--f-body);padding:0 16px;cursor:pointer}
 @media (max-width:640px){.gallery{grid-template-columns:repeat(2,minmax(0,1fr))}.hero-art{max-width:240px;justify-self:start;transform:rotate(1deg)}}
-@media (prefers-reduced-motion:no-preference){.gallery img{transition:transform .3s}.gallery button:hover img{transform:scale(1.03)}}
+/* Phóng to nhẹ khi rê chuột chỉ dùng cho máy có chuột; trên điện thoại chạm vào không bị giật */
+@media (prefers-reduced-motion:no-preference) and (hover:hover) and (pointer:fine){.gallery img{transition:transform .3s}.gallery button:hover img{transform:scale(1.03)}}
 
 @media (max-width:860px){
   .beliefs{grid-template-columns:repeat(2,minmax(0,1fr))}
@@ -2427,3 +2428,7 @@ body.hop-mo{overflow:hidden}
 .nb-menu button.armed{color:#ff8a8a}
 /* ⋮ trong lưới bài vẽ: góc trên bên trái để không đè nút link ở góc phải */
 .gallery .gal-o > .nb-more.gal-more{position:absolute;top:8px;left:8px;right:auto;width:32px;height:32px;min-width:0;display:grid;place-items:center;padding:0;margin:0;border:1px solid rgba(255,255,255,.4);border-radius:50%;background:rgba(10,12,18,.8);color:#fff;font:800 1.1rem/1 var(--f-body);cursor:pointer;z-index:3;overflow:visible}
+
+/* Lưới bài vẽ mượt hơn khi cuộn: ô ngoài màn hình không vẽ lại; ảnh giữ nguyên khung khi đang tải */
+.gallery .gal-o{content-visibility:auto;contain-intrinsic-size:auto 300px}
+.gallery .gal-b img{transform:translateZ(0);backface-visibility:hidden}

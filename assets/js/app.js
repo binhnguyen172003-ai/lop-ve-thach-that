@@ -64,7 +64,7 @@ addEventListener("error", e => {
 });
 /* ---------- Mở tức thì ở lần sau + dùng được khi mạng yếu ---------- */
 if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost") && !/[?&]khongcache/.test(location.search))
-  addEventListener("load", () => navigator.serviceWorker.register("sw.js?v=20261010al").catch(() => {}));
+  addEventListener("load", () => navigator.serviceWorker.register("sw.js?v=20261010am").catch(() => {}));
 
 /* ---------- Đo tốc độ: mở web kèm ?chandoan=1 để xem từng bước mất bao lâu ---------- */
 const DIAG = /[?&]chandoan/.test(location.search);
