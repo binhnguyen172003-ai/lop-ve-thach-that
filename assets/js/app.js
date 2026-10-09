@@ -3190,12 +3190,18 @@ async function onUser(u) {
   }
   // Máy chủ không trả lời trong 8 giây thì coi như chưa hỏi được (để dùng quyền đã lưu và tự thử lại), không để treo mãi
   const hanTuoi = p => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej({ code: "timeout" }), 8000))]);
-  const exists = async (col) => { try { return (await hanTuoi(getDoc(doc(db, col, mail)))).exists(); } catch (e) { return false; } };
+  let tuChoiQuyen = false; // máy chủ từ chối đọc (thường do token chưa cập nhật trạng thái xác nhận email)
+  const exists = async (col) => { try { return (await hanTuoi(getDoc(doc(db, col, mail)))).exists(); } catch (e) { if (e && e.code === "permission-denied") tuChoiQuyen = true; return false; } };
   // Hỏi cả 4 thông tin cùng lúc thay vì lần lượt, để trang hiện nhanh hơn.
   const getData = async (col) => {
     try { const d = await hanTuoi(getDoc(doc(db, col, mail))); return d.exists() ? (d.data() || {}) : null; }
-    catch (e) { if (e && e.code !== "permission-denied") serverIssue(e); return undefined; } // undefined = chưa hỏi được, khác null = không có
+    catch (e) {
+      if (e && e.code === "permission-denied") tuChoiQuyen = true; else if (e) serverIssue(e);
+      return undefined; // undefined = chưa hỏi được, khác null = không có
+    }
   };
+  // Đã xác nhận email nhưng token trên máy còn cũ (chưa có claim email_verified): làm mới token trước khi đọc dữ liệu.
+  if (!u.__thuLai && u.emailVerified) { try { await hanTuoi(u.getIdToken(true)); } catch (e) {} }
   const tr = performance.now();
   // Ảnh đại diện riêng của tài khoản này (giáo viên, quản lý, học viên đều có)
   let avaTuMay = false;
@@ -3218,6 +3224,11 @@ async function onUser(u) {
     if (cu && cu.mail === mail && (cu.isTeacher || cu.approved)) {
       isAdmin = !!cu.isAdmin; isTeacher = !!cu.isTeacher; approved = !!cu.approved; myHv = cu.hv || null;
       if (u.__thuLai === 1) toast("Máy chủ chưa trả lời. Em vẫn vào học được bằng quyền đã lưu trên máy, web sẽ tự thử lại.", "err");
+    } else if (tuChoiQuyen) {
+      // Bị từ chối quyền đọc: không để "đang kiểm tra" mãi. Hiện rõ hướng xử lý, vẫn tự thử lại ngầm.
+      renderLocks("pending"); renderAccount(false);
+      if (u.__thuLai === 1) toast("Máy chủ từ chối đọc tài khoản. Em thử tải lại trang (hoặc đăng xuất rồi đăng nhập lại); nếu vẫn vậy, báo thầy kiểm tra.", "err");
+      return;
     } else {
       renderLocks("checking");
       if (u.__thuLai === 1) toast("Chưa kiểm tra được tài khoản (mạng hoặc máy chủ chậm). Web đang tự thử lại…", "err");
