@@ -62,7 +62,7 @@ addEventListener("error", e => {
 });
 /* ---------- Mở tức thì ở lần sau + dùng được khi mạng yếu ---------- */
 if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost") && !/[?&]khongcache/.test(location.search))
-  addEventListener("load", () => navigator.serviceWorker.register("sw.js?v=20261010i").catch(() => {}));
+  addEventListener("load", () => navigator.serviceWorker.register("sw.js?v=20261010j").catch(() => {}));
 
 /* ---------- Đo tốc độ: mở web kèm ?chandoan=1 để xem từng bước mất bao lâu ---------- */
 const DIAG = /[?&]chandoan/.test(location.search);
@@ -2376,7 +2376,7 @@ function renderTiles() {
   const daHoc = Object.values(myProgress.bai || {}).filter(Boolean).length;
   const moBai = homework.filter(h => !h.han || h.han >= today).length;
   const tiles = [
-    { href: "#lam-viec", t: "Làm việc", n: tin + tb + viec, d: tin + tb + viec ? [tin && `${tin} tin nhắn mới`, tb && `${tb} thông báo mới`, viec && `${viec} việc chưa xong`].filter(Boolean).join(" · ") : (isTeacher ? "Nhắn tin, thông báo, giao việc" : "Nhắn thầy cô, xem thông báo của lớp") },
+    { href: "#lam-viec", t: "Trao đổi", n: tin + tb + viec, d: tin + tb + viec ? [tin && `${tin} tin nhắn mới`, tb && `${tb} thông báo mới`, viec && `${viec} việc chưa xong`].filter(Boolean).join(" · ") : (isTeacher ? "Nhắn tin, thông báo, giao việc" : "Nhắn thầy cô, xem thông báo của lớp") },
     isAdmin && { href: "#duyet", t: "Quản lý học viên", n: reqCount, d: `${roster.length} học viên · % đỗ · Top 5 tuần` + (reqCount ? ` · ${reqCount} chờ duyệt` : "") },
     isTeacher && { href: "#diem-danh", t: "Điểm danh", d: "Điểm danh buổi hôm nay" },
     { href: "#bai-tap", t: isTeacher ? "Giao & chấm bài tập" : "Bài tập", d: moBai ? `${moBai} bài đang mở` : "Chưa có bài đang mở" },
@@ -2879,8 +2879,8 @@ function renderLV() {
   if (lvErr) {
     if (!warn) { warn = document.createElement("p"); warn.id = "lv-warn"; warn.className = "sv-status bad"; $("#lv-body").prepend(warn); }
     warn.innerHTML = lvErr === "permission-denied"
-      ? (isAdmin ? `<b>⚠ Khu Làm việc cần luật bảo mật mới.</b> Thầy vào trang <a href="#duyet">Duyệt</a>, bấm "Sao chép luật mới" rồi dán vào Firebase như lần trước.`
-                 : "Khu Làm việc đang được thầy cập nhật, em quay lại sau nhé.")
+      ? (isAdmin ? `<b>⚠ Khu Trao đổi cần luật bảo mật mới.</b> Thầy vào trang <a href="#duyet">Duyệt</a>, bấm "Sao chép luật mới" rồi dán vào Firebase như lần trước.`
+                 : "Khu Trao đổi đang được thầy cập nhật, em quay lại sau nhé.")
       : "Mạng chập chờn, chưa tải được tin nhắn. Đang thử lại…";
     warn.hidden = false;
   } else if (warn) warn.hidden = true;
