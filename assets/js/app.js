@@ -621,6 +621,21 @@ const bangRankHTML = () => `<div class="xh-row xh-th" role="row"><span>Hạng</s
     RANK.map((r, i) => `<div class="xh-row t${i}" role="row" style="--rc:${r.mau === "rainbow" ? "#ffd6ff" : r.mau}">
       <b class="xh-ma${r.mau === "rainbow" ? " rb" : ""}">${r.ma}<small> RANK</small></b>${huyHieu(r, i, "sm")}
       <span class="xh-mo"><b><span class="xh-kim">${r.kim}</span> ${r.ten}</b><span>${r.mo}</span><i>${"★".repeat(i + 1)}</i></span><span class="xh-xp num">${r.xp} XP</span></div>`).join("");
+// Các hạng trên trang Xếp hạng: một vòng xoay thẻ (gọn hơn bảng dài)
+const bangVongHTML = () => `<div class="gv-ring rk-ring" aria-roledescription="vòng xoay" aria-label="Các hạng">
+    <div class="gv-stage rk-stage">${RANK.map((r, i) => `<article class="gv rk-card" data-i="${i}" style="--rc:${r.mau === "rainbow" ? "#ffd6ff" : r.mau}" aria-roledescription="thẻ" aria-label="${i + 1} / ${RANK.length}: ${esc(r.kim)} ${esc(r.ten)}">
+      <div class="gv-in rk-in">
+        <span class="rk-top"><b class="xh-ma${r.mau === "rainbow" ? " rb" : ""}">${r.ma}<small> RANK</small></b>${huyHieu(r, i, "sm")}</span>
+        <b class="rk-ten"><span class="xh-kim">${esc(r.kim)}</span> ${esc(r.ten)}</b>
+        <span class="rk-mo">${esc(r.mo)}</span>
+        <i class="rk-star">${"★".repeat(i + 1)}</i>
+        <span class="rk-xp num">${r.xp} XP</span>
+      </div></article>`).join("")}</div>
+    <div class="gv-ctl">
+      <button type="button" class="gv-nav" id="rk-prev" aria-label="Hạng trước">‹</button>
+      <div class="gv-dots" id="rk-dots">${RANK.map((r, i) => `<button type="button" data-i="${i}" aria-label="${esc(r.kim)} ${esc(r.ten)}"></button>`).join("")}</div>
+      <button type="button" class="gv-nav" id="rk-next" aria-label="Hạng sau">›</button>
+    </div></div>`;
 const cachXpHTML = () => `<ul class="xh-xpl">
     <li><b>+${XP.buoi}</b><span>Mỗi buổi đi học (thầy điểm danh có mặt)</span></li>
     <li><b>+${XP.baiTap}</b><span>Mỗi bài tập đã nộp</span></li>
@@ -668,7 +683,9 @@ document.addEventListener("keydown", e => {
 }, true);
 (function bangXepHang() {
   const bang = $("#xh-bang"); if (!bang) return;
-  bang.innerHTML = bangRankHTML();
+  bang.classList.add("rk-box");
+  bang.innerHTML = bangVongHTML();
+  vongXoay(bang, bang.querySelector(".rk-stage"), [...bang.querySelectorAll(".rk-card")], [...bang.querySelectorAll("#rk-dots button")], bang.querySelector("#rk-prev"), bang.querySelector("#rk-next"), null);
   $("#xh-cach").innerHTML = `<h3>Cách kiếm XP</h3>${cachXpHTML()}
     <p class="muted">Mùa xếp hạng bắt đầu từ ${fmtDate(new Date(RANK_BAT_DAU + "T00:00"))}. Mọi học viên khởi đầu ở hạng F.</p>`;
   // Học viên có hạng nổi bật (từ Bài vẽ nổi bật)

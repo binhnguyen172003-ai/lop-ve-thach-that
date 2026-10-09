@@ -2308,3 +2308,17 @@ body.hop-mo{overflow:hidden}
   .js-fx .cine-h1.in .hv-2{animation:word-in .8s ease-out .35s forwards}
 }
 @media (prefers-reduced-motion:reduce){.js-fx .cine-h1 .ln{opacity:1!important;transform:none!important;filter:none!important}}
+
+/* ----- Các hạng trên trang Xếp hạng: cửa sổ xoay thẻ ----- */
+.xh-bang.rk-box{border:0;background:none;overflow:visible}
+.rk-stage{height:330px}
+.rk-stage .rk-card{height:300px;width:250px;margin-left:-125px}
+.rk-in{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:18px 16px;text-align:center;
+  background:var(--sheet);border:1px solid color-mix(in srgb,var(--rc) 55%,var(--rule));border-radius:20px;color:var(--ink);cursor:pointer}
+.rk-card.on .rk-in{box-shadow:0 22px 44px -14px color-mix(in srgb,var(--rc) 45%,transparent)}
+.rk-top{display:flex;align-items:center;gap:10px}
+.rk-ten{font:700 1.1rem/1.25 var(--f-display)}
+.rk-mo{font-size:.9rem;line-height:1.45;color:var(--graphite)}
+.rk-star{font-style:normal;color:var(--rc);letter-spacing:.12em}
+.rk-xp{font-weight:700;color:var(--rc)}
+@media (max-width:640px){.rk-stage{height:300px}.rk-stage .rk-card{width:min(70vw,230px);margin-left:calc(min(70vw,230px) / -2);height:270px}}
