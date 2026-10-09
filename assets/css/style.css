@@ -1319,6 +1319,10 @@ body.lb-mo #tl-bong{position:fixed!important;top:12px!important;left:12px!import
 .lb #lb-cap{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 /* Bài của trợ giảng, giáo viên, quản lý: khung vàng riêng, không có hạng */
 .nb-card.nb-nv{border:2px solid #f9c74f;border-radius:18px;box-shadow:0 0 0 1px rgba(249,199,79,.35),0 0 26px rgba(249,199,79,.35)}
+.nb-card.nb-nv.nv-tg{border-color:#4cc9f0;box-shadow:0 0 0 1px rgba(76,201,240,.35),0 0 26px rgba(76,201,240,.35)}
+.nb-card.nb-nv.nv-ql{border-color:#ff6b6b;box-shadow:0 0 0 1px rgba(255,107,107,.35),0 0 26px rgba(255,107,107,.35)}
+.nb-card.nb-nv.nv-tg .nb-nv-tag{background:linear-gradient(90deg,#4cc9f0,#4361ee);color:#fff}
+.nb-card.nb-nv.nv-ql .nb-nv-tag{background:linear-gradient(90deg,#ff6b6b,#c1121f);color:#fff}
 .nb-nv-tag{position:absolute;top:10px;left:10px;z-index:3;padding:4px 10px;border-radius:999px;background:linear-gradient(90deg,#f9c74f,#ffb703);color:#1a1200;font:800 .68rem/1 var(--f-body);letter-spacing:.06em;text-transform:uppercase}
 .rk-badge{position:relative;display:inline-grid;place-items:center;width:58px;height:62px;flex:none;vertical-align:middle}
 .rk-badge svg{position:absolute;inset:0;width:100%;height:100%;filter:drop-shadow(0 0 10px color-mix(in srgb,var(--rc) 55%,transparent))}

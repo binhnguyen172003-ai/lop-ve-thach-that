@@ -62,7 +62,7 @@ addEventListener("error", e => {
 });
 /* ---------- Mở tức thì ở lần sau + dùng được khi mạng yếu ---------- */
 if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost") && !/[?&]khongcache/.test(location.search))
-  addEventListener("load", () => navigator.serviceWorker.register("sw.js?v=20261010r").catch(() => {}));
+  addEventListener("load", () => navigator.serviceWorker.register("sw.js?v=20261010s").catch(() => {}));
 
 /* ---------- Đo tốc độ: mở web kèm ?chandoan=1 để xem từng bước mất bao lâu ---------- */
 const DIAG = /[?&]chandoan/.test(location.search);
@@ -820,7 +820,8 @@ const GHI_CHU = {
   // Tối đa 10 ảnh mỗi mục, trong đó chỉ 5 bài mang huy chương TOP 1–5 (mỗi hạng 1 bài, bài quản lý chọn trên web được ưu tiên)
   // Bài của trợ giảng, giáo viên, quản lý (hoặc bài mẫu giáo viên): không có hạng, có khung riêng
   const nhanVienBai = b => ["Trợ giảng", "Giáo viên", "Quản lý"].includes(b.chucVu) || !!b.mau;
-  const nhanVienTen = b => b.chucVu && b.chucVu !== "Học viên" ? b.chucVu : "Giáo viên";
+  const nhanVienTen = b => (b.chucVu && b.chucVu !== "Học viên" ? b.chucVu : "Giáo viên") + (b.biDanh ? " · " + b.biDanh : "");
+  const nhanVienLop = b => ({ "Trợ giảng": "tg", "Quản lý": "ql" })[b.chucVu] || "gv"; // mỗi vai trò một khung màu
   const locNoiBat = k => { const daCo = new Set();
     const ds = [...BAI_NOI_BAT, ...BAIVE_DONG.map(b => ({ ...b, ngay: (b.hang >= 1 && b.hang <= 5 && b.ngayTop) || b.ngay, dong: true }))].filter(b => mucCua(b) === k)
       .map(b => ({ ...b, nv: nhanVienBai(b), top: !b.tg && !nhanVienBai(b) && b.hang >= 1 && b.hang <= 5 ? b.hang : 0 }))
@@ -837,7 +838,7 @@ const GHI_CHU = {
     const k = [ky, !!user && isTeacher, isAdmin, XP_DONG.length, TT_DONG.length, ...ds.map(b => (b.id || b.anh) + b.top)].join("|");
     if (k === sig) return; sig = k;
     if (!ds.length && !coThem()) { box.innerHTML = `<p class="nb-rong">Chưa có bài nổi bật ${TEN[ky]}. ${ky === "tuan" ? "Thầy cô sẽ cập nhật bài đẹp mỗi tuần." : `Bài tuần trước tự chuyển sang đây khi ${ky === "thang" ? "qua 1 tuần" : "qua 1 tháng"}.`}</p>`; return; }
-    box.innerHTML = `<div class="gv-stage nb-stage">${ds.map((b, i) => `<figure class="nb-card${b.nv ? " nb-nv" : ""}" data-i="${i}">
+    box.innerHTML = `<div class="gv-stage nb-stage">${ds.map((b, i) => `<figure class="nb-card${b.nv ? " nb-nv nv-" + nhanVienLop(b) : ""}" data-i="${i}">
         ${b.nv ? `<span class="nb-nv-tag">${esc(nhanVienTen(b))}</span>` : ""}
         <img src="${esc(b.anh)}" alt="${esc((b.loai || "Bài vẽ") + " · " + (b.hocVien || ""))}" loading="lazy" decoding="async" draggable="false">
         ${b.top ? `<span class="nb-medal h${b.top}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 2h4l1 5-3 1zM17 2h-4l-1 5 3 1z" class="rb"/><circle cx="12" cy="15" r="6.5" class="md"/><text x="12" y="18.2" text-anchor="middle">${b.top}</text></svg><b>TOP ${b.top}</b><i>${TEN[ky]}</i></span>` : ""}
@@ -3767,6 +3768,7 @@ function moDangBai() {
       <datalist id="bv-ds">${tenHV.map(t => `<option value="${esc(t)}">`).join("")}</datalist>
       <fieldset class="chon-loai"><legend>Đây là bài gì? *</legend>${LOAI_BAI.map((l, i) => `<label><input type="radio" name="bv-loai" value="${esc(l.ten)}"${i === 0 ? "" : ""}><span>${esc(l.ten)}</span></label>`).join("")}</fieldset>
       <label>Người vẽ là<select id="bv-vaitro"><option>Học viên</option><option>Trợ giảng</option><option>Giáo viên</option><option>Quản lý</option></select></label>
+      <label>Biệt danh (không bắt buộc)<input id="bv-bidanh" maxlength="30" autocomplete="off" placeholder="VD: Thầy Gấu, Cô Mây"></label>
       <label>Ghi chú<input id="bv-gc" maxlength="120" placeholder="VD: Bố cục màu tuần 3 · 8,5 điểm"></label>
       <label>Giáo viên hướng dẫn<input id="bv-gvhd" list="bv-gv" maxlength="80" autocomplete="off" placeholder="VD: Nguyễn Văn Hùng"></label>
       <label>Trợ giảng<input id="bv-tg" list="bv-gv" maxlength="80" autocomplete="off" placeholder="VD: Đỗ Hữu Trường"></label>
@@ -3798,6 +3800,7 @@ function moDangBai() {
     const data = { anh, hocVien, loai, ghiChu: el.querySelector("#bv-gc").value.trim(), link, ngay: todayVN(), hang: 0, ngayTop: "", nguoi: mail, tenNguoi: tenToi(), luc: Date.now() };
     if (gvhd) data.gvhd = gvhd; if (tgiang) data.tgiang = tgiang; // ghi khi có điền
     data.chucVu = el.querySelector("#bv-vaitro").value || "Học viên";
+    const biDanh = el.querySelector("#bv-bidanh").value.trim(); if (biDanh) data.biDanh = biDanh;
     if (isAdmin && el.querySelector("#bv-mau") && el.querySelector("#bv-mau").checked) data.mau = true;
     try {
       await timed("Đăng bài vẽ", setDoc(ref, data));
