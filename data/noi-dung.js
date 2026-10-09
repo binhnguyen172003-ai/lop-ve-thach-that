@@ -11,12 +11,14 @@
 
 // ---------- 1. LIÊN HỆ (hiện ở mục Đăng ký và trang Tài khoản) ----------
 export const LIEN_HE = {
-  sdt: "0328 193 134",                      // số hiện trên web
-  zalo: "0328193134",                       // số Zalo, viết liền
+  sdt: "0328 193 134",                      // số gọi điện hiện trên web
+  zalo: "0333684003",                       // số Zalo nhận tin tư vấn, viết liền (nút Zalo mở đúng số này)
+  zaloHienThi: "0333 684 003",              // số Zalo hiện cho người xem đọc
   email: "lopvedreamerstt@gmail.com",
+  // map: link Google Maps của cơ sở (dán link rút gọn maps.app.goo.gl/… nếu có). Trên web chỉ hiện chữ "Chỉ đường".
   coSo: [
-    { ten: "Cơ sở 1 · Bình Phú", diaChi: "Nủa, Bình Phú, Thạch Thất, Hà Nội" },
-    { ten: "Cơ sở 2 · Kim Quan", diaChi: "162 Kim Quan, Thạch Thất, Hà Nội" },
+    { ten: "Cơ sở 1 · Bình Phú", diaChi: "Nủa, Bình Phú, Thạch Thất, Hà Nội", map: "https://maps.google.com/?q=N%E1%BB%A7a%2C+B%C3%ACnh+Ph%C3%BA%2C+Th%E1%BA%A1ch+Th%E1%BA%A5t%2C+H%C3%A0+N%E1%BB%99i" },
+    { ten: "Cơ sở 2 · Kim Quan", diaChi: "162 Kim Quan, Thạch Thất, Hà Nội", map: "https://maps.google.com/?q=162+Kim+Quan%2C+Th%E1%BA%A1ch+Th%E1%BA%A5t%2C+H%C3%A0+N%E1%BB%99i" },
   ],
   instagram: { ten: "@lop_ve_thach_that", link: "https://www.instagram.com/lop_ve_thach_that/" },
   pinterest: { link: "https://pin.it/YkmIUW1tr" },
@@ -294,3 +296,16 @@ export const TON_DAU_KY = { "chi-koh": 73, tay: 6, "tay-ganh": 31, "tay-dat-set"
 // ===== SỐ HỌC VIÊN DỰ THI MỖI MÙA (để tính % đỗ ở Bảng vàng) =====
 // Điền tổng số học viên của lớp đi thi năm đó. Để 0 nếu chưa có: web chỉ hiện số đỗ, chưa tính %.
 export const SO_DU_THI = { 2025: 0, 2026: 0 };
+
+
+// ---------- BẢN TIN NỔI BẬT (trang chủ, mục "Bản tin") ----------
+// Bài cố định của lớp. Thầy cô đăng thêm bài mới ngay trên web (nút "+ Đăng bản tin" khi đã đăng nhập).
+// muc: "hoacu" (Hoạ cụ) · "lythuyet" (Lý thuyết) · "kinhnghiem" (Kinh nghiệm thi) · "tinlop" (Tin của lớp)
+// dsHoaCu: "Cơ bản" / "Khối H" / "Khối V" → tự liệt kê hoạ cụ cần mua theo bảng HOA_CU ở trên.
+export const BAN_TIN = [
+  { muc: "hoacu", ghim: true, ngay: "2026-10-09", tieuDe: "Hoạ cụ cần chuẩn bị khi bắt đầu học",
+    nd: "Buổi đầu em chưa cần mua đắt. Chỉ cần đủ bộ dưới đây là vẽ được hình hoạ cơ bản. Hoạ cụ màu (Khối H) thầy hướng dẫn mua khi bắt đầu học màu.\nLớp có bán sẵn tại cơ sở, giá như dưới đây.",
+    dsHoaCu: "Cơ bản" },
+  { muc: "lythuyet", ngay: "2026-10-09", tieuDe: "5 bước của một bài hình hoạ",
+    nd: "1. Dựng hình: đặt bố cục vừa khổ giấy, phác khung lớn bằng nét nhẹ.\n2. Đo tỷ lệ: so chiều cao, chiều ngang bằng que đo, nheo mắt nhìn tổng thể.\n3. Cấu trúc: tìm đường trục, mặt phẳng, khối chính.\n4. Sáng tối: chia mảng sáng – tối trước, rồi mới đẩy sắc độ trung gian.\n5. Hoàn thiện: chỉnh chi tiết, đứng xa nhìn lại, nhờ thầy nhận xét." },
+];

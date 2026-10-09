@@ -143,7 +143,7 @@ service cloud.firestore {
     // ===== HẠNG & THÀNH TỰU: thầy cô cộng XP / trao thành tựu; ai cũng xem (hiện ở Top rank) =====
     match /xephang/{id} {
       allow read: if true;
-      allow create: if isStaff()
+      allow create: if isAdmin()
         && request.resource.data.keys().hasOnly(['hocVien', 'loai', 'xp', 'ma', 'ghiChu', 'luc', 'nguoi'])
         && request.resource.data.hocVien is string && request.resource.data.hocVien.size() > 0 && request.resource.data.hocVien.size() <= 80
         && request.resource.data.loai in ['xp', 'thanhtuu']
@@ -158,6 +158,46 @@ service cloud.firestore {
     }
     match /khogd/{id} {
       allow read, write: if isAdmin();
+    }
+
+    // ===== ẢNH ĐẠI DIỆN: mỗi tài khoản một ảnh riêng (ảnh đã thu nhỏ, lưu dạng chữ) =====
+    match /anhdaidien/{mail} {
+      allow get: if signedIn();
+      allow list: if isStaff();
+      allow write: if isMe(mail)
+        && request.resource.data.keys().hasOnly(['anh', 'luc'])
+        && request.resource.data.anh is string && request.resource.data.anh.size() <= 200000;
+    }
+
+    // ===== BÀI VẼ HỌC VIÊN: giáo viên + quản lý đăng; CHỈ quản lý chọn Top 1–5; ai cũng xem =====
+    match /baive/{id} {
+      allow read: if true;
+      allow create: if isStaff()
+        && request.resource.data.nguoi == myEmail()
+        && request.resource.data.anh is string && request.resource.data.anh.size() <= 950000
+        && request.resource.data.hocVien is string && request.resource.data.hocVien.size() > 0 && request.resource.data.hocVien.size() <= 80
+        && request.resource.data.loai in ['Cơ bản', 'Hình hoạ người', 'Tượng', 'Màu', 'Mỹ thuật 2']
+        && shortText(request.resource.data, 'ghiChu', 120) && shortText(request.resource.data, 'link', 300)
+        && (isAdmin() || request.resource.data.hang == 0);
+      allow update: if isAdmin()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['hang', 'ngayTop'])
+        && request.resource.data.hang is int && request.resource.data.hang >= 0 && request.resource.data.hang <= 5;
+      allow delete: if isAdmin() || (isStaff() && resource.data.nguoi == myEmail());
+    }
+
+    // ===== BẢN TIN NỔI BẬT: giáo viên + quản lý đăng; quản lý ghim; ai cũng xem =====
+    match /bantin/{id} {
+      allow read: if true;
+      allow create: if isStaff()
+        && request.resource.data.tacGia == myEmail()
+        && request.resource.data.muc in ['hoacu', 'lythuyet', 'kinhnghiem', 'tinlop']
+        && request.resource.data.tieuDe is string && request.resource.data.tieuDe.size() > 0 && request.resource.data.tieuDe.size() <= 120
+        && request.resource.data.nd is string && request.resource.data.nd.size() > 0 && request.resource.data.nd.size() <= 3000
+        && shortText(request.resource.data, 'link', 300)
+        && (!('anh' in request.resource.data) || (request.resource.data.anh is string && request.resource.data.anh.size() <= 500000))
+        && (isAdmin() || request.resource.data.ghim == false);
+      allow update: if isAdmin() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['ghim']);
+      allow delete: if isAdmin() || (isStaff() && resource.data.tacGia == myEmail());
     }
 
     match /admins/{mail} {

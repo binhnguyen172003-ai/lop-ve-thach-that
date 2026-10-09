@@ -5,13 +5,20 @@
 import { firebaseConfig, ADMIN_EMAIL, EMAIL_NHAN_THONG_BAO } from "../../config/firebase-config.js?v=20261009b";
 import { FILE_LIMITS, FILE_TYPES, fileExt, fileSize, validateFiles, attachmentStorage, uploadError, validAttachmentPath } from "./attachments.js?v=20261009b";
 import { GIAO_TRINH_MAU as GT_LO_TRINH } from "../../data/giao-trinh-mau.js?v=20261009f";
-import { LIEN_HE, NAM_THI, LICH_THI, BO_LOC_TRUONG, CA_HOC, THOI_GIAN_BIEU, BAI_VE, BANG_VANG, TRUONG, MUC_TIEU, GIAO_VIEN, VIDEO_BIA, BAI_NOI_BAT, THANH_TUU_TRAO, XP_THUONG, AVATAR, SO_DU_THI, HOA_CU, TON_DAU_KY } from "../../data/noi-dung.js?v=20261009d";
+import { LIEN_HE, NAM_THI, LICH_THI, BO_LOC_TRUONG, CA_HOC, THOI_GIAN_BIEU, BAI_VE, BANG_VANG, TRUONG, MUC_TIEU, GIAO_VIEN, VIDEO_BIA, BAI_NOI_BAT, THANH_TUU_TRAO, XP_THUONG, AVATAR, SO_DU_THI, HOA_CU, TON_DAU_KY, BAN_TIN } from "../../data/noi-dung.js?v=20261009d";
 
 // Firebase được tải riêng, để phần giới thiệu vẫn chạy kể cả khi mạng chậm hoặc chưa cấu hình.
 const FB = "https://www.gstatic.com/firebasejs/10.12.2/";
 let initializeApp, getAuth, onAuthStateChanged, signOut;
 let createUserWithEmailAndPassword, signInWithEmailAndPassword, sendEmailVerification, sendPasswordResetEmail, updateProfile;
 let getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager, collection, doc, getDoc, setDoc, addDoc, deleteDoc, writeBatch, onSnapshot, query, orderBy, where;
+// Vai trò: isAdmin = quản lý (toàn quyền); isTeacher = giáo viên hoặc quản lý; approved = học viên đã duyệt.
+// Khai báo ở đầu file để các phần trang chủ (bài vẽ, bản tin) biết ai đang xem ngay từ đầu.
+let user = null, mail = "", isAdmin = false, isTeacher = false, approved = false, needVerify = false;
+// Bài vẽ thầy cô đăng trên web (Firestore: baive). Bài được quản lý chọn Top 1–5 thì thành "bài nổi bật".
+let BAIVE_DONG = [], BANTIN_DONG = [], baiVeLoi = false, banTinLoi = false;
+const NB_DONG = () => BAIVE_DONG.filter(b => b.hang >= 1 && b.hang <= 5).map(b => ({ ...b, ngay: b.ngayTop || b.ngay, dong: true }));
+const nbAll = () => [...BAI_NOI_BAT, ...NB_DONG()];
 async function loadFirebase() {
   const [a, au, fs] = await Promise.all([import(FB + "firebase-app.js"), import(FB + "firebase-auth.js"), import(FB + "firebase-firestore.js")]);
   ({ initializeApp } = a);
@@ -249,10 +256,14 @@ $$("#sched-tabs .tab").forEach(b => b.onclick = () => {
 renderSched(CO_SO[0]);
 
 /* ================= Liên hệ & mạng xã hội ================= */
+const ZALO_LOP = String(LIEN_HE.zalo || LIEN_HE.sdt || "").replace(/\D/g, "");
+const ZALO_LINK = "https://zalo.me/" + ZALO_LOP;
+const mapCua = c => c.map || "https://maps.google.com/?q=" + encodeURIComponent(c.diaChi || "");
 $("#lien-he").innerHTML =
-  `<div><dt>Quản lý lớp</dt><dd class="num">${esc(LIEN_HE.sdt)}</dd></div>
+  `<div><dt>Gọi thầy</dt><dd class="num"><a href="tel:${esc(String(LIEN_HE.sdt || "").replace(/\D/g, ""))}">${esc(LIEN_HE.sdt)}</a></dd></div>
+   <div><dt>Zalo tư vấn</dt><dd class="num"><a href="${esc(ZALO_LINK)}" target="_blank" rel="noopener">${esc(LIEN_HE.zaloHienThi || LIEN_HE.zalo)}</a></dd></div>
    <div><dt>Email</dt><dd>${esc(LIEN_HE.email)}</dd></div>
-   ${LIEN_HE.coSo.map(c => `<div><dt>${esc(c.ten)}</dt><dd>${esc(c.diaChi)}</dd></div>`).join("")}
+   ${LIEN_HE.coSo.map(c => `<div><dt>${esc(c.ten)}</dt><dd>${esc(c.diaChi)} <a class="map-link" href="${esc(mapCua(c))}" target="_blank" rel="noopener">📍 Chỉ đường</a></dd></div>`).join("")}
    <div><dt>Instagram</dt><dd><a href="${esc(LIEN_HE.instagram.link)}" target="_blank" rel="noopener">${esc(LIEN_HE.instagram.ten)}</a></dd></div>`;
 $("#link-ig").href = LIEN_HE.instagram.link;
 $("#ten-ig").textContent = LIEN_HE.instagram.ten;
@@ -269,27 +280,36 @@ const LOAI_BAI = [
 let galFilter = "all", galList = [], galCur = 0;
 const artCard = (l, note) => `<div class="gal-art">${l.img ? `<span class="art art-img" style="-webkit-mask-image:url(${l.img});mask-image:url(${l.img})" aria-hidden="true"></span>` : `<svg class="art" aria-hidden="true"><use href="#${l.art}"/></svg>`}
   <b>${esc(l.ten)}</b><span class="muted">${esc(l.moTa)}</span><span class="soon">${note}</span></div>`;
+function galTatCa() {
+  // Bài thầy cô đăng trên web (mới nhất trước) + bài có sẵn trong file data
+  return [...BAIVE_DONG.slice().sort((x, y) => (y.luc || 0) - (x.luc || 0)), ...BAI_VE];
+}
 function renderGallery() {
-  const has = BAI_VE.length > 0;
-  const count = t => BAI_VE.filter(b => b.loai === t).length;
+  const all = galTatCa(), has = all.length > 0;
+  const count = t => all.filter(b => b.loai === t).length;
+  { const g = $("#gal-them"); if (g) g.hidden = !(user && isTeacher); }
   $("#gal-filters").hidden = !has;
-  if (has) $("#gal-filters").innerHTML = [`<button class="tab" data-g="all" aria-selected="${galFilter === "all"}">Tất cả <span class="num">${BAI_VE.length}</span></button>`]
+  if (has) $("#gal-filters").innerHTML = [`<button class="tab" data-g="all" aria-selected="${galFilter === "all"}">Tất cả <span class="num">${all.length}</span></button>`]
     .concat(LOAI_BAI.map(l => `<button class="tab" data-g="${esc(l.ten)}" aria-selected="${galFilter === l.ten}">${esc(l.ten)} <span class="num">${count(l.ten)}</span></button>`)).join("");
   $$("#gal-filters .tab").forEach(b => b.onclick = () => { galFilter = b.dataset.g; renderGallery(); });
   if (!has) { $("#gallery").className = "gallery arts"; $("#gallery").innerHTML = LOAI_BAI.map(l => artCard(l, "Ảnh bài thật sắp cập nhật")).join(""); return; }
-  galList = BAI_VE.filter(b => galFilter === "all" || b.loai === galFilter);
+  galList = all.filter(b => galFilter === "all" || b.loai === galFilter);
   if (!galList.length) { const l = LOAI_BAI.find(x => x.ten === galFilter); $("#gallery").className = "gallery arts"; $("#gallery").innerHTML = artCard(l, "Phần này chưa có ảnh"); return; }
   $("#gallery").className = "gallery";
+  const xoaDuoc = b => b.id && user && (isAdmin || (isTeacher && b.nguoi === mail));
   $("#gallery").innerHTML = galList.map((b, i) =>
-    `<button type="button" aria-label="Xem lớn bài vẽ ${i + 1}"><img src="${esc(b.anh)}" alt="${esc(b.moTa || "Bài vẽ học viên")}" loading="lazy" decoding="async" width="300" height="400">
-      <span class="cap">${esc(b.hocVien || b.loai || "")}</span></button>`).join("");
+    `<div class="gal-o"><button type="button" class="gal-b" data-gi="${i}" aria-label="Xem lớn bài vẽ ${i + 1}"><img src="${esc(b.anh)}" alt="${esc(b.moTa || b.ghiChu || "Bài vẽ học viên")}" loading="lazy" decoding="async" width="300" height="400">
+      <span class="cap">${esc(b.hocVien || "")}${b.loai ? `<small>${esc(b.loai)}</small>` : ""}</span>${b.hang ? `<span class="gal-top">TOP ${Number(b.hang)}</span>` : ""}</button>
+      ${b.link ? `<a class="gal-link" href="${esc(b.link)}" target="_blank" rel="noopener" aria-label="Mở link kèm bài">↗</a>` : ""}
+      ${xoaDuoc(b) ? `<button type="button" class="gal-x" data-xbv="${esc(b.id)}" aria-label="Xoá bài này">Xoá</button>` : ""}</div>`).join("");
   const ds = galList;
-  $$("#gallery button").forEach((b, i) => b.onclick = () => { galList = ds; showLb(i); });
+  $$("#gallery [data-gi]").forEach(b => b.onclick = () => { galList = ds; showLb(Number(b.dataset.gi)); });
+  $$("#gallery [data-xbv]").forEach(b => confirmButton(b, () => deleteDoc(doc(db, "baive", b.dataset.xbv)), "Xoá?"));
 }
 function showLb(i) {
   galCur = (i + galList.length) % galList.length; const b = galList[galCur];
   $("#lb-img").src = b.anh; $("#lb-img").alt = b.moTa || "";
-  $("#lb-cap").textContent = `${galCur + 1} / ${galList.length} · ${[b.hocVien, b.loai, b.moTa].filter(Boolean).join(" · ")}`;
+  $("#lb-cap").textContent = `${galCur + 1} / ${galList.length} · ${[b.hocVien, b.loai, b.moTa || b.ghiChu].filter(Boolean).join(" · ")}`;
   $("#lb").hidden = false;
 }
 $("#lb-prev").onclick = () => showLb(galCur - 1);
@@ -390,7 +410,7 @@ function tinhRank(dd, prog, fb, ten) {
   const baiHoc = Object.values((prog || {}).bai || {}).filter(sau).length;
   const gioi = Object.values(fb || {}).filter(x => x && sau(x.luc) && soDiem(x.diem) !== null && soDiem(x.diem) >= 8).length;
   const bo = t => String(t || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
-  const nb = ten ? BAI_NOI_BAT.filter(b => !b.tg && b.hocVien && b.ngay > RANK_BAT_DAU && bo(ten).endsWith(bo(b.hocVien))) : [];
+  const nb = ten ? nbAll().filter(b => !b.tg && b.hocVien && b.ngay > RANK_BAT_DAU && bo(ten).endsWith(bo(b.hocVien))) : [];
   const top1 = nb.filter(b => b.hang === 1).length;
   const thuongDs = ten ? [...(XP_THUONG || []), ...XP_DONG].filter(x => x.hocVien && bo(ten).endsWith(bo(x.hocVien))) : [];
   const thuong = thuongDs.reduce((a, x) => a + (Number(x.xp) || 0), 0);
@@ -485,8 +505,11 @@ function logoHuyenThoai(cls = "") {
 /* Khung avatar theo hạng — tự vẽ, hạng càng cao khung càng cầu kỳ */
 const chuCai = t => String(t || "").trim().split(/\s+/).slice(-2).map(w => w[0] || "").join("").toUpperCase() || "?";
 /* Ảnh đại diện: ảnh em tự đổi (Tài khoản) → ảnh Google → ảnh thầy đặt sẵn trong data */
+// Mỗi tài khoản một ảnh riêng: lưu theo Gmail (máy dùng chung không bị lẫn ảnh của người khác)
 let myAvatar = "";
-try { myAvatar = localStorage.getItem("lvtt-avatar") || ""; } catch (e) {}
+const AVA_KEY = m => "lvtt-avatar:" + String(m || "").toLowerCase();
+try { localStorage.removeItem("lvtt-avatar"); } catch (e) {} // khoá cũ dùng chung cho mọi tài khoản — bỏ
+function napAvatarMay(m) { myAvatar = ""; if (!m) return; try { myAvatar = localStorage.getItem(AVA_KEY(m)) || ""; } catch (e) {} }
 const boDau = t => String(t || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").toLowerCase().trim();
 function anhCua(ten) {
   try { // myHv/user khai báo phía sau: lúc trang mới mở thì bỏ qua
@@ -569,7 +592,7 @@ function tinhThanhTuu(dd, prog, fb, ten, hw = []) {
   const dem = { mau: 0, hinhhoa: 0, bocuc: 0, chuyencan: 0, diemvang: 0, noibat: 0, quanquan: 0, chamchi: 0, thithu: 0 };
   const nop = (prog || {}).baitap || {};
   hw.forEach(h => { if (nop[h.id]) { const l = loai([h.ten, h.khoa, h.lop].join(" ")); if (l) dem[l]++; } });
-  const nb = BAI_NOI_BAT.filter(b => !b.tg && cua(b.hocVien));
+  const nb = nbAll().filter(b => !b.tg && cua(b.hocVien));
   nb.forEach(b => { const l = loai(b.loai + " " + (b.ghiChu || "")); if (l) dem[l]++; });
   dem.noibat = nb.length; dem.quanquan = nb.filter(b => b.hang === 1).length;
   dem.chuyencan = Object.entries(dd || {}).filter(([k, v]) => /^\d{4}-\d{2}-\d{2}_/.test(k) && v === "co").length;
@@ -650,7 +673,7 @@ document.addEventListener("keydown", e => {
   $("#xh-cach").innerHTML = `<h3>Cách kiếm XP</h3>${cachXpHTML()}
     <p class="muted">Mùa xếp hạng bắt đầu từ ${fmtDate(new Date(RANK_BAT_DAU + "T00:00"))}. Mọi học viên khởi đầu ở hạng F.</p>`;
   // Học viên có hạng nổi bật (từ Bài vẽ nổi bật)
-  const ten = [...new Set(BAI_NOI_BAT.filter(b => !b.tg && b.hocVien).map(b => b.hocVien))];
+  const ten = [...new Set(nbAll().filter(b => !b.tg && b.hocVien).map(b => b.hocVien))];
   const ds = ten.map(t => ({ t, k: tinhRank(null, null, null, t) })).sort((a, b) => b.k.xp - a.k.xp);
   $("#xh-top").innerHTML = ds.length ? `<h3>Học viên đang leo hạng</h3><div class="xh-hv">${ds.map(({ t, k }) => `<div class="t${k.i}" data-rk="${esc(t)}" role="button" tabindex="0" style="--rc:${k.r.mau === "rainbow" ? "#ffd6ff" : k.r.mau}">${huyHieu(k.r, k.i, "sm", t)}<b>${esc(t)}</b><span>Hạng ${k.r.ma} · ${k.r.kim} · ${k.r.ten} · ${k.xp} XP</span>${(m => m.length ? `<span class="xh-tt">${m.map(a => huyHieuTT(a, a.cap, "xs")).join("")}</span>` : "")(tinhThanhTuu(null, null, null, t).filter(a => a.cap))}</div>`).join("")}</div>
     <p class="muted xh-note">Tính từ bài vẽ nổi bật. Hạng đầy đủ (gồm đi học, bài tập) xem trong Tài khoản của từng em.</p>` : "";
@@ -660,7 +683,7 @@ document.addEventListener("keydown", e => {
 /* Trang chủ: chỉ hiện Top rank của lớp */
 function veTopRank() {
   const box = $("#tr-list"); if (!box) return;
-  const ten = [...new Set([...BAI_NOI_BAT.filter(b => !b.tg && b.hocVien).map(b => b.hocVien), ...(XP_THUONG || []).map(x => x.hocVien), ...XP_DONG.map(x => x.hocVien)].filter(Boolean))];
+  const ten = [...new Set([...nbAll().filter(b => !b.tg && b.hocVien).map(b => b.hocVien), ...(XP_THUONG || []).map(x => x.hocVien), ...XP_DONG.map(x => x.hocVien)].filter(Boolean))];
   const ds = ten.map(t => ({ t, k: tinhRank(null, null, null, t) })).sort((a, b) => b.k.xp - a.k.xp || b.k.i - a.k.i).slice(0, 5);
   box.innerHTML = ds.map(({ t, k }, j) => `<li class="t${k.i}${j < 3 ? " p" + (j + 1) : ""}" data-rk="${esc(t)}" role="button" tabindex="0" style="--rc:${k.r.mau === "rainbow" ? "#ffd6ff" : k.r.mau}">
     <span class="tr-so num">${j + 1}</span>${khungAvatar(k.r, k.i, t, "", "md")}
@@ -749,43 +772,53 @@ const GHI_CHU = {
   document.addEventListener("click", e => { if (!e.target.closest(".gc")) dong(); });
   document.addEventListener("keydown", e => { if (e.key === "Escape") dong(); });
 })();
-/* ================= Bài vẽ nổi bật: tuần / tháng / năm, vòng xoay 3D ================= */
+/* ================= Bài vẽ nổi bật: tuần / tháng / năm, vòng xoay 3D =================
+   Chỉ hiện TOP 5 do quản lý chọn (hạng 1–5). Bài khác nằm ở mục "Bài vẽ học viên".
+   Thầy cô thấy nút "+" ở cuối vòng xoay để đăng bài vẽ của học viên. */
 (function noiBat() {
   const box = $("#nb-ring"); if (!box) return;
   const TEN = { tuan: "tuần", thang: "tháng", nam: "năm" };
-  const mau = GIAO_VIEN.filter(g => g.anh).map((g, i) => ({ anh: g.bai || "assets/img/giao-vien/" + g.anh + "-bai.jpg", hocVien: g.ten, loai: "Bài mẫu giáo viên", mau: true }));
-  let ky = "tuan", vx = null;
+  let ky = "tuan", vx = null, daChon = false;
   // Tự chuyển mục theo ngày chọn bài: 0–7 ngày = tuần, 8–30 = tháng, 31–365 = năm
   const KHOANG = { tuan: [0, 7], thang: [7, 30], nam: [30, 365] };
   const tuoi = b => b.ngay ? (Date.now() - new Date(b.ngay + "T00:00:00+07:00").getTime()) / 864e5 : null;
   const mucCua = b => { const t = tuoi(b); if (t === null) return b.ky || "tuan"; return Object.keys(KHOANG).find(k => t >= KHOANG[k][0] - 1 && t < KHOANG[k][1]) || ""; };
-  const locNoiBat = k => BAI_NOI_BAT.filter(b => mucCua(b) === k)
-    .sort((a, b) => (a.tg ? 1 : 0) - (b.tg ? 1 : 0) || (a.hang || 99) - (b.hang || 99) || (b.diem || 0) - (a.diem || 0) || (tuoi(a) || 0) - (tuoi(b) || 0));
-  addEventListener("xephang-doi", () => ve());
+  // Mỗi vị trí Top chỉ 1 bài: bài quản lý chọn trên web được ưu tiên hơn bài có sẵn trong file
+  const locNoiBat = k => { const daCo = new Set();
+    return nbAll().filter(b => !b.tg && b.hang >= 1 && b.hang <= 5 && mucCua(b) === k)
+      .sort((a, b) => (a.hang || 99) - (b.hang || 99) || (b.dong ? 1 : 0) - (a.dong ? 1 : 0) || (tuoi(a) || 0) - (tuoi(b) || 0))
+      .filter(b => !daCo.has(b.hang) && daCo.add(b.hang)).slice(0, 5); };
+  const nutThem = () => isTeacher && user ? `<div class="nb-them">
+      <button type="button" class="nb-plus" data-dang-bai aria-label="Đăng bài vẽ học viên"><span aria-hidden="true">+</span></button>
+      <span>Đăng bài vẽ học viên${isAdmin ? ` · <a href="#duyet" data-top5>Chọn Top 5 tuần</a>` : ""}</span></div>` : "";
+  let sig = "";
   const ve = () => {
-    let ds = locNoiBat(ky);
-    const tam = !ds.length;
-    if (tam) { box.innerHTML = `<p class="nb-rong">Chưa có bài nổi bật ${TEN[ky]}. Bài Top Tuần sẽ tự chuyển sang đây khi ${ky === "thang" ? "qua 1 tuần" : "qua 1 tháng"}.</p>`; return; }
+    const ds = locNoiBat(ky);
+    const k = [ky, !!user && isTeacher, isAdmin, XP_DONG.length, TT_DONG.length, ...ds.map(b => (b.id || b.anh) + b.hang)].join("|");
+    if (k === sig) return; sig = k;
+    if (!ds.length) { box.innerHTML = `<p class="nb-rong">Chưa có Top 5 ${TEN[ky]}. ${ky === "tuan" ? "Quản lý sẽ chọn 5 bài đẹp nhất mỗi tuần." : `Bài Top Tuần tự chuyển sang đây khi ${ky === "thang" ? "qua 1 tuần" : "qua 1 tháng"}.`}</p>${nutThem()}`; return; }
     box.innerHTML = `<div class="gv-stage nb-stage">${ds.map((b, i) => `<figure class="nb-card" data-i="${i}">
         <img src="${esc(b.anh)}" alt="${esc((b.loai || "Bài vẽ") + " · " + (b.hocVien || ""))}" loading="lazy" decoding="async" draggable="false">
-        ${b.hang && b.hang <= 3 ? `<span class="nb-medal h${Number(b.hang)}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 2h4l1 5-3 1zM17 2h-4l-1 5 3 1z" class="rb"/><circle cx="12" cy="15" r="6.5" class="md"/><text x="12" y="18.2" text-anchor="middle">${Number(b.hang)}</text></svg><b>TOP ${Number(b.hang)}</b><i>${TEN[ky]}</i></span>` : ""}
-        ${!b.tg ? (m => m.length ? (a => `<span class="nb-tt" data-rk="${esc(b.hocVien)}" role="button" tabindex="0" title="${esc(a.ten)} · ${CAP[a.cap].ten} — ${esc(a.mo)}">${huyHieuTT(a, a.cap, "sm")}<span class="nb-ttx"><b>${esc(a.ten)}</b><small>${a.n} ${esc(a.dv)} · ${CAP[a.cap].ten}</small></span></span>`)(m[0]) : "")(ttNoiNhat(b.hocVien)) : ""}
-        ${!b.tg ? (t => khungThe(t.r, t.i))(tinhRank(null, null, null, b.hocVien)) : ""}
-        <figcaption><b>${esc(b.hocVien || "")} ${!b.tg && !tam ? (t => huyHieu(t.r, t.i, "xs", b.hocVien))(tinhRank(null, null, null, b.hocVien)) : ""}</b><span>${esc([b.loai, b.ghiChu].filter(Boolean).join(" · "))}</span></figcaption></figure>`).join("")}</div>
+        <span class="nb-medal h${Number(b.hang)}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 2h4l1 5-3 1zM17 2h-4l-1 5 3 1z" class="rb"/><circle cx="12" cy="15" r="6.5" class="md"/><text x="12" y="18.2" text-anchor="middle">${Number(b.hang)}</text></svg><b>TOP ${Number(b.hang)}</b><i>${TEN[ky]}</i></span>
+        ${(m => m.length ? (a => `<span class="nb-tt" data-rk="${esc(b.hocVien)}" role="button" tabindex="0" title="${esc(a.ten)} · ${CAP[a.cap].ten} — ${esc(a.mo)}">${huyHieuTT(a, a.cap, "sm")}<span class="nb-ttx"><b>${esc(a.ten)}</b><small>${a.n} ${esc(a.dv)} · ${CAP[a.cap].ten}</small></span></span>`)(m[0]) : "")(ttNoiNhat(b.hocVien))}
+        ${(t => khungThe(t.r, t.i))(tinhRank(null, null, null, b.hocVien))}
+        <figcaption><b>${esc(b.hocVien || "")} ${(t => huyHieu(t.r, t.i, "xs", b.hocVien))(tinhRank(null, null, null, b.hocVien))}</b><span>${esc([b.loai, b.ghiChu].filter(Boolean).join(" · "))}</span></figcaption></figure>`).join("")}</div>
       <div class="gv-ctl"><button type="button" class="gv-nav" aria-label="Bài trước">‹</button>
         <div class="gv-dots">${ds.map((b, i) => `<button type="button" data-i="${i}" aria-label="Bài ${i + 1}"></button>`).join("")}</div>
-        <button type="button" class="gv-nav" aria-label="Bài sau">›</button></div>
-      ${tam ? `<p class="muted nb-note">Bài nổi bật ${TEN[ky]} này đang được thầy chọn. Tạm xem bài mẫu của đội ngũ giáo viên.</p>` : ""}`;
+        <button type="button" class="gv-nav" aria-label="Bài sau">›</button></div>${nutThem()}`;
     const [p, n] = box.querySelectorAll(".gv-nav");
     const cards = [...box.querySelectorAll(".nb-card")];
     vx = vongXoay(box, box.querySelector(".nb-stage"), cards, [...box.querySelectorAll(".gv-dots button")], p, n, c => {
       galList = ds; showLb(Number(c.dataset.i));
     });
   };
-  $$("#nb-tabs [data-k]").forEach(t => t.onclick = () => { ky = t.dataset.k; $$("#nb-tabs [data-k]").forEach(x => x.setAttribute("aria-selected", x === t)); ve(); });
+  const chonKy = () => { if (daChon) return; ky = ["tuan", "thang", "nam"].find(k => locNoiBat(k).length) || "tuan"; $$("#nb-tabs [data-k]").forEach(x => x.setAttribute("aria-selected", x.dataset.k === ky)); };
+  addEventListener("xephang-doi", () => ve());
+  addEventListener("baive-doi", () => { chonKy(); ve(); });
+  addEventListener("vaitro-doi", () => ve());
+  $$("#nb-tabs [data-k]").forEach(t => t.onclick = () => { daChon = true; ky = t.dataset.k; $$("#nb-tabs [data-k]").forEach(x => x.setAttribute("aria-selected", x === t)); ve(); });
   // Mặc định mở mục có bài gần nhất (tuần → tháng → năm)
-  ky = ["tuan", "thang", "nam"].find(k => locNoiBat(k).length) || "tuan";
-  $$("#nb-tabs [data-k]").forEach(x => x.setAttribute("aria-selected", x.dataset.k === ky));
+  chonKy();
   ve();
 })();
 
@@ -981,7 +1014,7 @@ renderGiaoVien();
 // Gửi thẳng cho thầy qua email (không bắt phụ huynh tự sao chép), kèm nút Gọi / Zalo dự phòng.
 const SDT_LOP = String(LIEN_HE.sdt || "").replace(/\D/g, "");
 $("#dk-call").href = "tel:" + SDT_LOP;
-$("#dk-zalo").href = "https://zalo.me/" + SDT_LOP;
+$("#dk-zalo").href = ZALO_LINK;
 
 /* ================= Đếm ngược tới ngày thi ngay trong form đăng ký =================
    Chọn "Trường muốn thi" là đồng hồ đổi sang kỳ thi của trường đó (tính tới 7h sáng ngày thi). */
@@ -1047,7 +1080,7 @@ $("#dk-zalo").href = "https://zalo.me/" + SDT_LOP;
     LICH_THI.forEach(e => them("Lịch thi", e.ten, `${e.dot} · ${e.hienThi}/${e.ngay.slice(0, 4)}`, "#lich-thi", e.truong));
     them("Trang", "Đăng ký học thử", "Gửi thông tin, thầy gọi lại tư vấn · đếm ngược ngày thi", "#dang-ky", "dang ky hoc thu tu van hoc phi lien he so dien thoai zalo");
     them("Trang", "Tài khoản học viên", "Đăng nhập, giáo trình, bài tập, nhắn tin thầy cô", "#tai-khoan", "dang nhap dang ky tai khoan giao trinh bai tap");
-    them("Liên hệ", "Gọi / Zalo " + (LIEN_HE.sdt || ""), "Cơ sở Bình Phú · Kim Quan, Thạch Thất", "#dang-ky", "lien he dien thoai zalo dia chi co so");
+    them("Liên hệ", "Gọi " + (LIEN_HE.sdt || "") + " · Zalo " + (LIEN_HE.zaloHienThi || LIEN_HE.zalo || ""), "Cơ sở Bình Phú · Kim Quan, Thạch Thất", "#dang-ky", "lien he dien thoai zalo dia chi co so");
     return ds;
   };
   const tim = s => {
@@ -1120,8 +1153,12 @@ $("#dk-zalo").href = "https://zalo.me/" + SDT_LOP;
 
   // Menu toàn màn hình trên điện thoại
   const ov = $("#menu-ov"), burger = $("#nav-burger");
-  $("#menu-links").innerHTML = $$("nav a.link").map((a, i) => `<a href="${a.getAttribute("href")}" style="--i:${i}">${esc((a.querySelector("b") || a).textContent.trim())}</a>`).join("")
-    + `<a href="#tai-khoan" style="--i:${$$("nav a.link").length}">Tài khoản <small>Học viên · Giáo viên</small></a>`;
+  // Menu điện thoại: chia 3 nhóm, mỗi mục một ô gọn (tên + mô tả nhỏ), dễ nhìn, dễ bấm
+  { let i = 0;
+    const o = (href, t, d) => `<a href="${esc(href)}" style="--i:${i++}"><b>${esc(t)}</b>${d ? `<small>${esc(d)}</small>` : ""}</a>`;
+    $("#menu-links").innerHTML = $$("nav .dd").map(dd => `<div class="mn-g"><h4>${esc(dd.querySelector(".dd-t").textContent.trim())}</h4><div class="mn-ds">${
+      [...dd.querySelectorAll("a.link")].map(a => o(a.getAttribute("href"), (a.querySelector("b") || a).textContent.trim(), (a.querySelector("small") || {}).textContent || "")).join("")}</div></div>`).join("")
+      + `<div class="mn-g"><h4>Khác</h4><div class="mn-ds">${o("#tai-khoan", "Tài khoản", "Học viên · Giáo viên")}${o("#dang-ky", "Liên hệ", "Gọi · Zalo · chỉ đường")}</div></div>`; }
   const setMenu = open => {
     ov.classList.toggle("open", open); ov.setAttribute("aria-hidden", !open); burger.setAttribute("aria-expanded", open);
     document.body.style.overflow = open ? "hidden" : ""; onScroll();
@@ -1175,7 +1212,7 @@ $("#dk-zalo").href = "https://zalo.me/" + SDT_LOP;
 
   // Thanh gọi nhanh
   $("#dock-call").href = "tel:" + SDT_LOP;
-  $("#dock-zalo").href = "https://zalo.me/" + SDT_LOP;
+  $("#dock-zalo").href = ZALO_LINK;
 
   // Khối H/V: trên điện thoại thu gọn phần chi tiết
   if (matchMedia("(max-width:640px)").matches) $$(".khoi-dl").forEach(d => d.open = false);
@@ -1240,8 +1277,6 @@ $("#dk-copy").onclick = () => copyText($("#dk-text").textContent, $("#dk-status"
 const configured = !String(firebaseConfig.apiKey || "").startsWith("DAN_");
 let app, auth, db;
 
-// Vai trò: isAdmin = quản lý (toàn quyền); isTeacher = giáo viên hoặc quản lý; approved = học viên đã duyệt.
-let user = null, mail = "", isAdmin = false, isTeacher = false, approved = false, needVerify = false;
 let teachers = [], feedbackAll = {}, myFeedback = {};
 let diemdanhAll = {}, myDiemdanh = {}, myHv = null;
 let troLyDaTai = { diemDanh: false, diem: false, bai: false };
@@ -1307,7 +1342,7 @@ function renderAccount(pending) {
   if (!user) {
     $("#who-name").textContent = "Bước 1: Tạo tài khoản hoặc đăng nhập";
     $("#who-mail").textContent = "Dùng Gmail của em (hoặc của bố mẹ). Chưa có tài khoản thì chọn “Lần đầu: Tạo tài khoản”.";
-    $("#who-status").innerHTML = ""; $("#who-avatar").hidden = true;
+    $("#who-status").innerHTML = ""; $("#who-avatar").hidden = true; $("#who-ava").hidden = true; $("#btn-ql").hidden = true;
     $("#nav-acct-t").textContent = "Đăng nhập";
     { const k = $("#nav-ka"); if (k) { k.remove(); $("#nav-acct").classList.remove("has-ka"); } }
     baoTroLy(false);
@@ -1315,15 +1350,17 @@ function renderAccount(pending) {
   }
   $("#who-name").textContent = user.displayName || "Xin chào";
   $("#who-mail").textContent = "Đang dùng Gmail: " + mail;
-  if (user.photoURL) { $("#who-avatar").src = user.photoURL; $("#who-avatar").hidden = false; }
   $("#nav-acct-t").textContent = "Tài khoản";
+  $("#btn-learn").textContent = isTeacher ? "Xem giáo trình" : "Vào học ngay →";
+  { const q = $("#btn-ql"); q.hidden = !isTeacher || needVerify; q.href = isAdmin ? "#duyet" : "#diem-danh"; }
   if (needVerify) {
     $("#who-status").innerHTML = `<span class="chip line">Chưa xác nhận Gmail</span>`;
     $("#verify-text").textContent = `Thầy đã gửi một thư xác nhận vào ${mail}. Em bấm link trong thư để chứng minh Gmail này là của em.`;
     setStep(1); return;
   }
-  if (isAdmin) { $("#who-status").innerHTML = `<span class="chip">Quản lý</span> Toàn quyền: duyệt học viên và giáo viên, sửa giáo trình, giao và chấm bài.`; setStep(4); return; }
-  if (isTeacher) { $("#who-status").innerHTML = `<span class="chip">Giáo viên</span> Thầy/cô giao bài, xem học viên đã nộp, chấm điểm và nhận xét.`; setStep(4); return; }
+  const quyen = ds => `<ul class="quyen">${ds.map(x => `<li>${x}</li>`).join("")}</ul>`;
+  if (isAdmin) { $("#who-status").innerHTML = `<span class="chip">Quản lý</span>` + quyen(["Quản lý học viên: đi học, tiến độ, % đỗ", "Chọn Top 5 bài vẽ nổi bật tuần", "Duyệt tài khoản, cộng XP, kho hoạ cụ", "Sửa giáo trình, đăng bài vẽ, bản tin"]); setStep(4); return; }
+  if (isTeacher) { $("#who-status").innerHTML = `<span class="chip">Giáo viên</span>` + quyen(["Điểm danh học viên", "Giao bài & chấm bài tập", "Đăng ảnh bài vẽ học viên", "Đăng bản tin nổi bật tuần"]) + `<p class="muted quyen-note">Top 5 bài nổi bật do quản lý chọn.</p>`; setStep(4); return; }
   if (approved) { $("#who-status").innerHTML = `<span class="chip ok">Đã duyệt</span> Em đã vào học được rồi.`; setStep(4); return; }
   if (pendingReq && !editingReq) {
     $("#who-status").innerHTML = `<span class="chip line">Chờ duyệt</span>`;
@@ -1992,6 +2029,7 @@ function renderMyProg() {
     <p class="mp-note">Chấm xanh: có mặt · đỏ: vắng · xám: nghỉ phép. Khả năng đỗ là ước tính từ chuyên cần, giờ học và điểm bài tập, tự cập nhật sau mỗi buổi — không phải cam kết.</p>`;
 }
 function renderAttend() {
+  try { renderQL(); } catch (e) { console.warn(e); }
   if (!isTeacher || !$("#dd-list")) return;
   const ngay = $("#dd-ngay").value || todayVN(), ca = $("#dd-ca").value || caMacDinh(), cs = $("#dd-cs").value;
   const key = `${ngay}_${ca}`;
@@ -2000,7 +2038,8 @@ function renderAttend() {
   const ds = rows.map(x => x.r);
   const val = r => (diemdanhAll[r.id] || {})[key];
   const n = v => ds.filter(r => val(r) === v).length;
-  $("#dd-sum").innerHTML = `Đang hiển thị <b>${ds.length}</b>/${roster.length} học viên` + (ds.length ? ` · Ca đã chọn: <b>${n("co")}</b> có mặt · <b>${n("vang")}</b> vắng · <b>${n("phep")}</b> phép · <b>${ds.length - n("co") - n("vang") - n("phep")}</b> chưa điểm danh` : "");
+  // Tổng kết ca đang chọn: chia ô rõ ràng thay vì một dòng chữ dài
+  $("#dd-sum").innerHTML = `<span class="dds-t">Đang hiển thị <b>${ds.length}</b>/${roster.length} học viên</span>` + (ds.length ? `<span class="dds co"><b class="num">${n("co")}</b>Có mặt</span><span class="dds vang"><b class="num">${n("vang")}</b>Vắng</span><span class="dds phep"><b class="num">${n("phep")}</b>Phép</span><span class="dds chua"><b class="num">${ds.length - n("co") - n("vang") - n("phep")}</b>Chưa điểm danh</span>` : "");
   const empty = roster.length ? "Không tìm thấy học viên phù hợp. Thử đổi tên tìm kiếm hoặc cơ sở." : "Chưa có học viên nào được duyệt.";
   $("#dd-list").innerHTML = rows.length ? rows.map(({ r, t }) => `<li><div><b>${esc(r.ten)}</b> ${(t2 => huyHieu(t2.r, t2.i, "xs", r.ten))(tinhRank(diemdanhAll[r.id], progressAll[r.id], feedbackAll[r.id], r.ten))}<span class="muted">${esc(r.chuongTrinh || r.lop || "")}${r.coso ? " · " + esc(r.coso) : ""}</span><span class="dd-history">${t.records28 ? `Đã đi ${t.co28} buổi trong 4 tuần` : "Chưa có điểm danh trong 4 tuần"}</span></div>
     <div class="seg" role="group" aria-label="Điểm danh ${esc(r.ten)}">${[["co", "Có mặt"], ["vang", "Vắng"], ["phep", "Phép"]].map(([v, t]) =>
@@ -2080,11 +2119,18 @@ function renderTiles() {
       const t = isTeacher ? (isAdmin ? { r: { ma: "QL", mau: "#ffc400", kim: "Quản lý", ten: "Quản lý lớp" }, i: 5 } : { r: { ma: "GV", mau: "#57a6ff", kim: "Giáo viên", ten: "Giáo viên" }, i: 3 })
         : tinhRank(myDiemdanh, myProgress, myFeedback, ten);
       if (!k) { k = document.createElement("span"); k.id = "nav-ka"; na.prepend(k); }
-      k.innerHTML = khungAvatar(t.r, t.i, ten, myAvatar || (user && user.photoURL), "nav"); na.classList.add("has-ka"); na.title = isTeacher ? `Tài khoản · ${t.r.ten}` : `Tài khoản · Hạng ${t.r.ma} · ${t.r.ten}`;
+      k.innerHTML = khungAvatar(t.r, t.i, ten, myAvatar, "nav"); na.classList.add("has-ka"); na.title = isTeacher ? `Tài khoản · ${t.r.ten}` : `Tài khoản · Hạng ${t.r.ma} · ${t.r.ten}`;
     } else if (k) { k.remove(); na.classList.remove("has-ka"); na.removeAttribute("title"); } }
+  // Ảnh đại diện trên thẻ tài khoản: bấm vào để đổi (mỗi tài khoản một ảnh riêng)
+  { const wa = $("#who-ava"); if (wa) { wa.hidden = !user || needVerify;
+    if (!wa.hidden) { const ten = (!isTeacher && myHv && myHv.ten) || (user && user.displayName) || (mail || "").split("@")[0];
+      const t = isTeacher ? (isAdmin ? { r: { ma: "QL", mau: "#ffc400", kim: "Quản lý", ten: "Quản lý lớp" }, i: 5 } : { r: { ma: "GV", mau: "#57a6ff", kim: "Giáo viên", ten: "Giáo viên" }, i: 3 })
+        : approved ? tinhRank(myDiemdanh, myProgress, myFeedback, ten) : { r: RANK[0], i: 0 };
+      wa.innerHTML = khungAvatar(t.r, t.i, ten, myAvatar, "lg") + `<span class="ava-sua" aria-hidden="true">✎</span>`; } } }
   { const wr = $("#who-rank"); if (wr) { const hv = show && !isTeacher; wr.hidden = !hv;
     if (hv) { const av = $("#who-avatar"); if (av) av.hidden = true; const ten = (myHv && myHv.ten) || (user && user.displayName), t = tinhRank(myDiemdanh, myProgress, myFeedback, ten), tt = tinhThanhTuu(myDiemdanh, myProgress, myFeedback, ten, homework);
-      wr.innerHTML = `${khungAvatar(t.r, t.i, ten, myAvatar || (user && user.photoURL), "md")}${huyHieu(t.r, t.i, "xs", ten)}<span class="muted"><b class="num">${t.xp} XP</b> · ${tt.filter(a => a.cap).length}/${tt.length} thành tựu</span><a href="#xep-hang">Xem hạng & thành tựu ↓</a>`; } } }
+      wr.innerHTML = `${huyHieu(t.r, t.i, "xs", ten)}<span class="muted"><b class="num">${t.xp} XP</b> · ${tt.filter(a => a.cap).length}/${tt.length} thành tựu</span><a href="#xep-hang">Xem hạng & thành tựu ↓</a>`; } } }
+  capNhatVaiTro();
   { const av = $("#av-doi"); if (av) av.hidden = !user; }
   baoTroLy(show); try { renderXHQL(); renderKho(); } catch (e) {}
   if (!show) { box.innerHTML = ""; return; }
@@ -2094,25 +2140,29 @@ function renderTiles() {
   const moBai = homework.filter(h => !h.han || h.han >= today).length;
   const tiles = [
     { href: "#lam-viec", t: "Làm việc", n: tin + tb + viec, d: tin + tb + viec ? [tin && `${tin} tin nhắn mới`, tb && `${tb} thông báo mới`, viec && `${viec} việc chưa xong`].filter(Boolean).join(" · ") : (isTeacher ? "Nhắn tin, thông báo, giao việc" : "Nhắn thầy cô, xem thông báo của lớp") },
-    { href: "#giao-trinh", t: "Giáo trình", d: isTeacher ? `${lessons.length} bài trong giáo trình` : `Đã học ${daHoc}/${lessons.length} bài` },
-    { href: "#bai-tap", t: "Bài tập", d: moBai ? `${moBai} bài đang mở` : "Chưa có bài đang mở" },
-    isTeacher && { href: "#diem-danh", t: "Điểm danh", d: "Điểm danh buổi hôm nay, theo dõi chuyên cần" },
-    isAdmin && { href: "#duyet", t: "Duyệt học viên", n: reqCount, d: reqCount ? `${reqCount} yêu cầu đang chờ` : "Không có yêu cầu đang chờ" },
+    isAdmin && { href: "#duyet", t: "Quản lý học viên", n: reqCount, d: `${roster.length} học viên · % đỗ · Top 5 tuần` + (reqCount ? ` · ${reqCount} chờ duyệt` : "") },
+    isTeacher && { href: "#diem-danh", t: "Điểm danh", d: "Điểm danh buổi hôm nay" },
+    { href: "#bai-tap", t: isTeacher ? "Giao & chấm bài tập" : "Bài tập", d: moBai ? `${moBai} bài đang mở` : "Chưa có bài đang mở" },
+    { href: "#giao-trinh", t: isTeacher ? "Xem giáo trình" : "Giáo trình", d: isTeacher ? `${lessons.length} bài trong giáo trình` : `Đã học ${daHoc}/${lessons.length} bài` },
+    isTeacher && { href: "#bai-ve", t: "Đăng bài vẽ học viên", d: "Chụp bài, chọn loại bài, đăng lên web" },
+    isTeacher && { href: "#ban-tin", t: "Đăng bản tin", d: "Tin nổi bật tuần, hoạ cụ, lý thuyết" },
   ].filter(Boolean);
   box.innerHTML = (!isTeacher ? theRank(tinhRank(myDiemdanh, myProgress, myFeedback, (myHv && myHv.ten) || (user && user.displayName))) + theThanhTuu(tinhThanhTuu(myDiemdanh, myProgress, myFeedback, (myHv && myHv.ten) || (user && user.displayName), homework)) : "") + tiles.map(x => `<a class="acc-tile" href="${x.href}"><b>${x.t}${x.n ? ` <span class="nbadge num">${x.n}</span>` : ""}</b><span class="muted">${esc(x.d)}</span><i aria-hidden="true">→</i></a>`).join("");
 }
 
 /* ================= Đổi ảnh đại diện (tự cắt vuông, thu nhỏ còn ~20 KB) ================= */
 function luuAvatar(url) {
+  if (!user || !mail) return;
   myAvatar = url || "";
-  try { url ? localStorage.setItem("lvtt-avatar", url) : localStorage.removeItem("lvtt-avatar"); } catch (e) {}
+  try { url ? localStorage.setItem(AVA_KEY(mail), url) : localStorage.removeItem(AVA_KEY(mail)); } catch (e) {}
   renderTiles(); renderMyProg && renderMyProg();
   const st = $("#av-st");
-  if (!isTeacher && approved && db && mail) {
-    timed("Lưu ảnh đại diện", setDoc(doc(db, "tiendo", mail), { bai: myProgress.bai, baitap: myProgress.baitap, anh: myAvatar, capNhat: Date.now() }))
-      .then(() => { if (st) st.textContent = url ? "Đã lưu ảnh mới ✓" : "Đã bỏ ảnh ✓"; })
-      .catch(() => { if (st) st.textContent = "Đã đổi trên máy này. Chưa lưu lên lớp được, thử lại sau."; });
-  } else if (st) st.textContent = url ? "Đã đổi ảnh trên máy này ✓" : "Đã bỏ ảnh ✓";
+  if (!db) { if (st) st.textContent = "Đã đổi trên máy này ✓"; return; }
+  const viec = [setDoc(doc(db, "anhdaidien", mail), { anh: myAvatar, luc: Date.now() })];
+  if (!isTeacher && approved) viec.push(setDoc(doc(db, "tiendo", mail), { bai: myProgress.bai, baitap: myProgress.baitap, anh: myAvatar, capNhat: Date.now() }));
+  timed("Lưu ảnh đại diện", Promise.all(viec))
+    .then(() => { if (st) st.textContent = url ? "Đã lưu ảnh mới ✓" : "Đã bỏ ảnh ✓"; setTimeout(() => { if (st) st.textContent = ""; }, 3000); })
+    .catch(() => { if (st) st.textContent = "Đã đổi trên máy này. Chưa lưu lên lớp được, thử lại sau."; });
 }
 { const f = $("#av-file");
   if (f) f.addEventListener("change", () => {
@@ -2128,15 +2178,16 @@ function luuAvatar(url) {
     img.src = u;
   });
   const x = $("#av-xoa"); if (x) x.onclick = () => luuAvatar("");
+  const w = $("#who-ava"); if (w) w.onclick = () => f && f.click();
 }
 
 /* ================= Thầy cô cộng XP / trao thành tựu ngay trên web ================= */
 let xhDS = [], xhLoi = false;
 function renderXHQL() {
   const box = $("#xh-ql"); if (!box) return;
-  box.hidden = !(user && isTeacher);
+  box.hidden = !(user && isAdmin); // chỉ quản lý cộng XP / trao thành tựu
   if (box.hidden) return;
-  const ten = [...new Set([...roster.map(r => r.ten), ...BAI_NOI_BAT.filter(b => !b.tg && b.hocVien).map(b => b.hocVien)].filter(Boolean))].sort((a, b) => a.localeCompare(b, "vi"));
+  const ten = [...new Set([...roster.map(r => r.ten), ...nbAll().filter(b => !b.tg && b.hocVien).map(b => b.hocVien)].filter(Boolean))].sort((a, b) => a.localeCompare(b, "vi"));
   const dangGo = document.activeElement && box.contains(document.activeElement);
   if (dangGo && box.dataset.ve) { veDSXH(); return; }
   box.dataset.ve = 1;
@@ -2691,6 +2742,7 @@ async function onUser(u) {
   const prevMail = mail;
   user = u; mail = u ? String(u.email || "").toLowerCase() : "";
   isAdmin = false; isTeacher = false; approved = false; needVerify = false;
+  napAvatarMay(mail);
   roster = []; requests = []; teachers = []; progressAll = {}; feedbackAll = {};
   diemdanhAll = {}; myDiemdanh = {}; myHv = null; troLyDaTai = { diemDanh: false, diem: false, bai: false }; lvReset(); khoMon = {}; khoGD = []; khoLoi = ""; khoDaTai = false;
   if (prevMail && prevMail !== mail) try { localStorage.removeItem(DATA_KEY + prevMail); } catch (e) {} // máy dùng chung: xoá dữ liệu người trước
@@ -2725,6 +2777,9 @@ async function onUser(u) {
     catch (e) { if (e && e.code !== "permission-denied") serverIssue(e); return undefined; } // undefined = chưa hỏi được, khác null = không có
   };
   const tr = performance.now();
+  // Ảnh đại diện riêng của tài khoản này (giáo viên, quản lý, học viên đều có)
+  let avaTuMay = false;
+  getData("anhdaidien").then(a => { if (user !== u || !a) return; avaTuMay = true; myAvatar = a.anh || ""; try { myAvatar ? localStorage.setItem(AVA_KEY(mail), myAvatar) : localStorage.removeItem(AVA_KEY(mail)); } catch (e) {} renderTiles(); });
   const [isAdm, gvDoc, hvDoc, ycDoc, tdDoc] = isAdminMail ? [true, null, null, null, null] : await Promise.all([
     exists("admins"), getData("giaovien"), getData("hocvien"), getData("yeucau"), getData("tiendo")
   ]);
@@ -2784,7 +2839,7 @@ async function onUser(u) {
   }
 
   if (!isTeacher) {
-    if (tdDoc) { myProgress = { bai: tdDoc.bai || {}, baitap: tdDoc.baitap || {} }; if (tdDoc.anh) { myAvatar = tdDoc.anh; try { localStorage.setItem("lvtt-avatar", myAvatar); } catch (e) {} } }
+    if (tdDoc) { myProgress = { bai: tdDoc.bai || {}, baitap: tdDoc.baitap || {} }; if (tdDoc.anh && !avaTuMay) { myAvatar = tdDoc.anh; try { localStorage.setItem(AVA_KEY(mail), myAvatar); } catch (e) {} } }
     listen(doc(db, "nhanxet", mail), d => { troLyDaTai.diem = true; myFeedback = d.exists() ? d.data() : {}; renderHomework(); renderMyProg(); saveData(); });
     // Điểm danh của chính em (lỗi quyền thì im lặng, panel vẫn hiện hướng dẫn)
     unsubs.push(onSnapshot(doc(db, "diemdanh", mail), d => { troLyDaTai.diemDanh = true; myDiemdanh = d.exists() ? d.data() : {}; renderMyProg(); }, () => renderMyProg()));
@@ -2794,7 +2849,7 @@ async function onUser(u) {
     lessons = snap.docs.filter(d => !d.id.startsWith("_")).map(d => ({ id: d.id, ...d.data() })); renderLessons(); if (isAdmin) { renderRoster(); dongBoBaiHoc(); } saveData(); renderTiles();
   });
   listen(query(collection(db, "baitap"), orderBy("han")), snap => {
-    troLyDaTai.bai = true; homework = snap.docs.map(d => ({ id: d.id, ...d.data() })); renderHomework(); saveData(); renderTiles();
+    troLyDaTai.bai = true; homework = snap.docs.map(d => ({ id: d.id, ...d.data() })); renderHomework(); saveData(); renderTiles(); if (isAdmin) renderQL();
   });
   if (isTeacher) {
     listen(query(collection(db, "hocvien"), orderBy("duyetLuc", "desc")), snap => {
@@ -2804,7 +2859,7 @@ async function onUser(u) {
       diemdanhAll = {}; snap.docs.forEach(d => diemdanhAll[d.id] = d.data()); renderAttend();
     });
     listen(collection(db, "tiendo"), snap => {
-      progressAll = {}; snap.docs.forEach(d => progressAll[d.id] = d.data()); renderHomework(); if (isAdmin) renderRoster();
+      progressAll = {}; snap.docs.forEach(d => progressAll[d.id] = d.data()); renderHomework(); if (isAdmin) { renderRoster(); renderQL(); }
     });
     listen(collection(db, "nhanxet"), snap => {
       feedbackAll = {}; snap.docs.forEach(d => feedbackAll[d.id] = d.data()); renderHomework(); renderAttend();
@@ -2862,6 +2917,15 @@ async function startFirebase() {
       veTopRank(); dispatchEvent(new Event("xephang-doi"));
       try { renderTiles(); renderMyProg(); renderXHQL(); } catch (e) {}
     }, () => { xhLoi = true; try { renderXHQL(); } catch (e) {} });
+    // Bài vẽ thầy cô đăng + Top 5 quản lý chọn: ai cũng xem được trên trang chủ
+    onSnapshot(collection(db, "baive"), snap => {
+      BAIVE_DONG = snap.docs.map(d => ({ id: d.id, ...d.data() })).map(b => ({ ...b, hang: Number(b.hang) || 0 })); baiVeLoi = false;
+      renderGallery(); veTopRank(); dispatchEvent(new Event("baive-doi"));
+      try { renderTop5(); renderTiles(); } catch (e) {}
+    }, () => { baiVeLoi = true; try { renderTop5(); } catch (e) {} });
+    // Bản tin nổi bật
+    onSnapshot(collection(db, "bantin"), snap => { BANTIN_DONG = snap.docs.map(d => ({ id: d.id, ...d.data() })); banTinLoi = false; renderBanTin(); },
+      () => { banTinLoi = true; });
   } catch (e) {
     // Đã có quyền lưu trên máy: không chặn bài học, chỉ báo nhẹ. Chưa có quyền thì hiện khung báo mạng yếu.
     const coQuyen = cachedSession && cachedSession.mail && (cachedSession.isTeacher || cachedSession.approved);
@@ -3171,3 +3235,261 @@ $("#btn-seed").onclick = async () => {
   try { await timed("Nạp giáo trình", batch.commit()); st.textContent = `Đã nạp ${GIAO_TRINH_MAU.length + BAI_HOC.length} bài vào giáo trình.`; }
   catch (e) { st.textContent = "Chưa nạp được. Kiểm tra đã dán luật bảo mật (firestore.rules) chưa."; }
 };
+
+/* =====================================================================
+   ĐĂNG BÀI VẼ HỌC VIÊN · TOP 5 NỔI BẬT · BẢN TIN · TRANG QUẢN LÝ
+   - Giáo viên + quản lý: đăng ảnh bài vẽ (chọn loại bài), đăng bản tin.
+   - Chỉ quản lý: chọn Top 1–5 bài nổi bật tuần, ghim bản tin, xem % đỗ.
+   Ảnh được thu nhỏ ngay trên máy rồi lưu vào Firestore (không cần cấu hình kho tệp).
+   ===================================================================== */
+function capNhatVaiTro() {
+  const k = [!!user, isTeacher, isAdmin, mail].join("|");
+  if (k === capNhatVaiTro.k) return; capNhatVaiTro.k = k;
+  setTimeout(() => { renderGallery(); renderBanTin(); dispatchEvent(new Event("vaitro-doi")); }, 0); // chờ cả file tải xong
+}
+// Thu nhỏ ảnh để vừa giới hạn 1 MB của Firestore
+function nenAnh(file, max = 1400, gioiHan = 850000) {
+  return new Promise((ok, loi) => {
+    if (!file || !/^image\//.test(file.type || "image/")) return loi(new Error("Chọn một tấm ảnh nhé."));
+    const img = new Image(), u = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(u);
+      const w = img.naturalWidth, h = img.naturalHeight; let k = Math.min(1, max / Math.max(w, h)), q = .86, out = "";
+      const cv = document.createElement("canvas");
+      for (let lan = 0; lan < 10; lan++) {
+        cv.width = Math.max(1, Math.round(w * k)); cv.height = Math.max(1, Math.round(h * k));
+        const x = cv.getContext("2d"); x.fillStyle = "#fff"; x.fillRect(0, 0, cv.width, cv.height); x.drawImage(img, 0, 0, cv.width, cv.height);
+        out = cv.toDataURL("image/jpeg", q);
+        if (out.length <= gioiHan) return ok(out);
+        if (q > .62) q -= .08; else k *= .82;
+      }
+      ok(out);
+    };
+    img.onerror = () => { URL.revokeObjectURL(u); loi(new Error("Không mở được ảnh này, thử ảnh khác.")); };
+    img.src = u;
+  });
+}
+// Hộp thoại dùng chung (bottom sheet trên điện thoại)
+function moHop(html, nhan = "Hộp thoại") {
+  const ov = document.createElement("div"); ov.className = "hop-ov";
+  ov.innerHTML = `<div class="hop" role="dialog" aria-modal="true" aria-label="${esc(nhan)}"><button type="button" class="hop-x" data-dong aria-label="Đóng">✕</button>${html}</div>`;
+  document.body.append(ov); document.body.classList.add("hop-mo");
+  const dong = () => { ov.remove(); if (!$(".hop-ov")) document.body.classList.remove("hop-mo"); };
+  ov.addEventListener("click", e => { if (e.target === ov || e.target.closest("[data-dong]")) dong(); });
+  const esc2 = e => { if (e.key === "Escape") { dong(); removeEventListener("keydown", esc2); } }; addEventListener("keydown", esc2);
+  return { el: ov.querySelector(".hop"), dong };
+}
+const linkHopLe = v => !v || /^https?:\/\/\S+$/i.test(v);
+const tuanNay = b => b.hang >= 1 && b.hang <= 5 && b.ngayTop && (Date.parse(todayVN()) - Date.parse(b.ngayTop)) / 864e5 < 7;
+
+/* ---------- Đăng bài vẽ học viên ---------- */
+function moDangBai() {
+  if (!(user && isTeacher && db)) { toast("Đăng nhập tài khoản giáo viên hoặc quản lý để đăng bài.", "err"); location.hash = "#tai-khoan"; return; }
+  const tenHV = [...new Set([...roster.map(r => r.ten), ...galTatCa().map(b => b.hocVien)].filter(Boolean))].sort((a, b) => a.localeCompare(b, "vi"));
+  const { el, dong } = moHop(`<h3>Đăng bài vẽ học viên</h3>
+    <form id="f-bv" class="hop-f" novalidate>
+      <label class="anh-chon" for="bv-anh"><img id="bv-xem" alt="" hidden><span id="bv-chu"><b>📷 Chọn ảnh bài vẽ</b><small>Chụp thẳng, đủ sáng, không lệch khung</small></span><input id="bv-anh" type="file" accept="image/*"></label>
+      <label>Tên học viên *<input id="bv-ten" list="bv-ds" maxlength="80" autocomplete="off" placeholder="VD: Nguyễn Văn An"></label>
+      <datalist id="bv-ds">${tenHV.map(t => `<option value="${esc(t)}">`).join("")}</datalist>
+      <fieldset class="chon-loai"><legend>Đây là bài gì? *</legend>${LOAI_BAI.map((l, i) => `<label><input type="radio" name="bv-loai" value="${esc(l.ten)}"${i === 0 ? "" : ""}><span>${esc(l.ten)}</span></label>`).join("")}</fieldset>
+      <label>Ghi chú<input id="bv-gc" maxlength="120" placeholder="VD: Bố cục màu tuần 3 · 8,5 điểm"></label>
+      <label>Link kèm theo (không bắt buộc)<input id="bv-link" type="url" inputmode="url" maxlength="300" placeholder="https://… (video, bài đăng Facebook)"></label>
+      ${isAdmin ? `<label>Đưa lên Bài vẽ nổi bật<select id="bv-top"><option value="0">Không — chỉ vào mục Bài vẽ học viên</option>${[1, 2, 3, 4, 5].map(k => `<option value="${k}">Top ${k} tuần này</option>`).join("")}</select></label>`
+        : `<p class="muted hop-ghi">Bài vào mục <b>Bài vẽ học viên</b>. Quản lý sẽ chọn Top 5 bài nổi bật mỗi tuần.</p>`}
+      <div class="hop-nut"><button class="btn primary" type="submit" id="bv-gui">Đăng bài</button><button class="btn" type="button" data-dong>Huỷ</button></div>
+      <p class="status" id="bv-st" role="status"></p>
+    </form>`, "Đăng bài vẽ học viên");
+  let anh = "";
+  const f = el.querySelector("#bv-anh"), st = el.querySelector("#bv-st");
+  f.onchange = async () => {
+    const file = f.files && f.files[0]; if (!file) return;
+    st.textContent = "Đang thu nhỏ ảnh…"; st.classList.remove("err");
+    try { anh = await nenAnh(file); const im = el.querySelector("#bv-xem"); im.src = anh; im.hidden = false; el.querySelector("#bv-chu").hidden = true; st.textContent = ""; }
+    catch (e) { anh = ""; st.textContent = e.message; st.classList.add("err"); }
+  };
+  el.querySelector("#f-bv").onsubmit = async e => {
+    e.preventDefault(); st.classList.remove("err");
+    const hocVien = el.querySelector("#bv-ten").value.trim(), loai = (el.querySelector('[name="bv-loai"]:checked') || {}).value || "";
+    const link = el.querySelector("#bv-link").value.trim(), top = Number((el.querySelector("#bv-top") || {}).value || 0);
+    const loi = !anh ? "Chưa chọn ảnh bài vẽ." : !hocVien ? "Nhập tên học viên." : !loai ? "Chọn đây là bài gì (Màu, Tượng…)." : !linkHopLe(link) ? "Link phải bắt đầu bằng https://" : "";
+    if (loi) { st.textContent = loi; st.classList.add("err"); return; }
+    const nut = el.querySelector("#bv-gui"); nut.disabled = true; st.textContent = "Đang đăng…";
+    const ref = doc(collection(db, "baive"));
+    const data = { anh, hocVien, loai, ghiChu: el.querySelector("#bv-gc").value.trim(), link, ngay: todayVN(), hang: 0, ngayTop: "", nguoi: mail, tenNguoi: tenToi(), luc: Date.now() };
+    try {
+      await timed("Đăng bài vẽ", setDoc(ref, data));
+      if (isAdmin && top) await datTop(ref.id, top);
+      toast(top ? `Đã đăng và đưa lên Top ${top} tuần.` : "Đã đăng bài vẽ lên web."); dong();
+    } catch (err) {
+      nut.disabled = false; st.classList.add("err");
+      st.textContent = err && err.code === "permission-denied" ? "Máy chủ chưa cho đăng: quản lý cần dán luật bảo mật mới (firestore.rules) một lần." : "Chưa đăng được, kiểm tra mạng rồi thử lại.";
+    }
+  };
+}
+// Quản lý đặt hạng Top k cho một bài (k = 0: bỏ khỏi Top). Mỗi vị trí trong tuần chỉ có 1 bài.
+async function datTop(id, k) {
+  const b = writeBatch(db), hom = todayVN();
+  if (k) BAIVE_DONG.filter(x => x.id !== id && tuanNay(x) && x.hang === k).forEach(x => b.set(doc(db, "baive", x.id), { hang: 0, ngayTop: "" }, { merge: true }));
+  b.set(doc(db, "baive", id), k ? { hang: k, ngayTop: hom } : { hang: 0, ngayTop: "" }, { merge: true });
+  return timed("Chọn Top", b.commit());
+}
+
+/* ---------- Bản tin nổi bật ---------- */
+const MUC_TIN = { hoacu: "Hoạ cụ", lythuyet: "Lý thuyết", kinhnghiem: "Kinh nghiệm thi", tinlop: "Tin của lớp" };
+let tnLoc = "all";
+function banTinTatCa() {
+  const t = x => x.luc || Date.parse((x.ngay || "1970-01-01") + "T08:00:00+07:00") || 0;
+  return [...BANTIN_DONG, ...BAN_TIN.map((x, i) => ({ ...x, id: "", codinh: i }))].sort((a, b) => (b.ghim ? 1 : 0) - (a.ghim ? 1 : 0) || t(b) - t(a));
+}
+function renderBanTin() {
+  const grid = $("#tn-grid"); if (!grid) return;
+  { const n = $("#tn-them"); if (n) n.hidden = !(user && isTeacher); }
+  const all = banTinTatCa(), co = Object.keys(MUC_TIN).filter(k => all.some(x => x.muc === k));
+  if (tnLoc !== "all" && !co.includes(tnLoc)) tnLoc = "all";
+  $("#tn-loc").innerHTML = co.length > 1 ? [`<button class="tab" data-tn="all" aria-selected="${tnLoc === "all"}">Tất cả</button>`, ...co.map(k => `<button class="tab" data-tn="${k}" aria-selected="${tnLoc === k}">${MUC_TIN[k]}</button>`)].join("") : "";
+  $$("#tn-loc [data-tn]").forEach(b => b.onclick = () => { tnLoc = b.dataset.tn; renderBanTin(); });
+  const ds = all.filter(x => tnLoc === "all" || x.muc === tnLoc);
+  const doan = t => esc(t || "").split(/\n+/).filter(Boolean).map(x => `<p>${x}</p>`).join("");
+  const hoaCu = x => { if (!x.dsHoaCu) return ""; const l = HOA_CU.filter(h => (h.can || []).includes(x.dsHoaCu)); if (!l.length) return "";
+    return `<ul class="tn-hc">${l.map(h => `<li><span>${esc(h.ten)}</span><b class="num">${vnd(h.gia)}</b></li>`).join("")}<li class="tong"><span>Tổng cả bộ</span><b class="num">${vnd(l.reduce((a, h) => a + h.gia, 0))}</b></li></ul>`; };
+  grid.innerHTML = ds.length ? ds.map(x => `<article class="tn-the${x.ghim ? " ghim" : ""}">
+      ${x.anh ? `<img class="tn-anh" src="${esc(x.anh)}" alt="" loading="lazy" decoding="async">` : ""}
+      <div class="tn-nd">
+        <p class="tn-dau"><span class="tn-muc m-${esc(x.muc || "tinlop")}">${esc(MUC_TIN[x.muc] || "Tin của lớp")}</span>${x.ghim ? `<span class="tn-ghim">📌 Ghim</span>` : ""}</p>
+        <h3>${esc(x.tieuDe || "")}</h3>
+        <div class="tn-text">${doan(x.nd)}${hoaCu(x)}</div>
+        <button type="button" class="linkish tn-them-chu" hidden>Xem thêm ▾</button>
+        <div class="tn-cuoi">${x.link ? `<a class="btn small" href="${esc(x.link)}" target="_blank" rel="noopener">Mở link ↗</a>` : ""}
+          <span class="muted tn-meta">${esc(x.tenTacGia || "Lớp Vẽ Thạch Thất")} · ${x.luc ? fmtDate(x.luc) : x.ngay ? ngayVN(x.ngay) : ""}</span>
+          ${x.id && user && isAdmin ? `<button type="button" class="linkish" data-ghim="${esc(x.id)}">${x.ghim ? "Bỏ ghim" : "Ghim lên đầu"}</button>` : ""}
+          ${x.id && user && (isAdmin || (isTeacher && x.tacGia === mail)) ? `<button type="button" class="linkish" data-xtin="${esc(x.id)}">Xoá</button>` : ""}</div>
+      </div></article>`).join("")
+    : `<p class="muted">Chưa có bản tin trong mục này.</p>`;
+  // Bài dài: thu gọn, bấm "Xem thêm" để mở
+  requestAnimationFrame(() => $$("#tn-grid .tn-the").forEach(a => { const t = a.querySelector(".tn-text"), b = a.querySelector(".tn-them-chu");
+    if (t.scrollHeight > t.clientHeight + 4) { b.hidden = false; b.onclick = () => { const mo = a.classList.toggle("mo"); b.textContent = mo ? "Thu gọn ▴" : "Xem thêm ▾"; }; } }));
+  $$("#tn-grid [data-ghim]").forEach(b => b.onclick = () => { const x = BANTIN_DONG.find(t => t.id === b.dataset.ghim); if (!x) return;
+    timed("Ghim bản tin", setDoc(doc(db, "bantin", x.id), { ghim: !x.ghim }, { merge: true })).catch(() => toast("Chưa lưu được, thử lại.", "err")); });
+  $$("#tn-grid [data-xtin]").forEach(b => confirmButton(b, () => deleteDoc(doc(db, "bantin", b.dataset.xtin)), "Xoá?"));
+}
+function moDangTin() {
+  if (!(user && isTeacher && db)) { toast("Đăng nhập tài khoản giáo viên hoặc quản lý để đăng bản tin.", "err"); location.hash = "#tai-khoan"; return; }
+  const { el, dong } = moHop(`<h3>Đăng bản tin</h3>
+    <form id="f-tin" class="hop-f" novalidate>
+      <fieldset class="chon-loai"><legend>Chuyên mục *</legend>${Object.entries(MUC_TIN).map(([k, v], i) => `<label><input type="radio" name="tn-muc" value="${k}"${i === 3 ? " checked" : ""}><span>${v}</span></label>`).join("")}</fieldset>
+      <label>Tiêu đề *<input id="tn-td" maxlength="120" placeholder="VD: Tin nổi bật tuần · Hoạ cụ cần mua cho bài màu"></label>
+      <label>Nội dung *<textarea id="tn-nd" rows="6" maxlength="3000" placeholder="Viết ngắn gọn, mỗi ý một dòng."></textarea></label>
+      <label class="anh-chon nho" for="tn-anh"><img id="tn-xem" alt="" hidden><span id="tn-chu"><b>🖼 Thêm ảnh (không bắt buộc)</b></span><input id="tn-anh" type="file" accept="image/*"></label>
+      <label>Link (không bắt buộc)<input id="tn-link" type="url" inputmode="url" maxlength="300" placeholder="https://…"></label>
+      ${isAdmin ? `<label class="check"><input type="checkbox" id="tn-ghim"> Ghim lên đầu mục Bản tin</label>` : ""}
+      <div class="hop-nut"><button class="btn primary" type="submit" id="tn-gui">Đăng bản tin</button><button class="btn" type="button" data-dong>Huỷ</button></div>
+      <p class="status" id="tn-st" role="status"></p>
+    </form>`, "Đăng bản tin");
+  let anh = ""; const st = el.querySelector("#tn-st"), f = el.querySelector("#tn-anh");
+  f.onchange = async () => { const file = f.files && f.files[0]; if (!file) return; st.textContent = "Đang thu nhỏ ảnh…";
+    try { anh = await nenAnh(file, 1100, 450000); const im = el.querySelector("#tn-xem"); im.src = anh; im.hidden = false; el.querySelector("#tn-chu").hidden = true; st.textContent = ""; }
+    catch (e) { anh = ""; st.textContent = e.message; } };
+  el.querySelector("#f-tin").onsubmit = async e => {
+    e.preventDefault(); st.classList.remove("err");
+    const tieuDe = el.querySelector("#tn-td").value.trim(), nd = el.querySelector("#tn-nd").value.trim(), link = el.querySelector("#tn-link").value.trim();
+    const loi = !tieuDe ? "Nhập tiêu đề." : !nd ? "Nhập nội dung." : !linkHopLe(link) ? "Link phải bắt đầu bằng https://" : "";
+    if (loi) { st.textContent = loi; st.classList.add("err"); return; }
+    const nut = el.querySelector("#tn-gui"); nut.disabled = true; st.textContent = "Đang đăng…";
+    try {
+      await timed("Đăng bản tin", addDoc(collection(db, "bantin"), { muc: (el.querySelector('[name="tn-muc"]:checked') || {}).value || "tinlop", tieuDe, nd, anh, link,
+        ghim: !!(el.querySelector("#tn-ghim") || {}).checked, tacGia: mail, tenTacGia: tenToi(), luc: Date.now() }));
+      toast("Đã đăng bản tin."); dong(); location.hash = "#ban-tin";
+    } catch (err) { nut.disabled = false; st.classList.add("err"); st.textContent = err && err.code === "permission-denied" ? "Máy chủ chưa cho đăng: quản lý cần dán luật bảo mật mới (firestore.rules) một lần." : "Chưa đăng được, kiểm tra mạng rồi thử lại."; }
+  };
+}
+document.addEventListener("click", e => {
+  if (e.target.closest("[data-dang-bai]")) { e.preventDefault(); moDangBai(); }
+  else if (e.target.closest("[data-dang-tin]")) { e.preventDefault(); moDangTin(); }
+  else if (e.target.closest("[data-top5]")) { setTimeout(() => { const h = $("#ql-top5-h"); if (h) h.scrollIntoView({ block: "start" }); }, 80); }
+});
+
+/* ---------- Trang Quản lý: học viên đi học · tiến độ · % đỗ ---------- */
+let qlLoc = { cs: "", sx: "can", q: "" };
+function renderQL() {
+  const box = $("#ql-tong"); if (!box || !isAdmin) return;
+  const hom = todayVN(), d = new Date(hom + "T00:00:00Z"), thu2 = new Date(d.getTime() - ((d.getUTCDay() + 6) % 7) * 864e5).toISOString().slice(0, 10);
+  const all = roster.map(r => {
+    const dd = diemdanhAll[r.id] || {}, t = thongKe(dd, r, feedbackAll[r.id]), p = progressAll[r.id] || {};
+    const daHoc = lessons.filter(l => (p.bai || {})[l.id]).length, nop = Object.values(p.baitap || {}).filter(Boolean).length;
+    const tuan = Object.keys(dd).filter(k => k.slice(0, 10) >= thu2 && k.slice(0, 10) <= hom && dd[k] === "co").length;
+    return { r, t, daHoc, nop, tuan };
+  });
+  const coDL = all.filter(x => x.t.pass !== null), tb = a => a.length ? a.reduce((s, v) => s + v, 0) / a.length : null;
+  const passTB = tb(coDL.map(x => x.t.pass)), attTB = tb(all.filter(x => x.t.att !== null).map(x => x.t.att));
+  const diTuan = all.filter(x => x.tuan > 0).length, canNhac = all.filter(x => x.t.keys.length && x.t.muc !== "ok").length;
+  const nhom = [["cao", "≥ 70%", x => x.t.pass >= 70], ["vua", "40–69%", x => x.t.pass >= 40 && x.t.pass < 70], ["thap", "< 40%", x => x.t.pass !== null && x.t.pass < 40], ["chua", "Chưa có dữ liệu", x => x.t.pass === null]]
+    .map(([k, t, f]) => ({ k, t, n: all.filter(f).length }));
+  const words = timTen(qlLoc.q).split(" ").filter(Boolean);
+  const rows = all.filter(x => (!qlLoc.cs || String(x.r.coso || "").includes(qlLoc.cs)) && words.every(w => timTen(x.r.ten).includes(w)))
+    .sort((a, b) => qlLoc.sx === "ten" ? String(a.r.ten).localeCompare(String(b.r.ten), "vi")
+      : qlLoc.sx === "do" ? (a.t.pass ?? 101) - (b.t.pass ?? 101)
+      : qlLoc.sx === "it" ? a.t.co28 - b.t.co28
+      : ({ bad: 0, warn: 1, ok: 2 }[a.t.keys.length ? a.t.muc : "ok"] - { bad: 0, warn: 1, ok: 2 }[b.t.keys.length ? b.t.muc : "ok"]) || (a.t.pass ?? 101) - (b.t.pass ?? 101));
+  const dangGo = document.activeElement && document.activeElement.id === "ql-q";
+  const tong = lessons.length || 0;
+  const bang = rows.length ? rows.map(({ r, t, daHoc, nop, tuan }) => `<tr class="${t.keys.length ? t.muc : ""}">
+      <td data-l="Học viên"><div><b>${esc(r.ten)}</b><span class="muted">${esc(r.chuongTrinh || r.lop || t.khoi)}${r.coso ? " · " + esc(r.coso) : ""}</span></div></td>
+      <td data-l="Đi học" class="num"><div><b>${tuan}</b> buổi tuần này<span class="muted">${t.records28 ? t.co28 + " buổi / 4 tuần" : "chưa điểm danh"}${t.streak >= 2 ? ` · vắng liền ${t.streak}` : ""}</span></div></td>
+      <td data-l="Chuyên cần" class="num"><div>${t.att === null ? "–" : Math.round(t.att * 100) + "%"}</div></td>
+      <td data-l="Tiến độ"><div><div class="ql-bar"><i style="width:${tong ? Math.round(daHoc / tong * 100) : 0}%"></i></div><span class="muted num">${daHoc}/${tong} bài · giờ ${t.gio}/${t.gioCan}</span></div></td>
+      <td data-l="Bài tập" class="num"><div>${nop}/${homework.length} nộp<span class="muted">${t.avg === null ? "chưa có điểm" : "TB " + nf1(t.avg)}</span></div></td>
+      <td data-l="Dự báo đỗ"><div><span class="pill ${t.keys.length ? t.muc : ""}">${t.pass === null ? "Chưa có" : t.pass + "%"}</span></div></td>
+      <td><button type="button" class="btn small" data-qlmsg="${esc(r.id)}">Tin PH</button></td></tr>`).join("")
+    : `<tr><td colspan="7" class="muted">${roster.length ? "Không có học viên phù hợp bộ lọc." : "Chưa có học viên nào được duyệt."}</td></tr>`;
+  box.innerHTML = `<h2 class="ql-h2" id="ql-tong-h">Học viên đi học · tiến độ · % đỗ</h2>
+    <div class="ql-kpi">
+      <div><span>Học viên</span><b class="num">${all.length}</b></div>
+      <div><span>Đi học tuần này</span><b class="num">${diTuan}<small>/${all.length}</small></b></div>
+      <div><span>Chuyên cần 30 ngày</span><b class="num">${attTB === null ? "–" : Math.round(attTB * 100) + "%"}</b></div>
+      <div class="hl"><span>% đỗ dự báo TB</span><b class="num">${passTB === null ? "–" : Math.round(passTB) + "%"}</b></div>
+      <div class="${canNhac ? "warn" : ""}"><span>Cần nhắc</span><b class="num">${canNhac}</b></div>
+    </div>
+    <div class="ql-pb" aria-label="Phân bố khả năng đỗ">${all.length ? nhom.filter(x => x.n).map(x => `<i class="${x.k}" style="flex:${x.n}" title="${x.t}: ${x.n} em"></i>`).join("") : "<i class='chua' style='flex:1'></i>"}</div>
+    <p class="ql-pb-chu">${nhom.map(x => `<span class="${x.k}"><i></i>${x.t}: <b>${x.n}</b></span>`).join("")}</p>
+    <div class="ql-loc">
+      <label>Tìm<input id="ql-q" type="search" value="${esc(qlLoc.q)}" placeholder="Tên học viên" autocomplete="off"></label>
+      <label>Cơ sở<select id="ql-cs"><option value="">Tất cả</option>${["Bình Phú", "Kim Quan", "Online"].map(c => `<option${qlLoc.cs === c ? " selected" : ""}>${c}</option>`).join("")}</select></label>
+      <label>Xếp theo<select id="ql-sx">${[["can", "Cần nhắc trước"], ["do", "% đỗ thấp → cao"], ["it", "Đi học ít nhất"], ["ten", "Tên A–Z"]].map(([v, t]) => `<option value="${v}"${qlLoc.sx === v ? " selected" : ""}>${t}</option>`).join("")}</select></label>
+    </div>
+    <div class="ql-bang-w"><table class="ql-bang"><thead><tr><th>Học viên</th><th>Đi học</th><th>Chuyên cần</th><th>Tiến độ giáo trình</th><th>Bài tập</th><th>Dự báo đỗ</th><th></th></tr></thead><tbody>${bang}</tbody></table></div>
+    <p class="muted ql-ghi">% đỗ là ước tính từ giờ học, chuyên cần và điểm bài tập — dùng để biết em nào cần kèm thêm, không phải cam kết với phụ huynh. "Tin PH" chép sẵn tin nhắn gửi Zalo phụ huynh.</p>`;
+  const q = $("#ql-q"); q.oninput = () => { qlLoc.q = q.value; renderQL(); };
+  if (dangGo) { q.focus(); q.setSelectionRange(q.value.length, q.value.length); }
+  $("#ql-cs").onchange = e => { qlLoc.cs = e.target.value; renderQL(); };
+  $("#ql-sx").onchange = e => { qlLoc.sx = e.target.value; renderQL(); };
+  $$("#ql-tong [data-qlmsg]").forEach(b => b.onclick = () => { const x = all.find(o => o.r.id === b.dataset.qlmsg); if (!x) return;
+    const msg = tinNhanPhuHuynh(x.r, x.t);
+    try { navigator.clipboard.writeText(msg).then(() => toast("Đã chép tin nhắn. Dán vào Zalo gửi phụ huynh."), () => moHop(`<h3>Tin nhắn phụ huynh</h3><textarea class="dd-msg" readonly rows="8">${esc(msg)}</textarea>`)); }
+    catch (e) { moHop(`<h3>Tin nhắn phụ huynh</h3><textarea class="dd-msg" readonly rows="8">${esc(msg)}</textarea>`); } });
+  renderTop5();
+}
+function renderTop5() {
+  const box = $("#ql-top5"); if (!box || !isAdmin) return;
+  const gan = BAIVE_DONG.filter(b => (Date.parse(todayVN()) - Date.parse(b.ngay || "2000-01-01")) / 864e5 <= 45).sort((a, b) => (b.luc || 0) - (a.luc || 0));
+  const o = k => BAIVE_DONG.find(b => tuanNay(b) && b.hang === k);
+  box.innerHTML = `<h2 class="ql-h2" id="ql-top5-h">Top 5 bài vẽ nổi bật tuần</h2>
+    <p class="muted">Chọn bài cho từng vị trí. Chỉ 5 bài này hiện ở mục "Bài vẽ nổi bật" trên trang chủ; sau 1 tuần tự chuyển sang Top tháng. Bài khác vẫn nằm ở mục "Bài vẽ học viên".</p>
+    ${baiVeLoi ? `<p class="xh-loi">Máy chủ chưa cho đọc mục bài vẽ. Quản lý cần dán luật bảo mật mới (firestore.rules) một lần.</p>` : ""}
+    <div class="t5">${[1, 2, 3, 4, 5].map(k => { const b = o(k); return `<div class="t5-o h${k}">
+      <span class="t5-so">TOP ${k}</span>${b ? `<img src="${esc(b.anh)}" alt="">` : `<span class="t5-trong">Trống</span>`}
+      <select data-t5="${k}" aria-label="Chọn bài Top ${k}"><option value="">${b ? "— Bỏ khỏi Top —" : "Chọn bài…"}</option>${gan.map(x => `<option value="${esc(x.id)}"${b && b.id === x.id ? " selected" : ""}>${esc(x.hocVien)} · ${esc(x.loai)} · ${ngayVN(x.ngay)}</option>`).join("")}</select></div>`; }).join("")}</div>
+    <p><button type="button" class="btn primary" data-dang-bai>+ Đăng bài vẽ mới</button> <span class="muted">${gan.length} bài thầy cô đăng trong 45 ngày qua</span></p>`;
+  $$("#ql-top5 [data-t5]").forEach(s => s.onchange = () => {
+    const k = Number(s.dataset.t5), cu = o(k), id = s.value;
+    (id ? datTop(id, k) : cu ? datTop(cu.id, 0) : Promise.resolve()).then(() => toast(id ? `Đã đặt Top ${k} tuần.` : `Đã bỏ Top ${k}.`)).catch(() => { toast("Chưa lưu được. Kiểm tra mạng hoặc luật bảo mật.", "err"); renderTop5(); });
+  });
+}
+renderBanTin();
+/* Bàn phím điện thoại: đo phần màn hình còn nhìn thấy để khung tin nhắn không bị bàn phím che */
+(function vungNhin() {
+  const vv = window.visualViewport; if (!vv) return;
+  const dat = () => document.documentElement.style.setProperty("--vvh", Math.round(vv.height) + "px");
+  vv.addEventListener("resize", dat); dat();
+  const nd = $("#chat-nd");
+  if (nd) nd.addEventListener("focus", () => [150, 450].forEach(t => setTimeout(() => { dat(); $("#f-chat").scrollIntoView({ block: "end" }); const m = $("#chat-msgs"); if (m) m.scrollTop = m.scrollHeight; }, t)));
+})();
