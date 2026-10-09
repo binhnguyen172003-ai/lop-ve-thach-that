@@ -2017,7 +2017,27 @@ function renderRequests() {
 /* ===== Thông tin học viên: khối, cơ sở, SĐT, trường thi; xin đổi tên (thầy duyệt) ===== */
 const TRUONG_THI = ["HAU", "MTCN", "HUCE", "SIS", "NUAE", "Khác"];
 let doiTen = [], doiTenCuaToi = null, doiTenDaTai = "";
+// Ngày thi theo TRƯỜNG THI DỰ KIẾN học viên đã chọn (lấy từ lịch thi LICH_THI).
+// Trường chưa có lịch trên web (HUCE, SIS, NUAE, Khác) hoặc chưa chọn → null, dùng mốc chung theo khối.
+function mocThiCuaToi() {
+  const tt = myHv && !isTeacher && myHv.truongThi;
+  if (!tt) return null;
+  const kh = khoiOf(myHv);
+  const ds = LICH_THI.map(e => ({ ...e, n: daysUntil(e.ngay) }))
+    .filter(e => e.truong === tt && e.n >= 0).sort((a, b) => a.n - b.n);
+  const hop = ds.find(e => kh && e.dot.includes(kh)) || ds[0];
+  return hop || null;
+}
+// Chữ ở góc trang đầu: nếu học viên đã chọn trường có lịch thi thì hiện theo trường đó
+function capNhatBadgeThi() {
+  const el = $("#hero-badge"); if (!el) return;
+  const m = mocThiCuaToi();
+  if (m) { el.textContent = `Còn ${m.n} ngày đến kỳ thi ${m.truong} · ${m.hienThi}/${m.ngay.slice(0, 4)}`; return; }
+  const sap = LICH_THI.map(e => ({ ...e, n: daysUntil(e.ngay) })).filter(e => e.n >= 0).sort((a, b) => a.n - b.n)[0];
+  if (sap) el.textContent = `Còn ${sap.n} ngày đến kỳ thi đầu tiên`;
+}
 function renderHvInfo() {
+  capNhatBadgeThi();
   const box = $("#hv-info"); if (!box) return;
   if (!user || !approved || isAdmin || isTeacher || !myHv) { box.hidden = true; return; }
   if (doiTenDaTai !== mail) { doiTenDaTai = mail; doiTenCuaToi = null; getDoc(doc(db, "doiten", mail)).then(s => { doiTenCuaToi = s.exists() ? s.data() : null; renderHvInfo(); }).catch(() => {}); }
@@ -2229,7 +2249,7 @@ function renderMyProg() {
   box.innerHTML = theRank(tinhRank(myDiemdanh, myProgress, myFeedback, (myHv && myHv.ten) || (user && user.displayName))) + theThanhTuu(tinhThanhTuu(myDiemdanh, myProgress, myFeedback, (myHv && myHv.ten) || (user && user.displayName), homework)) + `
     <div class="mp-head">
       <div><p class="eyebrow">Tiến độ của em · ${esc(t.khoi)}</p>
-        <h3>Còn <b class="num">${t.daysLeft}</b> ngày đến kỳ thi <span class="muted">(${ngayVN(t.ngayThi)})</span></h3></div>
+        <h3>Còn <b class="num">${mocThiCuaToi()?.n ?? t.daysLeft}</b> ngày đến kỳ thi <span class="muted">(${ngayVN(mocThiCuaToi()?.ngay ?? t.ngayThi)}${mocThiCuaToi() ? " · " + esc(mocThiCuaToi().truong) : ""})</span></h3></div>
       <div class="mp-gauge ${t.muc}" style="--p:${t.pass ?? 0}"><b class="num">${t.pass === null ? "–" : t.pass + "%"}</b><span>khả năng đỗ<br>ước tính</span></div>
     </div>
     <div class="mp-stats">
@@ -2752,9 +2772,11 @@ function capNhatNhac() {
     });
     // Mỗi ngày một nhắc: còn bao nhiêu ngày đến kỳ thi (theo khối của học viên)
     if (!isTeacher && myHv) {
-      const khoiHv = khoiOf(myHv), ngayThi = MUC_TIEU.ngayThi[khoiHv] || MUC_TIEU.ngayThi["Khối H"], conNgay = daysUntil(ngayThi);
+      const mocTT = mocThiCuaToi();
+      const khoiHv = khoiOf(myHv), ngayThi = mocTT ? mocTT.ngay : (MUC_TIEU.ngayThi[khoiHv] || MUC_TIEU.ngayThi["Khối H"]), conNgay = mocTT ? mocTT.n : daysUntil(ngayThi);
       if (conNgay > 0) {
-        ds.push({ id: "ngaythi-" + hom, icon: "🗓", muc: "", tieuDe: `Còn ${conNgay} ngày đến kỳ thi`, nd: `Mốc ôn luyện dự kiến ${ngayVN(ngayThi)}. Đây không phải lịch thi chính thức.`, link: "#giao-trinh", dich: "#my-prog" });
+        const ndNhac = mocTT ? `Trường ${mocTT.truong} (${mocTT.dot}) dự kiến thi ${mocTT.hienThi}/${mocTT.ngay.slice(0, 4)}. Đây không phải lịch thi chính thức.` : `Mốc ôn luyện dự kiến ${ngayVN(ngayThi)}. Đây không phải lịch thi chính thức.`;
+        ds.push({ id: "ngaythi-" + hom, icon: "🗓", muc: "", tieuDe: `Còn ${conNgay} ngày đến kỳ thi`, nd: ndNhac, link: "#giao-trinh", dich: "#my-prog" });
         // toast một lần mỗi 24 giờ (nhớ trên máy này)
         let lanBao = 0; try { lanBao = Number(localStorage.getItem("lvtt-ngaythi-bao")) || 0; } catch (e) {}
         if (Date.now() - lanBao >= 86400000) { toast(`🗓 Còn ${conNgay} ngày đến kỳ thi`); try { localStorage.setItem("lvtt-ngaythi-bao", String(Date.now())); } catch (e) {} }
