@@ -2432,3 +2432,9 @@ body.hop-mo{overflow:hidden}
 /* Lưới bài vẽ mượt hơn khi cuộn: ô ngoài màn hình không vẽ lại; ảnh giữ nguyên khung khi đang tải */
 .gallery .gal-o{content-visibility:auto;contain-intrinsic-size:auto 300px}
 .gallery .gal-b img{transform:translateZ(0);backface-visibility:hidden}
+
+/* Trên máy tính: dấu ⋮ chuyển sang góc trên bên phải; nút ↗ dịch sang trái để không chồng nhau */
+@media (min-width:641px){
+  .gallery .gal-o > .nb-more.gal-more{left:auto;right:8px}
+  .gallery .gal-o > .gal-link{right:48px}
+}
