@@ -2459,6 +2459,8 @@ body.hop-mo{overflow:hidden}
 .vid-list a{display:block;padding:12px 14px;color:inherit;text-decoration:none;font-weight:600}
 .vid-list a:hover,.vid-list a:focus-visible{color:var(--accent)}
 
-/* ===== Bản tin: nút ⋮ của quản lý trên thẻ tin (gộp tin nổi bật vào một mục) ===== */
-.tn-the{position:relative}
-.tn-grid .tn-the > .nb-more.tn-more{position:absolute;top:8px;right:8px;z-index:3}
+/* ===== Bản tin nổi bật: gộp thành một mục dạng vòng xoay, bấm thẻ mở hộp xem đầy đủ ===== */
+#ban-tin .tb-noi{margin-top:16px}
+.hop .tn-text{max-height:none}
+.hop .tn-anh{border-radius:12px;margin:10px 0}
+.hop .tn-dau{margin:0 0 6px}
