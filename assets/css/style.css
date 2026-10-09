@@ -2326,3 +2326,15 @@ body.hop-mo{overflow:hidden}
 .tt-stage .tt-car{height:400px;width:290px;margin-left:-145px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:8px;padding:20px 16px;text-align:center;cursor:pointer;color:var(--ink)}
 .tt-car.on{box-shadow:0 22px 44px -14px color-mix(in srgb,var(--tc) 45%,transparent)}
 @media (max-width:640px){.tt-stage{height:420px}.tt-stage .tt-car{width:min(70vw,260px);margin-left:calc(min(70vw,260px) / -2);height:380px}}
+
+/* ----- Thẻ hạng: chữ F dùng kiểu serif nghiêng, khung huy hiệu to hơn, nhãn không chạm dấu, khoảng cách đều ----- */
+.rk-card .rk-top{gap:16px;justify-content:center}
+.rk-card .rk-badge.sm{width:66px;height:72px}
+.rk-card .rk-badge.sm b{font-size:1.05rem}
+.rk-card .xh-ma{font:italic 800 2.5rem/1 var(--f-serif);letter-spacing:0;margin:0}
+.rk-card .xh-ma small{font:700 .5em/1 var(--f-body);letter-spacing:.1em}
+.rk-card .rk-ten{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:10px 12px;font-size:1.12rem;line-height:1.3}
+.rk-card .xh-kim{padding:6px 16px 7px;margin:0;line-height:1.5;letter-spacing:.07em;box-shadow:0 0 12px color-mix(in srgb,var(--rc) 45%,transparent)}
+.rk-card .rk-mo{max-width:23ch;margin-top:2px}
+.rk-card .rk-star{margin-top:4px}
+.rk-card .rk-xp{margin-top:2px}
