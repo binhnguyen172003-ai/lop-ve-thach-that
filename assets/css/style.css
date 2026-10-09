@@ -2175,3 +2175,24 @@ body.hop-mo{overflow:hidden}
 @media (max-width:640px){.tb-ds a{grid-template-columns:1fr auto}.tb-ds b{grid-column:1/-1;order:2}.tb-ds small{order:3}}
 @media (prefers-reduced-motion:reduce){.tb-cham{animation:none}}
 .tl-x svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;display:block;margin:auto}.tl-x{display:inline-grid;place-items:center}
+/* Tin nổi bật dạng vòng xoay */
+.tb-ring{margin-top:4px}
+.tb-stage{height:300px}
+.tb-the{position:relative;overflow:hidden;border-radius:18px;border:1px solid var(--rule);background:var(--paper);cursor:pointer}
+.tb-the>img,.tb-nen{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.tb-nen{background:radial-gradient(120% 90% at 0 0,rgba(147,165,255,.35),transparent 60%),linear-gradient(160deg,#1d2433,#11141b)}
+.tb-nen.m-tuyensinh{background:radial-gradient(120% 90% at 0 0,rgba(255,90,74,.4),transparent 60%),linear-gradient(160deg,#2a1a1d,#11141b)}
+.tb-nen.m-hoacu{background:radial-gradient(120% 90% at 0 0,rgba(255,196,0,.35),transparent 60%),linear-gradient(160deg,#2a2414,#11141b)}
+.tb-nen.m-lythuyet{background:radial-gradient(120% 90% at 0 0,rgba(63,207,91,.3),transparent 60%),linear-gradient(160deg,#16261b,#11141b)}
+.tb-the-nd{position:absolute;left:0;right:0;bottom:0;display:grid;gap:6px;justify-items:start;padding:16px;color:#fff;background:linear-gradient(transparent,rgba(0,0,0,.85) 35%)}
+.tb-the:not(.co-anh) .tb-the-nd{top:0;align-content:end;background:none}
+.tb-the-nd b{font:700 1.08rem/1.3 var(--f-display)}.tb-the-nd small{font-size:.82rem;line-height:1.45;color:rgba(255,255,255,.78)}
+.tb-mo{display:flex;gap:10px;align-items:center;font-size:.82rem;font-weight:700;color:#cdd6ff}.tb-mo em{font-style:normal;font-weight:400;color:rgba(255,255,255,.55)}
+.tb-the.nb-add{background:var(--accent-soft);border:2px dashed var(--accent)}
+.tb-noi .gv-ctl{margin-top:8px}
+.tb-stage{height:320px}.tb-the{height:100%}
+.tb-chip{display:flex;gap:6px;flex-wrap:wrap}
+.tb-the-nd small{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.tb-the-nd b{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.tb-ring{overflow:hidden;padding-bottom:2px}.tb-noi .gv-ctl{position:relative;z-index:30}.tb-stage{overflow:visible}
+.tb-stage{height:350px}.tb-the{height:310px}@media (max-width:640px){.tb-stage{height:350px}.tb-the{height:310px}}

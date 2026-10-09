@@ -12,7 +12,7 @@ const GIOI_HAN_NGAY = 40;                 // số câu hỏi AI mỗi người m
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
-const ZALO = String(LIEN_HE.zalo || LIEN_HE.sdt || "").replace(/\D/g, ""), ZALO_LINK = "https://zalo.me/" + ZALO, ZALO_HT = LIEN_HE.zaloHienThi || LIEN_HE.zalo || LIEN_HE.sdt;
+const ZALO = String(LIEN_HE.zalo || LIEN_HE.sdt || "").replace(/\D/g, ""), ZALO_LINK = LIEN_HE.zaloLink || "https://zalo.me/" + ZALO, ZALO_HT = LIEN_HE.zaloHienThi || LIEN_HE.zalo || LIEN_HE.sdt;
 const khach = () => !nguoi;   // chưa đăng nhập: trợ lý đóng vai chuyên viên tư vấn tuyển sinh
 const vnd = n => Number(n || 0).toLocaleString("vi-VN") + "đ";
 const bo = t => String(t || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").toLowerCase();

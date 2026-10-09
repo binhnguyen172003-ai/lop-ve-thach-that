@@ -257,7 +257,7 @@ renderSched(CO_SO[0]);
 
 /* ================= Liên hệ & mạng xã hội ================= */
 const ZALO_LOP = String(LIEN_HE.zalo || LIEN_HE.sdt || "").replace(/\D/g, "");
-const ZALO_LINK = "https://zalo.me/" + ZALO_LOP;
+const ZALO_LINK = LIEN_HE.zaloLink || "https://zalo.me/" + ZALO_LOP;
 const mapCua = c => c.map || "https://maps.google.com/?q=" + encodeURIComponent(c.diaChi || "");
 $("#lien-he").innerHTML =
   `<div><dt>Gọi thầy</dt><dd class="num"><a href="tel:${esc(String(LIEN_HE.sdt || "").replace(/\D/g, ""))}">${esc(LIEN_HE.sdt)}</a></dd></div>
@@ -3343,17 +3343,32 @@ function banTinTatCa() {
   const t = x => x.luc || Date.parse((x.ngay || "1970-01-01") + "T08:00:00+07:00") || 0;
   return [...BANTIN_DONG, ...BAN_TIN.map((x, i) => ({ ...x, id: "", codinh: i }))].sort((a, b) => (b.ghim ? 1 : 0) - (a.ghim ? 1 : 0) || t(b) - t(a));
 }
-// "Tin nổi bật" ngay dưới mục Về lớp: tin tuyển sinh & thông báo mới nhất
+// "Tin nổi bật" ngay dưới mục Về lớp: vòng xoay tin tuyển sinh, thông báo, bài đăng (bấm thẻ giữa để mở link)
+let tbSig = "";
 function renderTinNoiBat() {
   const box = $("#tb-noi"); if (!box) return;
-  const all = banTinTatCa(), uu = all.filter(x => x.muc === "tuyensinh" || x.muc === "tinlop");
-  const ds = (uu.length ? uu : all).slice(0, 3);
-  box.innerHTML = `<div class="tb-dau"><p class="tb-t"><span class="tb-cham" aria-hidden="true"></span>Tin nổi bật</p>
-      <div class="tb-nut">${user && isTeacher ? `<button type="button" class="btn small primary" data-dang-tin>+ Đăng tin</button>` : ""}<a class="tb-xem" href="#ban-tin">Xem tất cả →</a></div></div>
-    ${ds.length ? `<ul class="tb-ds">${ds.map(x => `<li><a href="${esc(x.link && x.link.startsWith("#") ? x.link : "#ban-tin")}"><span class="tn-muc m-${esc(x.muc || "tinlop")}">${esc(MUC_TIN[x.muc] || "Thông báo")}</span>
-      <b>${esc(x.tieuDe || "")}</b><small>${esc(String(x.nd || "").split(/\n/)[0].slice(0, 110))}${String(x.nd || "").length > 110 ? "…" : ""}</small>
-      <em class="num">${x.luc ? fmtDate(x.luc) : x.ngay ? ngayVN(x.ngay) : ""}</em></a></li>`).join("")}</ul>`
+  const ds = banTinTatCa().slice(0, 8), them = !!(user && isTeacher);
+  const k = [them, ...ds.map(x => (x.id || x.codinh) + (x.tieuDe || "") + (x.ghim ? 1 : 0))].join("|");
+  if (k === tbSig) return; tbSig = k;
+  const lienKet = x => x.link || "#ban-tin";
+  const the = (x, i) => `<figure class="nb-card tb-the${x.anh ? " co-anh" : ""}" data-i="${i}">
+      ${x.anh ? `<img src="${esc(x.anh)}" alt="" loading="lazy" decoding="async" draggable="false">` : `<span class="tb-nen m-${esc(x.muc || "tinlop")}" aria-hidden="true"></span>`}
+      <div class="tb-the-nd"><span class="tb-chip"><span class="tn-muc m-${esc(x.muc || "tinlop")}">${esc(MUC_TIN[x.muc] || "Thông báo")}</span>${x.ghim ? `<span class="tn-ghim">📌 Ghim</span>` : ""}</span>
+        <b>${esc(x.tieuDe || "")}</b><small>${esc(String(x.nd || "").split(/\n/)[0].slice(0, 120))}${String(x.nd || "").length > 120 ? "…" : ""}</small>
+        <span class="tb-mo">${String(lienKet(x)).startsWith("#") ? "Xem chi tiết →" : "Mở link ↗"} <em class="num">${x.luc ? fmtDate(x.luc) : x.ngay ? ngayVN(x.ngay) : ""}</em></span></div></figure>`;
+  const n = ds.length + (them ? 1 : 0);
+  box.innerHTML = `<div class="tb-dau"><p class="tb-t"><span class="tb-cham" aria-hidden="true"></span>Tin nổi bật</p><a class="tb-xem" href="#ban-tin">Xem tất cả →</a></div>
+    ${n ? `<div class="gv-ring tb-ring" aria-roledescription="vòng xoay" aria-label="Tin nổi bật"><div class="gv-stage tb-stage">${ds.map(the).join("")}
+      ${them ? `<figure class="nb-card nb-add tb-the" data-i="${ds.length}" data-add="1"><div class="nb-add-in"><span class="nb-plus" aria-hidden="true">+</span><b>Đăng tin mới</b><small>Tin tuyển sinh, thông báo, hoạ cụ…<br>Có thể kèm ảnh và link</small></div></figure>` : ""}</div>
+      <div class="gv-ctl"><button type="button" class="gv-nav" aria-label="Tin trước">‹</button><div class="gv-dots">${Array.from({ length: n }, (_, i) => `<button type="button" data-i="${i}" aria-label="Tin ${i + 1}"></button>`).join("")}</div><button type="button" class="gv-nav" aria-label="Tin sau">›</button></div></div>`
       : `<p class="muted">Chưa có tin mới.</p>`}`;
+  if (!n) return;
+  const ring = box.querySelector(".tb-ring"), [p2, n2] = ring.querySelectorAll(".gv-nav");
+  vongXoay(ring, ring.querySelector(".tb-stage"), [...ring.querySelectorAll(".tb-the")], [...ring.querySelectorAll(".gv-dots button")], p2, n2, c => {
+    if (c.dataset.add) { moDangTin(); return; }
+    const x = ds[Number(c.dataset.i)], l = lienKet(x);
+    if (l.startsWith("#")) location.hash = l; else window.open(l, "_blank", "noopener");
+  });
 }
 function renderBanTin() {
   renderTinNoiBat();

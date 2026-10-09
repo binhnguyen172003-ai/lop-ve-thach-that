@@ -14,6 +14,7 @@ export const LIEN_HE = {
   sdt: "0328 193 134",                      // số gọi điện hiện trên web
   zalo: "0333684003",                       // số Zalo nhận tin tư vấn, viết liền (nút Zalo mở đúng số này)
   zaloHienThi: "0333 684 003",              // số Zalo hiện cho người xem đọc
+  zaloLink: "http://zaloapp.com/qr/p/wyzf2592bjz7", // link mã QR Zalo của thầy — nút "Zalo" mở link này
   email: "lopvedreamerstt@gmail.com",
   // map: link Google Maps của cơ sở (dán link rút gọn maps.app.goo.gl/… nếu có). Trên web chỉ hiện chữ "Chỉ đường".
   coSo: [
