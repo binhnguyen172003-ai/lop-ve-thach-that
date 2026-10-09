@@ -139,3 +139,9 @@ Việc đưa mã lên GitHub Pages **không tự triển khai Firebase Storage R
 Quyền: chỉ quản lý/giáo viên đã xác thực được tải lên và xóa; học viên đã duyệt được tải tài liệu của bài đã đăng. Dữ liệu bài chỉ lưu tên, loại, kích thước và đường dẫn; không lưu URL công khai có token tải xuống, không đưa tài liệu bài tập lên kho GitHub công khai.
 
 Khi xóa bài, hệ thống xóa tài liệu kèm theo. Nếu mạng hoặc quyền ngăn dọn tệp, thông báo rõ để quản lý kiểm tra thư mục `baitap/<mã bài>/` trong Storage. Việc đóng trình duyệt giữa lúc tải có thể để lại tệp tạm; quản lý có thể dọn những thư mục không có bài tương ứng trong Firestore.
+
+## Cấp khoá học cho học viên (nút "Vào học")
+- Khi **Duyệt** học viên, tick các khoá em được học (web tự tick sẵn theo lớp em đăng ký: Khối H → Hình hoạ cơ bản, Hình hoạ người, Màu; Khối V → Hình hoạ cơ bản, Hình hoạ tượng, Mỹ thuật 2; Vẽ cơ bản → Hình hoạ cơ bản; còn lại → tất cả).
+- Muốn đổi sau này: trang **Duyệt → Danh sách học viên**, bấm chọn/bỏ khoá ngay dưới cột Chương trình, web tự lưu.
+- Học viên đăng nhập: thẻ khoá được cấp ở mục "Các khoá học" hiện **✓ Khoá của em** và nút **Vào học →** mở thẳng khoá đó trong Giáo trình. Khoá chưa cấp hiện "Nhắn thầy để học thêm khoá này". Trong Giáo trình, em chỉ thấy các khoá được cấp.
+- Mất mạng / máy chủ không trả lời: học viên đã được duyệt vẫn học bằng quyền và bài đã lưu trên máy, web tự thử lại; không còn bị khoá oan.

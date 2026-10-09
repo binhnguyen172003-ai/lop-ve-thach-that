@@ -22,7 +22,7 @@ async function loadFirebase() {
 
 const $ = s => document.querySelector(s);
 // Trợ lý (chat + nhắc việc) tải riêng, không làm chậm trang
-const troLyPromise = import("./tro-ly.js?v=20261009b").catch(e => console.warn("Chưa tải được trợ lý", e));
+const troLyPromise = import("./tro-ly.js?v=20261009e").catch(e => console.warn("Chưa tải được trợ lý", e));
 window.__appOk = true;
 document.querySelectorAll(".slow-bar").forEach(el => el.remove());
 
@@ -55,7 +55,7 @@ addEventListener("error", e => {
 });
 /* ---------- Mở tức thì ở lần sau + dùng được khi mạng yếu ---------- */
 if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost") && !/[?&]khongcache/.test(location.search))
-  addEventListener("load", () => navigator.serviceWorker.register("sw.js?v=20261009b").catch(() => {}));
+  addEventListener("load", () => navigator.serviceWorker.register("sw.js?v=20261009e").catch(() => {}));
 
 /* ---------- Đo tốc độ: mở web kèm ?chandoan=1 để xem từng bước mất bao lâu ---------- */
 const DIAG = /[?&]chandoan/.test(location.search);
@@ -803,7 +803,7 @@ const GHI_CHU = {
     <button type="button" class="gv-nav" aria-label="Khoá sau">›</button>`;
   box.appendChild(ctl);
   const [prev, next] = ctl.querySelectorAll(".gv-nav");
-  vongXoay(box, stage, cards, [...ctl.querySelectorAll(".gv-dots button")], prev, next, () => { location.hash = "#dang-ky"; });
+  vongXoay(box, stage, cards, [...ctl.querySelectorAll(".gv-dots button")], prev, next, c => moTheKhoa(c));
 })();
 
 /* ================= Đội ngũ giáo viên ================= */
@@ -1274,6 +1274,7 @@ function renderLocks(state) {
   $("#gt-body").hidden = state !== "ok";
   $("#bt-body").hidden = state !== "ok";
   $("#lv-body").hidden = state !== "ok";
+  capNhatTheKhoa();
 }
 
 let pendingReq = null, editingReq = false, regDraftFor = null;
@@ -1339,19 +1340,71 @@ function renderAccount(pending) {
   setStep(2);
 }
 
+/* ---------- Khoá được cấp ----------
+   Học viên đã duyệt được cấp một số khoá (hocvien/<gmail>.khoaHoc, quản lý chọn lúc duyệt hoặc sửa trong danh sách).
+   Hồ sơ cũ chưa có khoaHoc thì suy ra từ lớp vẽ em đăng ký. Thẻ khoá ở trang chủ đổi thành "Vào học →". */
+const KHOA_GOC = ["Hình hoạ cơ bản", "Hình hoạ người", "Hình hoạ tượng", "Màu & bố cục màu", "Mỹ thuật 2", "Ôn thi cấp tốc"];
+const goc = k => String(k || "").split(" · ")[0].trim();
+let khoaMuon = null; // khoá học viên vừa bấm "Vào học" khi giáo trình chưa tải xong
+function khoaTuChuongTrinh(ct) {
+  const s = String(ct || "");
+  if (/khối h/i.test(s)) return ["Hình hoạ cơ bản", "Hình hoạ người", "Màu & bố cục màu"];
+  if (/khối v/i.test(s)) return ["Hình hoạ cơ bản", "Hình hoạ tượng", "Mỹ thuật 2"];
+  if (/cơ bản/i.test(s)) return ["Hình hoạ cơ bản"];
+  return KHOA_GOC.slice(); // học online, cấp tốc, chưa rõ: mở hết, thầy bớt sau
+}
+const khoaCuaHv = hv => {
+  const k = hv && Array.isArray(hv.khoaHoc) ? hv.khoaHoc.filter(x => KHOA_GOC.includes(x)) : [];
+  return k.length ? k : khoaTuChuongTrinh(hv && (hv.chuongTrinh || hv.lop));
+};
+function khoaDuocCap() {
+  if (isTeacher) return KHOA_GOC.slice();
+  return approved ? khoaCuaHv(myHv) : [];
+}
+const oChonKhoa = (id, chon) => `<div class="khoa-cap" data-kc="${esc(id)}">${KHOA_GOC.map(k =>
+  `<label><input type="checkbox" value="${esc(k)}"${chon.includes(k) ? " checked" : ""}><span>${esc(k)}</span></label>`).join("")}</div>`;
+const khoaDaChon = id => $$(`[data-kc="${CSS.escape(id)}"] input:checked`).map(i => i.value);
+function capNhatTheKhoa() {
+  const cap = khoaDuocCap(), daVao = !!user && !needVerify;
+  $$("#khoa-hoc .course").forEach(c => {
+    const vao = cap.includes(goc((c.querySelector("h3") || {}).textContent));
+    c.dataset.cta = vao ? "Vào học →" : approved ? "Nhắn thầy để học thêm khoá này →" : daVao ? "Xem tình trạng duyệt tài khoản →" : "Đăng ký học thử →";
+    c.classList.toggle("vao", vao);
+  });
+}
+function moTheKhoa(c) {
+  const ten = goc((c.querySelector("h3") || {}).textContent);
+  if (khoaDuocCap().includes(ten)) {
+    khoaMuon = ten; lessonId = null;
+    location.hash = "#giao-trinh";
+    if (lessons.length) {
+      renderLessons();
+      if (!lessons.some(l => goc(l.khoa) === ten)) toast(`Khoá ${ten} chưa có bài trên giáo trình, thầy sẽ cập nhật sớm.`);
+    }
+    return;
+  }
+  location.hash = approved ? "#lam-viec" : user && !needVerify ? "#tai-khoan" : "#dang-ky";
+}
+
 /* ---------- Giáo trình ---------- */
 function courses() { return [...new Set(lessons.map(l => l.khoa))]; }
 function renderLessons() {
-  const cs = courses();
-  $("#khoa-list").innerHTML = cs.map(c => `<option value="${esc(c)}">`).join("");
+  const csAll = courses();
+  $("#khoa-list").innerHTML = csAll.map(c => `<option value="${esc(c)}">`).join("");
   const selectedCourse = $("#bt-khoa").value || store.get(homeworkDraftKey(), {})?.["bt-khoa"];
-  $("#bt-khoa").innerHTML = cs.concat(["Chung"]).map(c => `<option>${esc(c)}</option>`).join("");
-  if (cs.concat(["Chung"]).includes(selectedCourse)) $("#bt-khoa").value = selectedCourse;
+  $("#bt-khoa").innerHTML = csAll.concat(["Chung"]).map(c => `<option>${esc(c)}</option>`).join("");
+  if (csAll.concat(["Chung"]).includes(selectedCourse)) $("#bt-khoa").value = selectedCourse;
+  // Học viên chỉ thấy các khoá được cấp (không khớp khoá nào thì vẫn hiện hết để em không bị trống trang).
+  const cap = khoaDuocCap();
+  let cs = isTeacher ? csAll : csAll.filter(c => cap.includes(goc(c)));
+  if (!cs.length) cs = csAll;
+  if (khoaMuon && csAll.length) { const k = cs.find(c => goc(c) === khoaMuon); if (k) course = k; khoaMuon = null; }
+  const hien = lessons.filter(l => cs.includes(l.khoa));
   // Quản lý luôn thấy khung này: lần đầu để nạp, về sau để cập nhật bài có sẵn (bài tự thêm không bị đụng tới).
   $("#seed-box").hidden = !isAdmin;
   $("#seed-title").textContent = lessons.length ? "Cập nhật giáo trình có sẵn" : "Giáo trình đang trống";
   $("#btn-seed").textContent = lessons.length ? "Cập nhật giáo trình có sẵn" : "Nạp giáo trình có sẵn";
-  const total = lessons.length, n = lessons.filter(l => myProgress.bai[l.id]).length;
+  const total = hien.length, n = hien.filter(l => myProgress.bai[l.id]).length;
   $("#gt-prog-text").textContent = `Đã học ${n}/${total} bài`;
   $("#gt-prog").style.width = total ? (n / total * 100) + "%" : "0";
   if (!cs.length) {
@@ -1696,16 +1749,18 @@ function renderRequests() {
         ${line("Trường", [r.truong, r.lopHoc].filter(Boolean).join(" · "))}${line("Nhà ở", r.khuVuc)}
         ${line("Mục tiêu", [r.khoi, r.namThi, r.mucTieu].filter(Boolean).join(" · "))}${line("Lời nhắn", r.ghiChu)}
       </div>
+      ${gv ? "" : `<div class="kc-wrap"><span class="muted">Cấp khoá học (em sẽ thấy nút "Vào học" ở các khoá này):</span>${oChonKhoa(r.id, khoaTuChuongTrinh(r.chuongTrinh))}</div>`}
       <div class="ctas" style="margin-top:12px"><button class="btn primary" data-ok="${esc(r.id)}">${gv ? "Duyệt giáo viên" : "Duyệt học viên"}</button>
         <button class="btn" data-no="${esc(r.id)}">Từ chối</button></div></div>`;
   }).join("");
   $$("#requests [data-ok]").forEach(b => b.onclick = async () => {
     const r = requests.find(x => x.id === b.dataset.ok); if (!r) return;
+    const khoaHoc = khoaDaChon(r.id);
     requests = requests.filter(x => x.id !== r.id); renderRequests();
     const { id, vaiTro, ...data } = r;
     const batch = writeBatch(db);
     if (vaiTro === "giaovien") batch.set(doc(db, "giaovien", r.id), { ten: r.ten, gmail: r.gmail, sdt: r.sdt || "", coso: r.coso || "", ghiChu: r.ghiChu || "", duyetLuc: Date.now() });
-    else batch.set(doc(db, "hocvien", r.id), { ...data, lop: r.chuongTrinh || r.lop || "", duyetLuc: Date.now() });
+    else batch.set(doc(db, "hocvien", r.id), { ...data, lop: r.chuongTrinh || r.lop || "", khoaHoc, duyetLuc: Date.now() });
     batch.delete(doc(db, "yeucau", r.id));
     toast(`Đã duyệt ${r.ten}. ${vaiTro === "giaovien" ? "Thầy/cô" : "Em"} ấy mở lại web là vào được.`);
     timed("Duyệt " + r.ten, batch.commit()).catch(() => { requests.unshift(r); renderRequests(); toast("Chưa duyệt được " + r.ten + ". Kiểm tra mạng rồi bấm lại.", "err"); });
@@ -1718,12 +1773,19 @@ function renderRoster() {
   $("#roster").innerHTML = `<thead><tr><th>Họ tên</th><th>Gmail</th><th>Chương trình</th><th>Cơ sở</th><th>Điện thoại</th><th>Đã học</th><th>Ngày duyệt</th><th></th></tr></thead><tbody>` +
     roster.map(r => {
       const p = progressAll[r.id]; const n = p && p.bai ? lessons.filter(l => p.bai[l.id]).length : 0;
-      return `<tr><td>${esc(r.ten)}${r.namSinh ? `<br><span class="muted num">Sinh năm ${esc(r.namSinh)}</span>` : ""}</td><td>${esc(r.gmail)}</td><td>${esc(r.chuongTrinh || r.lop)}</td><td>${esc(r.coso)}</td>
+      return `<tr><td>${esc(r.ten)}${r.namSinh ? `<br><span class="muted num">Sinh năm ${esc(r.namSinh)}</span>` : ""}</td><td>${esc(r.gmail)}</td><td>${esc(r.chuongTrinh || r.lop)}${oChonKhoa(r.id, khoaCuaHv(r))}</td><td>${esc(r.coso)}</td>
         <td class="num">${r.sdt ? "HV: " + esc(r.sdt) : ""}${r.sdtPh ? "<br>PH: " + esc(r.sdtPh) : ""}</td>
         <td class="num">${n}/${total}</td><td class="num">${fmtDate(r.duyetLuc)}</td>
         <td><button class="btn small" data-rm="${esc(r.id)}">Thu hồi</button></td></tr>`;
     }).join("") + `</tbody>`;
   $$("#roster [data-rm]").forEach(b => confirmButton(b, () => deleteDoc(doc(db, "hocvien", b.dataset.rm)), "Bấm lần nữa để thu hồi"));
+  $$("#roster .khoa-cap").forEach(box => box.onchange = () => {
+    const id = box.dataset.kc, r = roster.find(x => x.id === id), khoaHoc = khoaDaChon(id);
+    if (!khoaHoc.length) { toast("Cần chọn ít nhất một khoá.", "err"); renderRoster(); return; }
+    timed("Cấp khoá " + id, setDoc(doc(db, "hocvien", id), { khoaHoc }, { merge: true }))
+      .then(() => toast(`Đã cập nhật khoá học cho ${(r && r.ten) || id}.`))
+      .catch(() => { toast("Chưa lưu được. Kiểm tra mạng rồi chọn lại.", "err"); renderRoster(); });
+  });
 }
 
 function renderTeachers() {
@@ -2528,6 +2590,7 @@ function loadData(m) {
 const cachedSession = store.get(SESSION_KEY, null);
 function saveSession(pending) {
   store.set(SESSION_KEY, user ? { mail, ten: user.displayName || "", anh: user.photoURL || "", isAdmin, isTeacher, approved,
+    hv: myHv ? { ten: myHv.ten || "", chuongTrinh: myHv.chuongTrinh || "", lop: myHv.lop || "", coso: myHv.coso || "", khoaHoc: Array.isArray(myHv.khoaHoc) ? myHv.khoaHoc : null } : null,
     pending: pending ? { guiLuc: pending.guiLuc || Date.now() } : null } : null);
 }
 function showCachedSession() {
@@ -2535,7 +2598,7 @@ function showCachedSession() {
   const c = cachedSession;
   if (!c || !c.mail) { renderLocks("out"); renderAccount(false); return; }
   user = { displayName: c.ten, photoURL: c.anh, email: c.mail }; mail = c.mail;
-  isAdmin = !!c.isAdmin; isTeacher = !!c.isTeacher; approved = !!c.approved;
+  isAdmin = !!c.isAdmin; isTeacher = !!c.isTeacher; approved = !!c.approved; myHv = c.hv || null;
   renderLocks(isTeacher || approved ? "ok" : "pending");
   renderAccount(c.pending || false);
   if ((isTeacher || approved) && loadData(c.mail)) { renderLessons(); renderHomework(); return; }
@@ -2580,7 +2643,7 @@ async function onUser(u) {
   // Hỏi cả 4 thông tin cùng lúc thay vì lần lượt, để trang hiện nhanh hơn.
   const getData = async (col) => {
     try { const d = await getDoc(doc(db, col, mail)); return d.exists() ? (d.data() || {}) : null; }
-    catch (e) { if (e && e.code !== "permission-denied") serverIssue(e); return null; }
+    catch (e) { if (e && e.code !== "permission-denied") serverIssue(e); return undefined; } // undefined = chưa hỏi được, khác null = không có
   };
   const tr = performance.now();
   const [isAdm, gvDoc, hvDoc, ycDoc, tdDoc] = isAdminMail ? [true, null, null, null, null] : await Promise.all([
@@ -2592,6 +2655,21 @@ async function onUser(u) {
   isTeacher = isAdmin || !!gvDoc;
   approved = !isTeacher && !!hvDoc;
   myHv = hvDoc || null;
+  // Máy chủ không trả lời (mất mạng, lỗi tải): KHÔNG hạ quyền. Dùng quyền đã lưu trên máy và tự thử lại.
+  const hong = !isAdminMail && !isTeacher && !approved && (gvDoc === undefined || hvDoc === undefined);
+  if (hong) {
+    const cu = store.get(SESSION_KEY, null);
+    u.__thuLai = (u.__thuLai || 0) + 1;
+    if (u.__thuLai <= 20) setTimeout(() => { if (user === u) onUser(u); }, Math.min(5000 * u.__thuLai, 30000));
+    if (cu && cu.mail === mail && (cu.isTeacher || cu.approved)) {
+      isAdmin = !!cu.isAdmin; isTeacher = !!cu.isTeacher; approved = !!cu.approved; myHv = cu.hv || null;
+      if (u.__thuLai === 1) toast("Máy chủ chưa trả lời. Em vẫn vào học được bằng quyền đã lưu trên máy, web sẽ tự thử lại.", "err");
+    } else {
+      renderLocks("checking");
+      if (u.__thuLai === 1) toast("Chưa kiểm tra được tài khoản (mạng hoặc máy chủ chậm). Web đang tự thử lại…", "err");
+      return;
+    }
+  } else u.__thuLai = 0;
   let pending = !isTeacher && !approved && ycDoc ? ycDoc : false;
   // Phiếu lần trước bị máy chủ từ chối: tự gửi lại khi học viên mở web.
   const unsent = !isTeacher && !approved && !ycDoc ? store.get(UNSENT + mail, null) : null;
@@ -2706,7 +2784,10 @@ async function startFirebase() {
       try { renderTiles(); renderMyProg(); renderXHQL(); } catch (e) {}
     }, () => { xhLoi = true; try { renderXHQL(); } catch (e) {} });
   } catch (e) {
-    $$("[data-lock]").forEach(el => { el.hidden = false; el.innerHTML = `<h3>Chưa kết nối được máy chủ</h3><p class="muted">Mạng đang yếu. Có mạng lại, trang sẽ tự tải lại.</p><div class="ctas"><button class="btn primary" type="button" onclick="location.reload()">Tải lại ngay</button></div>`; });
+    // Đã có quyền lưu trên máy: không chặn bài học, chỉ báo nhẹ. Chưa có quyền thì hiện khung báo mạng yếu.
+    const coQuyen = cachedSession && cachedSession.mail && (cachedSession.isTeacher || cachedSession.approved);
+    if (coQuyen) toast("Mạng yếu: em vẫn học được bài đã lưu trên máy. Có mạng lại, web tự cập nhật.", "err");
+    else $$("[data-lock]").forEach(el => { el.hidden = false; el.innerHTML = `<h3>Chưa kết nối được máy chủ</h3><p class="muted">Mạng đang yếu. Có mạng lại, trang sẽ tự tải lại.</p><div class="ctas"><button class="btn primary" type="button" onclick="location.reload()">Tải lại ngay</button></div>`; });
     $("#login-status").textContent = "Mạng đang yếu nên chưa mở được đăng nhập. Có mạng lại, trang sẽ tự tải lại.";
     addEventListener("online", () => location.reload(), { once: true });
     return;

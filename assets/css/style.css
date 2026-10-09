@@ -977,6 +977,9 @@ html,body{overflow-x:clip}
   transition:transform .7s cubic-bezier(.22,.8,.3,1),opacity .7s,border-color .3s,box-shadow .3s;will-change:transform;backface-visibility:hidden;align-content:start}
 .cs-stage .course.on{border-color:var(--accent);box-shadow:0 22px 44px -12px rgba(10,14,30,.35)}
 .cs-stage .course.on::after{content:"Đăng ký học thử →";position:absolute;left:22px;bottom:18px;font-weight:700;font-size:.88rem;color:var(--accent)}
+.cs-stage .course[data-cta].on::after{content:attr(data-cta)}
+.cs-stage .course.vao.on::after{color:var(--ok)}
+.cs-stage .course.vao::before{content:"✓ Khoá của em";position:absolute;top:14px;right:14px;font-size:.72rem;font-weight:700;padding:3px 9px;border-radius:999px;background:var(--ok-soft);color:var(--ok)}
 .cs-stage .course .art{max-height:120px}
 @media (max-width:640px){
   .cs-stage{height:450px}
@@ -1900,3 +1903,10 @@ body.da-dn .dock{display:none!important}
 .kho-trong{padding:18px;border-radius:14px;border:1px dashed rgba(255,255,255,.2)}
 @media (max-width:760px){.kho-so{grid-template-columns:1fr 1fr}.kho-f{grid-template-columns:1fr 1fr}.kho-r{grid-template-columns:1.6fr 1fr 1fr .6fr;font-size:.8rem}.kho-r > span:nth-child(5){grid-column:1/-1}}
 .tl-ban{opacity:.7;font-size:.74rem}
+
+/* ===== Cấp khoá học cho học viên (Duyệt + Danh sách) ===== */
+.kc-wrap{margin-top:12px;display:grid;gap:6px;font-size:.85rem}
+.khoa-cap{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.khoa-cap label{display:inline-flex;align-items:center;gap:5px;font-size:.78rem;padding:3px 9px;border:1px solid var(--rule);border-radius:999px;cursor:pointer;white-space:nowrap}
+.khoa-cap input{margin:0;accent-color:var(--ok)}
+.khoa-cap label:has(input:checked){border-color:var(--ok);background:var(--ok-soft);color:var(--ok)}
