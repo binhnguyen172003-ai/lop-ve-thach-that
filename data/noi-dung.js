@@ -248,6 +248,7 @@ export const AVATAR = {
 // can: các khoá nên mua món này (để trợ lý gợi ý)
 export const HOA_CU = [
   { ma: "chi-koh", ten: "Bút chì KOH", loai: "Hình hoạ", gia: 12000, von: 8800, can: ["Cơ bản", "Khối H", "Khối V"] },
+  { ma: "tui-koh", ten: "Túi bút chì KOH (4 chiếc)", loai: "Hình hoạ", gia: 125000, von: 0, can: ["Cơ bản"] },
   { ma: "tay", ten: "Tẩy", loai: "Hình hoạ", gia: 8000, von: 5000, can: ["Cơ bản", "Khối H", "Khối V"] },
   { ma: "tay-ganh", ten: "Tẩy ganh", loai: "Hình hoạ", gia: 5000, von: 1800, can: ["Cơ bản", "Khối H", "Khối V"] },
   { ma: "tay-dat-set", ten: "Tẩy đất sét", loai: "Hình hoạ", gia: 10000, von: 6000, can: ["Khối H", "Khối V"] },
