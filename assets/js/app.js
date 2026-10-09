@@ -64,7 +64,7 @@ addEventListener("error", e => {
 });
 /* ---------- Mở tức thì ở lần sau + dùng được khi mạng yếu ---------- */
 if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost") && !/[?&]khongcache/.test(location.search))
-  addEventListener("load", () => navigator.serviceWorker.register("sw.js?v=20261010am").catch(() => {}));
+  addEventListener("load", () => navigator.serviceWorker.register("sw.js?v=20261010an").catch(() => {}));
 
 /* ---------- Đo tốc độ: mở web kèm ?chandoan=1 để xem từng bước mất bao lâu ---------- */
 const DIAG = /[?&]chandoan/.test(location.search);
@@ -290,16 +290,27 @@ function galTatCa() {
 // Tìm bài đăng trùng: cùng học viên + loại + ảnh (bài vẽ), hoặc cùng tiêu đề (bản tin).
 // Trong mỗi nhóm giữ một bản: ưu tiên bản chuyển tự động (seed-…), không bao giờ xoá bản seed-…
 function timBaiTrung() {
+  const laSeed = x => String(x.id).startsWith("seed-");
+  const khoa = x => String(x.hocVien || "").trim().toLowerCase() + "|" + (x.loai || "");
+  const ve = BAIVE_DONG.map(b => ({ ...b, kind: "baive" }));
+  // Bài đăng tay trùng với bản chuyển tự động (cùng học viên + loại) thì xoá bản đăng tay
+  const coSeed = new Set(ve.filter(laSeed).map(khoa));
+  const xoa = ve.filter(x => !laSeed(x) && coSeed.has(khoa(x)));
+  // Còn lại: cùng học viên + loại + cùng ảnh thì giữ bản mới nhất
   const nhom = new Map();
-  const them = (k, x) => { if (!nhom.has(k)) nhom.set(k, []); nhom.get(k).push(x); };
-  BAIVE_DONG.forEach(b => them("ve|" + String(b.hocVien || "").trim().toLowerCase() + "|" + (b.loai || "") + "|" + (b.anh ? b.anh.length : 0), { ...b, kind: "baive" }));
-  BANTIN_DONG.forEach(t => them("tin|" + String(t.tieuDe || "").trim().toLowerCase(), { ...t, kind: "bantin" }));
-  const xoa = [];
-  for (const ds of nhom.values()) {
-    if (ds.length < 2) continue;
-    const giu = ds.find(x => String(x.id).startsWith("seed-")) || ds.slice().sort((a, b) => (b.luc || 0) - (a.luc || 0))[0];
-    ds.forEach(x => { if (x.id !== giu.id && !String(x.id).startsWith("seed-")) xoa.push(x); });
-  }
+  ve.filter(x => !laSeed(x) && !coSeed.has(khoa(x))).forEach(x => {
+    const k = khoa(x) + "|" + (x.anh ? x.anh.length : 0);
+    if (!nhom.has(k)) nhom.set(k, []); nhom.get(k).push(x);
+  });
+  for (const ds of nhom.values()) if (ds.length > 1) ds.sort((a, b) => (b.luc || 0) - (a.luc || 0)).slice(1).forEach(x => xoa.push(x));
+  // Bản tin trùng tiêu đề: giữ bản chuyển tự động, không thì giữ bản mới nhất
+  const tin = BANTIN_DONG.map(t => ({ ...t, kind: "bantin" }));
+  const tenTin = t => String(t.tieuDe || "").trim().toLowerCase();
+  const tinSeed = new Set(tin.filter(laSeed).map(tenTin));
+  tin.filter(t => !laSeed(t) && tinSeed.has(tenTin(t))).forEach(t => xoa.push(t));
+  const nhomTin = new Map();
+  tin.filter(t => !laSeed(t) && !tinSeed.has(tenTin(t))).forEach(t => { const k = tenTin(t); if (!nhomTin.has(k)) nhomTin.set(k, []); nhomTin.get(k).push(t); });
+  for (const ds of nhomTin.values()) if (ds.length > 1) ds.sort((a, b) => (b.luc || 0) - (a.luc || 0)).slice(1).forEach(x => xoa.push(x));
   return xoa;
 }
 function renderGallery() {
@@ -3912,7 +3923,7 @@ async function chuyenBaiTinhSangWeb() {
     ...BAI_NOI_BAT.map((b, i) => ({ kind: "baive", id: "seed-nb-" + i, b })),
     ...BAN_TIN.map((t, i) => ({ kind: "bantin", id: "seed-tin-" + i, t })),
   ];
-  let xong = 0, loi = 0;
+  let xong = 0, loi = 0; const loiTen = [];
   for (const x of ds) {
     try {
       const ref = doc(db, x.kind, x.id);
@@ -3931,11 +3942,11 @@ async function chuyenBaiTinhSangWeb() {
         await setDoc(ref, data);
       }
       xong++;
-    } catch (e) { loi++; console.warn("Chưa chuyển được", x.id, e); }
+    } catch (e) { loi++; loiTen.push(x.b ? x.b.hocVien || x.b.loai : x.t ? x.t.tieuDe : x.id); console.warn("Chưa chuyển được", x.id, e); }
   }
   dangChuyenWeb = false;
   if (!loi) { try { localStorage.setItem("lvkv-chuyen-web-v1", "1"); } catch (e) {} toast(`Đã chuyển ${xong} mục sang bài đăng web.`); }
-  else toast(`Mới chuyển được ${xong} mục, còn ${loi} mục lỗi. Tải lại trang để thử tiếp.`, "err");
+  else toast(`Mới chuyển được ${xong} mục, còn ${loi} mục lỗi (${loiTen.slice(0, 3).join(", ")}). Tải lại trang để thử tiếp.`, "err");
 }
 // Quản lý đặt hạng Top k cho một bài (k = 0: bỏ khỏi Top). Mỗi vị trí trong tuần chỉ có 1 bài.
 async function datTop(id, k) {
