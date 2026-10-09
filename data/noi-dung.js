@@ -213,7 +213,7 @@ export const BAI_NOI_BAT = [
   { ngay: "2026-10-09", anh: "assets/img/bai-ve/linh-mau.webp", hocVien: "Linh", loai: "Màu", trung: true },
   { ngay: "2026-10-09", anh: "assets/img/bai-ve/thuy-chan-dung.webp", hocVien: "Thùy", loai: "Hình hoạ người", ghiChu: "Chân dung", trung: true },
   { ngay: "2026-10-09", anh: "assets/img/bai-ve/nam-sac-do.webp", hocVien: "Nam", loai: "Mỹ thuật 2", ghiChu: "Bố cục sắc độ", trung: true },
-  { ngay: "2026-07-01", hang: 1, anh: "assets/img/bai-ve/hoan-vua.webp", hocVien: "Đặng Huy Hoàn", loai: "Hình hoạ tượng", ghiChu: "Tượng vua · bài khổ lớn" },
+  { ngay: "2026-07-01", hang: 1, anh: "assets/img/bai-ve/hoan-vua.webp", hocVien: "Đặng Huy Hoàn", loai: "Tượng", ghiChu: "Tượng vua · bài khổ lớn" },
   { ngay: "2026-10-09", tg: true, anh: "assets/img/bai-ve/huyen-linh-mau.webp", hocVien: "Kiều Huyền Linh", loai: "Bài mẫu trợ giảng · Màu", trung: true },
 ];
 

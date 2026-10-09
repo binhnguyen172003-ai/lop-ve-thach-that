@@ -2443,3 +2443,6 @@ body.hop-mo{overflow:hidden}
 .gallery .gal-o{content-visibility:visible;contain:none}
 .gallery .gal-b img,
 .gallery .gal-b:hover img{transform:none;backface-visibility:visible;will-change:auto;transition:none}
+
+/* Nhãn TOP nằm giữa phía trên ảnh để không đè lên dấu ⋮ ở góc trái */
+.gallery .gal-o > .gal-top{left:50%;right:auto;transform:translateX(-50%)}

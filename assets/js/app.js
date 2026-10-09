@@ -16,7 +16,7 @@ let getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleT
 // Khai báo ở đầu file để các phần trang chủ (bài vẽ, bản tin) biết ai đang xem ngay từ đầu.
 let user = null, mail = "", isAdmin = false, isTeacher = false, approved = false, needVerify = false;
 // Bài vẽ thầy cô đăng trên web (Firestore: baive). Bài được quản lý chọn Top 1–5 thì thành "bài nổi bật".
-let BAIVE_DONG = [], BANTIN_DONG = [], baiVeLoi = false, banTinLoi = false, gallerySig = "";
+let BAIVE_DONG = [], BANTIN_DONG = [], baiVeLoi = false, banTinLoi = false, gallerySig = "", baiHen = 0;
 // Biệt danh mặc định theo người vẽ trong danh sách giáo viên (ví dụ Cường: "Giáo viên Hình hoạ · Dạy tượng"); bài đăng không ghi biệt danh riêng thì dùng mặc định này
 const biDanhCua = b => b.biDanh || (GIAO_VIEN.find(g => g.ten === b.hocVien) || {}).biDanh || "";
 const NB_DONG = () => BAIVE_DONG.filter(b => (b.hang >= 1 && b.hang <= 5) || b.mau).map(b => ({ ...b, ngay: b.ngayTop || b.ngay, dong: true }));
@@ -64,7 +64,7 @@ addEventListener("error", e => {
 });
 /* ---------- Mở tức thì ở lần sau + dùng được khi mạng yếu ---------- */
 if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost") && !/[?&]khongcache/.test(location.search))
-  addEventListener("load", () => navigator.serviceWorker.register("sw.js?v=20261010ar").catch(() => {}));
+  addEventListener("load", () => navigator.serviceWorker.register("sw.js?v=20261010as").catch(() => {}));
 
 /* ---------- Đo tốc độ: mở web kèm ?chandoan=1 để xem từng bước mất bao lâu ---------- */
 const DIAG = /[?&]chandoan/.test(location.search);
@@ -3463,7 +3463,8 @@ async function startFirebase() {
     // Bài vẽ thầy cô đăng + Top 5 quản lý chọn: ai cũng xem được trên trang chủ
     onSnapshot(collection(db, "baive"), snap => {
       BAIVE_DONG = snap.docs.map(d => ({ id: d.id, ...d.data() })).map(b => ({ ...b, hang: Number(b.hang) || 0 })); baiVeLoi = false;
-      renderGallery(); veTopRank(); dispatchEvent(new Event("baive-doi"));
+      // Gom các lần dữ liệu thay đổi liên tiếp (ví dụ khi đang chuyển bài) thành một lần vẽ lại, tránh ảnh chớp
+      clearTimeout(baiHen); baiHen = setTimeout(() => { renderGallery(); veTopRank(); dispatchEvent(new Event("baive-doi")); }, 250);
       try { renderTop5(); renderTiles(); } catch (e) {}
       if (isAdmin) setTimeout(chuyenBaiTinhSangWeb, 2000);
     }, () => { baiVeLoi = true; try { renderTop5(); } catch (e) {} });
