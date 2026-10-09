@@ -64,7 +64,7 @@ addEventListener("error", e => {
 });
 /* ---------- Mở tức thì ở lần sau + dùng được khi mạng yếu ---------- */
 if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost") && !/[?&]khongcache/.test(location.search))
-  addEventListener("load", () => navigator.serviceWorker.register("sw.js?v=20261010an").catch(() => {}));
+  addEventListener("load", () => navigator.serviceWorker.register("sw.js?v=20261010ao").catch(() => {}));
 
 /* ---------- Đo tốc độ: mở web kèm ?chandoan=1 để xem từng bước mất bao lâu ---------- */
 const DIAG = /[?&]chandoan/.test(location.search);
@@ -296,6 +296,9 @@ function timBaiTrung() {
   // Bài đăng tay trùng với bản chuyển tự động (cùng học viên + loại) thì xoá bản đăng tay
   const coSeed = new Set(ve.filter(laSeed).map(khoa));
   const xoa = ve.filter(x => !laSeed(x) && coSeed.has(khoa(x)));
+  // Bản chuyển từ danh sách "nổi bật" trùng với bản chuyển từ danh sách "bài vẽ" thì xoá bản seed-nb
+  const seedVe = new Set(ve.filter(x => String(x.id).startsWith("seed-ve-")).map(khoa));
+  ve.filter(x => String(x.id).startsWith("seed-nb-") && seedVe.has(khoa(x))).forEach(x => xoa.push(x));
   // Còn lại: cùng học viên + loại + cùng ảnh thì giữ bản mới nhất
   const nhom = new Map();
   ve.filter(x => !laSeed(x) && !coSeed.has(khoa(x))).forEach(x => {
@@ -873,7 +876,7 @@ const GHI_CHU = {
   const nhanVienTen = b => (b.chucVu && b.chucVu !== "Học viên" ? b.chucVu : "Giáo viên");
   const nhanVienLop = b => ({ "Trợ giảng": "tg", "Quản lý": "ql" })[b.chucVu] || "gv"; // mỗi vai trò một khung màu
   const locNoiBat = k => { const daCo = new Set();
-    const ds = [...BAI_NOI_BAT.filter((b, i) => !BAIVE_DONG.some(x => x.id === "seed-nb-" + i)), ...BAIVE_DONG.map(b => ({ ...b, ngay: (b.hang >= 1 && b.hang <= 5 && b.ngayTop) || b.ngay, dong: true }))].filter(b => mucCua(b) === k)
+    const ds = [...BAI_NOI_BAT.filter((b, i) => !b.trung && !BAIVE_DONG.some(x => x.id === "seed-nb-" + i)), ...BAIVE_DONG.map(b => ({ ...b, ngay: (b.hang >= 1 && b.hang <= 5 && b.ngayTop) || b.ngay, dong: true }))].filter(b => mucCua(b) === k)
       .map(b => ({ ...b, nv: nhanVienBai(b), top: !b.tg && !nhanVienBai(b) && b.hang >= 1 && b.hang <= 5 ? b.hang : 0 }))
       .sort((a, b) => (a.top || 99) - (b.top || 99) || (b.dong ? 1 : 0) - (a.dong ? 1 : 0) || (tuoi(a) || 0) - (tuoi(b) || 0) || (b.luc || 0) - (a.luc || 0));
     ds.forEach(b => { if (b.top) { if (daCo.has(b.top)) b.top = 0; else daCo.add(b.top); } });
@@ -3920,7 +3923,7 @@ async function chuyenBaiTinhSangWeb() {
   const layFile = async u => { const bl = await (await fetch(new URL(u, location.href))).blob(); return new File([bl], "anh.jpg", { type: bl.type || "image/jpeg" }); };
   const ds = [
     ...BAI_VE.map((b, i) => ({ kind: "baive", id: "seed-ve-" + i, b })).filter(x => x.b.anh),
-    ...BAI_NOI_BAT.map((b, i) => ({ kind: "baive", id: "seed-nb-" + i, b })),
+    ...BAI_NOI_BAT.map((b, i) => ({ kind: "baive", id: "seed-nb-" + i, b })).filter(x => !x.b.trung),
     ...BAN_TIN.map((t, i) => ({ kind: "bantin", id: "seed-tin-" + i, t })),
   ];
   let xong = 0, loi = 0; const loiTen = [];
