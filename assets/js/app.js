@@ -5,7 +5,7 @@
 import { firebaseConfig, ADMIN_EMAIL, EMAIL_NHAN_THONG_BAO } from "../../config/firebase-config.js?v=20261009b";
 import { FILE_LIMITS, FILE_TYPES, fileExt, fileSize, validateFiles, attachmentStorage, uploadError, validAttachmentPath } from "./attachments.js?v=20261009b";
 import { GIAO_TRINH_MAU as GT_LO_TRINH } from "../../data/giao-trinh-mau.js?v=20261010bf";
-import { LIEN_HE, NAM_THI, LICH_THI, BO_LOC_TRUONG, CA_HOC, THOI_GIAN_BIEU, BAI_VE, BANG_VANG, TRUONG, MUC_TIEU, GIAO_VIEN, VIDEO_BIA, BAI_NOI_BAT, THANH_TUU_TRAO, XP_THUONG, AVATAR, SO_DU_THI, HOA_CU, TON_DAU_KY, BAN_TIN, SAN_PHAM } from "../../data/noi-dung.js?v=20261010bf";
+import { LIEN_HE, NAM_THI, LICH_THI, BO_LOC_TRUONG, CA_HOC, THOI_GIAN_BIEU, BAI_VE, BANG_VANG, TRUONG, MUC_TIEU, GIAO_VIEN, VIDEO_BIA, BAI_NOI_BAT, THANH_TUU_TRAO, XP_THUONG, AVATAR, SO_DU_THI, HOA_CU, TON_DAU_KY, BAN_TIN, SAN_PHAM } from "../../data/noi-dung.js?v=20261010bh";
 
 // Firebase được tải riêng, để phần giới thiệu vẫn chạy kể cả khi mạng chậm hoặc chưa cấu hình.
 const FB = "https://www.gstatic.com/firebasejs/10.12.2/";
@@ -64,7 +64,7 @@ addEventListener("error", e => {
 });
 /* ---------- Mở tức thì ở lần sau + dùng được khi mạng yếu ---------- */
 if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost") && !/[?&]khongcache/.test(location.search))
-  addEventListener("load", () => navigator.serviceWorker.register("sw.js?v=20261010bf").catch(() => {}));
+  addEventListener("load", () => navigator.serviceWorker.register("sw.js?v=20261010bh").catch(() => {}));
 
 /* ---------- Đo tốc độ: mở web kèm ?chandoan=1 để xem từng bước mất bao lâu ---------- */
 const DIAG = /[?&]chandoan/.test(location.search);
@@ -187,34 +187,37 @@ function renderExams() {
   } else {
     $("#cd-lead").innerHTML = `<p>Mùa thi này đã kết thúc. Lớp sẽ cập nhật lịch năm sau.</p>`;
   }
-  // Điện thoại: chỉ hiện 3 kỳ thi gần nhất, bấm để xem cả lịch
-  const gan = new Set(shown.filter(e => e.n >= 0).sort((a, b) => a.n - b.n).slice(0, 3));
-  // Sơ đồ cây: thân là dòng thời gian, mỗi tháng một mốc, mỗi ngày thi một nhánh, các trường là lá
+
+  // Dòng thời gian NẰM NGANG: trục ở giữa, mỗi ngày thi một mốc, thẻ so le trên – dưới.
   const MA = { XD: "HUCE", QG: "SIS", SP: "NUAE", MTCN: "MTCN", HAU: "HAU" };
   const mau = t => t === "THPT" ? "#8a919c" : (TRUONG[MA[t]] || {}).mau || "#5b6068";
-  let side = 0;
-  $("#months").className = "months tl" + ($("#months").classList.contains("gon") ? " gon" : "");
-  $("#months").innerHTML = Object.keys(MONTH).map(m => {
-    const evs = shown.filter(e => e.ngay.slice(5, 7) === m);
-    if (!evs.length) return "";
-    const ngays = [...new Set(evs.map(e => e.ngay))].sort();
-    return `<div class="tl-m${evs.some(e => gan.has(e)) ? "" : " xa"}"><span>${MONTH[m]}</span></div>` + ngays.map(ng => {
-      const g = evs.filter(e => e.ngay === ng), e0 = g[0], qua = e0.n < 0;
-      return `<div class="tl-n ${side++ % 2 ? "R" : "L"}${qua ? " past" : ""}${g.some(e => gan.has(e)) ? "" : " xa"}">
-        <i class="tl-dot" style="--c:${mau(e0.t)}"></i>
-        <div class="tl-card">
-          <div class="tl-d"><b class="num">${esc(e0.hien)}</b><span class="num">${qua ? "Đã thi" : "Còn " + e0.n + " ngày"}</span></div>
-          <ul>${g.map(e => `<li style="--c:${mau(e.t)}"><i>${esc(e.t === "THPT" ? "THPT" : MA[e.t] || e.t)}</i><span>${esc(e.truong.replace("ĐHQG Hà Nội · Trường KH Liên ngành & Nghệ thuật", "ĐHQG HN · KH Liên ngành & Nghệ thuật"))}<em>${esc(e.dot)}</em></span></li>`).join("")}</ul>
-        </div></div>`;
-    }).join("");
+  const tenGon = s => s.replace("ĐHQG Hà Nội · Trường KH Liên ngành & Nghệ thuật", "ĐHQG Hà Nội · KH Liên ngành & Nghệ thuật");
+  const ngays = [...new Set(shown.map(e => e.ngay))].sort();
+  const box = $("#months");
+  box.className = "months lth";
+  if (!ngays.length) { box.innerHTML = `<p class="muted">Chưa có lịch thi cho lựa chọn này.</p>`; return; }
+
+  let thangDaRa = "";
+  const cot = ngays.map((ng, i) => {
+    const g = shown.filter(e => e.ngay === ng), e0 = g[0], qua = e0.n < 0, tren = i % 2 === 0;
+    const thang = ng.slice(5, 7);
+    const nhan = thang !== thangDaRa ? (thangDaRa = thang, `<span class="lth-thang">${esc(MONTH[thang] || "")}</span>`) : "";
+    const the = `<article class="lth-the">
+        <p class="lth-ngay"><b class="num">${esc(e0.hien)}</b><span class="num">${qua ? "Đã thi" : "Còn " + e0.n + " ngày"}</span></p>
+        <ul>${g.map(e => `<li style="--c:${mau(e.t)}"><i>${esc(e.t === "THPT" ? "THPT" : MA[e.t] || e.t)}</i><span>${esc(tenGon(e.truong))}<em>${esc(e.dot)}</em></span></li>`).join("")}</ul>
+      </article>`;
+    return `<div class="lth-cot${qua ? " qua" : ""}">
+        <div class="lth-tren">${tren ? the + `<i class="lth-can"></i>` : ""}</div>
+        <div class="lth-truc"><i class="lth-cham" style="--c:${mau(e0.t)}"></i>${nhan}</div>
+        <div class="lth-duoi">${tren ? "" : `<i class="lth-can"></i>` + the}</div>
+      </div>`;
   }).join("");
-  const con = shown.length - gan.size;
-  let more = $("#months-more");
-  if (!more) { more = document.createElement("button"); more.type = "button"; more.id = "months-more"; more.className = "btn months-more"; $("#months").after(more);
-    more.onclick = () => { $("#months").classList.toggle("gon"); renderExams(); }; }
-  if (!$("#months").dataset.init) { $("#months").dataset.init = "1"; $("#months").classList.add("gon"); }
-  more.hidden = con <= 0;
-  more.textContent = $("#months").classList.contains("gon") ? `Xem cả lịch (${shown.length} kỳ thi) ▼` : "Thu gọn ▲";
+  box.innerHTML = `<div class="lth-cuon" id="lth-cuon" tabindex="0" role="group" aria-label="Dòng thời gian các kỳ thi"><div class="lth-hang">${cot}</div></div>
+    <p class="lth-goiy muted">Vuốt ngang (hoặc giữ Shift + lăn chuột) để xem hết dòng thời gian.</p>`;
+  // Mở ra là cuộn tới kỳ thi gần nhất cho dễ nhìn
+  const cuon = $("#lth-cuon"), toi = [...box.querySelectorAll(".lth-cot")].find(c => !c.classList.contains("qua"));
+  if (cuon && toi) cuon.scrollLeft = Math.max(0, toi.offsetLeft - 16);
+  const more = $("#months-more"); if (more) more.hidden = true;
 }
 $("#exam-filters").innerHTML = [{ truong: "all", ten: "Tất cả" }, ...BO_LOC_TRUONG]
   .map(f => `<button class="tab" data-f="${esc(f.truong)}" aria-selected="${f.truong === "all"}">${esc(f.ten)}</button>`).join("");

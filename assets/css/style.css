@@ -2477,3 +2477,56 @@ body.hop-mo{overflow:hidden}
 /* Khoảng cách giữa khung tài khoản và các mục dưới cho đều nhau */
 #v-tai-khoan .acc-tiles{margin-block:20px}
 #v-tai-khoan .acc-xh{margin-top:20px;padding-top:24px}
+
+/* ================= Lịch thi: dòng thời gian NẰM NGANG (điện thoại và máy tính đều dễ nhìn) ================= */
+.months.lth{display:block;margin-top:22px}
+.lth-cuon{overflow-x:auto;overflow-y:hidden;scroll-snap-type:x proximity;overscroll-behavior-x:contain;
+  padding:4px 2px 10px;scrollbar-width:thin;-webkit-overflow-scrolling:touch;
+  /* mờ dần hai mép để thấy rõ là còn cuộn được */
+  -webkit-mask-image:linear-gradient(90deg,transparent 0,#000 18px,#000 calc(100% - 18px),transparent 100%);
+          mask-image:linear-gradient(90deg,transparent 0,#000 18px,#000 calc(100% - 18px),transparent 100%)}
+.lth-cuon:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:12px}
+.lth-hang{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(230px,1fr);align-items:stretch;
+  min-width:max-content;padding-inline:18px}
+.lth-cot{display:grid;grid-template-rows:1fr 58px 1fr;scroll-snap-align:center;padding-inline:7px}
+.lth-cot.qua{opacity:.42}
+
+/* Nửa trên và nửa dưới: thẻ dồn về phía trục để cuống nối liền mạch */
+.lth-tren{display:flex;flex-direction:column;justify-content:flex-end;align-items:stretch}
+.lth-duoi{display:flex;flex-direction:column;justify-content:flex-start;align-items:stretch}
+.lth-can{width:2px;height:20px;background:var(--rule);margin-left:26px;flex:none}
+
+/* Trục ngang chạy suốt, mỗi cột một đoạn nên nối thành một đường liền */
+.lth-truc{position:relative;display:flex;align-items:center}
+.lth-truc::before{content:"";position:absolute;left:-7px;right:-7px;top:50%;height:2px;margin-top:-1px;background:var(--rule)}
+.lth-cham{position:relative;width:13px;height:13px;margin-left:20px;border-radius:50%;background:var(--c);
+  box-shadow:0 0 0 4px var(--paper),0 0 0 6px color-mix(in srgb,var(--c) 45%,transparent)}
+.lth-thang{position:absolute;left:0;bottom:4px;font:800 .7rem var(--f-display);letter-spacing:.12em;
+  text-transform:uppercase;color:var(--graphite);white-space:nowrap}
+
+/* Thẻ một ngày thi */
+.lth-the{background:var(--sheet);border:1px solid var(--rule);border-radius:14px;padding:11px 13px;display:grid;gap:8px}
+.lth-ngay{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin:0}
+.lth-ngay b{font:italic 600 1.3rem/1 var(--f-serif)}
+.lth-ngay span{font-size:.74rem;font-weight:700;color:var(--accent);white-space:nowrap}
+.lth-the ul{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.lth-the li{display:grid;grid-template-columns:auto 1fr;gap:8px;align-items:start;font-size:.84rem;line-height:1.35}
+.lth-the li i{font:800 .6rem/1 var(--f-display);font-style:normal;letter-spacing:.04em;color:#fff;background:var(--c);
+  padding:4px 6px;border-radius:6px;white-space:nowrap}
+.lth-the li em{display:block;font-style:normal;font-size:.74rem;color:var(--graphite);margin-top:2px}
+.lth-goiy{margin-top:6px;font-size:.78rem;text-align:center}
+
+/* Máy tính: thẻ rộng rãi hơn, bỏ dòng gợi ý vuốt khi đã nhìn thấy hết */
+@media (min-width:1024px){
+  .lth-hang{grid-auto-columns:minmax(250px,1fr)}
+  .lth-the{padding:12px 14px}
+}
+/* Điện thoại: cột hẹp lại vừa màn hình, chữ nhỏ hơn một chút */
+@media (max-width:640px){
+  .lth-hang{grid-auto-columns:minmax(200px,78vw);padding-inline:12px}
+  .lth-cot{grid-template-rows:1fr 52px 1fr}
+  .lth-ngay b{font-size:1.15rem}
+  .lth-the li{font-size:.8rem}
+  .lth-goiy{text-align:left;padding-inline:12px}
+}
+@media (prefers-reduced-motion:no-preference){.lth-cuon{scroll-behavior:smooth}}
