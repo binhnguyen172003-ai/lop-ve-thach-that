@@ -2322,3 +2322,7 @@ body.hop-mo{overflow:hidden}
 .rk-star{font-style:normal;color:var(--rc);letter-spacing:.12em}
 .rk-xp{font-weight:700;color:var(--rc)}
 @media (max-width:640px){.rk-stage{height:300px}.rk-stage .rk-card{width:min(70vw,230px);margin-left:calc(min(70vw,230px) / -2);height:270px}}
+.tt-stage{height:440px}
+.tt-stage .tt-car{height:400px;width:290px;margin-left:-145px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:8px;padding:20px 16px;text-align:center;cursor:pointer;color:var(--ink)}
+.tt-car.on{box-shadow:0 22px 44px -14px color-mix(in srgb,var(--tc) 45%,transparent)}
+@media (max-width:640px){.tt-stage{height:420px}.tt-stage .tt-car{width:min(70vw,260px);margin-left:calc(min(70vw,260px) / -2);height:380px}}

@@ -643,6 +643,17 @@ const cachXpHTML = () => `<ul class="xh-xpl">
     <li><b>+${XP.diemGioi}</b><span>Mỗi bài được chấm từ 8 điểm</span></li>
     <li><b>+${XP.noiBat}</b><span>Có bài lên Bài vẽ nổi bật</span></li>
     <li><b>+${XP.top1}</b><span>Thêm nếu bài đạt Top 1</span></li></ul>`;
+const ttCardHTML = a => `${huyHieuTT(a, 4, "lg")}<b>${a.ten}</b><span>${a.mo}</span>
+      <ol>${a.moc.map((m, j) => `<li style="--cc:${CAP[j + 1].mau}"><i>${CAP[j + 1].ten}</i>${m} ${a.dv}</li>`).join("")}</ol>${a.trao ? `<small>Thầy trao</small>` : ""}`;
+// Thành tựu cần săn trên trang Xếp hạng: vòng xoay thẻ (giống các hạng)
+const thanhTuuVongHTML = () => `<h3>Thành tựu cần săn</h3><p class="muted">Thành tựu giữ trọn đời. Mỗi thành tựu có 4 cấp: <b style="color:${CAP[1].mau}">Đồng</b> → <b style="color:${CAP[2].mau}">Bạc</b> → <b style="color:${CAP[3].mau}">Vàng</b> → <b style="color:${CAP[4].mau}">Kim Cương</b>.</p>
+    <div class="gv-ring tt-ring" aria-roledescription="vòng xoay" aria-label="Thành tựu cần săn">
+      <div class="gv-stage tt-stage">${THANH_TUU.map((a, i) => `<article class="gv tt-s tt-car" data-i="${i}" style="--tc:${a.mau}" aria-roledescription="thẻ" aria-label="${i + 1} / ${THANH_TUU.length}: ${esc(a.ten)}">${ttCardHTML(a)}</article>`).join("")}</div>
+      <div class="gv-ctl">
+        <button type="button" class="gv-nav" id="tt-prev" aria-label="Thành tựu trước">‹</button>
+        <div class="gv-dots" id="tt-dots">${THANH_TUU.map((a, i) => `<button type="button" data-i="${i}" aria-label="${esc(a.ten)}"></button>`).join("")}</div>
+        <button type="button" class="gv-nav" id="tt-next" aria-label="Thành tựu sau">›</button>
+      </div></div>`;
 const thanhTuuSanHTML = () => `<h3>Thành tựu cần săn</h3><p class="muted">Thành tựu giữ trọn đời. Mỗi thành tựu có 4 cấp: <b style="color:${CAP[1].mau}">Đồng</b> → <b style="color:${CAP[2].mau}">Bạc</b> → <b style="color:${CAP[3].mau}">Vàng</b> → <b style="color:${CAP[4].mau}">Kim Cương</b>.</p>
     <div class="tt-show">${THANH_TUU.map(a => `<div class="tt-s" style="--tc:${a.mau}">${huyHieuTT(a, 4, "lg")}<b>${a.ten}</b><span>${a.mo}</span>
       <ol>${a.moc.map((m, j) => `<li style="--cc:${CAP[j + 1].mau}"><i>${CAP[j + 1].ten}</i>${m} ${a.dv}</li>`).join("")}</ol>${a.trao ? `<small>Thầy trao</small>` : ""}</div>`).join("")}</div>`;
@@ -694,7 +705,7 @@ document.addEventListener("keydown", e => {
   $("#xh-top").innerHTML = ds.length ? `<h3>Học viên đang leo hạng</h3><div class="xh-hv">${ds.map(({ t, k }) => `<div class="t${k.i}" data-rk="${esc(t)}" role="button" tabindex="0" style="--rc:${k.r.mau === "rainbow" ? "#ffd6ff" : k.r.mau}">${huyHieu(k.r, k.i, "sm", t)}<b>${esc(t)}</b><span>Hạng ${k.r.ma} · ${k.r.kim} · ${k.r.ten} · ${k.xp} XP</span>${(m => m.length ? `<span class="xh-tt">${m.map(a => huyHieuTT(a, a.cap, "xs")).join("")}</span>` : "")(tinhThanhTuu(null, null, null, t).filter(a => a.cap))}</div>`).join("")}</div>
     <p class="muted xh-note">Tính từ bài vẽ nổi bật. Hạng đầy đủ (gồm đi học, bài tập) xem trong Tài khoản của từng em.</p>` : "";
   const tt = $("#xh-thanhtuu");
-  if (tt) tt.innerHTML = thanhTuuSanHTML();
+  if (tt) { tt.innerHTML = thanhTuuVongHTML(); vongXoay(tt, tt.querySelector(".tt-stage"), [...tt.querySelectorAll(".tt-car")], [...tt.querySelectorAll("#tt-dots button")], tt.querySelector("#tt-prev"), tt.querySelector("#tt-next"), null); }
 })();
 /* Trang chủ: chỉ hiện Top rank của lớp */
 function veTopRank() {
