@@ -2438,3 +2438,8 @@ body.hop-mo{overflow:hidden}
   .gallery .gal-o > .nb-more.gal-more{left:auto;right:8px}
   .gallery .gal-o > .gal-link{right:48px}
 }
+
+/* Ghi đè: bỏ các tối ưu gây chớp ảnh khi cuộn lưới bài vẽ (ảnh giữ nguyên, không vẽ lại khi cuộn) */
+.gallery .gal-o{content-visibility:visible;contain:none}
+.gallery .gal-b img,
+.gallery .gal-b:hover img{transform:none;backface-visibility:visible;will-change:auto;transition:none}
