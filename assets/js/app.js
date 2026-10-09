@@ -62,7 +62,7 @@ addEventListener("error", e => {
 });
 /* ---------- Mở tức thì ở lần sau + dùng được khi mạng yếu ---------- */
 if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost") && !/[?&]khongcache/.test(location.search))
-  addEventListener("load", () => navigator.serviceWorker.register("sw.js?v=20261010c").catch(() => {}));
+  addEventListener("load", () => navigator.serviceWorker.register("sw.js?v=20261010d").catch(() => {}));
 
 /* ---------- Đo tốc độ: mở web kèm ?chandoan=1 để xem từng bước mất bao lâu ---------- */
 const DIAG = /[?&]chandoan/.test(location.search);
@@ -2040,7 +2040,7 @@ function renderHvInfo() {
   capNhatBadgeThi();
   const box = $("#hv-info"); if (!box) return;
   if (!user || !approved || isAdmin || isTeacher || !myHv) { box.hidden = true; return; }
-  if (doiTenDaTai !== mail) { doiTenDaTai = mail; doiTenCuaToi = null; getDoc(doc(db, "doiten", mail)).then(s => { doiTenCuaToi = s.exists() ? s.data() : null; renderHvInfo(); }).catch(() => {}); }
+  if (db && doc && doiTenDaTai !== mail) { doiTenDaTai = mail; doiTenCuaToi = null; getDoc(doc(db, "doiten", mail)).then(s => { doiTenCuaToi = s.exists() ? s.data() : null; renderHvInfo(); }).catch(() => {}); }
   const tt = myHv.truongThi || "", dang = doiTenCuaToi;
   box.hidden = false;
   box.innerHTML = `
