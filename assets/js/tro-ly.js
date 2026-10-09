@@ -311,7 +311,10 @@ function dung() {
     </section>`;
   document.body.append(w);
   const chat = $("#tl-chat"), pNhac = $("#tl-nhac");
-  const mo = (el, nut) => { [chat, pNhac].forEach(x => x !== el && (x.hidden = true)); el.hidden = !el.hidden; $("#tl-bong").hidden = true;
+  const mo = (el, nut) => {
+    // Khung xem bài vẽ đang mở thì đóng lại, để khung Chì/Nhắc việc hiện trọn vẹn, không chồng lên ảnh và nút
+    const lb = $("#lb"); if (lb && !lb.hidden && el.hidden) { lb.hidden = true; document.body.classList.remove("lb-mo"); }
+    [chat, pNhac].forEach(x => x !== el && (x.hidden = true)); el.hidden = !el.hidden; $("#tl-bong").hidden = true;
     $("#tl-chat-nut").setAttribute("aria-expanded", !chat.hidden); $("#tl-nhac-nut").setAttribute("aria-expanded", !pNhac.hidden);
     if (!chat.hidden) { if (!lichSu.length) chao(); if (matchMedia("(hover:hover)").matches) setTimeout(() => $("#tl-nd").focus({ preventScroll: true }), 50); moAI(); }
     if (!pNhac.hidden) { store.set("lvtt-nhac-xem", nhacKey()); veNhac(); }

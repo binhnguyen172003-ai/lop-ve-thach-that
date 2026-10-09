@@ -227,6 +227,14 @@ service cloud.firestore {
       allow update: if isAdmin()
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['hang', 'ngayTop'])
         && request.resource.data.hang is int && request.resource.data.hang >= 0 && request.resource.data.hang <= 5;
+      // Quản lý sửa thông tin bài (tên, loại, mô tả, người vẽ, ảnh…); không đổi người đăng, ngày đăng hay hạng Top
+      allow update: if isAdmin()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['hocVien', 'loai', 'ghiChu', 'link', 'moTa', 'chucVu', 'biDanh', 'gvhd', 'tgiang', 'mau', 'anh'])
+        && request.resource.data.hocVien is string && request.resource.data.hocVien.size() > 0 && request.resource.data.hocVien.size() <= 80
+        && request.resource.data.anh is string && request.resource.data.anh.size() <= 950000
+        && shortText(request.resource.data, 'ghiChu', 120) && shortText(request.resource.data, 'link', 300)
+        && shortText(request.resource.data, 'moTa', 300) && shortText(request.resource.data, 'biDanh', 30)
+        && shortText(request.resource.data, 'gvhd', 80) && shortText(request.resource.data, 'tgiang', 80);
       allow delete: if isAdmin() || (isStaff() && resource.data.nguoi == myEmail());
     }
 

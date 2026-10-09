@@ -2388,3 +2388,7 @@ body.hop-mo{overflow:hidden}
   .lb #lb-prev{left:max(24px,calc(50% - 620px))}
   .lb #lb-next{right:max(24px,calc(50% - 620px))}
 }
+
+/* Mô tả ngắn bức tranh trong khung xem bài + nút Sửa bài cho quản lý */
+.lb .lb-mota{grid-column:1/-1;justify-self:stretch;margin:0;text-align:center;font-size:.86rem;line-height:1.45;color:#cfd4dc;max-height:5.8em;overflow:auto}
+.gallery .gal-s{position:absolute;top:6px;left:6px;width:auto;padding:3px 10px;border-radius:999px;border:0;background:rgba(20,90,160,.9);color:#fff;font:600 .72rem var(--f-body);cursor:pointer;z-index:2}
