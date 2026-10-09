@@ -1805,6 +1805,8 @@ body.tl-dang-keo{-webkit-user-select:none;user-select:none}
 @keyframes tlVao{from{opacity:0;transform:translateY(8px) scale(.96)}}
 .tl-khung{position:fixed;right:12px;bottom:90px;width:min(440px,calc(100vw - 16px));height:min(680px,calc(100dvh - 110px));display:flex;flex-direction:column;border-radius:20px;background:#10131b;border:1px solid rgba(255,255,255,.12);box-shadow:0 28px 70px -12px rgba(0,0,0,.8);overflow:hidden;animation:tlVao .25s both;color:#eef1f6}
 .tl-khung[hidden]{display:none}
+/* Điện thoại: bảng nhắc việc và bảng chat hiện đầy chiều ngang màn hình, không bị lệch sang trái */
+@media (max-width:640px){.tl-khung{left:8px!important;right:8px!important;width:auto!important;top:auto!important;bottom:84px!important;height:min(560px,calc(100dvh - 120px))!important}}
 .tl-khung header{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03)}
 .tl-khung header b{font-size:.95rem}.tl-khung header small{display:block;font-size:.72rem;color:rgba(238,241,246,.6)}
 .tl-khung header > div{flex:1}
