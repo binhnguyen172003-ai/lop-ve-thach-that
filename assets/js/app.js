@@ -64,7 +64,7 @@ addEventListener("error", e => {
 });
 /* ---------- Mở tức thì ở lần sau + dùng được khi mạng yếu ---------- */
 if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost") && !/[?&]khongcache/.test(location.search))
-  addEventListener("load", () => navigator.serviceWorker.register("sw.js?v=20261010ah").catch(() => {}));
+  addEventListener("load", () => navigator.serviceWorker.register("sw.js?v=20261010ai").catch(() => {}));
 
 /* ---------- Đo tốc độ: mở web kèm ?chandoan=1 để xem từng bước mất bao lâu ---------- */
 const DIAG = /[?&]chandoan/.test(location.search);
@@ -305,11 +305,13 @@ function renderGallery() {
     `<div class="gal-o"><button type="button" class="gal-b" data-gi="${i}" aria-label="Xem lớn bài vẽ ${i + 1}"><img src="${esc(b.anh)}" alt="${esc(b.moTa || b.ghiChu || "Bài vẽ học viên")}" loading="lazy" decoding="async" width="300" height="400">
       <span class="cap">${esc(b.hocVien || "")}${biDanhCua(b) ? `<em class="bd">${esc(biDanhCua(b))}</em>` : ""}${b.loai ? `<small>${esc(b.loai)}</small>` : ""}</span>${b.hang ? `<span class="gal-top">TOP ${Number(b.hang)}</span>` : ""}</button>
       ${b.link ? `<a class="gal-link" href="${esc(b.link)}" target="_blank" rel="noopener" aria-label="Mở link kèm bài">↗</a>` : ""}
-      ${xoaDuoc(b) ? `<button type="button" class="gal-x" data-xbv="${esc(b.id)}" aria-label="Xoá bài này">Xoá</button>` : ""}
-      ${isAdmin && b.id ? `<button type="button" class="gal-s" data-sbv="${esc(b.id)}" aria-label="Sửa thông tin bài này">Sửa</button>` : ""}</div>`).join("");
+      ${isAdmin && b.id ? `<button type="button" class="nb-more gal-more" data-mn="${esc(b.id)}" aria-label="Tuỳ chọn: sửa thông tin, xoá bài">⋮</button>` : xoaDuoc(b) ? `<button type="button" class="gal-x" data-xbv="${esc(b.id)}" aria-label="Xoá bài này">Xoá</button>` : ""}</div>`).join("");
   const ds = galList;
   $$("#gallery [data-gi]").forEach(b => b.onclick = () => { galList = ds; showLb(Number(b.dataset.gi)); });
-  $$("#gallery [data-sbv]").forEach(b => b.onclick = () => { const x = BAIVE_DONG.find(y => y.id === b.dataset.sbv); if (x) moDangBai(x); });
+  // Nút ⋮ của quản lý trong lưới bài vẽ: mở menu sửa thông tin/link hoặc xoá
+  $$("#gallery .gal-more").forEach(bt => {
+    bt.addEventListener("click", e => { e.stopPropagation(); moMenuBai(bt, BAIVE_DONG.find(y => y.id === bt.dataset.mn)); });
+  });
   $$("#gallery [data-xbv]").forEach(b => confirmButton(b, () => deleteDoc(doc(db, "baive", b.dataset.xbv)), "Xoá?"));
 }
 function showLb(i) {
