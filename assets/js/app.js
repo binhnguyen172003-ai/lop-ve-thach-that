@@ -2571,6 +2571,15 @@ function capNhatNhac() {
       const dau = "lichbao-" + x.id + "-" + hom;
       if (!lichDaBao.has(dau)) { lichDaBao.add(dau); toast(`⏰ ${x.ten || "Nhắc việc"}${x.nd ? ": " + x.nd : ""}`); }
     });
+    // Mỗi ngày một nhắc: còn bao nhiêu ngày đến kỳ thi (theo khối của học viên)
+    if (!isTeacher && myHv) {
+      const khoiHv = khoiOf(myHv), ngayThi = MUC_TIEU.ngayThi[khoiHv] || MUC_TIEU.ngayThi["Khối H"], conNgay = daysUntil(ngayThi);
+      if (conNgay > 0) {
+        ds.push({ id: "ngaythi-" + hom, icon: "🗓", muc: "", tieuDe: `Còn ${conNgay} ngày đến kỳ thi`, nd: `Mốc ôn luyện dự kiến ${ngayVN(ngayThi)}. Đây không phải lịch thi chính thức.`, link: "#giao-trinh", dich: "#my-prog" });
+        const dau = "ngaythi-" + hom;
+        if (!lichDaBao.has(dau)) { lichDaBao.add(dau); toast(`🗓 Còn ${conNgay} ngày đến kỳ thi`); }
+      }
+    }
     const tin = lvUnreadMsgs(), tb = lvUnreadTB();
     if (tin) ds.push({ id: "tin-" + tin, icon: "💬", muc: "", tieuDe: `${tin} tin nhắn mới`, link: "#lam-viec", tab: "tin", dich: "#lv-tin" });
     // Mỗi thông báo chưa đọc là một nhắc việc riêng: bấm vào sẽ nhảy đúng tới thông báo đó
