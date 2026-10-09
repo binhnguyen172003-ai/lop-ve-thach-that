@@ -2604,3 +2604,7 @@ body.hop-mo{overflow:hidden}
 @media (max-width:640px){.gv-stage{height:380px}.gv-stage .gv{height:360px}}
 /* Khung "Xem lộ trình các khoá học" rộng bằng các khối khác cho thẳng hàng */
 .lt-wrap{max-width:none}
+
+/* Ô "+ Đăng tin mới" phải cao đúng bằng thẻ tin, không lấy chiều cao của cả khung vòng xoay */
+.tb-stage .nb-card.nb-add{min-height:0;height:300px;top:0}
+@media (max-width:640px){.tb-stage .nb-card.nb-add{height:286px}}
