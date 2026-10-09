@@ -16,7 +16,7 @@ let getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleT
 // Khai báo ở đầu file để các phần trang chủ (bài vẽ, bản tin) biết ai đang xem ngay từ đầu.
 let user = null, mail = "", isAdmin = false, isTeacher = false, approved = false, needVerify = false;
 // Bài vẽ thầy cô đăng trên web (Firestore: baive). Bài được quản lý chọn Top 1–5 thì thành "bài nổi bật".
-let BAIVE_DONG = [], BANTIN_DONG = [], baiVeLoi = false, banTinLoi = false;
+let BAIVE_DONG = [], BANTIN_DONG = [], baiVeLoi = false, banTinLoi = false, gallerySig = "";
 // Biệt danh mặc định theo người vẽ trong danh sách giáo viên (ví dụ Cường: "Giáo viên Hình hoạ · Dạy tượng"); bài đăng không ghi biệt danh riêng thì dùng mặc định này
 const biDanhCua = b => b.biDanh || (GIAO_VIEN.find(g => g.ten === b.hocVien) || {}).biDanh || "";
 const NB_DONG = () => BAIVE_DONG.filter(b => (b.hang >= 1 && b.hang <= 5) || b.mau).map(b => ({ ...b, ngay: b.ngayTop || b.ngay, dong: true }));
@@ -64,7 +64,7 @@ addEventListener("error", e => {
 });
 /* ---------- Mở tức thì ở lần sau + dùng được khi mạng yếu ---------- */
 if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost") && !/[?&]khongcache/.test(location.search))
-  addEventListener("load", () => navigator.serviceWorker.register("sw.js?v=20261010ab").catch(() => {}));
+  addEventListener("load", () => navigator.serviceWorker.register("sw.js?v=20261010ac").catch(() => {}));
 
 /* ---------- Đo tốc độ: mở web kèm ?chandoan=1 để xem từng bước mất bao lâu ---------- */
 const DIAG = /[?&]chandoan/.test(location.search);
@@ -295,9 +295,12 @@ function renderGallery() {
   $$("#gal-filters .tab").forEach(b => b.onclick = () => { galFilter = b.dataset.g; renderGallery(); });
   if (!has) { $("#gallery").className = "gallery arts"; $("#gallery").innerHTML = LOAI_BAI.map(l => artCard(l, "Ảnh bài thật sắp cập nhật")).join(""); return; }
   galList = all.filter(b => galFilter === "all" || b.loai === galFilter);
-  if (!galList.length) { const l = LOAI_BAI.find(x => x.ten === galFilter); $("#gallery").className = "gallery arts"; $("#gallery").innerHTML = artCard(l, "Phần này chưa có ảnh"); return; }
+  if (!galList.length) { gallerySig = ""; const l = LOAI_BAI.find(x => x.ten === galFilter); $("#gallery").className = "gallery arts"; $("#gallery").innerHTML = artCard(l, "Phần này chưa có ảnh"); return; }
   $("#gallery").className = "gallery";
   const xoaDuoc = b => b.id && user && (isAdmin || (isTeacher && b.nguoi === mail));
+  // Không dựng lại lưới khi dữ liệu không đổi (mỗi lần tải lại trang Firestore gửi dữ liệu 2 lần, tránh phân tích lại ảnh base64 nhiều lần)
+  const gSig = [galFilter, !!user, isAdmin, galList.map(b => [b.id || "", b.luc || 0, b.anh ? b.anh.length : 0, b.hang, b.hocVien, b.loai, b.moTa, b.ghiChu, b.biDanh, biDanhCua(b), b.chucVu, b.mau].join("~")).join("|")].join("#");
+  if (gSig === gallerySig) return; gallerySig = gSig;
   $("#gallery").innerHTML = galList.map((b, i) =>
     `<div class="gal-o"><button type="button" class="gal-b" data-gi="${i}" aria-label="Xem lớn bài vẽ ${i + 1}"><img src="${esc(b.anh)}" alt="${esc(b.moTa || b.ghiChu || "Bài vẽ học viên")}" loading="lazy" decoding="async" width="300" height="400">
       <span class="cap">${esc(b.hocVien || "")}${biDanhCua(b) ? `<em class="bd">${esc(biDanhCua(b))}</em>` : ""}${b.loai ? `<small>${esc(b.loai)}</small>` : ""}</span>${b.hang ? `<span class="gal-top">TOP ${Number(b.hang)}</span>` : ""}</button>
@@ -841,7 +844,8 @@ const GHI_CHU = {
   let sig = "";
   const ve = () => {
     const ds = locNoiBat(ky);
-    const k = [ky, !!user && isTeacher, isAdmin, XP_DONG.length, TT_DONG.length, ...ds.map(b => (b.id || b.anh) + b.top)].join("|");
+    // Khoá so sánh nhẹ: không ghép cả chuỗi ảnh base64 (rất nặng) mỗi lần tải lại, chỉ dùng độ dài + thời điểm đăng
+    const k = [ky, !!user && isTeacher, isAdmin, XP_DONG.length, TT_DONG.length, ...ds.map(b => [b.id || "", b.luc || 0, b.anh ? b.anh.length : 0, b.top, b.hocVien, b.loai, b.ghiChu, b.chucVu, b.biDanh, biDanhCua(b), b.mau, b.hang].join("~"))].join("|");
     if (k === sig) return; sig = k;
     if (!ds.length && !coThem()) { box.innerHTML = `<p class="nb-rong">Chưa có bài nổi bật ${TEN[ky]}. ${ky === "tuan" ? "Thầy cô sẽ cập nhật bài đẹp mỗi tuần." : `Bài tuần trước tự chuyển sang đây khi ${ky === "thang" ? "qua 1 tuần" : "qua 1 tháng"}.`}</p>`; return; }
     box.innerHTML = `<div class="gv-stage nb-stage">${ds.map((b, i) => `<figure class="nb-card${b.nv ? " nb-nv nv-" + nhanVienLop(b) : ""}" data-i="${i}">
