@@ -740,6 +740,21 @@
         </div>
         <div><button class="btn primary" type="submit">Đăng thông báo</button> <span class="status" id="tb-status"></span></div>
       </form>
+      <form class="card lv-form" id="f-lich" data-admin hidden>
+        <h3>Nhắc học viên theo khung giờ cố định</h3>
+        <p class="muted">Ví dụ: ăn sáng, ăn trưa, ăn tối, nhắc nộp bài. Đến giờ đã đặt, học viên thấy nhắc trong khung Nhắc việc trên web, và nhắc đó giữ đến hết ngày. Các ngày không tick sẽ không nhắc.</p>
+        <label for="lich-mau">Mẫu nhanh<select id="lich-mau"><option value="">— Tự đặt —</option><option value="sang">Ăn sáng · 06:30</option><option value="trua">Ăn trưa · 11:30</option><option value="toi">Ăn tối và làm bài · 18:00</option><option value="nop">Nhắc nộp bài · 21:00</option></select></label>
+        <div class="fgrid">
+          <label for="lich-ten">Tên nhắc<input id="lich-ten" maxlength="80" placeholder="VD: Ăn tối và làm bài"></label>
+          <label for="lich-gio">Giờ<input id="lich-gio" type="time" required></label>
+        </div>
+        <label for="lich-nd">Nội dung nhắc<textarea id="lich-nd" maxlength="300" rows="3" placeholder="VD: Ăn tối xong, dành 60 phút vẽ bài tập đến hạn."></textarea></label>
+        <fieldset class="chon-loai"><legend>Các ngày nhắc</legend>
+          <label><input type="checkbox" name="lich-ngay" value="0" checked><span>T2</span></label><label><input type="checkbox" name="lich-ngay" value="1" checked><span>T3</span></label><label><input type="checkbox" name="lich-ngay" value="2" checked><span>T4</span></label><label><input type="checkbox" name="lich-ngay" value="3" checked><span>T5</span></label><label><input type="checkbox" name="lich-ngay" value="4" checked><span>T6</span></label><label><input type="checkbox" name="lich-ngay" value="5" checked><span>T7</span></label><label><input type="checkbox" name="lich-ngay" value="6" checked><span>CN</span></label>
+        </fieldset>
+        <div><button class="btn primary" type="submit">Thêm khung giờ</button> <span class="status" id="lich-st"></span></div>
+        <div id="lich-ds"></div>
+      </form>
       <div class="tb-list" id="tb-list"></div>
     </section>
 

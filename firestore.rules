@@ -110,6 +110,16 @@ service cloud.firestore {
 
     // ===== KHU LÀM VIỆC =====
     // Thông báo: quản lý và giáo viên đăng; "tatca" thì học viên cũng đọc được, "giaovien" chỉ nội bộ.
+    // Khung giờ nhắc cố định (ăn sáng, ăn trưa, ăn tối, nộp bài…): ai đăng nhập đều đọc; chỉ quản lý đặt
+    match /lichnhac/{id} {
+      allow read: if signedIn();
+      allow create, update: if isAdmin()
+        && request.resource.data.ten is string && request.resource.data.ten.size() > 0 && request.resource.data.ten.size() <= 80
+        && request.resource.data.gio is string && request.resource.data.gio.size() == 5
+        && request.resource.data.nd is string && request.resource.data.nd.size() <= 300;
+      allow delete: if isAdmin();
+    }
+
     match /thongbao/{id} {
       allow read: if isStaff() || (isStudent() && resource.data.gui == 'tatca');
       allow create: if isStaff()

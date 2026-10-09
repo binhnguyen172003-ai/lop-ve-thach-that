@@ -1289,6 +1289,8 @@ document.addEventListener("focusout", () => setTimeout(() => { if (needRedraw) r
 let lessons = [], homework = [], roster = [], requests = [], progressAll = {};
 let myProgress = { bai: {}, baitap: {} };
 let course = null, lessonId = null, hwView = "open";
+let lichNhac = []; // khung giờ nhắc cố định do quản lý đặt
+const lichDaBao = new Set(); // nhắc đã hiện một lần trong phiên, tránh báo lặp mỗi phút
 let myAnhBT = {}, anhBaiTapAll = {};   // ảnh bài học viên đã tải lên: { [hwId]: [đường dẫn kho] }
 let unsubs = [];
 // Khu Làm việc
@@ -2514,6 +2516,12 @@ function capNhatNhac() {
       if (isAdmin && reqCount) ds.push({ id: "duyet-" + reqCount, icon: "🙋", muc: "gap", tieuDe: `${reqCount} yêu cầu chờ duyệt`, link: "#duyet", dich: "#ql-duyet-h" });
       if (typeof khoSapHet === "function") { const het = khoSapHet(); if (het.length) ds.push({ id: "kho-" + het.join(), icon: "📦", muc: "", tieuDe: `Kho sắp hết ${het.length} món`, nd: het.slice(0, 4).join(", "), link: "#kho", dich: "#kho" }); }
     }
+    // Khung giờ cố định do quản lý đặt: từ giờ đã hẹn đến hết ngày thì vẫn hiện trong Nhắc việc
+    lichDenGio().forEach(x => {
+      ds.push({ id: "lich-" + x.id + "-" + hom, icon: "⏰", muc: "", tieuDe: x.ten || "Nhắc việc", nd: x.nd || "", link: "#lam-viec", tab: "tb", dich: "#lv-tb" });
+      const dau = "lichbao-" + x.id + "-" + hom;
+      if (!lichDaBao.has(dau)) { lichDaBao.add(dau); toast(`⏰ ${x.ten || "Nhắc việc"}${x.nd ? ": " + x.nd : ""}`); }
+    });
     const tin = lvUnreadMsgs(), tb = lvUnreadTB();
     if (tin) ds.push({ id: "tin-" + tin, icon: "💬", muc: "", tieuDe: `${tin} tin nhắn mới`, link: "#lam-viec", tab: "tin", dich: "#lv-tin" });
     // Mỗi thông báo chưa đọc là một nhắc việc riêng: bấm vào sẽ nhảy đúng tới thông báo đó
@@ -2570,6 +2578,7 @@ function listenLV(q, fn) {
   unsubs.push(onSnapshot(q, fn, e => { lvErr = (e && e.code) || "loi"; renderLV(); }));
 }
 function lvStart() {
+  listenLV(collection(db, "lichnhac"), snap => { lichNhac = snap.docs.map(d => ({ id: d.id, ...d.data() })); renderLichNhac(); capNhatNhac(); });
   if (isTeacher) listenLV(collection(db, "thongbao"), snap => { lvTB = snap.docs.map(d => ({ id: d.id, ...d.data() })); renderLV(); });
   else listenLV(query(collection(db, "thongbao"), where("gui", "==", "tatca")), snap => { lvTB = snap.docs.map(d => ({ id: d.id, ...d.data() })); renderLV(); });
   if (isTeacher) listenLV(collection(db, "congviec"), snap => { lvCV = snap.docs.map(d => ({ id: d.id, ...d.data() })); renderLV(); });
@@ -2769,6 +2778,51 @@ $("#f-tb").addEventListener("submit", async e => {
   try { await addDoc(collection(db, "thongbao"), data); $("#f-tb").reset(); st.textContent = ""; toast("Đã đăng thông báo."); }
   catch (err) { st.textContent = err && err.code === "permission-denied" ? "Máy chủ chưa cho phép (cần dán luật bảo mật mới)." : "Chưa đăng được, kiểm tra mạng."; }
 });
+
+/* ----- Khung giờ nhắc cố định (ăn sáng, ăn trưa, ăn tối, nộp bài) ----- */
+const LICH_MAU = {
+  sang: ["Nhắc ăn sáng", "06:30", "Chào buổi sáng! Ăn sáng đủ no rồi mới vẽ tốt. Hôm nay em làm bài nào trong mục Bài tập?"],
+  trua: ["Nhắc ăn trưa", "11:30", "Đến giờ ăn trưa. Nghỉ 30 phút rồi luyện thêm một bài nhỏ nhé."],
+  toi: ["Nhắc ăn tối và làm bài", "18:00", "Ăn tối xong, dành 60 phút vẽ bài tập đến hạn. Nộp bài trong mục Bài tập."],
+  nop: ["Nhắc nộp bài", "21:00", "Kiểm tra bài tập trong mục Bài tập. Chụp ảnh rõ, tối đa 3 ảnh, nộp trước hạn."]
+};
+const phutTuGio = s => { const [h, m] = String(s || "").split(":").map(Number); return h * 60 + m; };
+// Các khung giờ đã đến và đúng ngày hôm nay (thứ 2 = 0 … chủ nhật = 6)
+function lichDenGio() {
+  if (!user || !lichNhac.length) return [];
+  const now = new Date(), hm = now.getHours() * 60 + now.getMinutes(), thu = (now.getDay() + 6) % 7;
+  return lichNhac.filter(x => x.bat !== false && (x.ngay || []).includes(thu) && phutTuGio(x.gio) <= hm);
+}
+function renderLichNhac() {
+  const box = $("#lich-ds"); if (!box) return;
+  const ds = lichNhac.slice().sort((a, b) => String(a.gio).localeCompare(String(b.gio)));
+  box.innerHTML = ds.length ? `<ul class="lich-ds">${ds.map(x => `<li><b class="num">${esc(x.gio)}</b> ${esc(x.ten || "")}
+      <span class="muted">${(x.ngay || []).length === 7 ? "mỗi ngày" : (x.ngay || []).map(i => ["T2", "T3", "T4", "T5", "T6", "T7", "CN"][i]).join(", ")}${x.bat === false ? " · đang tắt" : ""}</span>
+      <button type="button" class="btn small" data-blich="${esc(x.id)}">${x.bat === false ? "Bật" : "Tắt"}</button>
+      <button type="button" class="btn small" data-xlich="${esc(x.id)}">Xoá</button></li>`).join("")}</ul>`
+    : `<p class="muted">Chưa có khung giờ nhắc nào.</p>`;
+  $$("#lich-ds [data-blich]").forEach(b => b.onclick = () => { const x = lichNhac.find(y => y.id === b.dataset.blich); if (!x) return;
+    timed("Bật/tắt nhắc", setDoc(doc(db, "lichnhac", x.id), { bat: x.bat === false }, { merge: true })).catch(() => toast("Chưa lưu được, thử lại.", "err")); });
+  $$("#lich-ds [data-xlich]").forEach(b => confirmButton(b, () => deleteDoc(doc(db, "lichnhac", b.dataset.xlich)), "Xoá?"));
+}
+$("#lich-mau").addEventListener("change", e => {
+  const m = LICH_MAU[e.target.value]; if (!m) return;
+  $("#lich-ten").value = m[0]; $("#lich-gio").value = m[1]; $("#lich-nd").value = m[2];
+});
+$("#f-lich").addEventListener("submit", async e => {
+  e.preventDefault();
+  const ten = $("#lich-ten").value.trim(), gio = $("#lich-gio").value, nd = $("#lich-nd").value.trim();
+  const ngay = [...document.querySelectorAll('[name="lich-ngay"]:checked')].map(c => Number(c.value));
+  const st = $("#lich-st"); st.classList.remove("err");
+  if (!ten || !gio) { st.textContent = "Nhập tên nhắc và giờ."; st.classList.add("err"); return; }
+  if (!ngay.length) { st.textContent = "Chọn ít nhất một ngày nhắc."; st.classList.add("err"); return; }
+  st.textContent = "Đang lưu…";
+  try { await timed("Thêm khung giờ", addDoc(collection(db, "lichnhac"), { ten, gio, nd, ngay, bat: true, tacGia: mail, luc: Date.now() }));
+    $("#lich-mau").value = ""; $("#lich-ten").value = ""; $("#lich-nd").value = ""; st.textContent = "Đã thêm khung giờ."; }
+  catch (err) { st.classList.add("err"); st.textContent = err && err.code === "permission-denied" ? "Máy chủ chưa cho phép: quản lý cần dán luật bảo mật mới (firestore.rules)." : "Chưa lưu được, kiểm tra mạng."; }
+});
+// Kiểm tra giờ mỗi phút để nhắc đúng lúc đã hẹn khi học viên đang mở web
+setInterval(() => { try { if (user) capNhatNhac(); } catch (e) {} }, 60000);
 
 /* ----- Việc cần làm ----- */
 function renderViec() {
