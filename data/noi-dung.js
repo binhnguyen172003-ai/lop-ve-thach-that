@@ -332,12 +332,13 @@ export const SO_DU_THI = { 2025: 0, 2026: 0 };
 // muc: "tuyensinh" (Tin tuyển sinh) · "tinlop" (Thông báo lớp) · "hoacu" (Hoạ cụ) · "lythuyet" (Lý thuyết) · "kinhnghiem" (Kinh nghiệm thi)
 // dsHoaCu: "Cơ bản" / "Khối H" / "Khối V" → tự liệt kê hoạ cụ cần mua theo bảng HOA_CU ở trên.
 export const BAN_TIN = [
-  { muc: "lythuyet", ngay: "2026-10-10", tieuDe: "Gọt chì đúng cách và lưu ý khi mang bút vào phòng thi",
-    nd: "Gọt phần gỗ trước, để lõi chì lộ khoảng 1 cm. Gọt đều tay, tránh bẻ mạnh làm gãy chì.\nMài đầu chì nhẹ để lấy nét đậm, gọt trước khi đi thi, đừng để đến phòng thi mới gọt.\nChuẩn bị ít nhất 2 bút chì, 1 cục tẩy mềm, 1 gọt chì nhỏ gọn. Kiểm tra quy định của hội đồng thi về dụng cụ được mang vào.",
-    link: "https://s.shopee.vn/30odcyYlVL",
-    anh: "assets/img/tin/got-chi.png" },
   { muc: "tuyensinh", ngay: "2026-10-09", tieuDe: "Dự kiến thay đổi tuyển sinh trình độ đại học năm 2027 (ĐH Kiến trúc Hà Nội)",
     nd: "Trường Đại học Kiến trúc Hà Nội công bố thông báo về dự kiến thay đổi trong tuyển sinh trình độ đại học năm 2027.\nBấm \"Mở link\" để đọc chi tiết trên trang chính thức của trường.",
     link: "https://hau.edu.vn/Thong-bao-ve-du-kien-thay-doi-trong-tuyen-sinh-trinh-do-dai-hoc-nam-2027-cua-Truong-Dai-hoc-Kien-truc-Ha-Noi_n4870.html",
     anh: "assets/img/tin/tuyen-sinh-2027.jpg" },
-
+  { muc: "hoacu", ghim: true, ngay: "2026-10-09", tieuDe: "Hoạ cụ cần chuẩn bị khi bắt đầu học",
+    nd: "Buổi đầu em chưa cần mua đắt. Chỉ cần đủ bộ dưới đây là vẽ được hình hoạ cơ bản. Hoạ cụ màu (Khối H) thầy hướng dẫn mua khi bắt đầu học màu. Lớp có bán sẵn tại cơ sở, giá như dưới đây.",
+    dsHoaCu: "Cơ bản" },
+  { muc: "lythuyet", ngay: "2026-10-09", tieuDe: "5 bước của một bài hình hoạ",
+    nd: "1. Dựng hình: đặt bố cục vừa khổ giấy, phác khung lớn bằng nét nhẹ.\n2. Đo tỷ lệ: so chiều cao, chiều ngang bằng que đo, nheo mắt nhìn tổng thể.\n3. Cấu trúc: tìm đường trục, mặt phẳng, khối chính.\n4. Sáng tối: chia mảng sáng – tối trước, rồi mới đẩy sắc độ trung gian.\n5. Hoàn thiện: chỉnh chi tiết, đứng xa nhìn lại, nhờ thầy nhận xét." },
+];
