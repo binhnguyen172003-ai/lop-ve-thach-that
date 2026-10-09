@@ -52,37 +52,126 @@ const SYSTEM = () => `Em là "Bé Chì" — trợ lý ảo của Lớp Vẽ Th�
 TÍNH CÁCH: hài hước, lầy lội, hơi "mất nết" kiểu đứa bạn thân hay cà khịa (trêu chuyện lười vẽ, ngại nộp bài, tẩy thủng giấy…), nhưng NÓI THẬT, không nịnh, không hứa chắc đỗ, và luôn kết bằng một câu khích lệ học vẽ.
 GIỚI HẠN: người dùng phần lớn là học sinh — tuyệt đối không chửi thề, không nói tục, không trêu ngoại hình, gia cảnh hay làm ai tổn thương; không nói chuyện người lớn. Chỉ trả lời về: lớp học, luyện thi khối H/V, trường đại học, lịch học/lịch thi, hoạ cụ, cách học vẽ, cách dùng web lớp. Câu ngoài lề thì cà khịa nhẹ rồi kéo về chuyện vẽ.
 SỰ THẬT: chỉ dùng thông tin dưới đây. Không biết thì nói thẳng là không biết và bảo nhắn thầy Bình qua Zalo ${LIEN_HE.sdt}. KHÔNG bịa học phí, điểm chuẩn, ngày thi hay tỷ lệ đỗ.
-CÁCH TRẢ LỜI: tiếng Việt, ngắn 2–5 câu, có thể dùng 1 emoji. Khi được hỏi cần mua gì, liệt kê món cụ thể kèm giá và nhắc bấm nút "🛒 Soạn tin mua hoạ cụ".
+CÁCH TRẢ LỜI: tiếng Việt, ngắn gọn, có thể dùng 1 emoji. TRÌNH BÀY DỄ ĐỌC TRÊN ĐIỆN THOẠI:
+- Câu đầu trả lời thẳng ý chính (1 dòng).
+- Có từ 2 ý trở lên thì xuống dòng, mỗi ý một dòng bắt đầu bằng "- ".
+- In đậm thông tin quan trọng bằng **…** (giờ, ngày, giá, tên trường).
+- Không viết đoạn dài quá 3 dòng, không dùng bảng, không dùng tiêu đề #.
+- Câu cà khịa/khích lệ để riêng ở dòng cuối.
+- Hỏi lịch học/thời khoá biểu: web tự hiện khung lịch, em chỉ cần nói ngắn. Khi được hỏi cần mua gì, liệt kê món cụ thể kèm giá và nhắc bấm nút "🛒 Soạn tin mua hoạ cụ".
 ${nguoi ? `NGƯỜI ĐANG HỎI: ${nguoi.ten || "học viên"}${nguoi.khoi ? ", " + nguoi.khoi : ""}${nguoi.coso ? ", cơ sở " + nguoi.coso : ""}${nguoi.vaiTro !== "hv" ? " (thầy cô của lớp)" : ""}.` : ""}
 THÔNG TIN LỚP:\n${kienThuc()}`;
 
 /* ---------- Câu trả lời có sẵn (khi chưa bật AI) ---------- */
+const P = (...x) => x.map(t => `<p>${t}</p>`).join("");
+const UL = ds => `<ul>${ds.map(t => `<li>${t}</li>`).join("")}</ul>`;
 const CAU = [
-  { k: ["dia chi", "o dau", "co so", "cho nao", "duong"], t: () => `Lớp có 2 "hang ổ" nè: ${LIEN_HE.coSo.map(c => `<b>${esc(c.ten)}</b> (${esc(c.diaChi)})`).join(" và ")}. Đi lạc thì gọi ${esc(LIEN_HE.sdt)}, đừng đứng giữa đường vẽ bản đồ nha 😆` },
-  { k: ["lich hoc", "may gio", "hoc toi", "ca hoc", "hoc thu may", "hom nay hoc"], t: () => `Lịch học đây, chép vào tay đi khỏi quên:<br>${esc(lichHocText()).replace(/\n/g, "<br>")}<br>Đi đều là lên rank, nghỉ nhiều là rank nó nghỉ chơi với bạn đấy.` },
-  { k: ["lich thi", "ngay thi", "thi khi nao", "bao gio thi", "con bao lau"], t: () => `Lịch thi dự kiến ${NAM_THI}:<br>${esc(lichThiText()).replace(/\n/g, "<br>")}<br>Nghe thì xa chứ chớp mắt cái là tới. Vẽ đi, đừng chớp 👀` },
-  { k: ["khoi h", "khoi v", "khac nhau", "chon khoi", "nen thi khoi"], t: () => `Gọn nè: <b>Khối H</b> thi hình hoạ người + bố cục màu (thiết kế đồ hoạ, thời trang, nội thất, mỹ thuật ứng dụng). <b>Khối V</b> thi Toán + hình hoạ tượng (kiến trúc, xây dựng, quy hoạch). Thích tô màu bay bổng thì H, thích tính toán nhà cửa thì V. Còn phân vân thì hỏi thầy Bình, thầy soi một phát ra liền.` },
-  { k: ["hoc phi", "bao nhieu tien", "gia hoc", "dong tien"], t: () => `Chuyện tiền nong Chì không dám nói bừa đâu, sợ thầy trừ lương 😅. Nhắn thầy Bình qua Zalo ${esc(LIEN_HE.sdt)} để hỏi đúng nhất nhé. Học thử thì miễn phí đó!` },
+  { k: ["dia chi", "o dau", "co so", "cho nao", "duong"], t: () => P(`Lớp có <b>2 cơ sở</b> nè:`) + UL(LIEN_HE.coSo.map(c => `<b>${esc(c.ten)}</b>: ${esc(c.diaChi)}`)) + P(`Đi lạc thì gọi <b>${esc(LIEN_HE.sdt)}</b>, đừng đứng giữa đường vẽ bản đồ nha 😆`) },
+  { k: ["lich thi", "ngay thi", "thi khi nao", "bao gio thi", "con bao lau"], t: () => P(`Lịch thi dự kiến <b>${NAM_THI}</b>:`) + UL(LICH_THI.map(l => `<b>${esc(l.ten)}</b> · ${esc(l.dot)}: ${esc(l.hienThi)}`)) + P(`Nghe thì xa chứ chớp mắt cái là tới. Vẽ đi, đừng chớp 👀`) },
+  { k: ["khoi h", "khoi v", "khac nhau", "chon khoi", "nen thi khoi"], t: () => P(`Gọn nè:`) + UL([`<b>Khối H</b>: thi hình hoạ người + bố cục màu → thiết kế đồ hoạ, thời trang, nội thất, mỹ thuật ứng dụng.`, `<b>Khối V</b>: thi Toán + hình hoạ tượng → kiến trúc, xây dựng, quy hoạch.`]) + P(`Thích màu sắc bay bổng thì H, thích tính toán nhà cửa thì V. Còn phân vân thì hỏi thầy Bình, thầy soi một phát ra liền.`) },
+  { k: ["hoc phi", "bao nhieu tien", "gia hoc", "dong tien"], t: () => P(`Chuyện tiền nong Chì không dám nói bừa đâu 😅`) + UL([`Hỏi học phí: Zalo thầy Bình <b>${esc(LIEN_HE.sdt)}</b>`, `Học thử: <b>miễn phí</b>`]) },
   { k: ["hoa cu", "can mua", "mua gi", "dung cu", "but chi", "mau bot", "giay", "tay"], t: () => goiYHoaCu() },
-  { k: ["truong", "kien truc", "mtcn", "my thuat cong nghiep", "xay dung", "su pham", "dhqg"], t: () => `Các trường học viên lớp hay thi: ${Object.values(TRUONG).map(v => esc(v.ten)).join(", ")}. Xem điểm các anh chị đi trước ở <a href="#bang-vang">Bảng vàng</a> — nhìn mà thèm, thèm thì vẽ.` },
-  { k: ["giao vien", "thay co", "ai day", "tro giang"], t: () => `Đội hình thầy cô: ${GIAO_VIEN.map(g => esc(g.ten)).join(", ")}. Toàn người từng ngồi đúng ghế bạn đang ngồi, nên đừng hòng giấu bài xấu nha.` },
-  { k: ["rank", "hang", "xp", "len hang", "thanh tuu"], t: () => `Leo rank dễ mà khó: đi học +10 XP, nộp bài +15, bài ≥8 điểm +10, lên Bài vẽ nổi bật +100. Từ hạng A trở đi mỗi hạng cần thêm 2.000 XP — tức là phải cày thật. Bấm vào huy hiệu rank để xem bảng đầy đủ.` },
-  { k: ["lam lai", "nop lai", "chua dat", "bai tap", "nop bai"], t: () => `Bài bị "trả về" là do chưa đạt 1 trong 3 tiêu chí: hình cơ bản, sắc độ, tổng thể. Vẽ lại đúng chỗ thầy nhắc rồi bấm <b>Nộp lại</b> trong mục <a href="#bai-tap">Bài tập</a>. Bị trả bài không xấu, không làm lại mới xấu 😤` },
-  { k: ["chao", "hello", "hi ", "alo", "xin chao"], t: () => `Chào ${esc((nguoi && nguoi.ten) || "đồng chí hoạ sĩ")}! Chì đây — hỏi gì về lớp, lịch học, khối thi hay hoạ cụ cứ quăng vào. Hỏi xong nhớ đi vẽ nha.` },
-  { k: ["cam on", "thank", "tks"], t: () => `Không có chi! Cảm ơn thật lòng thì nộp bài đúng hạn là được rồi 😌` },
-  { k: ["luoi", "chan", "nan", "met", "kho qua", "khong ve duoc"], t: () => `Ai mà chẳng có ngày muốn ném bút chì đi. Nhưng bài xấu hôm nay là bậc thang cho bài đẹp tuần sau. Vẽ 20 phút thôi, hẹn giờ luôn — xong rồi tính tiếp. Chì tin bạn làm được 💪` },
+  { k: ["truong", "kien truc", "mtcn", "my thuat cong nghiep", "xay dung", "su pham", "dhqg"], t: () => P(`Các trường học viên lớp hay thi:`) + UL(Object.values(TRUONG).map(v => esc(v.ten))) + P(`Xem điểm anh chị đi trước ở <a href="#bang-vang">Bảng vàng</a> — nhìn mà thèm, thèm thì vẽ.`) },
+  { k: ["giao vien", "thay co", "ai day", "tro giang"], t: () => P(`Đội hình thầy cô:`) + UL(GIAO_VIEN.map(g => `<b>${esc(g.ten)}</b>${g.vaiTro ? ` · ${esc(g.vaiTro)}` : ""}`)) + P(`Toàn người từng ngồi đúng ghế bạn đang ngồi, đừng hòng giấu bài xấu nha.`) },
+  { k: ["rank", "hang", "xp", "len hang", "thanh tuu"], t: () => P(`Cách kiếm XP để leo rank:`) + UL([`Đi học: <b>+10</b>/buổi`, `Nộp bài: <b>+15</b>`, `Bài ≥ 8 điểm: <b>+10</b>`, `Lên Bài vẽ nổi bật: <b>+100</b> (Top 1 thêm +25)`]) + P(`Từ hạng A, mỗi hạng cần thêm <b>2.000 XP</b> — phải cày thật. Bấm vào huy hiệu rank để xem bảng đầy đủ.`) },
+  { k: ["lam lai", "nop lai", "chua dat", "bai tap", "nop bai"], t: () => P(`Bài bị trả về là do chưa đạt 1 trong 3 tiêu chí:`) + UL([`Hình cơ bản`, `Sắc độ`, `Tổng thể`]) + P(`Vẽ lại đúng chỗ thầy nhắc rồi bấm <b>Nộp lại</b> ở mục <a href="#bai-tap">Bài tập</a>.`, `Bị trả bài không xấu, không làm lại mới xấu 😤`) },
+  { k: ["chao", "hello", "hi ", "alo", "xin chao"], t: () => P(`Chào ${esc((nguoi && nguoi.ten) || "đồng chí hoạ sĩ")}! Chì đây.`, `Hỏi gì về lớp, lịch học, khối thi hay hoạ cụ cứ quăng vào. Hỏi xong nhớ đi vẽ nha.`) },
+  { k: ["cam on", "thank", "tks"], t: () => P(`Không có chi! Cảm ơn thật lòng thì nộp bài đúng hạn là được rồi 😌`) },
+  { k: ["luoi", "chan", "nan", "met", "kho qua", "khong ve duoc"], t: () => P(`Ai mà chẳng có ngày muốn ném bút chì đi.`) + UL([`Hẹn giờ <b>20 phút</b>, vẽ đúng 20 phút thôi.`, `Xong rồi mới tính tiếp.`]) + P(`Bài xấu hôm nay là bậc thang cho bài đẹp tuần sau. Chì tin bạn làm được 💪`) },
 ];
 function goiYHoaCu(khoi) {
   khoi = khoi || (nguoi && nguoi.khoi) || "";
   const list = HOA_CU.filter(h => h.can && h.can.length && (!khoi || h.can.some(c => bo(khoi).includes(bo(c)) || c === "Cơ bản")));
   const tong = list.reduce((a, h) => a + h.gia, 0);
-  return `Bộ cơ bản ${khoi ? "cho " + esc(khoi) : "cho người mới"}: ${list.map(h => `${esc(h.ten)} (${vnd(h.gia)})`).join(", ")} — tổng khoảng <b>${vnd(tong)}</b>. Bấm <b>🛒 Soạn tin mua hoạ cụ</b> để Chì soạn sẵn tin gửi thầy. Đừng mua bút xịn rồi để trong hộp làm kỷ niệm nha.`;
+  return P(`Bộ cơ bản ${khoi ? "cho <b>" + esc(khoi) + "</b>" : "cho người mới"}:`) + UL(list.map(h => `${esc(h.ten)} · <b>${vnd(h.gia)}</b>`)) +
+    P(`Tổng khoảng <b>${vnd(tong)}</b>. Bấm <b>🛒 Soạn tin mua hoạ cụ</b> để Chì soạn sẵn tin gửi thầy.`, `Đừng mua bút xịn rồi để trong hộp làm kỷ niệm nha.`);
 }
 function traLoiSan(q) {
   const b = " " + bo(q) + " ";
   const hit = CAU.map(c => ({ c, n: c.k.filter(k => b.includes(k)).length })).filter(x => x.n).sort((a, b2) => b2.n - a.n)[0];
   if (hit) return hit.c.t();
-  return `Câu này hơi khó với cái đầu bút chì của Chì 😅. Bạn hỏi về <i>lịch học, lịch thi, khối H/V, trường, hoạ cụ, rank</i> thì Chì rành. Còn lại nhắn thầy Bình qua Zalo ${esc(LIEN_HE.sdt)} cho chắc nha.`;
+  return P(`Câu này hơi khó với cái đầu bút chì của Chì 😅`, `Chì rành nhất: <i>lịch học, lịch thi, khối H/V, trường, hoạ cụ, rank</i>.`, `Còn lại nhắn thầy Bình qua Zalo <b>${esc(LIEN_HE.sdt)}</b> cho chắc nha.`);
+}
+
+/* ---------- Khung thời khoá biểu trong chat ---------- */
+const DAYS = ["T2", "T3", "T4", "T5", "T6", "T7", "CN"];
+const MAU_MON = { "Hình hoạ": "hh", "Màu": "mau", "Mỹ thuật 2": "mt2" };
+const hoiLich = q => { const b = " " + bo(q) + " "; return !/lich thi|ngay thi/.test(b) && /lich hoc|thoi khoa bieu|thoi gian bieu| tkb |ca hoc|may gio hoc|hoc may gio|hoc thu may|hoc ngay nao|hoc buoi nao|hom nay (co )?hoc|mai (co )?hoc|lich tuan|lich lop/.test(b); };
+function homNay() { const n = new Date(), vn = new Date(n.getTime() + (n.getTimezoneOffset() + 420) * 60000); return DAYS[(vn.getDay() + 6) % 7]; }
+function coSoMacDinh(q) {
+  const ds = Object.keys(THOI_GIAN_BIEU), b = bo(q || "");
+  return ds.find(k => b.includes(bo(k).replace("co so ", ""))) || ds.find(k => nguoi && nguoi.coso && bo(k).includes(bo(nguoi.coso))) || ds[0];
+}
+function buoiCua(cs, d) { const tkb = THOI_GIAN_BIEU[cs] || {}; return CA_HOC.filter(c => (tkb[c.ma] || {})[d]).map(c => ({ ...c, mon: tkb[c.ma][d] })); }
+function veLich(cs) {
+  const hn = homNay();
+  return `<div class="tl-lich-tab" role="tablist">${Object.keys(THOI_GIAN_BIEU).map(k => `<button type="button" data-cs="${esc(k)}" aria-selected="${k === cs}">${esc(k.replace("Cơ sở ", ""))}</button>`).join("")}</div>
+    <div class="tl-lich-ds">${DAYS.map(d => { const ca = buoiCua(cs, d);
+      return `<div class="tl-ngay${d === hn ? " nay" : ""}${ca.length ? "" : " nghi"}"><b>${NGAY[d]}${d === hn ? "<small>Hôm nay</small>" : ""}</b>
+        <div>${ca.length ? ca.map(c => `<div class="tl-ca"><span class="tl-monhoc ${MAU_MON[c.mon] || "mt2"}">${esc(c.mon)}</span><span>${esc(c.ten)} · <b>${esc(c.gio)}</b></span></div>`).join("") : "<span>Nghỉ</span>"}</div></div>`; }).join("")}</div>
+    <div class="tl-lich-chan"><button type="button" class="tl-lich-nut chinh" data-anh>📷 Lưu ảnh lịch</button><a class="tl-lich-nut" href="#lich-hoc" data-xem>Xem bảng lớn</a></div>`;
+}
+function guiLich(q) {
+  let cs = coSoMacDinh(q);
+  const n = buoiCua(cs, homNay());
+  themTin(true, P(`Lịch học <b>${esc(cs)}</b> đây, lưu ảnh về máy cho khỏi quên 👇`) +
+    (n.length ? P(`Hôm nay có buổi <b>${esc(n.map(c => `${c.mon} ${c.ten.toLowerCase()} ${c.gio}`).join(", "))}</b> nha.`) : P(`Hôm nay cơ sở này nghỉ — nghỉ học chứ không nghỉ vẽ đâu đấy 😏`)));
+  const the = themTin(true, "");
+  the.classList.add("the");
+  const ve = () => {
+    the.innerHTML = veLich(cs);
+    the.querySelectorAll("[data-cs]").forEach(b => b.onclick = () => { cs = b.dataset.cs; ve(); });
+    the.querySelector("[data-anh]").onclick = e => luuAnhLich(cs, e.currentTarget);
+    the.querySelector("[data-xem]").onclick = () => { $("#tl-chat").hidden = true; const t = document.querySelector(`#sched-tabs [data-s="${CSS.escape(cs)}"]`); if (t) t.click(); };
+  };
+  ve(); $("#tl-tin").scrollTop = $("#tl-tin").scrollHeight;
+}
+/* Vẽ thời khoá biểu thành ảnh PNG để học viên lưu vào máy / gửi Zalo */
+async function luuAnhLich(cs, nut) {
+  const W = 1080, PAD = 64, HEAD = 250, FOOT = 110, LINE = 64;
+  const caN = DAYS.map(d => buoiCua(cs, d)), cao = caN.map(c => Math.max(1, c.length) * LINE + 40);
+  const H = HEAD + cao.reduce((a, b) => a + b, 0) + FOOT;
+  const cv = document.createElement("canvas"); cv.width = W; cv.height = H;
+  const x = cv.getContext("2d"), F = '"Be Vietnam Pro", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
+  try { await document.fonts.ready; } catch (e) {}
+  const bo2 = (X, Y, w, h, r) => { x.beginPath(); x.roundRect ? x.roundRect(X, Y, w, h, r) : x.rect(X, Y, w, h); };
+  x.fillStyle = "#10131b"; x.fillRect(0, 0, W, H);
+  const g = x.createLinearGradient(0, 0, W, 0); g.addColorStop(0, "#ffcf3a"); g.addColorStop(1, "#ff7a2f");
+  x.fillStyle = g; x.fillRect(0, 0, W, 12);
+  x.fillStyle = "#ffcf3a"; x.font = `700 30px ${F}`; x.fillText("LỚP VẼ THẠCH THẤT · THỜI KHOÁ BIỂU", PAD, 92);
+  x.fillStyle = "#ffffff"; x.font = `800 64px ${F}`; x.fillText(cs, PAD, 172);
+  x.fillStyle = "rgba(238,241,246,.6)"; x.font = `500 28px ${F}`; x.fillText(CA_HOC.map(c => `${c.ten} ${c.gio}`).join("   ·   "), PAD, 222);
+  const hn = homNay(), mau = { hh: ["#2b3560", "#b9c6ff"], mau: ["#1f3b2c", "#8fe0b0"], mt2: ["#3a2f1a", "#ffd88a"] };
+  let y = HEAD;
+  DAYS.forEach((d, i) => {
+    const ca = caN[i], h = cao[i];
+    bo2(PAD - 16, y + 6, W - 2 * PAD + 32, h - 12, 22);
+    x.fillStyle = d === hn ? "rgba(255,207,58,.12)" : "rgba(255,255,255,.04)"; x.fill();
+    if (d === hn) { x.strokeStyle = "rgba(255,207,58,.7)"; x.lineWidth = 3; x.stroke(); }
+    x.fillStyle = ca.length ? "#ffffff" : "rgba(238,241,246,.4)"; x.font = `800 38px ${F}`; x.fillText(NGAY[d], PAD + 12, y + 20 + LINE / 2 + (d === hn ? 2 : 13));
+    if (d === hn) { x.fillStyle = "#ffcf3a"; x.font = `700 21px ${F}`; x.fillText("HÔM NAY", PAD + 14, y + 20 + LINE / 2 + 32); }
+    const cx = PAD + 260;
+    if (!ca.length) { x.fillStyle = "rgba(238,241,246,.4)"; x.font = `500 32px ${F}`; x.fillText("Nghỉ", cx, y + 20 + LINE / 2 + 11); }
+    ca.forEach((c, j) => {
+      const cy = y + 20 + j * LINE, [nen, chu] = mau[MAU_MON[c.mon] || "mt2"];
+      x.font = `700 30px ${F}`; const wm = Math.max(170, x.measureText(c.mon).width + 36);
+      bo2(cx, cy + 6, wm, 52, 14); x.fillStyle = nen; x.fill();
+      x.fillStyle = chu; x.textAlign = "center"; x.fillText(c.mon, cx + wm / 2, cy + 43); x.textAlign = "left";
+      x.fillStyle = "#eef1f6"; x.font = `600 30px ${F}`; x.fillText(`${c.ten}  ·  ${c.gio}`, cx + wm + 24, cy + 43);
+    });
+    y += h;
+  });
+  x.fillStyle = "rgba(238,241,246,.55)"; x.font = `500 26px ${F}`;
+  x.fillText(`Zalo/SĐT thầy Bình: ${LIEN_HE.sdt}   ·   Lịch có thể đổi theo khoá`, PAD, H - 46);
+  const ten = `lich-hoc-${bo(cs).replace(/[^a-z0-9]+/g, "-")}.png`;
+  const blob = await new Promise(r => cv.toBlob(r, "image/png"));
+  if (!blob) return;
+  const file = new File([blob], ten, { type: "image/png" });
+  try {
+    if (navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], title: `Lịch học ${cs}` }); if (nut) nut.textContent = "Đã lưu ✓"; return; }
+  } catch (e) { if (e && e.name === "AbortError") return; }
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = ten; document.body.append(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 4000); if (nut) nut.textContent = "Đã tải ảnh ✓";
 }
 
 /* ---------- AI (Firebase AI Logic · Gemini) ---------- */
@@ -158,17 +247,32 @@ function veGoi() {
   $("#tl-goi").querySelectorAll("button").forEach(b => b.onclick = () => hoi(b.textContent));
 }
 function themTin(ai, html, dang) {
-  const d = document.createElement("div"); d.className = "tl-m " + (ai ? "ai" : "toi") + (dang ? " dang" : "");
+  const d = document.createElement("div"); d.className = "tl-bub " + (ai ? "ai" : "toi") + (dang ? " dang" : "");
   d.innerHTML = html; $("#tl-tin").append(d); $("#tl-tin").scrollTop = $("#tl-tin").scrollHeight; return d;
 }
 function chao() {
   const ten = (nguoi && nguoi.ten) ? esc(nguoi.ten.split(" ").slice(-1)[0]) : "đồng chí hoạ sĩ";
   themTin(true, `Yo ${ten}! Tui là <b>Bé Chì</b> ✏️ — hỏi gì về lớp, lịch học, khối thi, hoạ cụ cứ hỏi. Tui trả lời thật lòng, hơi mất nết xíu, nhưng mục đích cuối cùng là bắt bạn đi vẽ 😤`);
 }
-const mdNhe = t => esc(t).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>").replace(/\n/g, "<br>");
+/* Định dạng câu trả lời AI: đoạn ngắn, gạch đầu dòng, in đậm */
+function dinhDang(t) {
+  const inl = x => x.replace(/\*\*(.+?)\*\*/g, "<b>$1</b>").replace(/(^|[\s(])\*([^*\n]+)\*(?=[\s.,!?)]|$)/g, "$1<i>$2</i>");
+  let html = "", ds = null;
+  const dong = () => { if (ds) { html += `</${ds}>`; ds = null; } };
+  for (let l of esc(t).split(/\r?\n/)) {
+    l = l.trim(); let m;
+    if (!l) { dong(); continue; }
+    if ((m = l.match(/^#{1,4}\s+(.+)/))) { dong(); html += `<p class="tl-h">${inl(m[1])}</p>`; continue; }
+    if ((m = l.match(/^(?:[-•–]|\*(?!\*))\s+(.+)/))) { if (ds !== "ul") { dong(); html += "<ul>"; ds = "ul"; } html += `<li>${inl(m[1])}</li>`; continue; }
+    if ((m = l.match(/^\d{1,2}[.)]\s+(.+)/))) { if (ds !== "ol") { dong(); html += "<ol>"; ds = "ol"; } html += `<li>${inl(m[1])}</li>`; continue; }
+    dong(); html += `<p>${inl(l)}</p>`;
+  }
+  dong(); return html || "<p>…</p>";
+}
 async function hoi(q) {
   themTin(false, esc(q));
   lichSu.push({ role: "user", text: q });
+  if (hoiLich(q)) { const cho = themTin(true, `<span class="tl-cham"><i></i><i></i><i></i></span>`, true); setTimeout(() => { cho.remove(); guiLich(q); }, 350); return; }
   const cho = themTin(true, `<span class="tl-cham"><i></i><i></i><i></i></span>`, true);
   const dem = demHomNay();
   const model = dem.n < GIOI_HAN_NGAY ? await moAI() : null;
@@ -177,7 +281,7 @@ async function hoi(q) {
       if (!aiChat) aiChat = model.startChat({ history: [] });
       const r = await aiChat.sendMessageStream(q);
       let txt = ""; cho.classList.remove("dang");
-      for await (const c of r.stream) { txt += c.text(); cho.innerHTML = mdNhe(txt); $("#tl-tin").scrollTop = $("#tl-tin").scrollHeight; }
+      for await (const c of r.stream) { txt += c.text(); cho.innerHTML = dinhDang(txt); $("#tl-tin").scrollTop = $("#tl-tin").scrollHeight; }
       dem.tang(); lichSu.push({ role: "model", text: txt });
       if (/hoạ cụ|họa cụ|mua/i.test(q)) themNutMua(cho);
       return;
@@ -191,8 +295,8 @@ async function hoi(q) {
     dem.n >= GIOI_HAN_NGAY ? 300 : 450);
 }
 function themNutMua(el) {
-  const b = document.createElement("button"); b.type = "button"; b.className = "btn small tl-nut-mua"; b.textContent = "🛒 Soạn tin mua hoạ cụ";
-  b.onclick = () => document.querySelector('#tl-chat [data-tab="mua"]').click(); el.append(document.createElement("br"), b);
+  const b = document.createElement("button"); b.type = "button"; b.className = "tl-lich-nut chinh tl-nut-mua"; b.textContent = "🛒 Soạn tin mua hoạ cụ";
+  b.onclick = () => document.querySelector('#tl-chat [data-tab="mua"]').click(); el.append(b);
 }
 
 /* ---------- Soạn tin mua hoạ cụ ---------- */
