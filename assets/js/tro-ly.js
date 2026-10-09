@@ -209,11 +209,11 @@ function dung() {
     <button type="button" class="tl-nut tl-chat-nut" id="tl-chat-nut" aria-label="Hỏi trợ lý Bé Chì" aria-expanded="false"><span class="tl-mat">✏️</span></button>
     <div class="tl-bong" id="tl-bong" hidden></div>
     <section class="tl-khung" id="tl-nhac" hidden aria-label="Nhắc việc">
-      <header><b>🔔 Nhắc việc của em</b><button type="button" class="tl-x" data-dong>✕</button></header>
+      <header class="tl-keo" title="Giữ và kéo để di chuyển"><b>🔔 Nhắc việc của em</b><button type="button" class="tl-x" data-to aria-label="Phóng to">⤢</button><button type="button" class="tl-x" data-dong aria-label="Đóng">✕</button></header>
       <div class="tl-nhac-ds" id="tl-nhac-ds"></div>
     </section>
     <section class="tl-khung tl-chat" id="tl-chat" hidden aria-label="Trợ lý Bé Chì">
-      <header><span class="tl-av">✏️</span><div><b>Bé Chì</b><small id="tl-che">Trợ lý lầy lội của lớp</small></div><button type="button" class="tl-x" data-dong>✕</button></header>
+      <header class="tl-keo" title="Giữ và kéo để di chuyển"><span class="tl-av">✏️</span><div><b>Bé Chì</b><small id="tl-che">Trợ lý lầy lội của lớp</small></div><button type="button" class="tl-x" data-to aria-label="Phóng to">⤢</button><button type="button" class="tl-x" data-dong aria-label="Đóng">✕</button></header>
       <div class="tl-tabs"><button type="button" data-tab="hoi" aria-selected="true">💬 Hỏi đáp</button><button type="button" data-tab="mua" aria-selected="false">🛒 Soạn tin mua hoạ cụ</button></div>
       <div class="tl-hoi" id="tl-hoi">
         <div class="tl-tin" id="tl-tin" aria-live="polite"></div>
@@ -227,9 +227,11 @@ function dung() {
   const mo = (el, nut) => { [chat, pNhac].forEach(x => x !== el && (x.hidden = true)); el.hidden = !el.hidden; $("#tl-bong").hidden = true;
     $("#tl-chat-nut").setAttribute("aria-expanded", !chat.hidden); $("#tl-nhac-nut").setAttribute("aria-expanded", !pNhac.hidden);
     if (!chat.hidden) { if (!lichSu.length) chao(); setTimeout(() => $("#tl-nd").focus({ preventScroll: true }), 50); moAI(); }
-    if (!pNhac.hidden) { store.set("lvtt-nhac-xem", nhacKey()); veNhac(); } };
-  $("#tl-chat-nut").onclick = () => mo(chat);
-  $("#tl-nhac-nut").onclick = () => mo(pNhac);
+    if (!pNhac.hidden) { store.set("lvtt-nhac-xem", nhacKey()); veNhac(); }
+    if (!el.hidden) datKhung(el); };
+  $("#tl-chat-nut").onclick = () => { if (!vuaKeo) mo(chat); };
+  $("#tl-nhac-nut").onclick = () => { if (!vuaKeo) mo(pNhac); };
+  ganKeo(w, chat, pNhac);
   $("#tl-bong").onclick = () => mo(pNhac);
   w.querySelectorAll("[data-dong]").forEach(b => b.onclick = () => { chat.hidden = pNhac.hidden = true; });
   document.addEventListener("keydown", e => { if (e.key === "Escape") chat.hidden = pNhac.hidden = true; });
@@ -240,6 +242,73 @@ function dung() {
   });
   $("#tl-go").addEventListener("submit", e => { e.preventDefault(); const q = $("#tl-nd").value.trim(); if (q) { $("#tl-nd").value = ""; hoi(q); } });
   veGoi();
+}
+/* ---------- Kéo thả: bong bóng và khung chat (nhớ vị trí) ---------- */
+let vuaKeo = false;
+const vp = () => { const v = window.visualViewport; return v ? { w: v.width, h: v.height, x: v.offsetLeft, y: v.offsetTop } : { w: innerWidth, h: innerHeight, x: 0, y: 0 }; };
+const kep = (v, a, b) => Math.max(a, Math.min(b, v));
+function keoDuoc(el, { batDau, di, tha }) {
+  el.addEventListener("pointerdown", e => {
+    if (e.button > 0 || (e.target.closest("button") && e.currentTarget.tagName === "HEADER")) return;
+    const x0 = e.clientX, y0 = e.clientY; let dang = false;
+    const move = ev => {
+      if (ev.pointerId !== e.pointerId) return;
+      const dx = ev.clientX - x0, dy = ev.clientY - y0;
+      if (!dang && Math.hypot(dx, dy) < 6) return;
+      if (!dang) { dang = true; batDau(); document.body.classList.add("tl-dang-keo"); }
+      ev.preventDefault(); di(dx, dy);
+    };
+    const up = ev => { if (ev.pointerId !== e.pointerId) return;
+      removeEventListener("pointermove", move); removeEventListener("pointerup", up); removeEventListener("pointercancel", up);
+      document.body.classList.remove("tl-dang-keo");
+      if (dang) { tha(); vuaKeo = true; setTimeout(() => { vuaKeo = false; }, 80); } };
+    addEventListener("pointermove", move, { passive: false }); addEventListener("pointerup", up); addEventListener("pointercancel", up);
+  });
+}
+function datCum(cum) {
+  const v = store.get("lvtt-tl-cum", null); if (!v) { cum.classList.remove("trai", "tren"); return; }
+  const r = cum.getBoundingClientRect(), W = innerWidth, H = innerHeight;
+  const x = v.ben === "L" ? 12 : W - r.width - 12, y = kep(v.y * H, 12, H - r.height - 12);
+  Object.assign(cum.style, { left: x + "px", top: y + "px", right: "auto", bottom: "auto" });
+  cum.classList.toggle("trai", v.ben === "L"); cum.classList.toggle("tren", y < H * .35);
+}
+function datKhung(el) {
+  const v = vp(), to = store.get("lvtt-tl-to", false);
+  el.classList.toggle("to", to);
+  el.querySelectorAll("[data-to]").forEach(b => { b.textContent = to ? "⤡" : "⤢"; b.setAttribute("aria-label", to ? "Thu nhỏ" : "Phóng to"); });
+  if (to) { Object.assign(el.style, { left: v.x + 8 + "px", top: v.y + 8 + "px", width: v.w - 16 + "px", height: v.h - 16 + "px" }); return; }
+  const dt = v.w <= 640, w = Math.min(v.w - 16, dt ? v.w - 16 : 440), h = Math.min(v.h - 16, dt ? Math.round(v.h * .8) : 680);
+  const luu = store.get("lvtt-tl-khung", null), r = $("#tl-cum").getBoundingClientRect();
+  let x, y;
+  if (luu) { x = luu.x * v.w; y = luu.y * v.h; }
+  else { x = r.left + r.width / 2 > v.w / 2 ? r.right - w : r.left; y = r.top - h - 10; if (y < 8) y = r.bottom + 10; }
+  x = kep(x, 8, v.w - w - 8) + v.x; y = kep(y, 8, v.h - h - 8) + v.y;
+  Object.assign(el.style, { left: x + "px", top: y + "px", width: w + "px", height: h + "px" });
+}
+function ganKeo(cum, ...khung) {
+  // Bong bóng: giữ và kéo, thả ra tự dạt vào mép trái/phải
+  let x0, y0;
+  [$("#tl-chat-nut"), $("#tl-nhac-nut")].forEach(n => keoDuoc(n, {
+    batDau() { const r = cum.getBoundingClientRect(); x0 = r.left; y0 = r.top; cum.classList.add("keo"); Object.assign(cum.style, { left: x0 + "px", top: y0 + "px", right: "auto", bottom: "auto" }); },
+    di(dx, dy) { const r = cum.getBoundingClientRect(); cum.style.left = kep(x0 + dx, 4, innerWidth - r.width - 4) + "px"; cum.style.top = kep(y0 + dy, 4, innerHeight - r.height - 4) + "px"; },
+    tha() { const r = cum.getBoundingClientRect(); cum.classList.remove("keo");
+      store.set("lvtt-tl-cum", { ben: r.left + r.width / 2 < innerWidth / 2 ? "L" : "R", y: r.top / innerHeight }); datCum(cum);
+      khung.forEach(k => { if (!k.hidden && !store.get("lvtt-tl-khung", null)) datKhung(k); }); },
+  }));
+  // Khung chat: giữ thanh tiêu đề để kéo
+  khung.forEach(k => {
+    let kx, ky; const hd = k.querySelector(".tl-keo");
+    keoDuoc(hd, {
+      batDau() { if (store.get("lvtt-tl-to", false)) { store.set("lvtt-tl-to", false); datKhung(k); } const r = k.getBoundingClientRect(); kx = r.left; ky = r.top; k.classList.add("keo"); },
+      di(dx, dy) { const v = vp(), r = k.getBoundingClientRect(); k.style.left = kep(kx + dx, v.x + 4, v.x + v.w - r.width - 4) + "px"; k.style.top = kep(ky + dy, v.y + 4, v.y + v.h - r.height - 4) + "px"; },
+      tha() { const v = vp(), r = k.getBoundingClientRect(); k.classList.remove("keo"); store.set("lvtt-tl-khung", { x: (r.left - v.x) / v.w, y: (r.top - v.y) / v.h }); },
+    });
+    k.querySelector("[data-to]").onclick = () => { store.set("lvtt-tl-to", !store.get("lvtt-tl-to", false)); datKhung(k); };
+  });
+  const lai = () => { datCum(cum); khung.forEach(k => { if (!k.hidden) datKhung(k); }); };
+  addEventListener("resize", lai);
+  if (window.visualViewport) visualViewport.addEventListener("resize", () => khung.forEach(k => { if (!k.hidden) datKhung(k); }));
+  requestAnimationFrame(() => datCum(cum));
 }
 function veGoi() {
   const g = ["Lịch học tuần này?", "Khối H khác V thế nào?", "Em cần mua hoạ cụ gì?", "Còn bao lâu nữa thi?", "Bài bị trả thì làm sao?", "Lười vẽ quá 😩"];
@@ -359,7 +428,7 @@ window.__troLy = {
   dangNhap(info) {
     nguoi = info; dung();
     document.body.classList.toggle("da-dn", !!info);
-    $("#tl-cum").hidden = !info;
+    $("#tl-cum").hidden = !info; if (info) requestAnimationFrame(() => datCum($("#tl-cum")));
     if (!info) { $("#tl-chat").hidden = $("#tl-nhac").hidden = true; lichSu = []; aiChat = null; $("#tl-tin").innerHTML = ""; }
     else if (aiModel && !aiChat) aiModel = null;  // nạp lại lời dặn có tên người dùng
   },
