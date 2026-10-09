@@ -2299,11 +2299,8 @@ body.hop-mo{overflow:hidden}
 }
 #stepper[hidden]{display:none}
 
-/* ----- Tiêu đề bìa: "HỌC VẼ" chữ vàng viết hoa, hai dòng căn giữa thẳng hàng ----- */
+/* ----- Tiêu đề bìa: hai dòng căn giữa thẳng hàng, giữ kiểu chữ cũ ----- */
 .cine-h1 .ln{display:block;text-align:center}
-.cine-h1 .hv-1{font-style:normal;font-weight:900;text-transform:uppercase;letter-spacing:.14em;font-size:.8em;line-height:1.15;padding:0 0 .06em .14em;
-  background:linear-gradient(180deg,#fff6cf 0%,#ffd45c 45%,#f08a1c 100%);-webkit-background-clip:text;background-clip:text;color:transparent;
-  filter:drop-shadow(0 4px 18px rgba(255,190,60,.45))}
 .cine-h1 .hv-2{margin-top:.04em}
 @media (prefers-reduced-motion:no-preference){
   .js-fx .cine-h1 .ln{opacity:0;transform:translateY(22px);filter:blur(8px)}
