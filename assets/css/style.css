@@ -2387,3 +2387,10 @@ body.hop-mo{overflow:hidden}
   .rk-stage .rk-card .rk-star{margin-top:0}
   .rk-stage .rk-card .rk-xp{margin-top:0}
 }
+
+/* Khung xem bài: dòng mô tả ở trên; dưới là nút Bài trước · Đóng · Bài sau thẳng hàng */
+.lb .lb-bar{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;justify-items:center;gap:10px 12px;width:min(100%,560px);flex-wrap:nowrap}
+.lb #lb-cap{grid-column:1/-1;justify-self:stretch;text-align:center;flex:none}
+.lb #lb-prev{justify-self:start}
+.lb #lb-next{justify-self:end}
+.lb #lb-close{justify-self:center}
