@@ -2299,7 +2299,7 @@ body.hop-mo{overflow:hidden}
 }
 #stepper[hidden]{display:none}
 
-/* ----- Tiêu đề bìa: hai dòng căn giữa thẳng hàng, giữ kiểu chữ cũ ----- */
+/* ----- Tiêu đề bìa: hai dòng căn giữa thẳng hàng, giữ kiểu chữ trắng nghiêng cũ ----- */
 .cine-h1 .ln{display:block;text-align:center}
 .cine-h1 .hv-2{margin-top:.04em}
 @media (prefers-reduced-motion:no-preference){
