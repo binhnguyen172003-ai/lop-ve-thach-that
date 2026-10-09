@@ -72,6 +72,10 @@ service cloud.firestore {
       allow create: if isMe(mail) && isStudent()
         && request.resource.data.keys().hasOnly(['tenMoi', 'tenCu', 'luc'])
         && request.resource.data.tenMoi is string && request.resource.data.tenMoi.size() > 0 && request.resource.data.tenMoi.size() <= 80;
+      // Gửi lại yêu cầu khi đã có một yêu cầu cũ chưa duyệt: ghi đè chính yêu cầu của mình
+      allow update: if isMe(mail) && isStudent()
+        && request.resource.data.keys().hasOnly(['tenMoi', 'tenCu', 'luc'])
+        && request.resource.data.tenMoi is string && request.resource.data.tenMoi.size() > 0 && request.resource.data.tenMoi.size() <= 80;
       allow delete: if isStaff() || isMe(mail);
     }
 

@@ -64,7 +64,7 @@ addEventListener("error", e => {
 });
 /* ---------- Mở tức thì ở lần sau + dùng được khi mạng yếu ---------- */
 if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost") && !/[?&]khongcache/.test(location.search))
-  addEventListener("load", () => navigator.serviceWorker.register("sw.js?v=20261010bp").catch(() => {}));
+  addEventListener("load", () => navigator.serviceWorker.register("sw.js?v=20261010br").catch(() => {}));
 
 /* ---------- Đo tốc độ: mở web kèm ?chandoan=1 để xem từng bước mất bao lâu ---------- */
 const DIAG = /[?&]chandoan/.test(location.search);
@@ -2198,7 +2198,9 @@ function renderHvInfo() {
     if (khoi) capNhat.khoi = khoi; // chỉ ghi khi học viên chọn khối; chưa chọn thì giữ khối cũ
     const b = writeBatch(db); b.update(doc(db, "hocvien", mail), capNhat);
     timed("Lưu thông tin học viên", b.commit()).then(() => { myHv = { ...myHv, ...capNhat }; st.textContent = "Đã lưu."; toast("Đã lưu thông tin của em."); renderHvInfo(); })
-      .catch(() => { st.textContent = "Chưa lưu được. Kiểm tra mạng rồi bấm lại."; });
+      .catch(e => { st.textContent = e && e.code === "permission-denied"
+        ? "Máy chủ chưa cho lưu: nhờ anh chị quản lý dán luật bảo mật mới (firestore.rules) một lần."
+        : "Chưa lưu được. Kiểm tra mạng rồi bấm lại."; });
   };
   const fd = $("#f-doiten");
   if (fd) fd.onsubmit = e => {
@@ -2208,7 +2210,9 @@ function renderHvInfo() {
     st.textContent = "Đang gửi…";
     timed("Gửi yêu cầu đổi tên", setDoc(doc(db, "doiten", mail), { tenMoi: moi, tenCu: myHv.ten || "", luc: Date.now() }))
       .then(() => { doiTenCuaToi = { tenMoi: moi }; toast("Đã gửi yêu cầu. Anh chị duyệt xong tên sẽ đổi."); renderHvInfo(); })
-      .catch(() => { st.textContent = "Chưa gửi được. Kiểm tra mạng rồi bấm lại."; });
+      .catch(e => { st.textContent = e && e.code === "permission-denied"
+        ? "Máy chủ chưa cho gửi: nhờ anh chị quản lý dán luật bảo mật mới (firestore.rules) một lần."
+        : "Chưa gửi được. Kiểm tra mạng rồi bấm lại."; });
   };
 }
 function renderDoiTen() {
