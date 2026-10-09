@@ -3190,12 +3190,13 @@ async function onUser(u) {
   }
   // Máy chủ không trả lời trong 8 giây thì coi như chưa hỏi được (để dùng quyền đã lưu và tự thử lại), không để treo mãi
   const hanTuoi = p => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej({ code: "timeout" }), 8000))]);
-  let tuChoiQuyen = false; // máy chủ từ chối đọc (thường do token chưa cập nhật trạng thái xác nhận email)
+  let tuChoiQuyen = false, tuLoi = ""; // tuChoiQuyen: máy chủ từ chối đọc; tuLoi: mã lỗi để báo thầy
   const exists = async (col) => { try { return (await hanTuoi(getDoc(doc(db, col, mail)))).exists(); } catch (e) { if (e && e.code === "permission-denied") tuChoiQuyen = true; return false; } };
   // Hỏi cả 4 thông tin cùng lúc thay vì lần lượt, để trang hiện nhanh hơn.
   const getData = async (col) => {
     try { const d = await hanTuoi(getDoc(doc(db, col, mail))); return d.exists() ? (d.data() || {}) : null; }
     catch (e) {
+      tuLoi = (e && (e.code || e.name)) || "khong-ro";
       if (e && e.code === "permission-denied") tuChoiQuyen = true; else if (e) serverIssue(e);
       return undefined; // undefined = chưa hỏi được, khác null = không có
     }
@@ -3228,6 +3229,10 @@ async function onUser(u) {
       // Bị từ chối quyền đọc: không để "đang kiểm tra" mãi. Hiện rõ hướng xử lý, vẫn tự thử lại ngầm.
       renderLocks("pending"); renderAccount(false);
       if (u.__thuLai === 1) toast("Máy chủ từ chối đọc tài khoản. Em thử tải lại trang (hoặc đăng xuất rồi đăng nhập lại); nếu vẫn vậy, báo thầy kiểm tra.", "err");
+      return;
+    } else if (u.__thuLai >= 2) {
+      // Đã thử lại mà vẫn chưa đọc được: hiện rõ mã lỗi và nút tải lại, không để "đang kiểm tra" mãi.
+      $$("[data-lock]").forEach(el => { el.hidden = false; el.innerHTML = `<h3>Chưa đọc được hồ sơ tài khoản</h3><p class="muted">Máy chủ chưa trả lời (mã: ${esc(tuLoi)}). Web vẫn tự thử lại. Thử tải lại trang; nếu vẫn vậy, chụp màn hình này gửi thầy.</p><div class="ctas"><button class="btn primary" type="button" onclick="location.reload()">Tải lại ngay</button></div>`; });
       return;
     } else {
       renderLocks("checking");
