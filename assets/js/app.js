@@ -2023,7 +2023,7 @@ function renderMyProg() {
       <div class="mp-gauge ${t.muc}" style="--p:${t.pass ?? 0}"><b class="num">${t.pass === null ? "–" : t.pass + "%"}</b><span>khả năng đỗ<br>ước tính</span></div>
     </div>
     <div class="mp-stats">
-      <div><span>Giờ đã học</span><b class="num">${t.gio}<small>/${t.gioCan} giờ</small></b><div class="bar"><i style="width:${pct}%"></i></div></div>
+      <div><span>Giờ đã học <small>(tính theo buổi đã điểm danh)</small></span><b class="num">${t.gio}<small>/${t.gioCan} giờ</small></b><div class="bar"><i style="width:${pct}%"></i></div></div>
       <div><span>Đã đi học trong 4 tuần</span><b class="num">${t.records28 ? t.co28 + " buổi" : "–"}</b><div class="mp-study-plan">${t.records28 ? esc(lichHocDeXuat(t)) : "Chưa có điểm danh trong 4 tuần"}</div></div>
       <div><span>Chuyên cần 30 ngày</span><b class="num">${t.att === null ? "–" : Math.round(t.att * 100) + "%"}</b></div>
       <div><span>Điểm bài tập TB</span><b class="num">${t.avg === null ? "–" : nf1(t.avg)}<small> · mục tiêu ${nf1(MUC_TIEU.diemDat)}</small></b></div>
