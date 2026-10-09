@@ -64,7 +64,7 @@ addEventListener("error", e => {
 });
 /* ---------- Mở tức thì ở lần sau + dùng được khi mạng yếu ---------- */
 if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost") && !/[?&]khongcache/.test(location.search))
-  addEventListener("load", () => navigator.serviceWorker.register("sw.js?v=20261010ak").catch(() => {}));
+  addEventListener("load", () => navigator.serviceWorker.register("sw.js?v=20261010al").catch(() => {}));
 
 /* ---------- Đo tốc độ: mở web kèm ?chandoan=1 để xem từng bước mất bao lâu ---------- */
 const DIAG = /[?&]chandoan/.test(location.search);
@@ -287,6 +287,21 @@ function galTatCa() {
   // Bài viết sẵn đã chuyển thành bài web (mã seed-ve-i) thì không hiện lần nữa
   return [...BAIVE_DONG.slice().sort((x, y) => (y.luc || 0) - (x.luc || 0)), ...BAI_VE.filter((b, i) => !BAIVE_DONG.some(x => x.id === "seed-ve-" + i))];
 }
+// Tìm bài đăng trùng: cùng học viên + loại + ảnh (bài vẽ), hoặc cùng tiêu đề (bản tin).
+// Trong mỗi nhóm giữ một bản: ưu tiên bản chuyển tự động (seed-…), không bao giờ xoá bản seed-…
+function timBaiTrung() {
+  const nhom = new Map();
+  const them = (k, x) => { if (!nhom.has(k)) nhom.set(k, []); nhom.get(k).push(x); };
+  BAIVE_DONG.forEach(b => them("ve|" + String(b.hocVien || "").trim().toLowerCase() + "|" + (b.loai || "") + "|" + (b.anh ? b.anh.length : 0), { ...b, kind: "baive" }));
+  BANTIN_DONG.forEach(t => them("tin|" + String(t.tieuDe || "").trim().toLowerCase(), { ...t, kind: "bantin" }));
+  const xoa = [];
+  for (const ds of nhom.values()) {
+    if (ds.length < 2) continue;
+    const giu = ds.find(x => String(x.id).startsWith("seed-")) || ds.slice().sort((a, b) => (b.luc || 0) - (a.luc || 0))[0];
+    ds.forEach(x => { if (x.id !== giu.id && !String(x.id).startsWith("seed-")) xoa.push(x); });
+  }
+  return xoa;
+}
 function renderGallery() {
   const all = galTatCa(), has = all.length > 0;
   const count = t => all.filter(b => b.loai === t).length;
@@ -294,6 +309,18 @@ function renderGallery() {
   if (has) $("#gal-filters").innerHTML = [`<button class="tab" data-g="all" aria-selected="${galFilter === "all"}">Tất cả <span class="num">${all.length}</span></button>`]
     .concat(LOAI_BAI.map(l => `<button class="tab" data-g="${esc(l.ten)}" aria-selected="${galFilter === l.ten}">${esc(l.ten)} <span class="num">${count(l.ten)}</span></button>`)).join("");
   $$("#gal-filters .tab").forEach(b => b.onclick = () => { galFilter = b.dataset.g; renderGallery(); });
+  // Quản lý: nút dọn bài đăng trùng (giữ bản chuyển tự động "seed-…", xoá bản đăng tay trùng; bấm 2 lần mới xoá)
+  if (isAdmin && has) {
+    const trung = timBaiTrung(), n = trung.length;
+    if (n) {
+      $("#gal-filters").insertAdjacentHTML("beforeend", `<button type="button" class="tab" id="gal-dontrung">🧹 Xoá ${n} bài trùng</button>`);
+      confirmButton($("#gal-dontrung"), async () => {
+        const xoa = timBaiTrung(); if (!xoa.length) return;
+        const lo = writeBatch(db); xoa.forEach(x => lo.delete(doc(db, x.kind, x.id)));
+        await lo.commit(); toast(`Đã xoá ${xoa.length} bài trùng.`);
+      }, `Bấm lần nữa để xoá ${n} bài trùng`);
+    }
+  }
   if (!has) { $("#gallery").className = "gallery arts"; $("#gallery").innerHTML = LOAI_BAI.map(l => artCard(l, "Ảnh bài thật sắp cập nhật")).join(""); return; }
   galList = all.filter(b => galFilter === "all" || b.loai === galFilter);
   if (!galList.length) { gallerySig = ""; const l = LOAI_BAI.find(x => x.ten === galFilter); $("#gallery").className = "gallery arts"; $("#gallery").innerHTML = artCard(l, "Phần này chưa có ảnh"); return; }
