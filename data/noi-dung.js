@@ -304,8 +304,10 @@ export const SO_DU_THI = { 2025: 0, 2026: 0 };
 // muc: "tuyensinh" (Tin tuyển sinh) · "tinlop" (Thông báo lớp) · "hoacu" (Hoạ cụ) · "lythuyet" (Lý thuyết) · "kinhnghiem" (Kinh nghiệm thi)
 // dsHoaCu: "Cơ bản" / "Khối H" / "Khối V" → tự liệt kê hoạ cụ cần mua theo bảng HOA_CU ở trên.
 export const BAN_TIN = [
-  { muc: "tuyensinh", ngay: "2026-10-09", tieuDe: "Lịch thi năng khiếu 2027 (dự kiến) đã có trên web",
-    nd: "Lớp đã tổng hợp lịch thi năng khiếu dự kiến của ĐH Kiến trúc HN, MTCN, Xây dựng, ĐHQG HN và SP Nghệ thuật TW, kèm đồng hồ đếm ngày.\nLịch chính thức sẽ cập nhật ngay khi các trường công bố.", link: "#lich-thi" },
+  { muc: "tuyensinh", ngay: "2026-10-09", tieuDe: "Dự kiến thay đổi tuyển sinh trình độ đại học năm 2027 (ĐH Kiến trúc Hà Nội)",
+    nd: "Trường Đại học Kiến trúc Hà Nội công bố thông báo về dự kiến thay đổi trong tuyển sinh trình độ đại học năm 2027.\nBấm \"Mở link\" để đọc chi tiết trên trang chính thức của trường.",
+    link: "https://hau.edu.vn/Thong-bao-ve-du-kien-thay-doi-trong-tuyen-sinh-trinh-do-dai-hoc-nam-2027-cua-Truong-Dai-hoc-Kien-truc-Ha-Noi_n4870.html",
+    anh: "assets/img/tin/tuyen-sinh-2027.jpg" },
   { muc: "hoacu", ghim: true, ngay: "2026-10-09", tieuDe: "Hoạ cụ cần chuẩn bị khi bắt đầu học",
     nd: "Buổi đầu em chưa cần mua đắt. Chỉ cần đủ bộ dưới đây là vẽ được hình hoạ cơ bản. Hoạ cụ màu (Khối H) thầy hướng dẫn mua khi bắt đầu học màu.\nLớp có bán sẵn tại cơ sở, giá như dưới đây.",
     dsHoaCu: "Cơ bản" },

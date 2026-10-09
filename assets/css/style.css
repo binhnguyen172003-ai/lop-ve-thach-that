@@ -2190,9 +2190,15 @@ body.hop-mo{overflow:hidden}
 .tb-mo{display:flex;gap:10px;align-items:center;font-size:.82rem;font-weight:700;color:#cdd6ff}.tb-mo em{font-style:normal;font-weight:400;color:rgba(255,255,255,.55)}
 .tb-the.nb-add{background:var(--accent-soft);border:2px dashed var(--accent)}
 .tb-noi .gv-ctl{margin-top:8px}
-.tb-stage{height:320px}.tb-the{height:100%}
 .tb-chip{display:flex;gap:6px;flex-wrap:wrap}
 .tb-the-nd small{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
 .tb-the-nd b{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
-.tb-ring{overflow:hidden;padding-bottom:2px}.tb-noi .gv-ctl{position:relative;z-index:30}.tb-stage{overflow:visible}
-.tb-stage{height:350px}.tb-the{height:310px}@media (max-width:640px){.tb-stage{height:350px}.tb-the{height:310px}}
+/* Vòng xoay tin: thẻ đặt tuyệt đối giữa khung (giống Bài vẽ nổi bật), mũi tên nằm riêng bên dưới */
+.tb-ring{overflow:hidden;padding-bottom:0}
+.tb-stage{height:340px;overflow:visible}
+.tb-the{position:absolute;top:0;left:50%;width:280px;height:300px;margin-left:-140px;transition:transform .7s cubic-bezier(.22,.8,.3,1),opacity .7s;will-change:transform;backface-visibility:hidden}
+.tb-noi .gv-ctl{position:relative;z-index:30;margin-top:14px}
+@media (max-width:640px){
+  .tb-stage{height:320px}
+  .tb-the{width:min(262px,70vw);height:286px;margin-left:calc(min(262px,70vw) / -2)}
+}
