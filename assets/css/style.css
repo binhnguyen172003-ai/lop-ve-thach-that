@@ -2128,13 +2128,13 @@ body.hop-mo{overflow:hidden}
   .ql-bang td:first-child{grid-template-columns:1fr;font-size:1rem}.ql-bang td:first-child::before,.ql-bang td:last-child::before{display:none}
   .ql-bang td:last-child{grid-template-columns:1fr}
 }
-.t5{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin:12px 0}
+.tq5{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin:12px 0}
 .t5-o{display:grid;gap:6px;padding:8px;border-radius:14px;border:1px solid var(--rule);background:var(--sheet)}
 .t5-o.h1{border-color:#ffc400}.t5-o.h2{border-color:#c7ccd5}.t5-o.h3{border-color:#d08a52}
 .t5-so{font:800 .8rem var(--f-display);color:var(--accent)}.t5-o.h1 .t5-so{color:#ffc400}
 .t5-o img,.t5-trong{width:100%;aspect-ratio:3/4;object-fit:cover;border-radius:10px;display:grid;place-items:center;background:var(--paper);color:var(--graphite);font-size:.8rem}
 .t5-o select{font:inherit;font-size:14px;width:100%;padding:6px;border-radius:8px;border:1px solid var(--rule);background:var(--paper);color:var(--ink)}
-@media (max-width:640px){.t5{grid-template-columns:repeat(2,minmax(0,1fr))}.t5-o.h1{grid-column:span 2}.t5-o.h1 img,.t5-o.h1 .t5-trong{aspect-ratio:4/3}}
+@media (max-width:640px){.tq5{grid-template-columns:repeat(2,minmax(0,1fr))}.t5-o.h1{grid-column:span 2}.t5-o.h1 img,.t5-o.h1 .t5-trong{aspect-ratio:4/3}}
 /* Chat tư vấn: đăng ký để lại SĐT */
 .tl-dk{padding:14px;overflow-y:auto;flex:1}
 .tl-dk-f{display:grid;gap:10px}.tl-dk-f label{display:grid;gap:4px;font-size:.82rem;font-weight:600}
@@ -2149,3 +2149,9 @@ body.hop-mo{overflow:hidden}
 .menu-ov{z-index:70}
 .who-ava .ka svg{width:100%!important;height:100%!important;max-width:none}
 @media (max-width:760px){.ql-kpi .hl{order:-1}.ql-bang td>div{min-width:0}}
+/* Thẳng hàng thẻ tài khoản */
+.av-doi label,.av-doi button{display:inline-flex;align-items:center;min-height:32px;padding:0;margin:0;line-height:1.2;vertical-align:middle}
+#who-status .chip{margin-left:0}
+#who-mail{word-break:normal;overflow-wrap:anywhere}
+.who{align-items:center}.who>div{min-width:0}
+@media (max-width:640px){#card-login .ctas{display:grid;grid-template-columns:1fr;gap:10px}#card-login .ctas .btn{width:100%}}

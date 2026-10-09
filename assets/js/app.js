@@ -1349,7 +1349,7 @@ function renderAccount(pending) {
     setStep(1); return;
   }
   $("#who-name").textContent = user.displayName || "Xin chào";
-  $("#who-mail").textContent = "Đang dùng Gmail: " + mail;
+  $("#who-mail").textContent = mail;
   $("#nav-acct-t").textContent = "Tài khoản";
   $("#btn-learn").textContent = isTeacher ? "Xem giáo trình" : "Vào học ngay →";
   { const q = $("#btn-ql"); q.hidden = !isTeacher || needVerify; q.href = isAdmin ? "#duyet" : "#diem-danh"; }
@@ -3475,7 +3475,7 @@ function renderTop5() {
   box.innerHTML = `<h2 class="ql-h2" id="ql-top5-h">Top 5 bài vẽ nổi bật tuần</h2>
     <p class="muted">Chọn bài cho từng vị trí. Chỉ 5 bài này hiện ở mục "Bài vẽ nổi bật" trên trang chủ; sau 1 tuần tự chuyển sang Top tháng. Bài khác vẫn nằm ở mục "Bài vẽ học viên".</p>
     ${baiVeLoi ? `<p class="xh-loi">Máy chủ chưa cho đọc mục bài vẽ. Quản lý cần dán luật bảo mật mới (firestore.rules) một lần.</p>` : ""}
-    <div class="t5">${[1, 2, 3, 4, 5].map(k => { const b = o(k); return `<div class="t5-o h${k}">
+    <div class="tq5">${[1, 2, 3, 4, 5].map(k => { const b = o(k); return `<div class="t5-o h${k}">
       <span class="t5-so">TOP ${k}</span>${b ? `<img src="${esc(b.anh)}" alt="">` : `<span class="t5-trong">Trống</span>`}
       <select data-t5="${k}" aria-label="Chọn bài Top ${k}"><option value="">${b ? "— Bỏ khỏi Top —" : "Chọn bài…"}</option>${gan.map(x => `<option value="${esc(x.id)}"${b && b.id === x.id ? " selected" : ""}>${esc(x.hocVien)} · ${esc(x.loai)} · ${ngayVN(x.ngay)}</option>`).join("")}</select></div>`; }).join("")}</div>
     <p><button type="button" class="btn primary" data-dang-bai>+ Đăng bài vẽ mới</button> <span class="muted">${gan.length} bài thầy cô đăng trong 45 ngày qua</span></p>`;
