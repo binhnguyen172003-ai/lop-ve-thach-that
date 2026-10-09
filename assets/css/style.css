@@ -2403,3 +2403,7 @@ body.hop-mo{overflow:hidden}
 .lb #lb-prev{left:6px;justify-self:auto}
 .lb #lb-next{right:6px;justify-self:auto}
 .lb #lb-close{justify-self:center}
+/* Mũi tên vào trong mép ảnh; nút Đóng ra giữa */
+.lb #lb-prev{left:24px}
+.lb #lb-next{right:24px}
+.lb #lb-close{margin:0 auto}
