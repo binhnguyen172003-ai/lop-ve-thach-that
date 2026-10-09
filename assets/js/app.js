@@ -2735,12 +2735,31 @@ $("#f-chat").addEventListener("submit", async e => {
 function renderTB() {
   const list = lvTB.slice().sort((a, b) => b.luc - a.luc);
   $("#tb-list").innerHTML = list.length ? list.map(t => `<article class="tb${t.gui === "giaovien" ? " noibo" : ""}" data-nhac-id="${esc("tb-" + t.id)}">
-      <div class="tb-head">${t.gui === "giaovien" ? `<span class="chip line">Nội bộ giáo viên</span>` : ""}<b>${esc(t.tieuDe || "Thông báo")}</b>
+      <div class="tb-head">${t.gui === "giaovien" ? `<span class="chip line">Nội bộ giáo viên</span>` : ""}${t.tuDong ? `<span class="chip line">Tự động</span>` : ""}<b>${esc(t.tieuDe || "Thông báo")}</b>
         <span class="muted num">${esc(t.ten || "")} · ${esc(fmtDate(t.luc))}</span></div>
       <p>${esc(t.nd).replace(/\n/g, "<br>")}</p>
       ${isAdmin || t.tacGia === mail ? `<button type="button" class="btn small" data-xtb="${esc(t.id)}">Xoá</button>` : ""}</article>`).join("")
     : `<p class="muted empty">Chưa có thông báo nào.</p>`;
   $$("#tb-list [data-xtb]").forEach(b => confirmButton(b, () => deleteDoc(doc(db, "thongbao", b.dataset.xtb))));
+}
+// Mẫu thông báo có sẵn: chọn mẫu sẽ điền tiêu đề và nội dung, người viết sửa phần trong [ ]
+const MAU_TB = {
+  top: ["🏆 Top bài vẽ tuần [số tuần]", "Chúc mừng các em [tên 1], [tên 2], [tên 3], [tên 4], [tên 5].\nXem bài và nhận xét của thầy trong mục Bài nổi bật."],
+  xuatsac: ["⭐ Bài tập [tên bài] được chấm Xuất sắc", "Bài của em [tên học viên] đã được đăng lên Bài vẽ học viên.\nCác em xem để học cách bố cục và xử lý sắc độ."],
+  tintuc: ["📢 [Tiêu đề tin]", "[Một hai câu tóm tắt tin].\nBấm Xem chi tiết trong mục Tin nổi bật để đọc đầy đủ."],
+  lichhoc: ["📅 Thay đổi lịch học tuần [số tuần]", "Lớp [tên lớp] chuyển từ [giờ cũ] sang [giờ mới] vào [ngày].\nCác em sắp xếp thời gian giúp thầy nhé."],
+  baitap: ["✏️ Bài tập mới: [tên bài]", "Hạn nộp: [ngày giờ].\nCác em chụp bài (tối đa 3 ảnh) và nộp trong mục Bài tập."],
+  online: ["🎨 Mở đăng ký lớp online", "Lớp luyện thi online của Dreamers sắp khai giảng [tháng].\nĐăng ký nhận lịch sớm ngay tại trang chủ."]
+};
+$("#tb-mau").addEventListener("change", e => {
+  const m = MAU_TB[e.target.value]; if (!m) return;
+  $("#tb-tieude").value = m[0]; $("#tb-nd").value = m[1]; $("#tb-nd").focus();
+});
+// Thông báo tự động: ghi thẳng vào mục thông báo chung, học viên thấy ở khung Nhắc việc và mục Thông báo
+function thongBaoTuDong(tieuDe, nd) {
+  if (!(user && db && isAdmin)) return Promise.resolve();
+  return addDoc(collection(db, "thongbao"), { tieuDe: String(tieuDe).slice(0, 120), nd: String(nd).slice(0, 2000), gui: "tatca", tacGia: mail, ten: tenToi(), luc: Date.now(), tuDong: true })
+    .catch(() => {});
 }
 $("#f-tb").addEventListener("submit", async e => {
   e.preventDefault();
@@ -3418,6 +3437,7 @@ function moDangBai() {
     try {
       await timed("Đăng bài vẽ", setDoc(ref, data));
       if (isAdmin && top) await datTop(ref.id, top);
+      else if (isAdmin) thongBaoTuDong("🖼 Bài vẽ mới trên web", `${hocVien} · ${loai} vừa được đăng lên Bài vẽ học viên. Xem trong mục Bài vẽ học viên.`);
       toast(top ? `Đã đăng và đưa lên Top ${top} tuần.` : "Đã đăng bài vẽ lên web."); dong();
     } catch (err) {
       nut.disabled = false; st.classList.add("err");
@@ -3430,7 +3450,10 @@ async function datTop(id, k) {
   const b = writeBatch(db), hom = todayVN();
   if (k) BAIVE_DONG.filter(x => x.id !== id && tuanNay(x) && x.hang === k).forEach(x => b.set(doc(db, "baive", x.id), { hang: 0, ngayTop: "" }, { merge: true }));
   b.set(doc(db, "baive", id), k ? { hang: k, ngayTop: hom } : { hang: 0, ngayTop: "" }, { merge: true });
-  return timed("Chọn Top", b.commit());
+  const kq = await timed("Chọn Top", b.commit());
+  if (k) { const x = BAIVE_DONG.find(y => y.id === id) || {};
+    thongBaoTuDong(`🏆 Top ${k} tuần này`, `${x.hocVien || "Một bài vẽ"}${x.loai ? " · " + x.loai : ""} vừa được chọn vào Top ${k} tuần. Xem trong mục Bài nổi bật.`); }
+  return kq;
 }
 
 /* ---------- Bản tin nổi bật ---------- */
@@ -3525,6 +3548,7 @@ function moDangTin() {
     try {
       await timed("Đăng bản tin", addDoc(collection(db, "bantin"), { muc: (el.querySelector('[name="tn-muc"]:checked') || {}).value || "tinlop", tieuDe, nd, anh, link,
         ghim: !!(el.querySelector("#tn-ghim") || {}).checked, tacGia: mail, tenTacGia: tenToi(), luc: Date.now() }));
+      if (isAdmin) thongBaoTuDong("📢 Tin mới: " + tieuDe, `${nd.split(/\n+/)[0].slice(0, 200)}\nXem chi tiết trong mục Tin nổi bật.`);
       toast("Đã đăng bản tin."); dong(); location.hash = "#ban-tin";
     } catch (err) { nut.disabled = false; st.classList.add("err"); st.textContent = err && err.code === "permission-denied" ? "Máy chủ chưa cho đăng: quản lý cần dán luật bảo mật mới (firestore.rules) một lần." : "Chưa đăng được, kiểm tra mạng rồi thử lại."; }
   };

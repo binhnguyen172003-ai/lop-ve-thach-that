@@ -729,7 +729,9 @@
     <!-- Thông báo -->
     <section class="lv-pane" id="lv-tb" hidden aria-label="Thông báo">
       <form class="card lv-form" id="f-tb" data-teacher hidden>
-        <h3>Đăng thông báo</h3>
+        <h3>Viết thông báo cho học viên</h3>
+        <p class="muted">Chọn một mẫu có sẵn rồi sửa phần trong ngoặc [ ]. Lưu ý: bài vẽ và bản tin do quản lý đăng sẽ tự động có thông báo, không cần viết tay.</p>
+        <label for="tb-mau">Mẫu có sẵn<select id="tb-mau"><option value="">— Viết tự do —</option><option value="top">Top bài vẽ tuần</option><option value="xuatsac">Bài tập được chấm Xuất sắc</option><option value="tintuc">Tin nổi bật mới</option><option value="lichhoc">Thay đổi lịch học</option><option value="baitap">Bài tập mới và hạn nộp</option><option value="online">Mở đăng ký lớp online</option></select></label>
         <label for="tb-tieude">Tiêu đề<input id="tb-tieude" maxlength="120" placeholder="VD: Nghỉ học tối thứ 6"></label>
         <label for="tb-nd">Nội dung<textarea id="tb-nd" maxlength="2000" required placeholder="Viết ngắn gọn, rõ ngày giờ."></textarea></label>
         <div class="fgrid">
