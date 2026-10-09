@@ -64,7 +64,7 @@ addEventListener("error", e => {
 });
 /* ---------- Mở tức thì ở lần sau + dùng được khi mạng yếu ---------- */
 if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost") && !/[?&]khongcache/.test(location.search))
-  addEventListener("load", () => navigator.serviceWorker.register("sw.js?v=20261010af").catch(() => {}));
+  addEventListener("load", () => navigator.serviceWorker.register("sw.js?v=20261010ag").catch(() => {}));
 
 /* ---------- Đo tốc độ: mở web kèm ?chandoan=1 để xem từng bước mất bao lâu ---------- */
 const DIAG = /[?&]chandoan/.test(location.search);
@@ -850,6 +850,7 @@ const GHI_CHU = {
     if (!ds.length && !coThem()) { box.innerHTML = `<p class="nb-rong">Chưa có bài nổi bật ${TEN[ky]}. ${ky === "tuan" ? "Thầy cô sẽ cập nhật bài đẹp mỗi tuần." : `Bài tuần trước tự chuyển sang đây khi ${ky === "thang" ? "qua 1 tuần" : "qua 1 tháng"}.`}</p>`; return; }
     box.innerHTML = `<div class="gv-stage nb-stage">${ds.map((b, i) => `<figure class="nb-card${b.nv ? " nb-nv nv-" + nhanVienLop(b) : ""}" data-i="${i}">
         ${b.nv ? `<span class="nb-nv-tag">${esc(nhanVienTen(b))}</span>` : ""}
+        ${isAdmin && b.id ? `<button type="button" class="nb-more" data-mn="${esc(b.id)}" aria-label="Tuỳ chọn: sửa link, xoá bài">⋮</button>` : ""}
         <img src="${esc(b.anh)}" alt="${esc((b.loai || "Bài vẽ") + " · " + (b.hocVien || ""))}" ${i < 2 || b.nv ? 'loading="eager" fetchpriority="high"' : 'loading="lazy"'} decoding="async" draggable="false">
         ${b.top ? `<span class="nb-medal h${b.top}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 2h4l1 5-3 1zM17 2h-4l-1 5 3 1z" class="rb"/><circle cx="12" cy="15" r="6.5" class="md"/><text x="12" y="18.2" text-anchor="middle">${b.top}</text></svg><b>TOP ${b.top}</b><i>${TEN[ky]}</i></span>` : ""}
         ${b.tg ? "" : (m => m.length ? (a => `<span class="nb-tt" data-rk="${esc(b.hocVien)}" role="button" tabindex="0" title="${esc(a.ten)} · ${CAP[a.cap].ten} — ${esc(a.mo)}">${huyHieuTT(a, a.cap, "sm")}<span class="nb-ttx"><b>${esc(a.ten)}</b><small>${a.n} ${esc(a.dv)} · ${CAP[a.cap].ten}</small></span></span>`)(m[0]) : "")(ttNoiNhat(b.hocVien))}
@@ -859,6 +860,11 @@ const GHI_CHU = {
         <div class="gv-dots">${ds.map((b, i) => `<button type="button" data-i="${i}" aria-label="Bài ${i + 1}"></button>`).join("")}${coThem() ? `<button type="button" data-i="${ds.length}" aria-label="Thêm bài vẽ"></button>` : ""}</div>
         <button type="button" class="gv-nav" aria-label="Bài sau">›</button></div>`;
     const [p, n] = box.querySelectorAll(".gv-nav");
+    // Nút ⋮ (chỉ quản lý thấy): sửa link/thông tin hoặc xoá bài; bấm ⋮ không được kéo hay mở ảnh
+    box.querySelectorAll(".nb-more").forEach(bt => {
+      const stop = e => e.stopPropagation();
+      bt.addEventListener("pointerdown", stop); bt.addEventListener("click", e => { e.stopPropagation(); e.preventDefault(); moMenuBai(bt, BAIVE_DONG.find(y => y.id === bt.dataset.mn)); });
+    });
     const cards = [...box.querySelectorAll(".nb-card")];
     vx = vongXoay(box, box.querySelector(".nb-stage"), cards, [...box.querySelectorAll(".gv-dots button")], p, n, c => {
       if (c.dataset.add) { moDangBai(); return; }
@@ -3768,6 +3774,24 @@ const linkHopLe = v => !v || /^https?:\/\/\S+$/i.test(v);
 const tuanNay = b => b.hang >= 1 && b.hang <= 5 && b.ngayTop && (Date.parse(todayVN()) - Date.parse(b.ngayTop)) / 864e5 < 7;
 
 /* ---------- Đăng bài vẽ học viên ---------- */
+// Menu ⋮ của quản lý trên thẻ bài nổi bật: sửa thông tin/link hoặc xoá bài (xoá phải bấm 2 lần)
+let menuBai = null;
+function moMenuBai(anchor, bai) {
+  if (menuBai) { const cu = menuBai; cu.remove(); menuBai = null; if (cu.dataset.cho === bai?.id) return; }
+  if (!bai || !isAdmin) return;
+  const m = document.createElement("div"); m.className = "nb-menu"; m.dataset.cho = bai.id;
+  m.innerHTML = `<button type="button" data-sua>✏️ Sửa thông tin & link</button><button type="button" data-xoa>🗑 Xoá bài này</button>`;
+  document.body.append(m); menuBai = m;
+  const r = anchor.getBoundingClientRect();
+  m.style.top = Math.min(r.bottom + 6, innerHeight - 140) + "px";
+  m.style.left = Math.max(8, Math.min(r.right - 200, innerWidth - 208)) + "px";
+  const fin = () => { m.remove(); if (menuBai === m) menuBai = null; removeEventListener("pointerdown", ngoai, true); };
+  const ngoai = e => { if (!m.contains(e.target) && e.target !== anchor) fin(); };
+  setTimeout(() => addEventListener("pointerdown", ngoai, true), 0);
+  m.querySelector("[data-sua]").onclick = () => { fin(); moDangBai(bai); };
+  const xoa = m.querySelector("[data-xoa]");
+  confirmButton(xoa, () => deleteDoc(doc(db, "baive", bai.id)).then(() => { fin(); toast("Đã xoá bài vẽ."); }), "Bấm lần nữa để xoá");
+}
 // sua: bài đang có (quản lý bấm "Sửa"); không có thì là đăng bài mới
 function moDangBai(sua) {
   if (!(user && isTeacher && db)) { toast("Đăng nhập tài khoản giáo viên hoặc quản lý để đăng bài.", "err"); location.hash = "#tai-khoan"; return; }
