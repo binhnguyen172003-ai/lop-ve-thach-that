@@ -190,7 +190,7 @@ export const GIAO_VIEN = [
   { ten: "Đỗ Hữu Trường", vaiTro: "Trợ giảng", khoi: "Khối V", truong: "HAU", nganh: "Sinh viên Kiến trúc, học viên lớp Thạch Thất khoá 2026 · tượng, Mỹ thuật 2", anh: "do-huu-truong" },
   { ten: "Bùi Anh Đức", vaiTro: "Trợ giảng", khoi: "Khối H", truong: "MTCN", nganh: "Sinh viên Mỹ thuật Công nghiệp · chân dung và người cơ bản", anh: "bui-anh-duc" },
   { ten: "Kiều Huyền Linh", vaiTro: "Trợ giảng", khoi: "Khối H", truong: "NUAE", nganh: "Sinh viên Sư phạm Mỹ thuật · màu cơ bản", anh: "kieu-huyen-linh", bai: "assets/img/bai-ve/huyen-linh-mau.webp" },
-  { ten: "Nguyễn Duy Cường", vaiTro: "Trợ giảng", khoi: "Khối V", truong: "HAU", nganh: "Sinh viên Kiến trúc · tượng, Mỹ thuật 2", anh: "nguyen-duy-cuong" },
+  { ten: "Nguyễn Duy Cường", vaiTro: "Trợ giảng", khoi: "Khối V", truong: "HAU", nganh: "Sinh viên Kiến trúc · tượng, Mỹ thuật 2", anh: "nguyen-duy-cuong", biDanh: "Giáo viên Hình hoạ · Dạy tượng" },
   { ten: "Nguyễn Ngân Thương", vaiTro: "Trợ giảng", khoi: "Khối V", truong: "HUCE", nganh: "Sinh viên Kiến trúc · tượng, tĩnh vật", anh: "nguyen-ngan-thuong" },
   { ten: "Châu", vaiTro: "Trợ giảng", khoi: "Khối H", truong: "MTCN", nganh: "Chân dung và người cơ bản" },
 ];

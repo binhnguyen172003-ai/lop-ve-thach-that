@@ -17,6 +17,8 @@ let getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleT
 let user = null, mail = "", isAdmin = false, isTeacher = false, approved = false, needVerify = false;
 // Bài vẽ thầy cô đăng trên web (Firestore: baive). Bài được quản lý chọn Top 1–5 thì thành "bài nổi bật".
 let BAIVE_DONG = [], BANTIN_DONG = [], baiVeLoi = false, banTinLoi = false;
+// Biệt danh mặc định theo người vẽ trong danh sách giáo viên (ví dụ Cường: "Giáo viên Hình hoạ · Dạy tượng"); bài đăng không ghi biệt danh riêng thì dùng mặc định này
+const biDanhCua = b => b.biDanh || (GIAO_VIEN.find(g => g.ten === b.hocVien) || {}).biDanh || "";
 const NB_DONG = () => BAIVE_DONG.filter(b => (b.hang >= 1 && b.hang <= 5) || b.mau).map(b => ({ ...b, ngay: b.ngayTop || b.ngay, dong: true }));
 const nbAll = () => [...BAI_NOI_BAT, ...NB_DONG()];
 async function loadFirebase() {
@@ -29,7 +31,7 @@ async function loadFirebase() {
 
 const $ = s => document.querySelector(s);
 // Trợ lý (chat + nhắc việc) tải riêng, không làm chậm trang
-const troLyPromise = import("./tro-ly.js?v=20261010y").catch(e => console.warn("Chưa tải được trợ lý", e));
+const troLyPromise = import("./tro-ly.js?v=20261010z").catch(e => console.warn("Chưa tải được trợ lý", e));
 window.__appOk = true;
 document.querySelectorAll(".slow-bar").forEach(el => el.remove());
 
@@ -62,7 +64,7 @@ addEventListener("error", e => {
 });
 /* ---------- Mở tức thì ở lần sau + dùng được khi mạng yếu ---------- */
 if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost") && !/[?&]khongcache/.test(location.search))
-  addEventListener("load", () => navigator.serviceWorker.register("sw.js?v=20261010y").catch(() => {}));
+  addEventListener("load", () => navigator.serviceWorker.register("sw.js?v=20261010z").catch(() => {}));
 
 /* ---------- Đo tốc độ: mở web kèm ?chandoan=1 để xem từng bước mất bao lâu ---------- */
 const DIAG = /[?&]chandoan/.test(location.search);
@@ -298,7 +300,7 @@ function renderGallery() {
   const xoaDuoc = b => b.id && user && (isAdmin || (isTeacher && b.nguoi === mail));
   $("#gallery").innerHTML = galList.map((b, i) =>
     `<div class="gal-o"><button type="button" class="gal-b" data-gi="${i}" aria-label="Xem lớn bài vẽ ${i + 1}"><img src="${esc(b.anh)}" alt="${esc(b.moTa || b.ghiChu || "Bài vẽ học viên")}" loading="lazy" decoding="async" width="300" height="400">
-      <span class="cap">${esc(b.hocVien || "")}${b.loai ? `<small>${esc(b.loai)}</small>` : ""}</span>${b.hang ? `<span class="gal-top">TOP ${Number(b.hang)}</span>` : ""}</button>
+      <span class="cap">${esc(b.hocVien || "")}${biDanhCua(b) ? `<em class="bd">${esc(biDanhCua(b))}</em>` : ""}${b.loai ? `<small>${esc(b.loai)}</small>` : ""}</span>${b.hang ? `<span class="gal-top">TOP ${Number(b.hang)}</span>` : ""}</button>
       ${b.link ? `<a class="gal-link" href="${esc(b.link)}" target="_blank" rel="noopener" aria-label="Mở link kèm bài">↗</a>` : ""}
       ${xoaDuoc(b) ? `<button type="button" class="gal-x" data-xbv="${esc(b.id)}" aria-label="Xoá bài này">Xoá</button>` : ""}
       ${isAdmin && b.id ? `<button type="button" class="gal-s" data-sbv="${esc(b.id)}" aria-label="Sửa thông tin bài này">Sửa</button>` : ""}</div>`).join("");
@@ -311,7 +313,7 @@ function showLb(i) {
   galCur = (i + galList.length) % galList.length; const b = galList[galCur];
   $("#lb-img").src = b.anh; $("#lb-img").alt = b.moTa || "";
   $("#lb-mota").textContent = b.moTa || ""; $("#lb-mota").hidden = !b.moTa;
-  $("#lb-cap").textContent = `${galCur + 1} / ${galList.length} · ${[b.hocVien, b.loai, b.ghiChu, b.gvhd && "GVHD: " + b.gvhd, b.tgiang && "Trợ giảng: " + b.tgiang, b.chucVu && b.chucVu !== "Học viên" && "Người vẽ: " + b.chucVu, b.mau && "Bài mẫu giáo viên"].filter(Boolean).join(" · ")}`;
+  $("#lb-cap").textContent = `${galCur + 1} / ${galList.length} · ${[b.hocVien, biDanhCua(b), b.loai, b.ghiChu, b.gvhd && "GVHD: " + b.gvhd, b.tgiang && "Trợ giảng: " + b.tgiang, b.chucVu && b.chucVu !== "Học viên" && "Người vẽ: " + b.chucVu, b.mau && "Bài mẫu giáo viên"].filter(Boolean).join(" · ")}`;
   $("#lb").hidden = false; document.body.classList.add("lb-mo"); // bong bóng Chì dời lên trên, không đè chữ mô tả
   window.__troLy?.goiYBai(b.hocVien ? `bài của ${b.hocVien}` : (b.loai || "bài vẽ này"));
 }
@@ -823,7 +825,7 @@ const GHI_CHU = {
   // Tối đa 10 ảnh mỗi mục, trong đó chỉ 5 bài mang huy chương TOP 1–5 (mỗi hạng 1 bài, bài quản lý chọn trên web được ưu tiên)
   // Bài của trợ giảng, giáo viên, quản lý (hoặc bài mẫu giáo viên): không có hạng, có khung riêng
   const nhanVienBai = b => ["Trợ giảng", "Giáo viên", "Quản lý"].includes(b.chucVu) || !!b.mau;
-  const nhanVienTen = b => (b.chucVu && b.chucVu !== "Học viên" ? b.chucVu : "Giáo viên") + (b.biDanh ? " · " + b.biDanh : "");
+  const nhanVienTen = b => (b.chucVu && b.chucVu !== "Học viên" ? b.chucVu : "Giáo viên") + (biDanhCua(b) ? " · " + biDanhCua(b) : "");
   const nhanVienLop = b => ({ "Trợ giảng": "tg", "Quản lý": "ql" })[b.chucVu] || "gv"; // mỗi vai trò một khung màu
   const locNoiBat = k => { const daCo = new Set();
     const ds = [...BAI_NOI_BAT, ...BAIVE_DONG.map(b => ({ ...b, ngay: (b.hang >= 1 && b.hang <= 5 && b.ngayTop) || b.ngay, dong: true }))].filter(b => mucCua(b) === k)
@@ -3775,7 +3777,7 @@ function moDangBai(sua) {
       <datalist id="bv-ds">${tenHV.map(t => `<option value="${esc(t)}">`).join("")}</datalist>
       <fieldset class="chon-loai"><legend>Đây là bài gì? *</legend>${LOAI_BAI.map(l => `<label><input type="radio" name="bv-loai" value="${esc(l.ten)}"${s.loai === l.ten ? " checked" : ""}><span>${esc(l.ten)}</span></label>`).join("")}</fieldset>
       <label>Người vẽ là<select id="bv-vaitro">${["Học viên", "Trợ giảng", "Giáo viên", "Quản lý"].map(v => `<option${(s.chucVu || "Học viên") === v ? " selected" : ""}>${v}</option>`).join("")}</select></label>
-      <label>Biệt danh (không bắt buộc)<input id="bv-bidanh" maxlength="30" autocomplete="off" placeholder="VD: Thầy Gấu, Cô Mây" value="${esc(s.biDanh || "")}"></label>
+      <label>Biệt danh (không bắt buộc)<input id="bv-bidanh" maxlength="30" autocomplete="off" placeholder="VD: Thầy Gấu, Cô Mây" value="${esc(biDanhCua(s))}"></label>
       <label>Ghi chú<input id="bv-gc" maxlength="120" placeholder="VD: Bố cục màu tuần 3 · 8,5 điểm" value="${esc(s.ghiChu || "")}"></label>
       <label>Mô tả ngắn bức tranh (không bắt buộc)<textarea id="bv-mota" maxlength="300" rows="3" placeholder="VD: Tĩnh vật bình hoa huệ và chai thủy tinh, bố cục chéo, sáng tối mạnh ở thân bình">${esc(s.moTa || "")}</textarea></label>
       <label>Giáo viên hướng dẫn<input id="bv-gvhd" list="bv-gv" maxlength="80" autocomplete="off" placeholder="VD: Nguyễn Văn Hùng" value="${esc(s.gvhd || "")}"></label>
