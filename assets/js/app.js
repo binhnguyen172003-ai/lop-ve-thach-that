@@ -2411,7 +2411,7 @@ function capNhatNhac() {
       const cs = String((myHv && myHv.coso) || "");
       Object.entries(THOI_GIAN_BIEU).filter(([ten]) => !cs || bo2(ten).includes(bo2(cs))).forEach(([ten, ca]) => CA_HOC.forEach(c => {
         const mon = (ca[c.ma] || {})[thu];
-        if (mon) ds.push({ id: "hoc-" + hom + c.ma + ten, icon: "🎨", muc: "", tieuDe: `Hôm nay có buổi ${mon} · ${c.ten} ${c.gio}`, nd: `${ten}. Đi học đều +10 XP mỗi buổi, đừng để rank nằm im.`, link: "#tai-khoan" });
+        if (mon) ds.push({ id: "hoc-" + hom + c.ma + ten, icon: "🎨", muc: "", tieuDe: `Hôm nay có buổi ${mon} · ${c.ten} ${c.gio}`, nd: `${ten}. Đi học đều +10 XP mỗi buổi, đừng để rank nằm im.`, link: "#lo-trinh", dich: "#lo-trinh" });
       }));
       homework.forEach(h => {
         const fb = myFeedback[h.id], nop = myProgress.baitap[h.id];

@@ -409,7 +409,7 @@ function ganKeo(cum, ...khung) {
   requestAnimationFrame(() => datCum(cum));
 }
 function veGoi() {
-  const g = khach() ? ["Học phí thế nào?", "Con chưa biết vẽ học được không?", "Lớp online khi nào mở?", "Lịch học"] : ["Lịch học tuần này?"];
+  const g = khach() ? ["Học phí thế nào?", "Con chưa biết vẽ học được không?", "Lớp online khi nào mở?", "Lịch học", "Lịch thi năm 2027?", "Khối H hay Khối V?", "Hoạ cụ cần chuẩn bị gì?"] : ["Lịch học tuần này?", "Hoạ cụ cần mua gì?", "Bài bị trả thì sửa sao?", "Lịch thi dự kiến?", "Lên rank thế nào?"];
   $("#tl-goi").innerHTML = g.map(t => `<button type="button">${esc(t)}</button>`).join("");
   $("#tl-goi").querySelectorAll("button").forEach(b => b.onclick = () => hoi(b.textContent));
 }
