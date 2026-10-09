@@ -31,7 +31,7 @@ async function loadFirebase() {
 
 const $ = s => document.querySelector(s);
 // Trợ lý (chat + nhắc việc) tải riêng, không làm chậm trang
-const troLyPromise = import("./tro-ly.js?v=20261010z").catch(e => console.warn("Chưa tải được trợ lý", e));
+const troLyPromise = import("./tro-ly.js?v=20261010ad").catch(e => console.warn("Chưa tải được trợ lý", e));
 window.__appOk = true;
 document.querySelectorAll(".slow-bar").forEach(el => el.remove());
 
@@ -64,7 +64,7 @@ addEventListener("error", e => {
 });
 /* ---------- Mở tức thì ở lần sau + dùng được khi mạng yếu ---------- */
 if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost") && !/[?&]khongcache/.test(location.search))
-  addEventListener("load", () => navigator.serviceWorker.register("sw.js?v=20261010ac").catch(() => {}));
+  addEventListener("load", () => navigator.serviceWorker.register("sw.js?v=20261010ad").catch(() => {}));
 
 /* ---------- Đo tốc độ: mở web kèm ?chandoan=1 để xem từng bước mất bao lâu ---------- */
 const DIAG = /[?&]chandoan/.test(location.search);

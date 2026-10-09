@@ -91,6 +91,11 @@ const CAU = [
   { k: ["chao", "hello", "hi ", "alo", "xin chao"], t: () => P(`Chào ${esc((nguoi && nguoi.ten) || "đồng chí hoạ sĩ")}! Chì đây.`, `Hỏi gì về lớp, lịch học, khối thi hay hoạ cụ cứ quăng vào. Hỏi xong nhớ đi vẽ nha.`) },
   { k: ["cam on", "thank", "tks"], t: () => P(`Không có chi! Cảm ơn thật lòng thì nộp bài đúng hạn là được rồi 😌`) },
   { k: ["luoi", "chan", "nan", "met", "kho qua", "khong ve duoc"], t: () => P(`Ai mà chẳng có ngày muốn ném bút chì đi.`) + UL([`Hẹn giờ <b>20 phút</b>, vẽ đúng 20 phút thôi.`, `Xong rồi mới tính tiếp.`]) + P(`Bài xấu hôm nay là bậc thang cho bài đẹp tuần sau. Chì tin bạn làm được 💪`) },
+  { k: ["bai tap", "bai ve tuan nay", "lam bai gi", "giao bai"], t: () => P(`Bài tập tuần này em xem ở mục <b>Bài tập</b> trong Tài khoản nha:`) + UL(['Đọc kỹ đề và số bài cần nộp.', 'Chụp ảnh đủ sáng, không lệch khung rồi đăng lên web.', 'Có chỗ chưa hiểu thì ghi lại để hỏi thầy buổi học tới.']) + P(`Bài nào làm xong thì nhớ đánh dấu, để Chì còn theo dõi tiến độ của em 📚`) },
+  { k: ["sua bai", "nhan xet bai", "bai bi sai", "sua the nao", "phe bai"], t: () => P(`Muốn sửa bài cho nhanh tiến bộ, em làm theo 3 bước:`) + UL(['<b>Tìm một lỗi lớn nhất</b>: tỷ lệ, bố cục hay sắc độ.', '<b>Sửa đúng lỗi đó</b> trên bài cũ, đừng vẽ lại từ đầu ngay.', '<b>So sánh</b> bài trước và bài sau, rồi mang tới hỏi thầy nếu còn vướng.']) + P(`Sửa một chỗ cho thật kỹ vẫn tốt hơn sửa mười chỗ qua loa 😉`) },
+  { k: ["tuong thach cao", "ve tuong", "ve tuong the nao", "tuong ve"], t: () => P(`Vẽ tượng thạch cao, em nhớ 3 điều:`) + UL(['<b>Dựng khối trước</b>: vẽ khối lớn, bỏ chi tiết, rồi mới đến đường nét.', '<b>Tìm đường sáng tối chính</b> trước khi tô, đừng tô từng mảng rời rạc.', '<b>Kiểm tra tỷ lệ</b> bằng cách so đầu, mũi và mắt với khung hình.']) + P(`Vẽ chậm mà chắc, tượng sẽ tự lên hình 🗿`) },
+  { k: ["cham the nao", "cham bai", "tieu chi cham", "diem bai", "cham diem"], t: () => P(`Bài được chấm dựa trên các tiêu chí chính:`) + UL(['Bố cục và tỷ lệ.', 'Hình khối và đường nét.', 'Sắc độ, độ sáng tối và sự chỉn chu.']) + P(`Điểm của từng bài thầy sẽ ghi trong nhận xét. Em có thắc mắc về điểm nào thì hỏi Chì nhé.`) },
+  { k: ["meo bo cuc", "bo cuc", "bo cuc the nao", "can bo cuc"], t: () => P(`Mấy mẹo bố cục đơn giản:`) + UL(['Đặt vật chính gần một trong các điểm chia 1/3 khung hình.', 'Cho vật chính và vật phụ có nhịp khác nhau, đừng để đều tăm tắp.', 'Phác bố cục bằng vài nét nhạt trước khi vẽ kỹ.']) + P(`Bố cục tốt thì bài đã đẹp một nửa rồi 🎨`) },
 ];
 function goiYHoaCu(khoi) {
   khoi = khoi || (nguoi && nguoi.khoi) || "";
@@ -419,7 +424,7 @@ function ganKeo(cum, ...khung) {
   requestAnimationFrame(() => datCum(cum));
 }
 function veGoi() {
-  const g = khach() ? ["Học phí thế nào?", "Con chưa biết vẽ học được không?", "Lớp online khi nào mở?", "Lịch học", "Lịch thi năm 2027?", "Khối H hay Khối V?", "Hoạ cụ cần chuẩn bị gì?"] : ["Lịch học tuần này?", "Hoạ cụ cần mua gì?", "Lịch thi dự kiến?", "Lên rank thế nào?"];
+  const g = khach() ? ["Học phí thế nào?", "Con chưa biết vẽ học được không?", "Lớp online khi nào mở?", "Lịch học", "Lịch thi năm 2027?", "Khối H hay Khối V?", "Hoạ cụ cần chuẩn bị gì?"] : ["Lịch học tuần này?", "Hoạ cụ cần mua gì?", "Lịch thi dự kiến?", "Lên rank thế nào?", "Bài tập tuần này?", "Cách sửa bài vẽ?", "Vẽ tượng thạch cao thế nào?", "Tiến độ học của em?", "Bài này được chấm thế nào?", "Mẹo vẽ bố cục?"];
   $("#tl-goi").innerHTML = g.map(t => `<button type="button">${esc(t)}</button>`).join("");
   $("#tl-goi").querySelectorAll("button").forEach(b => b.onclick = () => hoi(b.textContent));
 }
