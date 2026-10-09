@@ -1219,7 +1219,7 @@ $("#dk-zalo").href = ZALO_LINK;
 
   // Hình trang trí mờ hai bên cho các phần khác (giống phần "Về lớp")
   const DECO = { "khoa-hoc": ["deco/khoi.svg", "deco/captoc.svg"], "bang-vang": [null, "deco/cup.svg"], "giao-vien": ["hinh-hoa-nguoi.png", null],
-    "bai-ve": [null, "deco/mau.svg"], "lich-thi": ["deco/captoc.svg", null], "lich-hoc": [null, "deco/khoi.svg"], "khoi": ["hinh-hoa-tuong.png", null], "dang-ky": [null, "deco/mt2.svg"] };
+    "bai-ve": [null, "deco/mau.svg"], "lich-thi": ["deco/captoc-lich-thi.svg", null], "lich-hoc": [null, "deco/khoi.svg"], "khoi": ["hinh-hoa-tuong.png", null], "dang-ky": [null, "deco/mt2.svg"] };
   Object.entries(DECO).forEach(([id, [l, r]]) => {
     const sec = document.getElementById(id); if (!sec) return;
     sec.classList.add("has-deco");
