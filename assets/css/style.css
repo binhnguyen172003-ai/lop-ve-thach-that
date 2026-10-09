@@ -2597,14 +2597,19 @@ body.hop-mo{overflow:hidden}
 
 /* ===== Sửa chữ bị cắt và khung lệch (rà soát 10/10) ===== */
 /* Thẻ giáo viên: dòng ngành học dài bị cắt ngang giữa câu trong vòng xoay */
-.gv-stage{height:400px}
-.gv-stage .gv{height:380px}
-.gv-stage .gv-txt{min-height:0;overflow:hidden;padding-bottom:12px}
-.gv-stage .gv-ng{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-@media (max-width:640px){.gv-stage{height:380px}.gv-stage .gv{height:360px}}
+/* Chỉ áp cho vòng xoay GIÁO VIÊN (#gv-stage); các vòng xoay khác dùng chung lớp .gv-stage nên phải chừa ra */
+#gv-stage{height:400px}
+#gv-stage .gv{height:380px}
+#gv-stage .gv-txt{min-height:0;overflow:hidden;padding-bottom:12px}
+#gv-stage .gv-ng{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+@media (max-width:640px){#gv-stage{height:380px}#gv-stage .gv{height:360px}}
 /* Khung "Xem lộ trình các khoá học" rộng bằng các khối khác cho thẳng hàng */
 .lt-wrap{max-width:none}
 
 /* Ô "+ Đăng tin mới" phải cao đúng bằng thẻ tin, không lấy chiều cao của cả khung vòng xoay */
 .tb-stage .nb-card.nb-add{min-height:0;height:300px;top:0}
 @media (max-width:640px){.tb-stage .nb-card.nb-add{height:286px}}
+
+/* Vòng xoay bản tin: khung cao vừa đúng thẻ, thẻ không bị treo lên trên để hở đáy */
+#ban-tin .tb-stage{height:308px}
+@media (max-width:640px){#ban-tin .tb-stage{height:294px}}
