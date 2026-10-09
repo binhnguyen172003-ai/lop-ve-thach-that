@@ -181,9 +181,13 @@ async function hoi(q) {
       dem.tang(); lichSu.push({ role: "model", text: txt });
       if (/hoạ cụ|họa cụ|mua/i.test(q)) themNutMua(cho);
       return;
-    } catch (e) { aiChat = null; if (/quota|429|permission|403|api.*not.*enabled/i.test(String(e && e.message))) aiLoi = true; }
+    } catch (e) {
+      aiChat = null; const m = String(e && e.message);
+      if (/permission|403|api.*not.*(enabled|used)|billing/i.test(m)) aiLoi = true;            // chưa bật AI: dùng câu trả lời sẵn
+      else if (/429|quota|resource.*exhausted/i.test(m)) { cho.dataset.ban = 1; }               // nhiều người hỏi cùng lúc: trả lời sẵn lần này
+    }
   }
-  setTimeout(() => { cho.classList.remove("dang"); cho.innerHTML = traLoiSan(q); if (/hoa cu|mua/.test(bo(q))) themNutMua(cho); $("#tl-tin").scrollTop = $("#tl-tin").scrollHeight; },
+  setTimeout(() => { cho.classList.remove("dang"); cho.innerHTML = (cho.dataset.ban ? `<small class="tl-ban">Chì đang bị hỏi dồn quá, trả lời nhanh bản có sẵn nha:</small><br>` : "") + traLoiSan(q); if (/hoa cu|mua/.test(bo(q))) themNutMua(cho); $("#tl-tin").scrollTop = $("#tl-tin").scrollHeight; },
     dem.n >= GIOI_HAN_NGAY ? 300 : 450);
 }
 function themNutMua(el) {

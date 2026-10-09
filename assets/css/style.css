@@ -1899,3 +1899,4 @@ body.da-dn .dock{display:none!important}
 .kho-gd small{grid-column:2/4;font-size:.74rem;color:var(--graphite)}
 .kho-trong{padding:18px;border-radius:14px;border:1px dashed rgba(255,255,255,.2)}
 @media (max-width:760px){.kho-so{grid-template-columns:1fr 1fr}.kho-f{grid-template-columns:1fr 1fr}.kho-r{grid-template-columns:1.6fr 1fr 1fr .6fr;font-size:.8rem}.kho-r > span:nth-child(5){grid-column:1/-1}}
+.tl-ban{opacity:.7;font-size:.74rem}
