@@ -62,7 +62,7 @@ addEventListener("error", e => {
 });
 /* ---------- Mở tức thì ở lần sau + dùng được khi mạng yếu ---------- */
 if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost") && !/[?&]khongcache/.test(location.search))
-  addEventListener("load", () => navigator.serviceWorker.register("sw.js?v=20261010m").catch(() => {}));
+  addEventListener("load", () => navigator.serviceWorker.register("sw.js?v=20261010n").catch(() => {}));
 
 /* ---------- Đo tốc độ: mở web kèm ?chandoan=1 để xem từng bước mất bao lâu ---------- */
 const DIAG = /[?&]chandoan/.test(location.search);
@@ -3798,8 +3798,19 @@ function moDangBai() {
 // Quản lý đặt hạng Top k cho một bài (k = 0: bỏ khỏi Top). Mỗi vị trí trong tuần chỉ có 1 bài.
 async function datTop(id, k) {
   const b = writeBatch(db), hom = todayVN();
-  if (k) BAIVE_DONG.filter(x => x.id !== id && tuanNay(x) && x.hang === k).forEach(x => b.set(doc(db, "baive", x.id), { hang: 0, ngayTop: "" }, { merge: true }));
-  b.set(doc(db, "baive", id), k ? { hang: k, ngayTop: hom } : { hang: 0, ngayTop: "" }, { merge: true });
+  if (k) {
+    // Đưa bài vào Top k: bài đang ở Top k bị đẩy xuống Top k+1, bài ở k+1 đẩy tiếp; Top 5 bị đẩy thì bỏ khỏi Top.
+    const theo = {}; BAIVE_DONG.filter(x => x.id !== id && tuanNay(x) && x.hang >= 1 && x.hang <= 5).forEach(x => theo[x.hang] = x);
+    const doi = []; let dang = id, vt = k;
+    while (true) {
+      doi.push([dang, vt]);
+      const occ = theo[vt];
+      if (!occ) break;
+      if (vt >= 5) { doi.push([occ.id, 0]); break; }
+      dang = occ.id; vt += 1;
+    }
+    doi.forEach(([x, h]) => b.set(doc(db, "baive", x), h ? { hang: h, ngayTop: hom } : { hang: 0, ngayTop: "" }, { merge: true }));
+  } else b.set(doc(db, "baive", id), { hang: 0, ngayTop: "" }, { merge: true });
   const kq = await timed("Chọn Top", b.commit());
   if (k) { const x = BAIVE_DONG.find(y => y.id === id) || {};
     thongBaoTuDong(`🏆 Top ${k} tuần này`, `${x.hocVien || "Một bài vẽ"}${x.loai ? " · " + x.loai : ""} vừa được chọn vào Top ${k} tuần. Xem trong mục Bài nổi bật.`); }
@@ -3974,7 +3985,7 @@ function renderTop5() {
   const gan = BAIVE_DONG.filter(b => (Date.parse(todayVN()) - Date.parse(b.ngay || "2000-01-01")) / 864e5 <= 45).sort((a, b) => (b.luc || 0) - (a.luc || 0));
   const o = k => BAIVE_DONG.find(b => tuanNay(b) && b.hang === k);
   box.innerHTML = `<h2 class="ql-h2" id="ql-top5-h">Top 5 bài vẽ nổi bật tuần</h2>
-    <p class="muted">Chọn bài cho từng vị trí. Chỉ 5 bài này hiện ở mục "Bài vẽ nổi bật" trên trang chủ; sau 1 tuần tự chuyển sang Top tháng. Bài khác vẫn nằm ở mục "Bài vẽ học viên".</p>
+    <p class="muted">Chọn bài cho từng vị trí: bài đang ở vị trí đó sẽ tự xuống một bậc (Top 5 bị đẩy thì bỏ khỏi Top). Chỉ 5 bài này hiện ở mục "Bài vẽ nổi bật" trên trang chủ; sau 1 tuần tự chuyển sang Top tháng. Bài khác vẫn nằm ở mục "Bài vẽ học viên".</p>
     ${baiVeLoi ? `<p class="xh-loi">Máy chủ chưa cho đọc mục bài vẽ. Quản lý cần dán luật bảo mật mới (firestore.rules) một lần.</p>` : ""}
     <div class="tq5">${[1, 2, 3, 4, 5].map(k => { const b = o(k); return `<div class="t5-o h${k}">
       <span class="t5-so">TOP ${k}</span>${b ? `<img src="${esc(b.anh)}" alt="">` : `<span class="t5-trong">Trống</span>`}
