@@ -2359,3 +2359,16 @@ body.hop-mo{overflow:hidden}
   body.da-dn .lb{padding-bottom:calc(96px + env(safe-area-inset-bottom,0px))}
   .lb .lb-bar{padding-right:0}
 }
+/* ===== Vòng thẻ hạng trên máy tính: một khung duy nhất, chữ không bị cắt ===== */
+@media (min-width:641px){
+  .rk-stage{height:372px}
+  .rk-stage .rk-card{display:block;grid-column:auto;padding:0;margin:0 0 0 -140px;border:0;border-radius:0;background:none;box-shadow:none;height:344px;width:280px}
+  .rk-stage .rk-in{height:100%;padding:16px 18px;gap:6px;justify-content:center;overflow:hidden}
+  .rk-stage .rk-card .rk-top{gap:14px}
+  .rk-stage .rk-card .rk-badge.sm{width:58px;height:64px}
+  .rk-stage .rk-card .xh-ma{font:italic 800 2.2rem/1 var(--f-serif)}
+  .rk-stage .rk-card .rk-ten{font-size:1.05rem}
+  .rk-stage .rk-card .rk-mo{font-size:.86rem;max-width:26ch;margin-top:0}
+  .rk-stage .rk-card .rk-star{margin-top:0}
+  .rk-stage .rk-card .rk-xp{margin-top:0}
+}
