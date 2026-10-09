@@ -2547,6 +2547,13 @@ function donCuaToiHTML() {
     ${d.trangThai === "da_bao" ? `<p class="muted">Em đã báo chuyển khoản. Thầy xác nhận xong là đơn tự đóng.</p>` : `<button class="btn small" type="button" data-dadong="${esc(d.id)}">Em đã chuyển khoản</button>`}
   </div>`).join("")}</div>`;
 }
+function tongTuDau() {
+  const ban = khoGD.filter(g => g.loai === "ban"), nhap = khoGD.filter(g => g.loai === "nhap");
+  const thu = ban.reduce((a, g) => a + g.sl * g.gia, 0), giaVon = ban.reduce((a, g) => a + g.sl * (g.von || 0), 0);
+  const chi = nhap.reduce((a, g) => a + g.sl * g.gia, 0);
+  const conTrongKho = monKho().reduce((a, m) => a + (Number(m.ton) || 0) * (Number(m.von) || 0), 0);
+  return { thu, giaVon, lai: thu - giaVon, chi, conTrongKho };
+}
 function laiLoThang(th) {
   const gd = khoGD.filter(g => thangCua(g.ngay) === th);
   const ban = gd.filter(g => g.loai === "ban"), nhap = gd.filter(g => g.loai === "nhap");
@@ -2601,6 +2608,11 @@ function renderKho() {
       <ul class="kho-gd">${khoGD.slice(0, 25).map(g => `<li class="${g.loai}"><span>${g.loai === "ban" ? "Bán" : "Nhập"}</span><b>${esc(g.ten)} × ${g.sl}</b><span>${vnd(g.sl * g.gia)}</span><small>${esc(g.ai || "")} · ${ngayVN(g.ngay)}</small><button type="button" class="linkish" data-kx="${esc(g.id)}">Xoá</button></li>`).join("") || `<li class="muted">Chưa có giao dịch.</li>`}</ul>
     </div>
     <div class="kho-p" ${khoTab === "ll" ? "" : "hidden"}>
+      ${(() => { const t = tongTuDau(); return `<div class="kho-tong"><h4 class="kho-h4">Tổng từ đầu đến nay (chỉ quản lý thấy)</h4>
+        <div class="kho-so"><div><b>${vnd(t.thu)}</b><span>tổng tiền đã bán (thu về)</span></div><div><b>${vnd(t.giaVon)}</b><span>giá vốn của hàng đã bán</span></div>
+        <div class="${t.lai >= 0 ? "lai" : "lo"}"><b>${t.lai >= 0 ? "+" : ""}${vnd(t.lai)}</b><span>${t.lai >= 0 ? "LÃI" : "LỖ"} đã thực hiện</span></div>
+        <div><b>${vnd(t.chi)}</b><span>tổng tiền đã nhập hàng</span></div><div><b>${vnd(t.conTrongKho)}</b><span>vốn còn nằm trong kho</span></div></div>
+        <p class="muted kho-note">Tính từ các giao dịch đã ghi trong sổ kho. Hàng có sẵn trong kho lúc tạo kho chưa có giá nhập ghi lại thì không tính vào lãi.</p></div>`; })()}
       <label class="kho-th">Tháng<select id="kho-thang">${cacThang.map(t => `<option value="${t}" ${t === khoThang ? "selected" : ""}>${t.slice(5)}/${t.slice(0, 4)}</option>`).join("")}</select></label>
       <div class="kho-so"><div><b>${vnd(ll.doanhThu)}</b><span>doanh thu bán (${ll.soDon} lượt)</span></div><div><b>${vnd(ll.giaVon)}</b><span>giá vốn hàng đã bán</span></div>
         <div class="${ll.lai >= 0 ? "lai" : "lo"}"><b>${ll.lai >= 0 ? "+" : ""}${vnd(ll.lai)}</b><span>${ll.lai >= 0 ? "LÃI" : "LỖ"} trên hàng đã bán</span></div><div><b>${vnd(ll.chiNhap)}</b><span>tiền nhập hàng trong tháng</span></div></div>
