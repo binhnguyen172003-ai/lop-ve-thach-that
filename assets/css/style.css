@@ -826,7 +826,8 @@ nav.on-hero .burger i{background:#fff}
 @media (prefers-reduced-motion:no-preference){.cine-bg img{animation:kenburns 26s ease-in-out infinite alternate}}
 @keyframes kenburns{from{transform:scale(1) translate(0,0)}to{transform:scale(1.1) translate(-2%,-2%)}}
 .cine-in{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:0;padding-top:12px}
-.cine-badge{padding:4px 14px 4px 4px;color:rgba(255,255,255,.92);font-size:.85rem}
+.cine-badge{padding:4px 14px 4px 4px;color:rgba(255,255,255,.92);font-size:.85rem;max-width:100%;white-space:normal;text-align:center}
+.cine-in{min-width:0}
 .pill-new{background:#fff;color:#000;border-radius:999px;padding:4px 10px;font-size:.72rem;font-weight:700}
 .cine-h1{font:italic 600 clamp(3.1rem,11vw,6.2rem)/.92 var(--f-serif);letter-spacing:-.03em;margin-top:22px;max-width:12ch;color:#fff;text-wrap:balance}
 .cine-h1 .strike{position:relative;white-space:nowrap}

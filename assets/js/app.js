@@ -62,7 +62,7 @@ addEventListener("error", e => {
 });
 /* ---------- Mở tức thì ở lần sau + dùng được khi mạng yếu ---------- */
 if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost") && !/[?&]khongcache/.test(location.search))
-  addEventListener("load", () => navigator.serviceWorker.register("sw.js?v=20261010d").catch(() => {}));
+  addEventListener("load", () => navigator.serviceWorker.register("sw.js?v=20261010e").catch(() => {}));
 
 /* ---------- Đo tốc độ: mở web kèm ?chandoan=1 để xem từng bước mất bao lâu ---------- */
 const DIAG = /[?&]chandoan/.test(location.search);
@@ -2032,7 +2032,7 @@ function mocThiCuaToi() {
 function capNhatBadgeThi() {
   const el = $("#hero-badge"); if (!el) return;
   const m = mocThiCuaToi();
-  if (m) { el.textContent = `Còn ${m.n} ngày đến kỳ thi ${m.truong} · ${m.hienThi}/${m.ngay.slice(0, 4)}`; return; }
+  if (m) { el.textContent = `Còn ${m.n} ngày đến kỳ thi ${m.truong}`; return; }
   const sap = LICH_THI.map(e => ({ ...e, n: daysUntil(e.ngay) })).filter(e => e.n >= 0).sort((a, b) => a.n - b.n)[0];
   if (sap) el.textContent = `Còn ${sap.n} ngày đến kỳ thi đầu tiên`;
 }
