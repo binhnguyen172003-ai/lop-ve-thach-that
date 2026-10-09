@@ -1329,6 +1329,11 @@ function renderLocks(state) {
       <div class="ctas"><a class="btn primary" href="#tai-khoan">Đăng nhập / Đăng ký</a><a class="btn" href="#dang-ky">Chưa là học viên? Đăng ký học</a></div>`}`;
   });
   $("#gt-body").hidden = state !== "ok";
+  // Đã được duyệt: ẩn 3 bước hướng dẫn, chỉ giữ thẻ tài khoản gọn. Chưa duyệt thì vẫn hiện đầy đủ.
+  const daDuyet = state === "ok";
+  $("#stepper").hidden = daDuyet;
+  $("#v-tai-khoan > .page-head > p.muted").hidden = daDuyet;
+  $("#v-tai-khoan > .page-head > h1").textContent = daDuyet ? "Tài khoản của em" : "Vào lớp học";
   $("#bt-body").hidden = state !== "ok";
   $("#lv-body").hidden = state !== "ok";
   capNhatTheKhoa();
