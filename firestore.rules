@@ -90,6 +90,12 @@ service cloud.firestore {
       allow write: if isStudent() && isMe(mail);
     }
 
+    // Ảnh bài học viên tải lên: học viên ghi và xem của mình; giáo viên, quản lý xem tất cả.
+    match /anhbaitap/{mail} {
+      allow read: if isStaff() || isMe(mail);
+      allow write: if isStudent() && isMe(mail);
+    }
+
     // Điểm và nhận xét bài tập: giáo viên và quản lý ghi; học viên xem của mình.
     match /nhanxet/{mail} {
       allow read: if isStaff() || isMe(mail);

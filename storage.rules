@@ -13,6 +13,14 @@ service firebase.storage {
     function student() {
       return signedIn() && firestore.exists(/databases/(default)/documents/hocvien/$(email()));
     }
+    // Ảnh bài học viên: học viên tải lên thư mục của mình (ảnh JPEG, tối đa 3 ảnh/bài); giáo viên, quản lý xem và xoá
+    match /nopbai/{homeworkId}/{owner}/{fileName} {
+      allow get: if staff() || (signedIn() && request.auth.token.email == owner);
+      allow create: if signedIn() && request.auth.token.email == owner && student()
+        && request.resource.size > 0 && request.resource.size <= 2 * 1024 * 1024
+        && request.resource.contentType == 'image/jpeg';
+      allow delete: if staff() || (signedIn() && request.auth.token.email == owner);
+    }
     match /baitap/{homeworkId}/{fileName} {
       allow get: if staff() || (student()
         && firestore.exists(/databases/(default)/documents/baitap/$(homeworkId)));

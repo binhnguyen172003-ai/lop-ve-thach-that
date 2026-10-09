@@ -1289,6 +1289,7 @@ document.addEventListener("focusout", () => setTimeout(() => { if (needRedraw) r
 let lessons = [], homework = [], roster = [], requests = [], progressAll = {};
 let myProgress = { bai: {}, baitap: {} };
 let course = null, lessonId = null, hwView = "open";
+let myAnhBT = {}, anhBaiTapAll = {};   // ảnh bài học viên đã tải lên: { [hwId]: [đường dẫn kho] }
 let unsubs = [];
 // Khu Làm việc
 let lvTB = [], lvCV = [], lvKenh = [], lvMine = null, lvErr = "", lvTab = "tin", lvOpen = "", lvMsgs = [], lvMsgUnsub = null, lvPending = [];
@@ -1599,6 +1600,7 @@ function renderHomework() {
       ${!isTeacher && fb ? `<p class="fb ${fb.trangThai === "lamlai" ? "lamlai" : fb.trangThai === "dat" ? "dat" : ""}"><b>Thầy nhận xét${fb.diem ? ` · Điểm ${esc(fb.diem)}` : ""}:</b> ${esc(fb.nhanXet || "")}${fb.tieuChi ? `<span class="tc-ket">${TIEU_CHI.map(([k, t]) => `<i class="${fb.tieuChi[k] === false ? "chua" : "ok"}">${fb.tieuChi[k] === false ? "✗" : "✓"} ${t}</i>`).join("")}</span>` : ""}<br><span class="muted">${esc(fb.nguoiCham || "")} · ${fmtDate(fb.luc)}</span></p>` : ""}
       ${!isTeacher && canLamLai(fb, myProgress.baitap[h.id]) ? `<div class="lamlai-box"><b>⚠ Bài này cần làm lại</b><span>Chưa đạt: ${esc(chuaDat(fb).join(", ") || "theo nhận xét của thầy")}.${fb.hanLamLai ? ` Hạn nộp lại: <b>${ngayVN(fb.hanLamLai)}</b>` : ""} Làm lại sớm để không bị chậm tiến độ cả lớp nhé.</span><button class="btn small primary" data-nl="${esc(h.id)}">Em đã làm lại · Nộp lại</button></div>` : ""}
       ${!isTeacher && daNopLai(fb, myProgress.baitap[h.id]) ? `<p class="nl-cho">✓ Đã nộp lại, chờ thầy chấm lại.</p>` : ""}
+      ${isTeacher ? "" : anhHocVien(h)}
       <div class="acts">${isTeacher ? staffBar : studentBar}</div>
       ${isTeacher && gradeOpen.has(h.id) ? gradeTable(h) : ""}</div>`;
   }).join("");
@@ -1612,6 +1614,83 @@ function renderHomework() {
   });
   $$("#hw-list .grade input").forEach(i => i.oninput = () => { gradeDraft[i.dataset.key] = i.value; });
   $$("#hw-list [data-save]").forEach(b => b.onclick = () => saveGrade(b));
+  $$("#hw-list [data-up]").forEach(i => i.onchange = () => taiAnhBaiTap(i.dataset.up, i.files));
+  $$("#hw-list .g-xs").forEach(c => c.onchange = () => danhDauXuatSac(c));
+  hienAnhTuKho(); tongHopBaiTap();
+}
+/* ---------- Ảnh bài học viên tải lên (tối đa 3 ảnh mỗi bài) ---------- */
+function anhHocVien(h) {
+  const ds = myAnhBT[h.id] || [];
+  return `<div class="bt-anh"><div class="bt-anh-ds">${ds.map(p => `<img data-anh="${esc(p)}" alt="Ảnh bài đã nộp">`).join("")}</div>
+    ${ds.length < 3 ? `<label class="btn small bt-anh-chon">📷 Tải ảnh bài (${ds.length}/3)<input type="file" accept="image/*" multiple data-up="${esc(h.id)}" hidden></label>` : `<span class="muted">Đã đủ 3 ảnh cho bài này.</span>`}</div>`;
+}
+const anhTrongBai = (uid, hid) => { const ds = (anhBaiTapAll[uid] || {})[hid] || []; return ds.length ? `<div class="bt-anh-nho">${ds.map(p => `<img data-anh="${esc(p)}" alt="Ảnh bài">`).join("")}</div>` : ""; };
+async function taiAnhBaiTap(hid, files) {
+  const con = 3 - (myAnhBT[hid] || []).length;
+  if (!files || !files.length) return;
+  if (con <= 0) return toast("Bài này đã đủ 3 ảnh.", "err");
+  const list = [...files].slice(0, con);
+  if (files.length > con) toast(`Chỉ nhận thêm ${con} ảnh cho bài này.`);
+  toast("Đang tải ảnh…");
+  try {
+    const sdk = await attachmentStorage(app), moi = [];
+    for (const [i, f] of list.entries()) {
+      try {
+        const data = await nenAnh(f, 1400, 850000);
+        const blob = await (await fetch(data)).blob();
+        const path = `nopbai/${hid}/${mail}/${Date.now()}-${i}.jpg`;
+        await sdk.uploadBytes(sdk.ref(sdk.storage, path), blob, { contentType: "image/jpeg" });
+        moi.push(path);
+      } catch (e) { toast(`Chưa tải được ${f.name || "ảnh"}. Thử ảnh khác nhỏ hơn.`, "err"); }
+    }
+    if (!moi.length) return;
+    await timed("Lưu ảnh bài", setDoc(doc(db, "anhbaitap", mail), { [hid]: [...(myAnhBT[hid] || []), ...moi] }, { merge: true }));
+    toast("Đã tải ảnh bài lên ✓");
+  } catch (e) { toast("Chưa tải được ảnh. Kiểm tra mạng rồi thử lại.", "err"); }
+}
+async function hienAnhTuKho() {
+  const nodes = [...document.querySelectorAll("#hw-list img[data-anh]:not([data-dang])")];
+  if (!nodes.length) return;
+  let sdk; try { sdk = await attachmentStorage(app); } catch (e) { return; }
+  nodes.forEach(async img => {
+    img.dataset.dang = "1"; img.classList.add("bt-anh-cho");
+    img.onclick = () => img.src && window.open(img.src, "_blank", "noopener");
+    try { img.src = await sdk.getDownloadURL(sdk.ref(sdk.storage, img.dataset.anh)); img.classList.remove("bt-anh-cho"); }
+    catch (e) { img.alt = "Chưa mở được ảnh"; }
+  });
+}
+/* Bài xuất sắc: giáo viên đánh dấu, ảnh bài được đưa vào Bài vẽ học viên (tách hẳn khỏi bài nổi bật và bài học) */
+const xsKey = (hid, uid) => `xs_${hid}_${uid}`.replace(/[^A-Za-z0-9_@.-]/g, "_");
+async function danhDauXuatSac(c) {
+  const [hid, uid] = c.dataset.xs.split("|");
+  const ref = doc(db, "baive", xsKey(hid, uid));
+  try {
+    if (!c.checked) { await timed("Bỏ đánh dấu xuất sắc", deleteDoc(ref)); toast("Đã bỏ khỏi Bài vẽ học viên."); return; }
+    const path = ((anhBaiTapAll[uid] || {})[hid] || [])[0];
+    if (!path) { c.checked = false; return toast("Học viên chưa tải ảnh bài này nên chưa đưa lên được.", "err"); }
+    const sdk = await attachmentStorage(app), url = await sdk.getDownloadURL(sdk.ref(sdk.storage, path));
+    const hv = roster.find(r => r.id === uid), bt = homework.find(h => h.id === hid);
+    await timed("Đưa bài xuất sắc", setDoc(ref, { anh: url, hocVien: (hv && hv.ten) || uid, loai: "Bài tập", ghiChu: bt ? bt.ten : "", nguoi: mail, ten: tenToi(), luc: Date.now(), hang: 0, nguonId: xsKey(hid, uid) }));
+    toast("Đã đưa lên Bài vẽ học viên ⭐");
+  } catch (e) { c.checked = !c.checked; toast("Chưa lưu được. Kiểm tra mạng rồi thử lại.", "err"); }
+}
+/* Đánh giá bài: bảng tổng hợp theo từng bài, cho giáo viên và quản lý */
+function tongHopBaiTap() {
+  if (!isTeacher) return;
+  let box = $("#bt-tong");
+  if (!box) { box = document.createElement("div"); box.id = "bt-tong"; $("#hw-overview").after(box); }
+  if (!homework.length || !roster.length) { box.innerHTML = ""; return; }
+  const dong = homework.map(h => {
+    const fbs = roster.map(r => (feedbackAll[r.id] || {})[h.id]).filter(Boolean);
+    const nop = roster.filter(r => (progressAll[r.id] || {}).baitap && progressAll[r.id].baitap[h.id]).length;
+    const diems = fbs.map(f => soDiem(f.diem)).filter(x => x !== null);
+    const dat = fbs.filter(f => f.trangThai === "dat").length, lamLai = fbs.filter(f => f.trangThai === "lamlai").length;
+    const anh = roster.filter(r => ((anhBaiTapAll[r.id] || {})[h.id] || []).length).length;
+    const tb = diems.length ? (diems.reduce((a, b) => a + b, 0) / diems.length).toFixed(1).replace(".", ",") : "–";
+    return `<tr><td><b>${esc(h.ten)}</b><small>${esc(h.khoa || "")}</small></td><td class="num">${nop}/${roster.length}</td><td class="num">${fbs.length}</td><td class="num">${anh}</td><td class="num">${tb}</td><td class="num">${fbs.length ? Math.round(dat / fbs.length * 100) + "%" : "–"}</td><td class="num">${lamLai}</td></tr>`;
+  }).join("");
+  box.innerHTML = `<section class="bt-tong"><p class="eyebrow">Đánh giá bài tập</p><div class="bt-tong-bang"><table><thead><tr><th>Bài</th><th>Đã nộp</th><th>Đã chấm</th><th>Có ảnh</th><th>Điểm TB</th><th>Đạt 3 tiêu chí</th><th>Làm lại</th></tr></thead><tbody>${dong}</tbody></table></div></section>`;
+  hienAnhTuKho();
 }
 function gradeTable(h) {
   if (!roster.length) return `<div class="grade"><p class="muted">Chưa có học viên nào được duyệt.</p></div>`;
@@ -1624,12 +1703,13 @@ function gradeTable(h) {
     const nopLaiRoi = daNopLai(fb, done);
     return `<div class="g-row ${nopLaiRoi ? "nop-lai" : ""}">
       <div class="g-who"><b>${esc(r.ten)}</b> ${nopLaiRoi ? '<span class="chip warn">Đã nộp lại · chấm lại</span>' : fb.trangThai === "lamlai" ? '<span class="chip bad">Đang phải làm lại</span>' : done ? '<span class="chip ok">Đã nộp</span>' : '<span class="chip line">Chưa nộp</span>'}
-        <span class="muted">${esc(r.chuongTrinh || r.lop || "")}</span></div>
+        <span class="muted">${esc(r.chuongTrinh || r.lop || "")}</span>${anhTrongBai(r.id, h.id)}</div>
       <div class="g-in">
         <label>Điểm<input class="g-diem" data-key="${esc(k1)}" value="${esc(d)}" maxlength="6" inputmode="decimal" placeholder="VD: 8"></label>
         <label class="g-nx-l">Nhận xét<input class="g-nx" data-key="${esc(k2)}" value="${esc(nx)}" maxlength="300" placeholder="Nhận xét ngắn"></label>
         <button class="btn small primary" data-save="${esc(h.id)}|${esc(r.id)}">${fb.luc ? "Lưu lại" : "Lưu"}</button>
       </div>
+      <label class="xs-l"><input type="checkbox" class="g-xs" data-xs="${esc(h.id)}|${esc(r.id)}" ${BAIVE_DONG.some(b => b.nguonId === xsKey(h.id, r.id)) ? "checked" : ""}> ⭐ Xuất sắc · đưa lên Bài vẽ học viên (không đưa vào bài nổi bật hay bài học)</label>
       <div class="g-tc"><span class="muted">Đạt tiêu chí (bỏ chọn nếu chưa đạt → học viên phải nộp lại):</span>${TIEU_CHI.map(([k, t]) => `<button type="button" class="tc-t" data-key="${esc(h.id)}|${esc(r.id)}|tc-${k}" data-k="${k}" aria-pressed="${tc(k)}">${t}</button>`).join("")}</div></div>`;
   }).join("");
   return `<div class="grade">${items}</div>`;
@@ -2851,6 +2931,7 @@ async function onUser(u) {
   if (!isTeacher) {
     if (tdDoc) { myProgress = { bai: tdDoc.bai || {}, baitap: tdDoc.baitap || {} }; if (tdDoc.anh && !avaTuMay) { myAvatar = tdDoc.anh; try { localStorage.setItem(AVA_KEY(mail), myAvatar); } catch (e) {} } }
     listen(doc(db, "nhanxet", mail), d => { troLyDaTai.diem = true; myFeedback = d.exists() ? d.data() : {}; renderHomework(); renderMyProg(); saveData(); });
+    listen(doc(db, "anhbaitap", mail), d => { myAnhBT = d.exists() ? d.data() : {}; renderHomework(); });
     // Điểm danh của chính em (lỗi quyền thì im lặng, panel vẫn hiện hướng dẫn)
     unsubs.push(onSnapshot(doc(db, "diemdanh", mail), d => { troLyDaTai.diemDanh = true; myDiemdanh = d.exists() ? d.data() : {}; renderMyProg(); }, () => renderMyProg()));
     renderMyProg();
@@ -2874,6 +2955,7 @@ async function onUser(u) {
     listen(collection(db, "nhanxet"), snap => {
       feedbackAll = {}; snap.docs.forEach(d => feedbackAll[d.id] = d.data()); renderHomework(); renderAttend();
     });
+    listen(collection(db, "anhbaitap"), snap => { anhBaiTapAll = {}; snap.docs.forEach(d => anhBaiTapAll[d.id] = d.data()); renderHomework(); });
   }
   lvStart();
   if (!$("#v-lam-viec").hidden) lvOnShow();
