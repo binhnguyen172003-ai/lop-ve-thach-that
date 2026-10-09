@@ -2338,3 +2338,15 @@ body.hop-mo{overflow:hidden}
 .rk-card .rk-mo{max-width:23ch;margin-top:2px}
 .rk-card .rk-star{margin-top:4px}
 .rk-card .rk-xp{margin-top:2px}
+/* ===== Thông tin học viên trong Tài khoản ===== */
+.hv-info{margin:4px 0 18px;display:grid;gap:14px}
+.hv-dl{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:0}
+.hv-dl>div{padding:10px 12px;border:1px solid var(--rule);border-radius:12px;background:rgba(255,255,255,.03)}
+.hv-dl dt{font:600 .72rem var(--f-body);letter-spacing:.08em;text-transform:uppercase;color:var(--muted,#9aa3b2)}
+.hv-dl dd{margin:4px 0 0;font:700 .98rem var(--f-body)}
+.hv-form{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));align-items:end}
+.hv-form>div{grid-column:1/-1}
+.hv-form label,.hv-doiten label{display:grid;gap:6px;font:600 .86rem var(--f-body)}
+.hv-form input,.hv-form select,.hv-doiten input{min-height:44px;padding:8px 12px;border-radius:10px;border:1px solid var(--rule);background:#0c0e14;color:var(--ink);font:500 .95rem var(--f-body)}
+.hv-doiten form{display:grid;gap:10px}
+@media (max-width:640px){.hv-dl{grid-template-columns:1fr 1fr}}

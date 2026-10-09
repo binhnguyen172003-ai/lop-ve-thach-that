@@ -56,7 +56,22 @@ service cloud.firestore {
     // Học viên đã duyệt: giáo viên xem danh sách; học viên chỉ xem hồ sơ mình; quản lý duyệt.
     match /hocvien/{mail} {
       allow read: if isStaff() || isMe(mail);
-      allow write: if isAdmin();
+      allow create, delete: if isAdmin();
+      // Học viên tự sửa SĐT và trường thi của mình; quản lý sửa mọi thứ; giáo viên chỉ đổi tên khi quản lý/giáo viên duyệt yêu cầu
+      allow update: if isAdmin()
+        || (isMe(mail) && isStudent() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['sdt', 'truongThi'])
+            && shortText(request.resource.data, 'sdt', 15) && shortText(request.resource.data, 'truongThi', 20))
+        || (isStaff() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['ten'])
+            && request.resource.data.ten is string && request.resource.data.ten.size() > 0 && request.resource.data.ten.size() <= 80);
+    }
+
+    // Yêu cầu đổi tên của học viên: học viên gửi cho chính mình; quản lý / giáo viên duyệt (đổi hocvien) hoặc xoá
+    match /doiten/{mail} {
+      allow read: if isStaff() || isMe(mail);
+      allow create: if isMe(mail) && isStudent()
+        && request.resource.data.keys().hasOnly(['tenMoi', 'tenCu', 'luc'])
+        && request.resource.data.tenMoi is string && request.resource.data.tenMoi.size() > 0 && request.resource.data.tenMoi.size() <= 80;
+      allow delete: if isStaff() || isMe(mail);
     }
 
     // Giáo viên đã duyệt: chỉ quản lý xem và duyệt; giáo viên xem hồ sơ của chính mình.

@@ -573,6 +573,8 @@
       </div>
     </div>
     <p id="who-status" style="margin-block:12px 16px"></p>
+    <!-- Thông tin học của học viên đã duyệt: khối, cơ sở, khoá; sửa SĐT, trường thi; xin đổi tên -->
+    <div class="hv-info" id="hv-info" hidden></div>
     <div class="ctas" style="margin-top:0">
       <a class="btn primary big" id="btn-learn" href="#giao-trinh" hidden>Vào học ngay →</a>
       <a class="btn big" id="btn-ql" href="#diem-danh" hidden>Kiểm soát học viên</a>
@@ -822,6 +824,9 @@
     <h2 class="ql-h2" id="ql-duyet-h">Duyệt tài khoản</h2>
     <h3>Yêu cầu chờ duyệt <span class="chip" id="req-count" hidden></span></h3>
     <div class="req-list" id="requests"></div>
+
+    <h3 style="margin-top:28px">Yêu cầu đổi tên <span class="chip" id="doiten-count" hidden></span></h3>
+    <div class="req-list" id="doiten-list"></div>
 
     <h3 style="margin-top:32px">Học viên đã duyệt</h3>
     <div class="roster-wrap"><table class="roster" id="roster"></table></div>

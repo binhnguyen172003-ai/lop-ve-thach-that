@@ -1369,6 +1369,7 @@ function renderLocks(state) {
   $("#bt-body").hidden = state !== "ok";
   $("#lv-body").hidden = state !== "ok";
   capNhatTheKhoa();
+  renderHvInfo();
 }
 
 let pendingReq = null, editingReq = false, regDraftFor = null;
@@ -2010,6 +2011,69 @@ function renderRequests() {
     timed("Duyệt " + r.ten, batch.commit()).catch(() => { requests.unshift(r); renderRequests(); toast("Chưa duyệt được " + r.ten + ". Kiểm tra mạng rồi bấm lại.", "err"); });
   });
   $$("#requests [data-no]").forEach(b => confirmButton(b, () => deleteDoc(doc(db, "yeucau", b.dataset.no)), "Bấm lần nữa để từ chối"));
+}
+/* ===== Thông tin học viên: khối, cơ sở, SĐT, trường thi; xin đổi tên (thầy duyệt) ===== */
+const TRUONG_THI = ["HAU", "MTCN", "HUCE", "SIS", "NUAE", "Khác"];
+let doiTen = [], doiTenCuaToi = null, doiTenDaTai = "";
+function renderHvInfo() {
+  const box = $("#hv-info"); if (!box) return;
+  if (!user || !approved || isAdmin || isTeacher || !myHv) { box.hidden = true; return; }
+  if (doiTenDaTai !== mail) { doiTenDaTai = mail; doiTenCuaToi = null; getDoc(doc(db, "doiten", mail)).then(s => { doiTenCuaToi = s.exists() ? s.data() : null; renderHvInfo(); }).catch(() => {}); }
+  const tt = myHv.truongThi || "", dang = doiTenCuaToi;
+  box.hidden = false;
+  box.innerHTML = `
+    <dl class="hv-dl">
+      <div><dt>Khối</dt><dd>${esc(khoiOf(myHv) || "Chưa xếp khối")}</dd></div>
+      <div><dt>Cơ sở</dt><dd>${esc(myHv.coso || "—")}</dd></div>
+      <div><dt>Lớp vẽ</dt><dd>${esc(myHv.chuongTrinh || myHv.lop || "—")}</dd></div>
+    </dl>
+    <form class="hv-form" id="f-hv-info" novalidate>
+      <label>Số điện thoại của em<input id="hv-sdt" inputmode="tel" maxlength="15" autocomplete="tel" value="${esc(myHv.sdt || "")}" placeholder="VD: 0912345678"></label>
+      <label>Trường thi dự kiến<select id="hv-truong-thi"><option value="">Chưa chọn</option>${TRUONG_THI.map(t => `<option${t === tt ? " selected" : ""}>${esc(t)}</option>`).join("")}</select></label>
+      <div><button class="btn primary" type="submit">Lưu thông tin</button> <span class="status" id="hv-info-st" role="status"></span></div>
+    </form>
+    <div class="hv-doiten">${dang
+      ? `<p class="muted">Đã gửi yêu cầu đổi tên thành <b>${esc(dang.tenMoi)}</b>. Đang chờ thầy duyệt.</p>`
+      : `<form id="f-doiten" novalidate><label>Xin đổi họ tên (thầy duyệt trước khi đổi)<input id="doiten-moi" maxlength="80" autocomplete="name" placeholder="Họ và tên mới"></label>
+         <div><button class="btn" type="submit">Gửi yêu cầu đổi tên</button> <span class="status" id="doiten-st" role="status"></span></div></form>`}
+    </div>`;
+  $("#f-hv-info").onsubmit = e => {
+    e.preventDefault();
+    const sdt = cleanPhone($("#hv-sdt").value), truongThi = $("#hv-truong-thi").value, st = $("#hv-info-st");
+    if (sdt && !/^\d{9,11}$/.test(sdt)) { st.textContent = "Số điện thoại chưa đúng (9–11 số)."; return; }
+    st.textContent = "Đang lưu…";
+    const b = writeBatch(db); b.update(doc(db, "hocvien", mail), { sdt, truongThi });
+    timed("Lưu thông tin học viên", b.commit()).then(() => { myHv = { ...myHv, sdt, truongThi }; st.textContent = "Đã lưu."; toast("Đã lưu thông tin của em."); renderHvInfo(); })
+      .catch(() => { st.textContent = "Chưa lưu được. Kiểm tra mạng rồi bấm lại."; });
+  };
+  const fd = $("#f-doiten");
+  if (fd) fd.onsubmit = e => {
+    e.preventDefault();
+    const moi = $("#doiten-moi").value.trim().replace(/\s+/g, " "), st = $("#doiten-st");
+    if (moi.length < 2) { st.textContent = "Nhập họ và tên mới."; return; }
+    st.textContent = "Đang gửi…";
+    timed("Gửi yêu cầu đổi tên", setDoc(doc(db, "doiten", mail), { tenMoi: moi, tenCu: myHv.ten || "", luc: Date.now() }))
+      .then(() => { doiTenCuaToi = { tenMoi: moi }; toast("Đã gửi yêu cầu. Thầy duyệt xong tên sẽ đổi."); renderHvInfo(); })
+      .catch(() => { st.textContent = "Chưa gửi được. Kiểm tra mạng rồi bấm lại."; });
+  };
+}
+function renderDoiTen() {
+  const box = $("#doiten-list"), chip = $("#doiten-count"); if (!box) return;
+  chip.hidden = !doiTen.length; chip.textContent = doiTen.length;
+  box.innerHTML = doiTen.length ? doiTen.map(x => `<div class="req-item">
+      <div class="req-head"><b>${esc(x.tenMoi)}</b> <span class="muted">đổi từ: ${esc(x.tenCu || "")}</span> <span class="muted num">Gửi ${fmtDate(x.luc)}</span></div>
+      <div class="req-body"><div><span class="muted">Gmail:</span> ${esc(x.id)}</div></div>
+      <div class="ctas" style="margin-top:12px"><button class="btn primary" data-doiten-ok="${esc(x.id)}">Duyệt đổi tên</button>
+        <button class="btn" data-doiten-no="${esc(x.id)}">Từ chối</button></div></div>`).join("")
+    : `<p class="muted">Không có yêu cầu đổi tên nào.</p>`;
+  $$("#doiten-list [data-doiten-ok]").forEach(b => b.onclick = () => {
+    const x = doiTen.find(y => y.id === b.dataset.doitenOk); if (!x) return;
+    doiTen = doiTen.filter(y => y.id !== x.id); renderDoiTen();
+    const bt = writeBatch(db); bt.update(doc(db, "hocvien", x.id), { ten: x.tenMoi }); bt.delete(doc(db, "doiten", x.id));
+    timed("Đổi tên " + x.tenMoi, bt.commit()).then(() => toast(`Đã đổi tên thành ${x.tenMoi}.`))
+      .catch(() => { doiTen.unshift(x); renderDoiTen(); toast("Chưa đổi được tên. Kiểm tra mạng rồi bấm lại.", "err"); });
+  });
+  $$("#doiten-list [data-doiten-no]").forEach(b => confirmButton(b, () => deleteDoc(doc(db, "doiten", b.dataset.doitenNo)), "Bấm lần nữa để từ chối"));
 }
 function renderRoster() {
   if (!roster.length) { $("#roster").innerHTML = `<tbody><tr><td class="muted">Chưa có học viên nào được duyệt.</td></tr></tbody>`; return; }
@@ -3116,6 +3180,9 @@ async function onUser(u) {
     listen(query(collection(db, "yeucau"), orderBy("guiLuc", "desc")), snap => {
       requests = snap.docs.filter(d => d.id !== mail).map(d => ({ id: d.id, ...d.data() })); renderRequests();
       if (!svChecked) { svChecked = true; checkRules(); }
+    });
+    listen(collection(db, "doiten"), snap => {
+      doiTen = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (a.luc || 0) - (b.luc || 0)); renderDoiTen();
     });
     listen(query(collection(db, "giaovien"), orderBy("duyetLuc", "desc")), snap => {
       teachers = snap.docs.map(d => ({ id: d.id, ...d.data() })); renderTeachers(); renderLV();
