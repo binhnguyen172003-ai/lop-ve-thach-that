@@ -18,8 +18,8 @@ export const LIEN_HE = {
   email: "lopvedreamerstt@gmail.com",
   // map: link Google Maps của cơ sở (dán link rút gọn maps.app.goo.gl/… nếu có). Trên web chỉ hiện chữ "Chỉ đường".
   coSo: [
-    { ten: "Cơ sở 1 · Bình Phú", diaChi: "Nủa, Bình Phú, Thạch Thất, Hà Nội", map: "https://maps.google.com/?q=N%E1%BB%A7a%2C+B%C3%ACnh+Ph%C3%BA%2C+Th%E1%BA%A1ch+Th%E1%BA%A5t%2C+H%C3%A0+N%E1%BB%99i" },
-    { ten: "Cơ sở 2 · Kim Quan", diaChi: "162 Kim Quan, Thạch Thất, Hà Nội", map: "https://maps.google.com/?q=162+Kim+Quan%2C+Th%E1%BA%A1ch+Th%E1%BA%A5t%2C+H%C3%A0+N%E1%BB%99i" },
+    { ten: "Cơ sở 1 · Bình Phú", diaChi: "Nủa, Bình Phú, Thạch Thất, Hà Nội", map: "https://maps.app.goo.gl/LVNWnV9cfMog7m438" },
+    { ten: "Cơ sở 2 · Kim Quan", diaChi: "162 Kim Quan, Thạch Thất, Hà Nội", map: "https://maps.app.goo.gl/2ZH4yuAM7piMcgRS7" },
   ],
   instagram: { ten: "@lop_ve_thach_that", link: "https://www.instagram.com/lop_ve_thach_that/" },
   pinterest: { link: "https://pin.it/YkmIUW1tr" },

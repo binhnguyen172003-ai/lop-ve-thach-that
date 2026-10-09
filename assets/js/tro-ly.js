@@ -4,7 +4,7 @@
 //  trợ lý vẫn trả lời bằng bộ câu hỏi có sẵn bên dưới (không cần mạng AI).
 // =====================================================================
 import { firebaseConfig, EMAIL_NHAN_THONG_BAO } from "../../config/firebase-config.js?v=20261009b";
-import { LIEN_HE, LICH_THI, CA_HOC, THOI_GIAN_BIEU, TRUONG, GIAO_VIEN, HOA_CU, NAM_THI } from "../../data/noi-dung.js?v=20261009d";
+import { LIEN_HE, LICH_THI, CA_HOC, THOI_GIAN_BIEU, TRUONG, GIAO_VIEN, HOA_CU, NAM_THI } from "../../data/noi-dung.js?v=20261010av";
 
 const AI_SDK = "https://www.gstatic.com/firebasejs/12.0.0/";
 const AI_MODEL = ["gemini-2.5-flash", "gemini-2.5-flash-lite", "gemini-2.0-flash"];
