@@ -781,11 +781,12 @@ const GHI_CHU = {
   const mo = (b, tu) => { dang = b; b.setAttribute("aria-expanded", "true"); pop.innerHTML = `<b>Mục này là gì?</b>${esc(b.dataset.gc)}`;
     pop.classList.add("mo"); dat(); clearTimeout(hen); if (tu) hen = setTimeout(dong, 6000); };
   addEventListener("scroll", dat, { passive: true }); addEventListener("resize", dat, { passive: true });
+  // Khi lướt tới mục (dấu ! nằm trong vùng giữa màn hình) thì tự hiện giải thích, mỗi mục một lần mỗi phiên
   const io = "IntersectionObserver" in window ? new IntersectionObserver(es => es.forEach(e => {
-    if (!e.isIntersecting) return; const b = e.target.querySelector(".gc-i"); io.unobserve(e.target);
-    if (!b || daXem[e.target.id]) return; daXem[e.target.id] = 1; try { sessionStorage.setItem("lvtt-gc", JSON.stringify(daXem)); } catch (x) {}
-    setTimeout(() => mo(b, true), 450);
-  }), { threshold: .6 }) : null;
+    if (!e.isIntersecting) return; const b = e.target.querySelector(".gc-i"), key = e.target.dataset.gcKey;
+    if (!b || daXem[key]) return; io.unobserve(e.target); daXem[key] = 1; try { sessionStorage.setItem("lvtt-gc", JSON.stringify(daXem)); } catch (x) {}
+    setTimeout(() => { if (!dang) mo(b, true); }, 350);
+  }), { threshold: 0.5, rootMargin: "-15% 0px -25% 0px" }) : null;
   Object.entries(GHI_CHU).forEach(([id, nd]) => {
     const h = document.getElementById(id); if (!h || h.querySelector(".gc")) return;
     const w = document.createElement("span"); w.className = "gc";
@@ -793,8 +794,11 @@ const GHI_CHU = {
     h.append(w);
     const b = w.querySelector(".gc-i"); b.dataset.gc = nd;
     b.addEventListener("click", e => { e.stopPropagation(); dang === b ? dong() : mo(b); });
-    b.addEventListener("mouseenter", () => mo(b)); b.addEventListener("mouseleave", dong);
-    if (io) io.observe(h);
+    // rê chuột (máy tính) mới hiện khi rê; chạm trên điện thoại chỉ dùng click để không mở rồi đóng ngay
+    b.addEventListener("pointerenter", e => { if (e.pointerType === "mouse") mo(b); });
+    b.addEventListener("pointerleave", e => { if (e.pointerType === "mouse") dong(); });
+    w.dataset.gcKey = id;
+    if (io) io.observe(w);
   });
   document.addEventListener("click", e => { if (!e.target.closest(".gc")) dong(); });
   document.addEventListener("keydown", e => { if (e.key === "Escape") dong(); });
