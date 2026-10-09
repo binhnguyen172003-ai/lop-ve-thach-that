@@ -140,6 +140,26 @@ service cloud.firestore {
       }
     }
 
+    // ===== HẠNG & THÀNH TỰU: thầy cô cộng XP / trao thành tựu; ai cũng xem (hiện ở Top rank) =====
+    match /xephang/{id} {
+      allow read: if true;
+      allow create: if isStaff()
+        && request.resource.data.keys().hasOnly(['hocVien', 'loai', 'xp', 'ma', 'ghiChu', 'luc', 'nguoi'])
+        && request.resource.data.hocVien is string && request.resource.data.hocVien.size() > 0 && request.resource.data.hocVien.size() <= 80
+        && request.resource.data.loai in ['xp', 'thanhtuu']
+        && (!('xp' in request.resource.data) || (request.resource.data.xp is int && request.resource.data.xp > 0 && request.resource.data.xp <= 2000))
+        && shortText(request.resource.data, 'ghiChu', 120);
+      allow delete: if isAdmin();
+    }
+
+    // ===== KHO HOẠ CỤ: chỉ quản lý xem và ghi (nhập hàng, bán hàng, tồn kho) =====
+    match /kho/{id} {
+      allow read, write: if isAdmin();
+    }
+    match /khogd/{id} {
+      allow read, write: if isAdmin();
+    }
+
     match /admins/{mail} {
       allow read: if isMe(mail);
       allow write: if false;

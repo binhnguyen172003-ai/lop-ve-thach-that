@@ -5,7 +5,7 @@
 import { firebaseConfig, ADMIN_EMAIL, EMAIL_NHAN_THONG_BAO } from "../../config/firebase-config.js?v=20261009b";
 import { FILE_LIMITS, FILE_TYPES, fileExt, fileSize, validateFiles, attachmentStorage, uploadError, validAttachmentPath } from "./attachments.js?v=20261009b";
 import { GIAO_TRINH_MAU as GT_LO_TRINH } from "../../data/giao-trinh-mau.js?v=20261009b";
-import { LIEN_HE, NAM_THI, LICH_THI, BO_LOC_TRUONG, CA_HOC, THOI_GIAN_BIEU, BAI_VE, BANG_VANG, TRUONG, MUC_TIEU, GIAO_VIEN, VIDEO_BIA, BAI_NOI_BAT, THANH_TUU_TRAO, XP_THUONG, AVATAR } from "../../data/noi-dung.js?v=20261009d";
+import { LIEN_HE, NAM_THI, LICH_THI, BO_LOC_TRUONG, CA_HOC, THOI_GIAN_BIEU, BAI_VE, BANG_VANG, TRUONG, MUC_TIEU, GIAO_VIEN, VIDEO_BIA, BAI_NOI_BAT, THANH_TUU_TRAO, XP_THUONG, AVATAR, SO_DU_THI, HOA_CU, TON_DAU_KY } from "../../data/noi-dung.js?v=20261009d";
 
 // Firebase được tải riêng, để phần giới thiệu vẫn chạy kể cả khi mạng chậm hoặc chưa cấu hình.
 const FB = "https://www.gstatic.com/firebasejs/10.12.2/";
@@ -364,6 +364,8 @@ function vongXoay(box, st, cards, dots, prev, next, onCenter) {
 }
 
 /* ================= Hạng học viên (F → SSS+): leo hạng nhờ đi học, làm bài, có bài nổi bật ================= */
+// XP thưởng / thành tựu thầy trao trên web (Firestore: xephang) — gộp với dữ liệu trong file
+let XP_DONG = [], TT_DONG = [];
 const RANK = [
   { ma: "F", xp: 0, mau: "#9aa3ad", kim: "Sắt", ten: "Người Mới", mo: "Vừa vào lớp, bắt đầu hành trình." },
   { ma: "E", xp: 100, mau: "#3fcf5b", kim: "Đồng", ten: "Tập Sự", mo: "Đã có bài đầu tiên được chọn hoặc đi học đều." },
@@ -390,7 +392,7 @@ function tinhRank(dd, prog, fb, ten) {
   const bo = t => String(t || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
   const nb = ten ? BAI_NOI_BAT.filter(b => !b.tg && b.hocVien && b.ngay > RANK_BAT_DAU && bo(ten).endsWith(bo(b.hocVien))) : [];
   const top1 = nb.filter(b => b.hang === 1).length;
-  const thuongDs = ten ? (XP_THUONG || []).filter(x => x.hocVien && bo(ten).endsWith(bo(x.hocVien))) : [];
+  const thuongDs = ten ? [...(XP_THUONG || []), ...XP_DONG].filter(x => x.hocVien && bo(ten).endsWith(bo(x.hocVien))) : [];
   const thuong = thuongDs.reduce((a, x) => a + (Number(x.xp) || 0), 0);
   const xp = buoi * XP.buoi + baiTap * XP.baiTap + baiHoc * XP.baiHoc + gioi * XP.diemGioi + nb.length * XP.noiBat + top1 * XP.top1 + thuong;
   let i = 0; RANK.forEach((r, j) => { if (xp >= r.xp) i = j; });
@@ -572,7 +574,7 @@ function tinhThanhTuu(dd, prog, fb, ten, hw = []) {
   dem.noibat = nb.length; dem.quanquan = nb.filter(b => b.hang === 1).length;
   dem.chuyencan = Object.entries(dd || {}).filter(([k, v]) => /^\d{4}-\d{2}-\d{2}_/.test(k) && v === "co").length;
   dem.diemvang = Object.values(fb || {}).filter(x => x && soDiem(x.diem) !== null && soDiem(x.diem) >= 8).length;
-  const trao = (THANH_TUU_TRAO || []).filter(x => cua(x.hocVien));
+  const trao = [...(THANH_TUU_TRAO || []), ...TT_DONG].filter(x => cua(x.hocVien));
   trao.forEach(x => { if (x.ma in dem) dem[x.ma] += Number(x.so) || 1; });
   return THANH_TUU.map(a => {
     const n = dem[a.ma], cap = a.moc.filter(m => n >= m).length, toi = a.moc[cap] || null;
@@ -656,15 +658,16 @@ document.addEventListener("keydown", e => {
   if (tt) tt.innerHTML = thanhTuuSanHTML();
 })();
 /* Trang chủ: chỉ hiện Top rank của lớp */
-(function topRank() {
+function veTopRank() {
   const box = $("#tr-list"); if (!box) return;
-  const ten = [...new Set([...BAI_NOI_BAT.filter(b => !b.tg && b.hocVien).map(b => b.hocVien), ...(XP_THUONG || []).map(x => x.hocVien)].filter(Boolean))];
+  const ten = [...new Set([...BAI_NOI_BAT.filter(b => !b.tg && b.hocVien).map(b => b.hocVien), ...(XP_THUONG || []).map(x => x.hocVien), ...XP_DONG.map(x => x.hocVien)].filter(Boolean))];
   const ds = ten.map(t => ({ t, k: tinhRank(null, null, null, t) })).sort((a, b) => b.k.xp - a.k.xp || b.k.i - a.k.i).slice(0, 5);
   box.innerHTML = ds.map(({ t, k }, j) => `<li class="t${k.i}${j < 3 ? " p" + (j + 1) : ""}" data-rk="${esc(t)}" role="button" tabindex="0" style="--rc:${k.r.mau === "rainbow" ? "#ffd6ff" : k.r.mau}">
     <span class="tr-so num">${j + 1}</span>${khungAvatar(k.r, k.i, t, "", "md")}
     <span class="tr-ten"><b>${esc(t)}</b><small>Hạng ${k.r.ma} · ${k.r.kim} · ${k.r.ten}</small></span><span class="tr-xp num">${k.xp} XP</span></li>`).join("");
   $("#top-rank").hidden = !ds.length;
-})();
+}
+veTopRank();
 /* ================= Lộ trình học: từng môn, theo tuần (lấy từ giáo trình có sẵn) ================= */
 (function loTrinh() {
   const tabs = $("#lt-tabs"), body = $("#lt-body"); if (!tabs || !body) return;
@@ -758,6 +761,7 @@ const GHI_CHU = {
   const mucCua = b => { const t = tuoi(b); if (t === null) return b.ky || "tuan"; return Object.keys(KHOANG).find(k => t >= KHOANG[k][0] - 1 && t < KHOANG[k][1]) || ""; };
   const locNoiBat = k => BAI_NOI_BAT.filter(b => mucCua(b) === k)
     .sort((a, b) => (a.tg ? 1 : 0) - (b.tg ? 1 : 0) || (a.hang || 99) - (b.hang || 99) || (b.diem || 0) - (a.diem || 0) || (tuoi(a) || 0) - (tuoi(b) || 0));
+  addEventListener("xephang-doi", () => ve());
   const ve = () => {
     let ds = locNoiBat(ky);
     const tam = !ds.length;
@@ -945,6 +949,28 @@ function renderHonor() {
       ${rest.length > 6 ? `<button type="button" class="mg-more" id="bv-more">${bvMore ? "Thu gọn ▲" : `Xem tất cả ${list.length} học viên ▼`}</button>` : ""}
     </div>
     <p class="muted bv-note">Bấm vào tên để xem điểm từng trường. Xếp theo điểm môn vẽ cao nhất của mỗi bạn.</p>`;
+  // Phân tích tỷ lệ đỗ (tính từ dữ liệu Bảng vàng; % đỗ cần số học viên dự thi ở SO_DU_THI)
+  {
+    const ds = BANG_VANG.filter(x => hopNam(x, bvYear)), nam = bvYear ? [bvYear] : BV_NAM;
+    const duThi = nam.reduce((a, y) => a + (Number((SO_DU_THI || {})[y]) || 0), 0);
+    const hvDo = new Set(ds.map(x => x.ten.trim().toLowerCase() + "|" + x.nam)).size;
+    const theoTr = Object.keys(TRUONG).map(k => ({ k, n: ds.filter(x => x.truong === k).length })).filter(x => x.n).sort((a, b) => b.n - a.n);
+    const diem = all.filter(x => x.top).map(x => x.top.d);
+    const MUC = [["Từ 9", d => d >= 9, "#ffcf3a"], ["8,5 – 8,9", d => d >= 8.5 && d < 9, "#7fe3ff"], ["8 – 8,4", d => d >= 8 && d < 8.5, "#e08a4c"], ["7 – 7,9", d => d >= 7 && d < 8, "#9aa3ad"], ["Dưới 7", d => d < 7, "#5b6170"]];
+    const tb = diem.length ? diem.reduce((a, b) => a + b, 0) / diem.length : 0;
+    const max = Math.max(1, ...theoTr.map(x => x.n));
+    const bar = (nhan, n, tong, mau) => `<div class="pt-r"><span>${nhan}</span><i style="--w:${Math.round(n / tong * 100)}%;--c:${mau}"></i><b class="num">${n}${tong ? ` · ${Math.round(n / (diem.length || 1) * 100)}%` : ""}</b></div>`;
+    $("#bv-body").insertAdjacentHTML("beforeend", `<details class="bv-pt"><summary>📊 Phân tích tỷ lệ đỗ ${tatCa ? "· tất cả các khoá" : "· mùa thi " + bvYear}</summary>
+      <div class="pt-grid">
+        <div class="pt-o pt-lon">${duThi ? `<b class="num">${Math.round(hvDo / duThi * 100)}%</b><span>tỷ lệ đỗ (${hvDo}/${duThi} học viên dự thi)</span>` : `<b class="num">${hvDo}</b><span>học viên đỗ / có điểm · <em>thêm số học viên dự thi để tính %</em></span>`}</div>
+        <div class="pt-o"><b class="num">${fmtDiem(Math.round(tb * 100) / 100)}</b><span>điểm vẽ trung bình (môn cao nhất)</span></div>
+        <div class="pt-o"><b class="num">${diem.length ? Math.round(diem.filter(d => d >= 8).length / diem.length * 100) : 0}%</b><span>bài đạt từ 8 điểm</span></div>
+        <div class="pt-o"><b class="num">${diem.length ? Math.round(diem.filter(d => d >= 9).length / diem.length * 100) : 0}%</b><span>bài đạt từ 9 điểm</span></div>
+      </div>
+      <div class="pt-2"><div><h4>Lượt đỗ theo trường</h4>${theoTr.map(x => `<div class="pt-r"><span>${esc(x.k)}</span><i style="--w:${Math.round(x.n / max * 100)}%;--c:${esc(tr(x.k).mau)}"></i><b class="num">${x.n} · ${Math.round(x.n / ds.length * 100)}%</b></div>`).join("")}</div>
+        <div><h4>Phân bố điểm vẽ cao nhất</h4>${MUC.map(([nhan, f, mau]) => bar(nhan, diem.filter(f).length, Math.max(1, ...MUC.map(m => diem.filter(m[1]).length)), mau)).join("")}</div></div>
+      <p class="muted pt-note">Tính từ ${ds.length} lượt đỗ/có điểm trên Bảng vàng. Phần trăm theo trường = số lượt đỗ trường đó / tổng lượt.</p></details>`);
+  }
   if ($("#bv-clear")) $("#bv-clear").onclick = () => { bvSchool = ""; renderHonor(); };
   if ($("#bv-more")) $("#bv-more").onclick = () => { bvMore = !bvMore; renderHonor(); if (!bvMore) $("#bang-vang").scrollIntoView({ block: "start" }); };
 }
@@ -1936,7 +1962,7 @@ function renderTiles() {
     if (hv) { const av = $("#who-avatar"); if (av) av.hidden = true; const ten = (myHv && myHv.ten) || (user && user.displayName), t = tinhRank(myDiemdanh, myProgress, myFeedback, ten), tt = tinhThanhTuu(myDiemdanh, myProgress, myFeedback, ten, homework);
       wr.innerHTML = `${khungAvatar(t.r, t.i, ten, myAvatar || (user && user.photoURL), "md")}${huyHieu(t.r, t.i, "xs", ten)}<span class="muted"><b class="num">${t.xp} XP</b> · ${tt.filter(a => a.cap).length}/${tt.length} thành tựu</span><a href="#xep-hang">Xem hạng & thành tựu ↓</a>`; } } }
   { const av = $("#av-doi"); if (av) av.hidden = !user; }
-  baoTroLy(show);
+  baoTroLy(show); try { renderXHQL(); renderKho(); } catch (e) {}
   if (!show) { box.innerHTML = ""; return; }
   const today = todayVN();
   const tin = lvUnreadMsgs(), tb = lvUnreadTB(), viec = lvMyOpenTasks();
@@ -1978,6 +2004,196 @@ function luuAvatar(url) {
     img.src = u;
   });
   const x = $("#av-xoa"); if (x) x.onclick = () => luuAvatar("");
+}
+
+/* ================= Thầy cô cộng XP / trao thành tựu ngay trên web ================= */
+let xhDS = [], xhLoi = false;
+function renderXHQL() {
+  const box = $("#xh-ql"); if (!box) return;
+  box.hidden = !(user && isTeacher);
+  if (box.hidden) return;
+  const ten = [...new Set([...roster.map(r => r.ten), ...BAI_NOI_BAT.filter(b => !b.tg && b.hocVien).map(b => b.hocVien)].filter(Boolean))].sort((a, b) => a.localeCompare(b, "vi"));
+  const dangGo = document.activeElement && box.contains(document.activeElement);
+  if (dangGo && box.dataset.ve) { veDSXH(); return; }
+  box.dataset.ve = 1;
+  box.innerHTML = `<h3>⭐ Cộng XP · trao thành tựu</h3>
+    <p class="muted">Dùng khi học viên có bài xuất sắc, chăm chỉ, đạt thủ khoa thi thử… Hạng và thành tựu cập nhật ngay cho cả lớp thấy.</p>
+    ${xhLoi ? `<p class="xh-loi">Máy chủ chưa cho lưu mục này. Quản lý cần dán luật bảo mật mới (firestore.rules) một lần.</p>` : ""}
+    <form id="f-xh" class="xh-f">
+      <label>Học viên<input id="xh-ten" list="xh-ds-ten" required maxlength="80" placeholder="Gõ tên học viên"></label>
+      <datalist id="xh-ds-ten">${ten.map(t => `<option value="${esc(t)}">`).join("")}</datalist>
+      <div class="seg xh-loai" role="group" aria-label="Loại"><button type="button" data-l="xp" aria-pressed="true">+ XP</button><button type="button" data-l="thanhtuu" aria-pressed="false">🏆 Thành tựu</button></div>
+      <label class="xh-xp">Số XP<select id="xh-xp">${[20, 50, 100, 200, 500].map(n => `<option value="${n}">+${n} XP</option>`).join("")}</select></label>
+      <label class="xh-tt" hidden>Thành tựu<select id="xh-tt">${THANH_TUU.map(a => `<option value="${a.ma}">${esc(a.ten)}${a.trao ? " (thầy trao)" : ""}</option>`).join("")}</select></label>
+      <label class="xh-gc">Lý do<input id="xh-gc" maxlength="120" required placeholder="VD: Bài màu tuần 3 xuất sắc"></label>
+      <button class="btn primary" type="submit">Lưu</button><span class="status" id="xh-st"></span>
+    </form>
+    <div id="xh-ds"></div>`;
+  let loai = "xp";
+  box.querySelectorAll(".xh-loai button").forEach(b => b.onclick = () => {
+    loai = b.dataset.l; box.querySelectorAll(".xh-loai button").forEach(x => x.setAttribute("aria-pressed", x === b));
+    box.querySelector(".xh-xp").hidden = loai !== "xp"; box.querySelector(".xh-tt").hidden = loai !== "thanhtuu";
+  });
+  $("#f-xh").onsubmit = async e => {
+    e.preventDefault();
+    const d = { hocVien: $("#xh-ten").value.trim(), loai, ghiChu: $("#xh-gc").value.trim(), luc: Date.now(), nguoi: tenToi() };
+    if (loai === "xp") d.xp = Number($("#xh-xp").value); else d.ma = $("#xh-tt").value;
+    if (!d.hocVien) return;
+    $("#xh-st").textContent = "Đang lưu…";
+    try { await timed("Lưu XP", addDoc(collection(db, "xephang"), d)); $("#xh-st").textContent = "Đã lưu ✓"; $("#xh-gc").value = ""; toast(loai === "xp" ? `Đã cộng ${d.xp} XP cho ${d.hocVien}` : `Đã trao thành tựu cho ${d.hocVien}`); }
+    catch (err) { $("#xh-st").textContent = err && err.code === "permission-denied" ? "Chưa lưu được: cần dán luật bảo mật mới." : "Chưa lưu được, kiểm tra mạng."; }
+  };
+  veDSXH();
+}
+function veDSXH() {
+  const el = $("#xh-ds"); if (!el) return;
+  el.innerHTML = xhDS.length ? `<h4>Đã trao gần đây</h4><ul class="xh-ds">${xhDS.slice(0, 20).map(x => `<li><b>${esc(x.hocVien)}</b>
+    <span>${x.loai === "xp" ? `+${Number(x.xp) || 0} XP` : "🏆 " + esc((THANH_TUU.find(a => a.ma === x.ma) || {}).ten || x.ma)}</span>
+    <small>${esc(x.ghiChu || "")} · ${esc(x.nguoi || "")} · ${fmtDate(x.luc)}</small>${isAdmin ? `<button type="button" class="linkish" data-xxh="${esc(x.id)}">Xoá</button>` : ""}</li>`).join("")}</ul>` : "";
+  el.querySelectorAll("[data-xxh]").forEach(b => confirmButton(b, () => deleteDoc(doc(db, "xephang", b.dataset.xxh))));
+}
+
+/* ================= KHO HOẠ CỤ (chỉ quản lý): nhập · bán · tồn · lãi lỗ tháng ================= */
+let khoMon = {}, khoGD = [], khoLoi = "", khoTab = "ton", khoThang = "", khoDaTai = false;
+const vnd = n => Math.round(Number(n) || 0).toLocaleString("vi-VN") + "đ";
+const thangCua = iso => String(iso || "").slice(0, 7);
+function khoStart() {
+  unsubs.push(onSnapshot(collection(db, "kho"), snap => { khoMon = {}; snap.docs.forEach(d => khoMon[d.id] = { ma: d.id, ...d.data() }); khoDaTai = true; renderKho(); },
+    e => { khoLoi = (e && e.code) || "loi"; renderKho(); }));
+  unsubs.push(onSnapshot(collection(db, "khogd"), snap => { khoGD = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (b.luc || 0) - (a.luc || 0)); renderKho(); baoCaoThang(); },
+    e => { khoLoi = (e && e.code) || "loi"; renderKho(); }));
+}
+const monKho = () => Object.values(khoMon).filter(m => m.ma !== "_caidat").sort((a, b) => String(a.loai).localeCompare(String(b.loai), "vi") || String(a.ten).localeCompare(String(b.ten), "vi"));
+function khoSapHet() { return monKho().filter(m => (Number(m.ton) || 0) <= 3 && (m.daBan || 0) > 0).map(m => m.ten); }
+function laiLoThang(th) {
+  const gd = khoGD.filter(g => thangCua(g.ngay) === th);
+  const ban = gd.filter(g => g.loai === "ban"), nhap = gd.filter(g => g.loai === "nhap");
+  const doanhThu = ban.reduce((a, g) => a + g.sl * g.gia, 0), giaVon = ban.reduce((a, g) => a + g.sl * (g.von || 0), 0);
+  const chiNhap = nhap.reduce((a, g) => a + g.sl * g.gia, 0);
+  const theoMon = {}; ban.forEach(g => { const m = theoMon[g.ten] ||= { sl: 0, tien: 0, lai: 0 }; m.sl += g.sl; m.tien += g.sl * g.gia; m.lai += g.sl * (g.gia - (g.von || 0)); });
+  return { gd, doanhThu, giaVon, lai: doanhThu - giaVon, chiNhap, dongTien: doanhThu - chiNhap, soDon: ban.length, theoMon };
+}
+function renderKho() {
+  const sec = $("#kho"); if (!sec) return;
+  sec.hidden = !(user && isAdmin);
+  if (sec.hidden) return;
+  const body = $("#kho-body");
+  if (khoLoi) { body.innerHTML = `<p class="xh-loi">Máy chủ chưa cho mở Kho (${esc(khoLoi)}). Thầy dán luật bảo mật mới (firestore.rules) một lần là dùng được.</p>`; return; }
+  if (!khoDaTai) { body.innerHTML = `<p class="muted">Đang tải kho…</p>`; return; }
+  const ds = monKho();
+  if (!ds.length) {
+    body.innerHTML = `<div class="kho-trong"><b>Kho chưa có dữ liệu.</b><p class="muted">Bấm nút dưới để tạo kho từ sổ hoạ cụ tháng 07 (${HOA_CU.length} món, kèm số tồn ghi trong sổ). Sau đó thầy kiểm kho thực tế và sửa lại số tồn.</p>
+      <button class="btn primary" id="kho-tao" type="button">Tạo kho từ sổ hoạ cụ</button> <span class="status" id="kho-tao-st"></span></div>`;
+    $("#kho-tao").onclick = async () => {
+      $("#kho-tao-st").textContent = "Đang tạo…";
+      const b = writeBatch(db);
+      HOA_CU.forEach(h => b.set(doc(db, "kho", h.ma), { ten: h.ten, loai: h.loai, gia: h.gia, von: h.von, ton: Number(TON_DAU_KY[h.ma]) || 0, daBan: 0 }));
+      try { await timed("Tạo kho", b.commit()); toast("Đã tạo kho."); } catch (e) { $("#kho-tao-st").textContent = "Chưa tạo được: " + (e.code || "lỗi mạng"); }
+    };
+    return;
+  }
+  const thangNay = todayVN().slice(0, 7);
+  if (!khoThang) khoThang = thangNay;
+  const cacThang = [...new Set([thangNay, ...khoGD.map(g => thangCua(g.ngay))])].filter(Boolean).sort().reverse();
+  const tongVon = ds.reduce((a, m) => a + (m.ton || 0) * (m.von || 0), 0), tongBan = ds.reduce((a, m) => a + (m.ton || 0) * (m.gia || 0), 0);
+  const ll = laiLoThang(khoThang);
+  body.innerHTML = `<div class="kho-tabs" role="tablist">${[["ton", "📦 Tồn kho"], ["gd", "➕ Nhập · Bán"], ["ll", "📈 Lãi lỗ tháng"]].map(([k, t]) => `<button type="button" data-kt="${k}" aria-selected="${khoTab === k}">${t}</button>`).join("")}</div>
+    <div class="kho-p" ${khoTab === "ton" ? "" : "hidden"}>
+      <div class="kho-so"><div><b>${ds.reduce((a, m) => a + (m.ton || 0), 0)}</b><span>món đang tồn</span></div><div><b>${vnd(tongVon)}</b><span>vốn nằm trong kho</span></div><div><b>${vnd(tongBan)}</b><span>nếu bán hết thu về</span></div><div><b>${khoSapHet().length}</b><span>món sắp hết (≤3)</span></div></div>
+      <div class="kho-bang"><div class="kho-r kho-h"><span>Món</span><span>Vốn</span><span>Giá bán</span><span>Tồn</span><span></span></div>
+      ${ds.map(m => `<div class="kho-r ${(m.ton || 0) <= 3 ? "it" : ""}"><span><b>${esc(m.ten)}</b><small>${esc(m.loai)}</small></span><span>${vnd(m.von)}</span><span>${vnd(m.gia)}</span><span class="num"><b>${m.ton || 0}</b></span>
+        <span><button type="button" class="linkish" data-ks="${esc(m.ma)}">Sửa</button></span></div>`).join("")}</div>
+      <p class="muted kho-note">Bấm "Sửa" để chỉnh giá hoặc số tồn sau khi kiểm kho. <button type="button" class="linkish" id="kho-csv-ton">Tải bảng tồn kho (CSV, mở bằng Google Trang tính)</button></p>
+    </div>
+    <div class="kho-p" ${khoTab === "gd" ? "" : "hidden"}>
+      <form id="f-kho" class="kho-f">
+        <div class="seg kho-loai" role="group"><button type="button" data-kl="ban" aria-pressed="true">Bán cho học viên</button><button type="button" data-kl="nhap" aria-pressed="false">Nhập hàng</button></div>
+        <label>Món<select id="kho-mon">${ds.map(m => `<option value="${esc(m.ma)}">${esc(m.ten)} · tồn ${m.ton || 0}</option>`).join("")}</select></label>
+        <label>Số lượng<input id="kho-sl" type="number" min="1" max="9999" value="1" required inputmode="numeric"></label>
+        <label>Đơn giá (đ)<input id="kho-gia" type="number" min="0" step="500" required inputmode="numeric"></label>
+        <label>Người mua / nơi nhập<input id="kho-ai" maxlength="80" list="xh-ds-ten" placeholder="VD: Bảo · Bình Phú"></label>
+        <label>Ngày<input id="kho-ngay" type="date" required value="${todayVN()}"></label>
+        <button class="btn primary" type="submit">Lưu giao dịch</button><span class="status" id="kho-st"></span>
+      </form>
+      <h4 class="kho-h4">Giao dịch gần đây</h4>
+      <ul class="kho-gd">${khoGD.slice(0, 25).map(g => `<li class="${g.loai}"><span>${g.loai === "ban" ? "Bán" : "Nhập"}</span><b>${esc(g.ten)} × ${g.sl}</b><span>${vnd(g.sl * g.gia)}</span><small>${esc(g.ai || "")} · ${ngayVN(g.ngay)}</small><button type="button" class="linkish" data-kx="${esc(g.id)}">Xoá</button></li>`).join("") || `<li class="muted">Chưa có giao dịch.</li>`}</ul>
+    </div>
+    <div class="kho-p" ${khoTab === "ll" ? "" : "hidden"}>
+      <label class="kho-th">Tháng<select id="kho-thang">${cacThang.map(t => `<option value="${t}" ${t === khoThang ? "selected" : ""}>${t.slice(5)}/${t.slice(0, 4)}</option>`).join("")}</select></label>
+      <div class="kho-so"><div><b>${vnd(ll.doanhThu)}</b><span>doanh thu bán (${ll.soDon} lượt)</span></div><div><b>${vnd(ll.giaVon)}</b><span>giá vốn hàng đã bán</span></div>
+        <div class="${ll.lai >= 0 ? "lai" : "lo"}"><b>${ll.lai >= 0 ? "+" : ""}${vnd(ll.lai)}</b><span>${ll.lai >= 0 ? "LÃI" : "LỖ"} trên hàng đã bán</span></div><div><b>${vnd(ll.chiNhap)}</b><span>tiền nhập hàng trong tháng</span></div></div>
+      <p class="muted kho-note">Dòng tiền tháng (thu bán − chi nhập): <b>${vnd(ll.dongTien)}</b>. Nhập nhiều để dự trữ thì dòng tiền âm là bình thường, lãi thật xem ở ô "LÃI/LỖ".</p>
+      ${Object.keys(ll.theoMon).length ? `<div class="kho-bang"><div class="kho-r kho-h"><span>Món bán chạy</span><span>Số lượng</span><span>Doanh thu</span><span>Lãi</span><span></span></div>${Object.entries(ll.theoMon).sort((a, b) => b[1].tien - a[1].tien).map(([t, m]) => `<div class="kho-r"><span><b>${esc(t)}</b></span><span>${m.sl}</span><span>${vnd(m.tien)}</span><span>${vnd(m.lai)}</span><span></span></div>`).join("")}</div>` : `<p class="muted">Tháng này chưa bán món nào.</p>`}
+      <p><button type="button" class="btn small" id="kho-csv-thang">Tải giao dịch tháng (CSV)</button> <button type="button" class="btn small" id="kho-gui">📧 Gửi báo cáo tháng này vào Gmail</button></p>
+    </div>`;
+  body.querySelectorAll("[data-kt]").forEach(b => b.onclick = () => { khoTab = b.dataset.kt; renderKho(); });
+  body.querySelectorAll("[data-ks]").forEach(b => b.onclick = () => suaMon(b.dataset.ks));
+  body.querySelectorAll("[data-kx]").forEach(b => confirmButton(b, () => xoaGD(b.dataset.kx)));
+  const sel = $("#kho-thang"); if (sel) sel.onchange = () => { khoThang = sel.value; renderKho(); };
+  $("#kho-csv-ton").onclick = () => taiCSV("ton-kho-" + todayVN() + ".csv", [["Món", "Loại", "Giá vốn", "Giá bán", "Tồn", "Vốn tồn"], ...ds.map(m => [m.ten, m.loai, m.von, m.gia, m.ton || 0, (m.ton || 0) * (m.von || 0)])]);
+  $("#kho-csv-thang").onclick = () => taiCSV("giao-dich-" + khoThang + ".csv", [["Ngày", "Loại", "Món", "SL", "Đơn giá", "Thành tiền", "Giá vốn/món", "Lãi", "Người"], ...ll.gd.map(g => [g.ngay, g.loai === "ban" ? "Bán" : "Nhập", g.ten, g.sl, g.gia, g.sl * g.gia, g.von || "", g.loai === "ban" ? g.sl * (g.gia - (g.von || 0)) : "", g.ai || ""])]);
+  $("#kho-gui").onclick = () => { guiBaoCao(khoThang, true); };
+  let loai = "ban";
+  const giaMacDinh = () => { const m = khoMon[$("#kho-mon").value]; $("#kho-gia").value = m ? (loai === "ban" ? m.gia : m.von) : ""; };
+  body.querySelectorAll("[data-kl]").forEach(b => b.onclick = () => { loai = b.dataset.kl; body.querySelectorAll("[data-kl]").forEach(x => x.setAttribute("aria-pressed", x === b)); giaMacDinh(); });
+  $("#kho-mon").onchange = giaMacDinh; giaMacDinh();
+  $("#f-kho").onsubmit = async e => {
+    e.preventDefault();
+    const m = khoMon[$("#kho-mon").value], sl = Math.max(1, Math.round(Number($("#kho-sl").value) || 0)), gia = Math.max(0, Number($("#kho-gia").value) || 0);
+    if (!m) return;
+    if (loai === "ban" && sl > (m.ton || 0) && !confirm(`Kho chỉ còn ${m.ton || 0} ${m.ten}. Vẫn lưu?`)) return;
+    const ton = (m.ton || 0) + (loai === "nhap" ? sl : -sl);
+    const von = loai === "nhap" && ton > 0 ? Math.round(((m.ton > 0 ? m.ton : 0) * (m.von || 0) + sl * gia) / ((m.ton > 0 ? m.ton : 0) + sl)) : (m.von || 0);
+    const b = writeBatch(db);
+    b.set(doc(db, "khogd", Date.now().toString(36) + Math.random().toString(36).slice(2, 7)), { loai, ma: m.ma, ten: m.ten, sl, gia, von: m.von || 0, ai: $("#kho-ai").value.trim(), ngay: $("#kho-ngay").value || todayVN(), luc: Date.now(), nguoi: mail });
+    b.set(doc(db, "kho", m.ma), { ton, von, ...(loai === "ban" ? { daBan: (m.daBan || 0) + sl } : {}) }, { merge: true });
+    $("#kho-st").textContent = "Đang lưu…";
+    try { await timed("Lưu kho", b.commit()); toast(`Đã ${loai === "ban" ? "bán" : "nhập"} ${sl} ${m.ten}. Tồn còn ${ton}.`); }
+    catch (err) { $("#kho-st").textContent = "Chưa lưu được: " + (err.code || "lỗi mạng"); }
+  };
+}
+async function suaMon(ma) {
+  const m = khoMon[ma]; if (!m) return;
+  const ton = prompt(`Số tồn thực tế của "${m.ten}":`, m.ton || 0); if (ton === null) return;
+  const gia = prompt(`Giá bán "${m.ten}" (đ):`, m.gia || 0); if (gia === null) return;
+  const von = prompt(`Giá nhập (vốn) "${m.ten}" (đ):`, m.von || 0); if (von === null) return;
+  try { await timed("Sửa kho", setDoc(doc(db, "kho", ma), { ton: Math.max(0, Math.round(Number(ton) || 0)), gia: Number(gia) || 0, von: Number(von) || 0 }, { merge: true })); toast("Đã cập nhật " + m.ten); }
+  catch (e) { toast("Chưa lưu được.", "err"); }
+}
+async function xoaGD(id) {
+  const g = khoGD.find(x => x.id === id), m = g && khoMon[g.ma]; if (!g) return;
+  const b = writeBatch(db);
+  b.delete(doc(db, "khogd", id));
+  if (m) b.set(doc(db, "kho", m.ma), { ton: (m.ton || 0) + (g.loai === "ban" ? g.sl : -g.sl), ...(g.loai === "ban" ? { daBan: Math.max(0, (m.daBan || 0) - g.sl) } : {}) }, { merge: true });
+  await timed("Xoá giao dịch", b.commit());
+}
+function taiCSV(ten, rows) {
+  const csv = "﻿" + rows.map(r => r.map(v => `"${String(v ?? "").replace(/"/g, '""')}"`).join(",")).join("\n");
+  const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" })); a.download = ten; a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
+// Đầu tháng: tự gửi báo cáo lãi lỗ tháng trước vào Gmail thầy (một lần, ghi nhớ trên máy chủ)
+async function baoCaoThang() {
+  if (!isAdmin || !EMAIL_NHAN_THONG_BAO || !khoDaTai) return;
+  const d = new Date(todayVN() + "T12:00:00"); d.setMonth(d.getMonth() - 1);
+  const th = d.toISOString().slice(0, 7), cd = khoMon._caidat || {};
+  if (cd.daGui === th || baoCaoThang.dang) return;
+  if (!khoGD.some(g => thangCua(g.ngay) <= th)) return;      // kho mới mở, chưa có tháng trước
+  baoCaoThang.dang = true;
+  try { await guiBaoCao(th, false); await setDoc(doc(db, "kho", "_caidat"), { daGui: th, luc: Date.now() }, { merge: true }); } catch (e) {}
+  baoCaoThang.dang = false;
+}
+async function guiBaoCao(th, tay) {
+  const ll = laiLoThang(th), ten = `${th.slice(5)}/${th.slice(0, 4)}`;
+  const top = Object.entries(ll.theoMon).sort((a, b) => b[1].tien - a[1].tien).slice(0, 8).map(([t, m]) => `${t}: ${m.sl} món · ${vnd(m.tien)} · lãi ${vnd(m.lai)}`).join("\n") || "Không bán món nào";
+  const het = khoSapHet().join(", ") || "Không có";
+  try {
+    const r = await fetch("https://formsubmit.co/ajax/" + EMAIL_NHAN_THONG_BAO, { method: "POST", headers: { "Content-Type": "application/json", "Accept": "application/json" },
+      body: JSON.stringify({ _subject: `Báo cáo kho hoạ cụ tháng ${ten}: ${ll.lai >= 0 ? "LÃI" : "LỖ"} ${vnd(ll.lai)}`, _template: "table", _captcha: "false",
+        "Tháng": ten, "Doanh thu bán": vnd(ll.doanhThu), "Số lượt bán": ll.soDon, "Giá vốn hàng bán": vnd(ll.giaVon), "LÃI / LỖ": vnd(ll.lai),
+        "Tiền nhập hàng": vnd(ll.chiNhap), "Dòng tiền (thu − chi)": vnd(ll.dongTien), "Món bán chạy": top, "Sắp hết hàng": het }) });
+    if (tay) toast(r.ok ? "Đã gửi báo cáo vào Gmail." : "Chưa gửi được báo cáo.", r.ok ? "" : "err");
+  } catch (e) { if (tay) toast("Chưa gửi được báo cáo.", "err"); throw e; }
 }
 
 /* ================= Nối với trợ lý: ai đang đăng nhập + danh sách nhắc việc ================= */
@@ -2073,6 +2289,7 @@ function lvStart() {
   else if (isTeacher) listenLV(query(collection(db, "traodoi"), where("vaiTro", "==", "hocvien")), snap => { lvKenh = snap.docs.map(d => ({ id: d.id, ...d.data() })); renderLV(); });
   if (!isAdmin) listenLV(doc(db, "traodoi", mail), d => { lvMine = d.exists() ? { id: d.id, ...d.data() } : null; renderLV(); });
   if (!isTeacher) lvOpen = mail; // học viên: chỉ có 1 cuộc trò chuyện với thầy cô
+  if (isAdmin) khoStart();
 }
 function lvOnShow() {
   if (!canLearnNow()) return;
@@ -2333,7 +2550,7 @@ async function onUser(u) {
   user = u; mail = u ? String(u.email || "").toLowerCase() : "";
   isAdmin = false; isTeacher = false; approved = false; needVerify = false;
   roster = []; requests = []; teachers = []; progressAll = {}; feedbackAll = {};
-  diemdanhAll = {}; myDiemdanh = {}; myHv = null; lvReset();
+  diemdanhAll = {}; myDiemdanh = {}; myHv = null; lvReset(); khoMon = {}; khoGD = []; khoLoi = ""; khoDaTai = false;
   if (prevMail && prevMail !== mail) try { localStorage.removeItem(DATA_KEY + prevMail); } catch (e) {} // máy dùng chung: xoá dữ liệu người trước
   loadData(mail);
   // Đổi người dùng thì xoá sạch form đăng ký, tránh gửi nhầm thông tin của người trước (máy dùng chung).
@@ -2479,6 +2696,15 @@ async function startFirebase() {
     catch (e) { db = getFirestore(app); }
     // Mở sẵn kết nối tới máy chủ ngay khi vào trang, để lúc đăng nhập không phải chờ.
     getDoc(doc(db, "admins", "_mo-ket-noi")).catch(() => {});
+    // XP thưởng & thành tựu thầy trao trên web: ai cũng xem được (hiện ở Top rank)
+    onSnapshot(collection(db, "xephang"), snap => {
+      const all = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      XP_DONG = all.filter(x => x.loai === "xp").map(x => ({ ...x, xp: Number(x.xp) || 0 }));
+      TT_DONG = all.filter(x => x.loai === "thanhtuu");
+      xhDS = all.sort((a, b) => (b.luc || 0) - (a.luc || 0));
+      veTopRank(); dispatchEvent(new Event("xephang-doi"));
+      try { renderTiles(); renderMyProg(); renderXHQL(); } catch (e) {}
+    }, () => { xhLoi = true; try { renderXHQL(); } catch (e) {} });
   } catch (e) {
     $$("[data-lock]").forEach(el => { el.hidden = false; el.innerHTML = `<h3>Chưa kết nối được máy chủ</h3><p class="muted">Mạng đang yếu. Có mạng lại, trang sẽ tự tải lại.</p><div class="ctas"><button class="btn primary" type="button" onclick="location.reload()">Tải lại ngay</button></div>`; });
     $("#login-status").textContent = "Mạng đang yếu nên chưa mở được đăng nhập. Có mạng lại, trang sẽ tự tải lại.";
