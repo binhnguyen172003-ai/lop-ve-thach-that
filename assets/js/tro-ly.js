@@ -334,7 +334,7 @@ function ganKeo(cum, ...khung) {
   requestAnimationFrame(() => datCum(cum));
 }
 function veGoi() {
-  const g = ["Em học thế này có đỗ không?", "Em mới học, bắt đầu thế nào?", "Khối H khác V thế nào?", "Em cần mua hoạ cụ gì?", "Còn bao lâu nữa thi?", "Bài bị trả thì làm sao?", "Lười vẽ quá 😩"];
+  const g = ["Lịch học tuần này?"];
   $("#tl-goi").innerHTML = g.map(t => `<button type="button">${esc(t)}</button>`).join("");
   $("#tl-goi").querySelectorAll("button").forEach(b => b.onclick = () => hoi(b.textContent));
 }
