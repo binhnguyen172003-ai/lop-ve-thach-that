@@ -1514,6 +1514,7 @@ function renderLessons() {
   }
   if (!cs.includes(course)) course = cs[0];
   $("#course-tabs").innerHTML = cs.map(c => `<button class="tab" data-c="${esc(c)}" aria-selected="${c === course}">${esc(c)}</button>`).join("");
+  $("#course-tabs").hidden = cs.length <= 1;   // chỉ có một khoá: bỏ dòng chip, tiêu đề khoá đã nằm trong thẻ bài
   $$("#course-tabs button").forEach(b => b.onclick = () => { course = b.dataset.c; lessonId = null; renderLessons(); });
   const list = lessons.filter(l => l.khoa === course);
   if (!list.find(l => l.id === lessonId)) lessonId = list[0].id;
