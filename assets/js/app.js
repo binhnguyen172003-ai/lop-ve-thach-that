@@ -64,7 +64,7 @@ addEventListener("error", e => {
 });
 /* ---------- Mở tức thì ở lần sau + dùng được khi mạng yếu ---------- */
 if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost") && !/[?&]khongcache/.test(location.search))
-  addEventListener("load", () => navigator.serviceWorker.register("sw.js?v=20261010bl").catch(() => {}));
+  addEventListener("load", () => navigator.serviceWorker.register("sw.js?v=20261010bm").catch(() => {}));
 
 /* ---------- Đo tốc độ: mở web kèm ?chandoan=1 để xem từng bước mất bao lâu ---------- */
 const DIAG = /[?&]chandoan/.test(location.search);
@@ -2099,17 +2099,30 @@ function renderRequests() {
   if (!n) { $("#requests").innerHTML = `<p class="muted">Không có yêu cầu nào đang chờ.</p>`; return; }
   const v = x => esc(x || "—");
   const line = (k, val) => val ? `<div><span class="muted">${k}:</span> ${esc(val)}</div>` : "";
+  // Một dòng tóm tắt: chỉ những thứ cần để quyết định duyệt hay không
+  const tomTat = r => (r.vaiTro === "giaovien"
+    ? [r.coso]
+    : [r.lopHoc, r.khoi, r.namThi && "thi " + r.namThi, r.coso, r.chuongTrinh]
+  ).filter(Boolean).map(x => `<span>${esc(x)}</span>`).join("");
+  // Số điện thoại bấm được để gọi hoặc lưu danh bạ
+  const soDt = (so, nhan) => { const s = String(so || "").replace(/\D/g, ""); return s
+    ? `<a class="req-sdt" href="tel:${esc(s)}">${esc(so)}<small>${esc(nhan)}</small></a>` : ""; };
   $("#requests").innerHTML = requests.map(r => {
     const gv = r.vaiTro === "giaovien";
     return `<div class="req-item">
       <div class="req-head"><b>${v(r.ten)}</b> <span class="chip ${gv ? "" : "ok"}">${gv ? "Giáo viên" : "Học viên"}</span>
         <span class="muted num">Gửi ${fmtDate(r.guiLuc)}</span></div>
-      <div class="req-body">
-        ${line("Gmail", r.gmail)}${line("Năm sinh", r.namSinh)}${line("Cơ sở", r.coso)}${line("Lớp vẽ", r.chuongTrinh)}
-        ${line(gv ? "Điện thoại" : "SĐT của em", r.sdt)}${line("SĐT bố mẹ", r.sdtPh)}
-        ${line("Trường", [r.truong, r.lopHoc].filter(Boolean).join(" · "))}${line("Nhà ở", r.khuVuc)}
-        ${line("Mục tiêu", [r.khoi, r.namThi, r.mucTieu].filter(Boolean).join(" · "))}${line("Lời nhắn", r.ghiChu)}
-      </div>
+      <p class="req-tom">${tomTat(r) || `<span class="muted">Chưa điền thông tin lớp</span>`}</p>
+      <div class="req-lh">${soDt(r.sdtPh, "bố mẹ")}${soDt(r.sdt, gv ? "điện thoại" : "của em")}
+        <span class="req-mail">${v(r.gmail)}</span></div>
+      ${r.ghiChu ? `<p class="req-nhan">“${esc(r.ghiChu)}”</p>` : ""}
+      <details class="req-them"><summary>Xem đầy đủ</summary>
+        <div class="req-body">
+          ${line("Gmail", r.gmail)}${line("Năm sinh", r.namSinh)}${line("Cơ sở", r.coso)}${line("Lớp vẽ", r.chuongTrinh)}
+          ${line(gv ? "Điện thoại" : "SĐT của em", r.sdt)}${line("SĐT bố mẹ", r.sdtPh)}
+          ${line("Trường", [r.truong, r.lopHoc].filter(Boolean).join(" · "))}${line("Nhà ở", r.khuVuc)}
+          ${line("Mục tiêu", [r.khoi, r.namThi, r.mucTieu].filter(Boolean).join(" · "))}${line("Lời nhắn", r.ghiChu)}
+        </div></details>
       ${gv ? "" : `<div class="kc-wrap"><span class="muted">Cấp khoá học (em sẽ thấy nút "Vào học" ở các khoá này):</span>${oChonKhoa(r.id, khoaTuChuongTrinh(r.chuongTrinh))}</div>`}
       <div class="ctas" style="margin-top:12px"><button class="btn primary" data-ok="${esc(r.id)}">${gv ? "Duyệt giáo viên" : "Duyệt học viên"}</button>
         <button class="btn" data-no="${esc(r.id)}">Từ chối</button></div></div>`;
