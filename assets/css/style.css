@@ -2394,3 +2394,12 @@ body.hop-mo{overflow:hidden}
 .lb #lb-prev{justify-self:start}
 .lb #lb-next{justify-self:end}
 .lb #lb-close{justify-self:center}
+
+/* Khung xem bài: nút ‹ › nằm hai bên ảnh, Đóng ở dưới giữa, mô tả ở trên Đóng */
+.lb{position:fixed}
+.lb .lb-bar{display:grid;grid-template-columns:1fr;justify-items:center;gap:12px;width:min(100%,560px);position:static}
+.lb #lb-cap{grid-column:auto;text-align:center;justify-self:stretch}
+.lb #lb-prev,.lb #lb-next{position:absolute;top:calc(50% - 70px);z-index:2;width:46px;min-width:46px;height:46px;min-height:46px;padding:0;display:grid;place-items:center;font-size:1.4rem;line-height:1;background:rgba(12,13,16,.7);border-color:rgba(255,255,255,.35)}
+.lb #lb-prev{left:6px;justify-self:auto}
+.lb #lb-next{right:6px;justify-self:auto}
+.lb #lb-close{justify-self:center}
