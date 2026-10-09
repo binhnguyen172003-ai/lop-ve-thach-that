@@ -62,7 +62,7 @@ addEventListener("error", e => {
 });
 /* ---------- Mở tức thì ở lần sau + dùng được khi mạng yếu ---------- */
 if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost") && !/[?&]khongcache/.test(location.search))
-  addEventListener("load", () => navigator.serviceWorker.register("sw.js?v=20261010n").catch(() => {}));
+  addEventListener("load", () => navigator.serviceWorker.register("sw.js?v=20261010o").catch(() => {}));
 
 /* ---------- Đo tốc độ: mở web kèm ?chandoan=1 để xem từng bước mất bao lâu ---------- */
 const DIAG = /[?&]chandoan/.test(location.search);
@@ -308,7 +308,7 @@ function renderGallery() {
 function showLb(i) {
   galCur = (i + galList.length) % galList.length; const b = galList[galCur];
   $("#lb-img").src = b.anh; $("#lb-img").alt = b.moTa || "";
-  $("#lb-cap").textContent = `${galCur + 1} / ${galList.length} · ${[b.hocVien, b.loai, b.moTa || b.ghiChu].filter(Boolean).join(" · ")}`;
+  $("#lb-cap").textContent = `${galCur + 1} / ${galList.length} · ${[b.hocVien, b.loai, b.moTa || b.ghiChu, b.gvhd && "GVHD: " + b.gvhd, b.tgiang && "Trợ giảng: " + b.tgiang].filter(Boolean).join(" · ")}`;
   $("#lb").hidden = false;
   window.__troLy?.goiYBai(b.hocVien ? `bài của ${b.hocVien}` : (b.loai || "bài vẽ này"));
 }
@@ -3761,6 +3761,9 @@ function moDangBai() {
       <datalist id="bv-ds">${tenHV.map(t => `<option value="${esc(t)}">`).join("")}</datalist>
       <fieldset class="chon-loai"><legend>Đây là bài gì? *</legend>${LOAI_BAI.map((l, i) => `<label><input type="radio" name="bv-loai" value="${esc(l.ten)}"${i === 0 ? "" : ""}><span>${esc(l.ten)}</span></label>`).join("")}</fieldset>
       <label>Ghi chú<input id="bv-gc" maxlength="120" placeholder="VD: Bố cục màu tuần 3 · 8,5 điểm"></label>
+      <label>Giáo viên hướng dẫn<input id="bv-gvhd" list="bv-gv" maxlength="80" autocomplete="off" placeholder="VD: Nguyễn Văn Hùng"></label>
+      <label>Trợ giảng<input id="bv-tg" list="bv-gv" maxlength="80" autocomplete="off" placeholder="VD: Đỗ Hữu Trường"></label>
+      <datalist id="bv-gv">${GIAO_VIEN.map(g => `<option value="${esc(g.ten)}">`).join("")}</datalist>
       <label>Link kèm theo (không bắt buộc)<input id="bv-link" type="url" inputmode="url" maxlength="300" placeholder="https://… (video, bài đăng Facebook)"></label>
       ${isAdmin ? `<label>Đưa lên Bài vẽ nổi bật<select id="bv-top"><option value="0">Không — chỉ vào mục Bài vẽ học viên</option>${[1, 2, 3, 4, 5].map(k => `<option value="${k}">Top ${k} tuần này</option>`).join("")}</select></label>`
         : `<p class="muted hop-ghi">Bài vào mục <b>Bài vẽ học viên</b>. Quản lý sẽ chọn Top 5 bài nổi bật mỗi tuần.</p>`}
@@ -3783,7 +3786,9 @@ function moDangBai() {
     if (loi) { st.textContent = loi; st.classList.add("err"); return; }
     const nut = el.querySelector("#bv-gui"); nut.disabled = true; st.textContent = "Đang đăng…";
     const ref = doc(collection(db, "baive"));
+    const gvhd = el.querySelector("#bv-gvhd").value.trim(), tgiang = el.querySelector("#bv-tg").value.trim();
     const data = { anh, hocVien, loai, ghiChu: el.querySelector("#bv-gc").value.trim(), link, ngay: todayVN(), hang: 0, ngayTop: "", nguoi: mail, tenNguoi: tenToi(), luc: Date.now() };
+    if (gvhd) data.gvhd = gvhd; if (tgiang) data.tgiang = tgiang; // ghi khi có điền
     try {
       await timed("Đăng bài vẽ", setDoc(ref, data));
       if (isAdmin && top) await datTop(ref.id, top);
