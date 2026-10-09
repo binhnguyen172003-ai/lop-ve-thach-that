@@ -294,11 +294,11 @@ function dung() {
     <button type="button" class="tl-nut tl-chat-nut" id="tl-chat-nut" aria-label="Hỏi trợ lý Bé Chì" aria-expanded="false"><span class="tl-mat">✏️</span></button>
     <div class="tl-bong" id="tl-bong" hidden></div>
     <section class="tl-khung" id="tl-nhac" hidden aria-label="Nhắc việc">
-      <header class="tl-keo" title="Giữ và kéo để di chuyển"><b>🔔 Nhắc việc của em</b><button type="button" class="tl-x" data-to aria-label="Phóng to">⤢</button><button type="button" class="tl-x" data-dong aria-label="Đóng">✕</button></header>
+      <header class="tl-keo" title="Giữ và kéo để di chuyển"><b>🔔 Nhắc việc của em</b><button type="button" class="tl-x" data-to aria-label="Phóng to"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6M20 4l-7 7M10 20H4v-6M4 20l7-7"/></svg></button><button type="button" class="tl-x" data-dong aria-label="Đóng">✕</button></header>
       <div class="tl-nhac-ds" id="tl-nhac-ds"></div>
     </section>
     <section class="tl-khung tl-chat" id="tl-chat" hidden aria-label="Trợ lý Bé Chì">
-      <header class="tl-keo" title="Giữ và kéo để di chuyển"><span class="tl-av">✏️</span><div><b>Bé Chì</b><small id="tl-che">Trợ lý lầy lội của lớp</small></div><button type="button" class="tl-x" data-to aria-label="Phóng to">⤢</button><button type="button" class="tl-x" data-dong aria-label="Đóng">✕</button></header>
+      <header class="tl-keo" title="Giữ và kéo để di chuyển"><span class="tl-av">✏️</span><div><b>Bé Chì</b><small id="tl-che">Trợ lý lầy lội của lớp</small></div><button type="button" class="tl-x" data-to aria-label="Phóng to"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6M20 4l-7 7M10 20H4v-6M4 20l7-7"/></svg></button><button type="button" class="tl-x" data-dong aria-label="Đóng">✕</button></header>
       <div class="tl-tabs"><button type="button" data-tab="hoi" aria-selected="true">💬 Hỏi đáp</button><button type="button" data-tab="mua" aria-selected="false">🛒 Mua hoạ cụ</button><button type="button" data-tab="dk" aria-selected="false" hidden>📝 Đăng ký tư vấn</button></div>
       <div class="tl-hoi" id="tl-hoi">
         <div class="tl-tin" id="tl-tin" aria-live="polite"></div>
@@ -364,7 +364,10 @@ function datCum(cum) {
 function datKhung(el) {
   const v = vp(), to = store.get("lvtt-tl-to", false);
   el.classList.toggle("to", to);
-  el.querySelectorAll("[data-to]").forEach(b => { b.textContent = to ? "⤡" : "⤢"; b.setAttribute("aria-label", to ? "Thu nhỏ" : "Phóng to"); });
+  // Nút phóng to / thu nhỏ: vẽ bằng hình (ký tự ⤢ trên Android hiện rất bé)
+  const MO = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6M20 4l-7 7M10 20H4v-6M4 20l7-7"/></svg>';
+  const THU = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 11h-6V5M13 11l7-7M5 13h6v6M11 13l-7 7"/></svg>';
+  el.querySelectorAll("[data-to]").forEach(b => { b.innerHTML = to ? THU : MO; b.setAttribute("aria-label", to ? "Thu nhỏ" : "Phóng to"); });
   if (to) { Object.assign(el.style, { left: v.x + 8 + "px", top: v.y + 8 + "px", width: v.w - 16 + "px", height: v.h - 16 + "px" }); return; }
   const dt = v.w <= 640;
   if (dt) { // điện thoại: khung chiếm phần màn hình nhìn thấy (trừ bàn phím), luôn sát mép dưới vùng nhìn thấy

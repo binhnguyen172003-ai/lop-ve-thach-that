@@ -2174,3 +2174,4 @@ body.hop-mo{overflow:hidden}
 .tn-muc.m-tuyensinh{background:rgba(255,90,74,.15);color:#ff6b5b}
 @media (max-width:640px){.tb-ds a{grid-template-columns:1fr auto}.tb-ds b{grid-column:1/-1;order:2}.tb-ds small{order:3}}
 @media (prefers-reduced-motion:reduce){.tb-cham{animation:none}}
+.tl-x svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;display:block;margin:auto}.tl-x{display:inline-grid;place-items:center}
