@@ -2594,3 +2594,13 @@ body.hop-mo{overflow:hidden}
   .tb-the.nb-add .nb-add-in{padding:14px 12px;gap:6px}
   .tb-the.nb-add .nb-add-in small{-webkit-line-clamp:2}
 }
+
+/* ===== Sửa chữ bị cắt và khung lệch (rà soát 10/10) ===== */
+/* Thẻ giáo viên: dòng ngành học dài bị cắt ngang giữa câu trong vòng xoay */
+.gv-stage{height:400px}
+.gv-stage .gv{height:380px}
+.gv-stage .gv-txt{min-height:0;overflow:hidden;padding-bottom:12px}
+.gv-stage .gv-ng{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+@media (max-width:640px){.gv-stage{height:380px}.gv-stage .gv{height:360px}}
+/* Khung "Xem lộ trình các khoá học" rộng bằng các khối khác cho thẳng hàng */
+.lt-wrap{max-width:none}
