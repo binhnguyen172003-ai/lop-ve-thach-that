@@ -1728,7 +1728,7 @@ nav .acct.has-ka .acct-icon{display:none!important}
 .gc-pop,.gc-pop *{-webkit-text-fill-color:currentColor}
 .gc-i[aria-expanded="true"]{background-color:#ffcf3a;color:#0b0d14;animation:none}
 .gc-pop::before{display:none}
-.gc{vertical-align:middle;top:-.08em;margin-left:12px}
+.gc{vertical-align:middle;top:-.26em;margin-left:12px}
 @media (max-width:640px){.gc{margin-left:9px}}
 /* ===== Lộ trình học ===== */
 .lt-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
