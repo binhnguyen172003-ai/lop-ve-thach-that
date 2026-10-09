@@ -2407,3 +2407,11 @@ body.hop-mo{overflow:hidden}
 .lb #lb-prev{left:24px}
 .lb #lb-next{right:24px}
 .lb #lb-close{margin:0 auto}
+/* Máy tính: ảnh bài to hơn, mô tả và nút Đóng nằm gọn dưới ảnh, Đóng căn giữa */
+@media (min-width:641px){
+  .lb img{max-height:calc(100dvh - 190px);max-width:min(92vw,1200px)}
+  .lb .lb-bar{gap:8px;padding-bottom:6px}
+  .lb #lb-cap{font-size:.95rem}
+  .lb #lb-prev{left:max(24px,calc(50% - 620px))}
+  .lb #lb-next{right:max(24px,calc(50% - 620px))}
+}
