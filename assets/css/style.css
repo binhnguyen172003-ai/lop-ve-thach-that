@@ -1966,3 +1966,19 @@ body.tl-dang-keo{-webkit-user-select:none;user-select:none}
 .bai-bang table{border-collapse:collapse;width:100%;min-width:420px;font-size:.9rem}
 .bai-bang th,.bai-bang td{border:1px solid var(--rule);padding:7px 9px;text-align:left;vertical-align:top}
 .bai-bang th{background:var(--accent-soft);font-weight:700}
+/* Tiêu đề trang chủ: tách dòng "Không" khỏi chữ "p", gạch chéo dốc hơn (2026-10-09) */
+.hero.cine .cine-h1{line-height:1.08}
+.hero.cine .cine-h1 .strike::after{left:-4%;right:-4%;top:50%;height:.065em;border-radius:.05em;transform:rotate(-11deg);transform-origin:center}
+
+/* Logo chữ góc trên: font đứng cơ bản, nghiêm túc */
+.lg-t{font:600 1.05rem/1 var(--f-body);letter-spacing:-.01em;background:none;-webkit-text-fill-color:currentColor;color:#f2f4f6;padding-right:0}
+.lg-t i{font-style:normal}
+.lg-t s{text-decoration:line-through;text-decoration-color:#f5c400;text-decoration-thickness:2px;color:rgba(242,244,246,.55);-webkit-text-fill-color:currentColor}
+.lg-t b{font-weight:600}
+@media (max-width:600px){.lg-t{font-size:.98rem}}
+@media (max-width:360px){.lg-t{font-size:.86rem}}
+
+/* Tên trường dưới trang chủ: chữ đứng, giãn chữ, nghiêm túc sang trọng */
+.cine-schools a{font:600 clamp(.95rem,2.4vw,1.2rem)/1 var(--f-body);font-style:normal;letter-spacing:.18em;padding:6px 0 6px .18em}
+.cine-schools{gap:10px 30px}
+@media (max-width:640px){.cine-schools{gap:8px 20px}.cine-schools a{letter-spacing:.14em;padding-left:.14em}}
