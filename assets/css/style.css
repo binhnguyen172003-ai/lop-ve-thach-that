@@ -2414,11 +2414,20 @@ body.hop-mo{overflow:hidden}
   50%{box-shadow:0 0 0 3px rgba(var(--aura),1),0 0 36px rgba(var(--aura),.9),0 0 88px rgba(var(--aura),.4)}
 }
 /* Lúc hiện ra: thẻ bừng sáng rồi ảnh zoom về như một pose anh hùng */
-.nb-card.nb-nv{animation:nbAura 2.4s ease-in-out infinite,nbVao .9s cubic-bezier(.2,.8,.3,1) both}
-@keyframes nbVao{from{opacity:0;filter:brightness(2.2) saturate(.4)}60%{opacity:1;filter:brightness(1.25)}to{opacity:1;filter:none}}
-.nb-card.nb-nv img{animation:nbPose 1.2s cubic-bezier(.18,.9,.3,1.15) both}
-@keyframes nbPose{from{transform:scale(1.3) translateY(-7%)}to{transform:none}}
-@media (prefers-reduced-motion:reduce){.nb-card.nb-nv,.nb-card.nb-nv img{animation:none}}
+/* Lúc hiện ra: thẻ như thiên thạch lao từ trên xuống, chạm đất nén lại rồi rung nhẹ.
+   Dùng translate/rotate/scale riêng (không đụng transform của vòng xoay) nên không xung đột vị trí thẻ. */
+.nb-card.nb-nv{animation:nbAura 2.4s ease-in-out infinite,nbDap 1.1s cubic-bezier(.3,.7,.4,1) both}
+@keyframes nbDap{
+  0%{translate:0 -360px;rotate:-16deg;scale:.55;opacity:0;filter:brightness(2.6) saturate(.3)}
+  12%{opacity:1}
+  55%{translate:0 0;rotate:3deg;scale:1.1;opacity:1;filter:brightness(1.5)}
+  66%{translate:0 0;rotate:0deg;scale:.94;filter:brightness(1.1)}
+  76%{translate:-7px 2px;rotate:-1.6deg;scale:1}
+  86%{translate:6px -2px;rotate:1.2deg}
+  93%{translate:-2px 1px;rotate:-.4deg}
+  100%{translate:0 0;rotate:0deg;scale:1;opacity:1;filter:none}
+}
+@media (prefers-reduced-motion:reduce){.nb-card.nb-nv{animation:nbAura 2.4s ease-in-out infinite}}
 
 /* Nút ⋮ của quản lý trên thẻ bài nổi bật và menu sửa/xoá */
 .nb-more{position:absolute;top:10px;right:10px;z-index:5;width:36px;height:36px;padding:0;border-radius:50%;border:1px solid rgba(255,255,255,.35);background:rgba(10,12,18,.78);color:#fff;font:800 1.15rem/1 var(--f-body);cursor:pointer;display:grid;place-items:center}
