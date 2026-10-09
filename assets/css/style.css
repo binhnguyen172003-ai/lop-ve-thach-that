@@ -2197,7 +2197,7 @@ body.hop-mo{overflow:hidden}
 .tb-ring{overflow:hidden;padding-bottom:0}
 .tb-stage{height:340px;overflow:visible}
 .tb-the{position:absolute;top:0;left:50%;width:280px;height:300px;margin-left:-140px;transition:transform .7s cubic-bezier(.22,.8,.3,1),opacity .7s;will-change:transform;backface-visibility:hidden}
-.tb-noi .gv-ctl{position:relative;z-index:30;margin-top:14px}
+.tb-noi .gv-ctl{position:relative;z-index:1;margin-top:14px}
 @media (max-width:640px){
   .tb-stage{height:320px}
   .tb-the{width:min(262px,70vw);height:286px;margin-left:calc(min(262px,70vw) / -2)}
