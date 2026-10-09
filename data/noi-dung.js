@@ -14,7 +14,7 @@ export const LIEN_HE = {
   sdt: "0328 193 134",                      // số gọi điện hiện trên web
   zalo: "0333684003",                       // số Zalo nhận tin tư vấn, viết liền (nút Zalo mở đúng số này)
   zaloHienThi: "0333 684 003",              // số Zalo hiện cho người xem đọc
-  zaloLink: "http://zaloapp.com/qr/p/wyzf2592bjz7", // link mã QR Zalo của thầy — nút "Zalo" mở link này
+  zaloLink: "http://zaloapp.com/qr/p/wyzf2592bjz7", // link mã QR Zalo của anh chị — nút "Zalo" mở link này
   email: "lopvedreamerstt@gmail.com",
   // map: link Google Maps của cơ sở (dán link rút gọn maps.app.goo.gl/… nếu có). Trên web chỉ hiện chữ "Chỉ đường".
   coSo: [
@@ -27,7 +27,7 @@ export const LIEN_HE = {
 
 // ---------- SẢN PHẨM THÊM (hiện trong menu ☰ trên điện thoại) ----------
 // link: dán link Google Drive (chia sẻ "Bất kỳ ai có link") vào đây. Để trống = hiện "Sắp ra mắt".
-// thongTin: ghi chú nội bộ cho thầy, không hiện trên web.
+// thongTin: ghi chú nội bộ cho anh chị, không hiện trên web.
 export const SAN_PHAM = [
   {
     ten: "Khoá học nâng cao",
@@ -191,7 +191,7 @@ export const BANG_VANG = [
 
 
 // ---------- 6. MỤC TIÊU HỌC & DỰ BÁO ĐỖ (trang Điểm danh, Tiến độ của học viên) ----------
-// Thầy chỉnh các con số cho đúng thực tế lớp. Web dùng để tính "cần đi bao nhiêu buổi/tuần" và "khả năng đỗ ước tính".
+// Anh chị chỉnh các con số cho đúng thực tế lớp. Web dùng để tính "cần đi bao nhiêu buổi/tuần" và "khả năng đỗ ước tính".
 export const MUC_TIEU = {
   gioMoiBuoi: 3,                                   // mỗi buổi học khoảng bao nhiêu giờ
   gioCan: { "Khối H": 450, "Khối V": 400, "Cơ bản": 150 },             // tổng giờ nên học trước ngày thi
@@ -221,9 +221,9 @@ export const GIAO_VIEN = [
 export const VIDEO_BIA = "";
 
 // ===== BÀI VẼ NỔI BẬT — tự chuyển Top Tuần → Top Tháng → Top Năm =====
-// Mỗi tuần thầy thêm bài đẹp: đặt ảnh vào assets/img/bai-ve/ rồi thêm 1 dòng.
+// Mỗi tuần anh chị thêm bài đẹp: đặt ảnh vào assets/img/bai-ve/ rồi thêm 1 dòng.
 //   ngay : ngày chọn bài (năm-tháng-ngày)     hang : 1, 2, 3 (huy chương), bỏ trống nếu không xếp hạng
-//   diem : điểm thầy chấm (không bắt buộc)    tg   : true = bài mẫu trợ giảng (không xếp hạng)
+//   diem : điểm anh chị chấm (không bắt buộc)    tg   : true = bài mẫu trợ giảng (không xếp hạng)
 // Web tự chia theo ngày:  0–7 ngày → Top Tuần · 8–30 ngày → Top Tháng · 31–365 ngày → Top Năm
 // Không cần xoá bài cũ: bài tự chuyển mục khi đủ ngày.
 export const BAI_NOI_BAT = [
@@ -245,7 +245,7 @@ export const THANH_TUU_TRAO = [
   { hocVien: "Đặng Huy Hoàn", ma: "quanquan", so: 49, ghiChu: "Quán quân Top 1 nhiều tuần" },
 ];
 
-// ===== XP THƯỞNG — thầy cộng tay cho học viên (ghi rõ lý do) =====
+// ===== XP THƯỞNG — anh chị cộng tay cho học viên (ghi rõ lý do) =====
 //   VD: { hocVien: "Khang", xp: 50, ghiChu: "Hoàn thành xuất sắc bài màu tuần 2" },
 //   Thêm huyenThoai: true để trao huy hiệu "HUYỀN THOẠI CỦA LỚP".
 export const XP_THUONG = [
@@ -319,7 +319,7 @@ export const HOA_CU = [
   { ma: "combo-pentel", ten: "Combo Pentel (bộ màu pha sẵn)", loai: "Màu", gia: 600000, von: 0, can: [] },
 ];
 
-// Số tồn theo sổ tháng 07 — dùng làm số đầu kỳ khi mở Kho lần đầu (thầy kiểm kho thực tế rồi sửa trên web)
+// Số tồn theo sổ tháng 07 — dùng làm số đầu kỳ khi mở Kho lần đầu (anh chị kiểm kho thực tế rồi sửa trên web)
 export const TON_DAU_KY = { "chi-koh": 73, tay: 6, "tay-ganh": 31, "tay-dat-set": 3, "bang-a3": 15, "bang-dinh": 9, "bo-but": 12, dao: 9, "luoi-dao": 4, "noi-1": 1, "giay-a1": 50, "3let": 10, "di-bay": 2, "di-chi": 3, co: 40, ho: 9, "lo-ho": 32, "bot-nang": 26, "bot-do": 15, "bot-xanh": 19, pentel: 3, pay: 10, "xit-am": 4, "xo-nho": 17, "xo-to": 1, "hop-bot": 60, "khan-giay": 16, "chi-duc": 21, sketch: 4, thuoc: 3, "combo-mt2-kv": 3, "moc-capy": 16 };
 
 // ===== SỐ HỌC VIÊN DỰ THI MỖI MÙA (để tính % đỗ ở Bảng vàng) =====
@@ -328,7 +328,7 @@ export const SO_DU_THI = { 2025: 0, 2026: 0 };
 
 
 // ---------- BẢN TIN NỔI BẬT (trang chủ, mục "Bản tin") ----------
-// Bài cố định của lớp. Thầy cô đăng thêm bài mới ngay trên web (nút "+ Đăng bản tin" khi đã đăng nhập).
+// Bài cố định của lớp. Anh chị đăng thêm bài mới ngay trên web (nút "+ Đăng bản tin" khi đã đăng nhập).
 // muc: "tuyensinh" (Tin tuyển sinh) · "tinlop" (Thông báo lớp) · "hoacu" (Hoạ cụ) · "lythuyet" (Lý thuyết) · "kinhnghiem" (Kinh nghiệm thi)
 // dsHoaCu: "Cơ bản" / "Khối H" / "Khối V" → tự liệt kê hoạ cụ cần mua theo bảng HOA_CU ở trên.
 export const BAN_TIN = [

@@ -4,8 +4,8 @@
 // =====================================================================
 import { firebaseConfig, ADMIN_EMAIL, EMAIL_NHAN_THONG_BAO } from "../../config/firebase-config.js?v=20261009b";
 import { FILE_LIMITS, FILE_TYPES, fileExt, fileSize, validateFiles, attachmentStorage, uploadError, validAttachmentPath } from "./attachments.js?v=20261009b";
-import { GIAO_TRINH_MAU as GT_LO_TRINH } from "../../data/giao-trinh-mau.js?v=20261009f";
-import { LIEN_HE, NAM_THI, LICH_THI, BO_LOC_TRUONG, CA_HOC, THOI_GIAN_BIEU, BAI_VE, BANG_VANG, TRUONG, MUC_TIEU, GIAO_VIEN, VIDEO_BIA, BAI_NOI_BAT, THANH_TUU_TRAO, XP_THUONG, AVATAR, SO_DU_THI, HOA_CU, TON_DAU_KY, BAN_TIN, SAN_PHAM } from "../../data/noi-dung.js?v=20261010be";
+import { GIAO_TRINH_MAU as GT_LO_TRINH } from "../../data/giao-trinh-mau.js?v=20261010bf";
+import { LIEN_HE, NAM_THI, LICH_THI, BO_LOC_TRUONG, CA_HOC, THOI_GIAN_BIEU, BAI_VE, BANG_VANG, TRUONG, MUC_TIEU, GIAO_VIEN, VIDEO_BIA, BAI_NOI_BAT, THANH_TUU_TRAO, XP_THUONG, AVATAR, SO_DU_THI, HOA_CU, TON_DAU_KY, BAN_TIN, SAN_PHAM } from "../../data/noi-dung.js?v=20261010bf";
 
 // Firebase được tải riêng, để phần giới thiệu vẫn chạy kể cả khi mạng chậm hoặc chưa cấu hình.
 const FB = "https://www.gstatic.com/firebasejs/10.12.2/";
@@ -15,7 +15,7 @@ let getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleT
 // Vai trò: isAdmin = quản lý (toàn quyền); isTeacher = giáo viên hoặc quản lý; approved = học viên đã duyệt.
 // Khai báo ở đầu file để các phần trang chủ (bài vẽ, bản tin) biết ai đang xem ngay từ đầu.
 let user = null, mail = "", isAdmin = false, isTeacher = false, approved = false, needVerify = false;
-// Bài vẽ thầy cô đăng trên web (Firestore: baive). Bài được quản lý chọn Top 1–5 thì thành "bài nổi bật".
+// Bài vẽ anh chị đăng trên web (Firestore: baive). Bài được quản lý chọn Top 1–5 thì thành "bài nổi bật".
 let BAIVE_DONG = [], BANTIN_DONG = [], baiVeLoi = false, banTinLoi = false, gallerySig = "", baiHen = 0;
 // Biệt danh mặc định theo người vẽ trong danh sách giáo viên (ví dụ Cường: "Giáo viên Hình hoạ · Dạy tượng"); bài đăng không ghi biệt danh riêng thì dùng mặc định này
 const biDanhCua = b => b.biDanh || (GIAO_VIEN.find(g => g.ten === b.hocVien) || {}).biDanh || "";
@@ -31,7 +31,7 @@ async function loadFirebase() {
 
 const $ = s => document.querySelector(s);
 // Trợ lý (chat + nhắc việc) tải riêng, không làm chậm trang
-const troLyPromise = import("./tro-ly.js?v=20261010ad").catch(e => console.warn("Chưa tải được trợ lý", e));
+const troLyPromise = import("./tro-ly.js?v=20261010bf").catch(e => console.warn("Chưa tải được trợ lý", e));
 window.__appOk = true;
 document.querySelectorAll(".slow-bar").forEach(el => el.remove());
 
@@ -64,7 +64,7 @@ addEventListener("error", e => {
 });
 /* ---------- Mở tức thì ở lần sau + dùng được khi mạng yếu ---------- */
 if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost") && !/[?&]khongcache/.test(location.search))
-  addEventListener("load", () => navigator.serviceWorker.register("sw.js?v=20261010be").catch(() => {}));
+  addEventListener("load", () => navigator.serviceWorker.register("sw.js?v=20261010bf").catch(() => {}));
 
 /* ---------- Đo tốc độ: mở web kèm ?chandoan=1 để xem từng bước mất bao lâu ---------- */
 const DIAG = /[?&]chandoan/.test(location.search);
@@ -88,14 +88,14 @@ function serverIssue(e) {
   const msg = String((e && e.message) || "");
   let text;
   if (/does not exist|not-found/i.test(code + " " + msg) && /database/i.test(msg))
-    text = "Máy chủ dữ liệu chưa được tạo. Thầy vào Firebase → Firestore Database → bấm Tạo cơ sở dữ liệu.";
+    text = "Máy chủ dữ liệu chưa được tạo. Anh chị vào Firebase → Firestore Database → bấm Tạo cơ sở dữ liệu.";
   else if (code === "permission-denied")
-    text = isAdmin ? "Máy chủ từ chối: luật bảo mật chưa đúng. Thầy vào Firebase → Firestore → Quy tắc, dán lại luật mới rồi bấm Xuất bản."
-                   : "Tài khoản này chưa có quyền làm việc đó. Nếu em đã được thầy duyệt, hãy tải lại trang.";
+    text = isAdmin ? "Máy chủ từ chối: luật bảo mật chưa đúng. Anh chị vào Firebase → Firestore → Quy tắc, dán lại luật mới rồi bấm Xuất bản."
+                   : "Tài khoản này chưa có quyền làm việc đó. Nếu em đã được anh chị duyệt, hãy tải lại trang.";
   else if (code === "unavailable" || /offline|network/i.test(code + msg))
     text = "Mạng đang chập chờn nên chưa lưu được. Kiểm tra wifi/4G rồi thử lại.";
   else if (code === "failed-precondition")
-    text = "Máy chủ chưa sẵn sàng. Thầy kiểm tra Firestore Database đã được tạo chưa.";
+    text = "Máy chủ chưa sẵn sàng. Anh chị kiểm tra Firestore Database đã được tạo chưa.";
   else text = "Có lỗi khi kết nối máy chủ" + (code ? " (mã: " + code + ")" : "") + ". Tải lại trang rồi thử lại.";
   let bar = document.getElementById("server-issue");
   if (!bar) {
@@ -284,7 +284,7 @@ let galFilter = "all", galList = [], galCur = 0;
 const artCard = (l, note) => `<div class="gal-art">${l.img ? `<span class="art art-img" style="-webkit-mask-image:url(${l.img});mask-image:url(${l.img})" aria-hidden="true"></span>` : `<svg class="art" aria-hidden="true"><use href="#${l.art}"/></svg>`}
   <b>${esc(l.ten)}</b><span class="muted">${esc(l.moTa)}</span><span class="soon">${note}</span></div>`;
 function galTatCa() {
-  // Bài thầy cô đăng trên web (mới nhất trước) + bài có sẵn trong file data
+  // Bài anh chị đăng trên web (mới nhất trước) + bài có sẵn trong file data
   // Bài viết sẵn đã chuyển thành bài web (mã seed-ve-i) thì không hiện lần nữa
   // Bản chuyển tự động (seed-…) không hiện; bài viết sẵn trong file dữ liệu hiện như trước
   return [...BAIVE_DONG.filter(b => !String(b.id).startsWith("seed-")).sort((x, y) => (y.luc || 0) - (x.luc || 0)), ...BAI_VE];
@@ -450,7 +450,7 @@ function vongXoay(box, st, cards, dots, prev, next, onCenter) {
 }
 
 /* ================= Hạng học viên (F → SSS+): leo hạng nhờ đi học, làm bài, có bài nổi bật ================= */
-// XP thưởng / thành tựu thầy trao trên web (Firestore: xephang) — gộp với dữ liệu trong file
+// XP thưởng / thành tựu anh chị trao trên web (Firestore: xephang) — gộp với dữ liệu trong file
 let XP_DONG = [], TT_DONG = [];
 const RANK = [
   { ma: "F", xp: 0, mau: "#9aa3ad", kim: "Sắt", ten: "Người Mới", mo: "Vừa vào lớp, bắt đầu hành trình." },
@@ -464,7 +464,7 @@ const RANK = [
   { ma: "SSS", xp: 7400, mau: "#ff3b3b", kim: "Huyền Thoại", ten: "Bậc Thầy", mo: "Rất ít người đạt được." },
   { ma: "SSS+", xp: 9400, mau: "rainbow", kim: "Thách Đấu", ten: "Huyền Thoại Thạch Thất", mo: "Đỉnh cao tuyệt đối — vượt mọi giới hạn." },
 ];
-// Cách tính điểm kinh nghiệm (XP) — thầy sửa số ở đây nếu muốn
+// Cách tính điểm kinh nghiệm (XP) — anh chị sửa số ở đây nếu muốn
 const XP = { buoi: 10, baiTap: 15, baiHoc: 5, diemGioi: 10, noiBat: 100, top1: 25 };
 // Mùa xếp hạng bắt đầu: mọi học viên khởi đầu ở hạng F (1 sao), chỉ tính hoạt động SAU ngày này
 const RANK_BAT_DAU = "2026-10-09";
@@ -570,7 +570,7 @@ function logoHuyenThoai(cls = "") {
 }
 /* Khung avatar theo hạng — tự vẽ, hạng càng cao khung càng cầu kỳ */
 const chuCai = t => String(t || "").trim().split(/\s+/).slice(-2).map(w => w[0] || "").join("").toUpperCase() || "?";
-/* Ảnh đại diện: ảnh em tự đổi (Tài khoản) → ảnh Google → ảnh thầy đặt sẵn trong data */
+/* Ảnh đại diện: ảnh em tự đổi (Tài khoản) → ảnh Google → ảnh anh chị đặt sẵn trong data */
 // Mỗi tài khoản một ảnh riêng: lưu theo Gmail (máy dùng chung không bị lẫn ảnh của người khác)
 let myAvatar = "";
 const AVA_KEY = m => "lvtt-avatar:" + String(m || "").toLowerCase();
@@ -643,11 +643,11 @@ const THANH_TUU = [
   { ma: "mau", ten: "Hoạ Sĩ Sắc Màu", mo: "Nộp bài tập màu / trang trí màu", dv: "bài màu", moc: [25, 75, 150, 250], mau: "#ff5fa2" },
   { ma: "hinhhoa", ten: "Bàn Tay Than Chì", mo: "Nộp bài hình hoạ: tượng, chân dung, tĩnh vật", dv: "bài hình hoạ", moc: [25, 75, 150, 250], mau: "#c9d1dc" },
   { ma: "bocuc", ten: "Kiến Trúc Sư Bố Cục", mo: "Nộp bài bố cục, sắc độ, Mỹ thuật 2", dv: "bài bố cục", moc: [25, 75, 150, 250], mau: "#57a6ff" },
-  { ma: "chuyencan", ten: "Ngọn Lửa Chuyên Cần", mo: "Đi học đầy đủ (thầy điểm danh có mặt)", dv: "buổi", moc: [50, 150, 300, 500], mau: "#ff7a2f" },
-  { ma: "diemvang", ten: "Điểm Vàng", mo: "Bài được thầy chấm từ 8 điểm", dv: "bài ≥ 8đ", moc: [15, 50, 125, 250], mau: "#ffd23f" },
+  { ma: "chuyencan", ten: "Ngọn Lửa Chuyên Cần", mo: "Đi học đầy đủ (anh chị điểm danh có mặt)", dv: "buổi", moc: [50, 150, 300, 500], mau: "#ff7a2f" },
+  { ma: "diemvang", ten: "Điểm Vàng", mo: "Bài được anh chị chấm từ 8 điểm", dv: "bài ≥ 8đ", moc: [15, 50, 125, 250], mau: "#ffd23f" },
   { ma: "noibat", ten: "Ngôi Sao Phòng Tranh", mo: "Có bài lên mục Bài vẽ nổi bật", dv: "bài nổi bật", moc: [5, 15, 50, 100], mau: "#b98cff" },
   { ma: "quanquan", ten: "Quán Quân Tuần", mo: "Bài đạt Top 1 Bài vẽ nổi bật", dv: "lần Top 1", moc: [5, 15, 25, 50], mau: "#ffc400" },
-  { ma: "chamchi", ten: "Top Chăm Chỉ", mo: "Thầy trao cho học viên chăm nhất tháng", dv: "lần được trao", moc: [5, 15, 30, 50], mau: "#4fe0a6", trao: true },
+  { ma: "chamchi", ten: "Top Chăm Chỉ", mo: "Anh chị trao cho học viên chăm nhất tháng", dv: "lần được trao", moc: [5, 15, 30, 50], mau: "#4fe0a6", trao: true },
   { ma: "thithu", ten: "Thủ Khoa Thi Thử", mo: "Điểm cao nhất một đợt thi thử", dv: "lần thủ khoa", moc: [5, 10, 15, 25], mau: "#ff4d5e", trao: true },
 ];
 const CAP = [{ ten: "Chưa mở", mau: "#3a3f4b" }, { ten: "Đồng", mau: "#d08a52" }, { ten: "Bạc", mau: "#dfe6f0" }, { ten: "Vàng", mau: "#ffcf3a" }, { ten: "Kim Cương", mau: "#7ff3ff" }];
@@ -704,14 +704,14 @@ const bangVongHTML = () => `<div class="gv-ring rk-ring" aria-roledescription="v
       <button type="button" class="gv-nav" id="rk-next" aria-label="Hạng sau">›</button>
     </div></div>`;
 const cachXpHTML = () => `<ul class="xh-xpl">
-    <li><b>+${XP.buoi}</b><span>Mỗi buổi đi học (thầy điểm danh có mặt)</span></li>
+    <li><b>+${XP.buoi}</b><span>Mỗi buổi đi học (anh chị điểm danh có mặt)</span></li>
     <li><b>+${XP.baiTap}</b><span>Mỗi bài tập đã nộp</span></li>
     <li><b>+${XP.baiHoc}</b><span>Mỗi bài giáo trình học xong</span></li>
     <li><b>+${XP.diemGioi}</b><span>Mỗi bài được chấm từ 8 điểm</span></li>
     <li><b>+${XP.noiBat}</b><span>Có bài lên Bài vẽ nổi bật</span></li>
     <li><b>+${XP.top1}</b><span>Thêm nếu bài đạt Top 1</span></li></ul>`;
 const ttCardHTML = a => `${huyHieuTT(a, 4, "lg")}<b>${a.ten}</b><span>${a.mo}</span>
-      <ol>${a.moc.map((m, j) => `<li style="--cc:${CAP[j + 1].mau}"><i>${CAP[j + 1].ten}</i>${m} ${a.dv}</li>`).join("")}</ol>${a.trao ? `<small>Thầy trao</small>` : ""}`;
+      <ol>${a.moc.map((m, j) => `<li style="--cc:${CAP[j + 1].mau}"><i>${CAP[j + 1].ten}</i>${m} ${a.dv}</li>`).join("")}</ol>${a.trao ? `<small>Anh chị trao</small>` : ""}`;
 // Thành tựu cần săn trên trang Xếp hạng: vòng xoay thẻ (giống các hạng)
 const thanhTuuVongHTML = () => `<h3>Thành tựu cần săn</h3><p class="muted">Thành tựu giữ trọn đời. Mỗi thành tựu có 4 cấp: <b style="color:${CAP[1].mau}">Đồng</b> → <b style="color:${CAP[2].mau}">Bạc</b> → <b style="color:${CAP[3].mau}">Vàng</b> → <b style="color:${CAP[4].mau}">Kim Cương</b>.</p>
     <div class="gv-ring tt-ring" aria-roledescription="vòng xoay" aria-label="Thành tựu cần săn">
@@ -723,7 +723,7 @@ const thanhTuuVongHTML = () => `<h3>Thành tựu cần săn</h3><p class="muted"
       </div></div>`;
 const thanhTuuSanHTML = () => `<h3>Thành tựu cần săn</h3><p class="muted">Thành tựu giữ trọn đời. Mỗi thành tựu có 4 cấp: <b style="color:${CAP[1].mau}">Đồng</b> → <b style="color:${CAP[2].mau}">Bạc</b> → <b style="color:${CAP[3].mau}">Vàng</b> → <b style="color:${CAP[4].mau}">Kim Cương</b>.</p>
     <div class="tt-show">${THANH_TUU.map(a => `<div class="tt-s" style="--tc:${a.mau}">${huyHieuTT(a, 4, "lg")}<b>${a.ten}</b><span>${a.mo}</span>
-      <ol>${a.moc.map((m, j) => `<li style="--cc:${CAP[j + 1].mau}"><i>${CAP[j + 1].ten}</i>${m} ${a.dv}</li>`).join("")}</ol>${a.trao ? `<small>Thầy trao</small>` : ""}</div>`).join("")}</div>`;
+      <ol>${a.moc.map((m, j) => `<li style="--cc:${CAP[j + 1].mau}"><i>${CAP[j + 1].ten}</i>${m} ${a.dv}</li>`).join("")}</ol>${a.trao ? `<small>Anh chị trao</small>` : ""}</div>`).join("")}</div>`;
 /* Bấm vào huy hiệu / chip hạng ở bất kỳ đâu → mở bảng ghi chú, bảng hạng và cách leo rank */
 function moBangRank(ten) {
   let dlg = $("#rk-dlg");
@@ -743,7 +743,7 @@ function moBangRank(ten) {
       <li>Mùa xếp hạng bắt đầu từ <b>${fmtDate(new Date(RANK_BAT_DAU + "T00:00"))}</b>. Mọi học viên khởi đầu ở <b>hạng F · Sắt · Người Mới</b>.</li>
       <li>Hạng càng cao, huy hiệu càng rực rỡ: từ Sắt xám → Đồng → Thép → Bạc → Vàng → Bạch Kim → Kim Cương → Tinh Anh → Huyền Thoại đỏ rực → <b>Thách Đấu cầu vồng</b>.</li>
       <li><b>Càng lên cao càng khó:</b> mỗi hạng cần nhiều XP hơn hẳn hạng trước (F→E chỉ 100 XP). <b>Từ Lão Làng (A) trở lên, mỗi hạng cần thêm 2.000 XP</b>: A 1.400 → S 3.400 → SS 5.400 → SSS 7.400 → SSS+ 9.400. Chỉ những bạn chăm chỉ bền bỉ cả năm mới chạm tới SSS+ · Thách Đấu.</li>
-      <li>XP cộng tự động khi em đi học, nộp bài, được chấm điểm cao hoặc có bài lên Bài vẽ nổi bật. Thầy có thể thưởng thêm XP cho bài xuất sắc.</li>
+      <li>XP cộng tự động khi em đi học, nộp bài, được chấm điểm cao hoặc có bài lên Bài vẽ nổi bật. Anh chị có thể thưởng thêm XP cho bài xuất sắc.</li>
       <li>Hạng đầy đủ của em (gồm đi học, bài tập) xem trong mục <b>Tài khoản</b>.</li></ul></div>
     <h3>Cách kiếm XP</h3>${cachXpHTML()}
     <div class="rk-dlg-tt">${thanhTuuSanHTML()}</div>
@@ -806,7 +806,7 @@ veTopRank();
         <li class="lt-dich"><span class="lt-dot">★</span><div><small>Đích đến</small><p>Vào phòng thi tự tin, đủ bài, đủ kỹ năng.</p></div></li></ol>
       ${loiDan ? `<p class="lt-dan">💡 ${esc(loiDan)}</p>` : ""}
       ${m.p ? `<details class="lt-them"><summary>${esc(m.p[2])} ▾</summary><ol>${m.p[5].map(x => `<li>${esc(x)}</li>`).join("")}</ol>${m.p[6] ? `<p class="muted">${esc(m.p[6])}</p>` : ""}</details>` : ""}
-      <p class="lt-cta">Muốn biết em nên bắt đầu từ đâu? <a href="#dang-ky">Đăng ký học thử để thầy xếp lộ trình riêng →</a></p>`;
+      <p class="lt-cta">Muốn biết em nên bắt đầu từ đâu? <a href="#dang-ky">Đăng ký học thử để anh chị xếp lộ trình riêng →</a></p>`;
     tabs.querySelectorAll("button").forEach(b => b.onclick = () => { chon = +b.dataset.i; ve(); });
   };
   // Bấm "Lộ trình học" trên menu / link #lo-trinh → tự mở thẻ
@@ -818,19 +818,19 @@ veTopRank();
 })();
 /* ================= Dấu "!" giải thích từng mục cho người mới — tự hiện khi lướt tới ================= */
 const GHI_CHU = {
-  "h-nb": "Những bài vẽ đẹp nhất do thầy chọn. Bài mới vào Top Tuần, để lâu sẽ tự chuyển sang Top Tháng rồi Top Năm. Vuốt hoặc bấm vào ảnh bên cạnh để xem bài khác. Bấm vào RANK để xem hạng của bạn đó.",
+  "h-nb": "Những bài vẽ đẹp nhất do anh chị chọn. Bài mới vào Top Tuần, để lâu sẽ tự chuyển sang Top Tháng rồi Top Năm. Vuốt hoặc bấm vào ảnh bên cạnh để xem bài khác. Bấm vào RANK để xem hạng của bạn đó.",
   "h-tr": "5 học viên có hạng cao nhất lớp. Đi học đều, nộp bài, có bài lên mục nổi bật là được cộng XP để lên hạng. Bấm vào từng bạn để xem chi tiết.",
   "h-ve-lop": "Cách lớp dạy: học có mục tiêu theo trường em muốn thi, đi từ nền tảng đến luyện đề.",
   "h-lt": "Lộ trình chi tiết từng môn: tuần nào học gì, bao nhiêu bài. Bấm tên môn ở trên để đổi. Bấm “Quy trình…” ở cuối để xem các bước làm một bài.",
   "h-khoa": "Các khoá học của lớp. Vuốt sang hai bên để xem từng khoá, bấm vào khoá để xem chi tiết.",
   "h-bv": "Học viên của lớp đã đỗ đại học và điểm năng khiếu. Chọn năm hoặc trường để lọc, bấm “Xem điểm từng trường” để xem kỹ hơn. Huy hiệu cạnh tên đổi màu theo điểm: 8 · 8,5 · 9 · 9,5.",
-  "h-gv": "Thầy cô và trợ giảng đang dạy ở lớp. Vuốt để xem từng người, trường đang học và môn phụ trách.",
+  "h-gv": "Anh chị và trợ giảng đang dạy ở lớp. Vuốt để xem từng người, trường đang học và môn phụ trách.",
   "h-baive": "Bài vẽ của học viên trong quá trình học. Bấm vào ảnh để xem to.",
   "h-qloi": "Những gì em nhận được khi học ở lớp.",
   "h-thi": "Lịch thi năng khiếu dự kiến của các trường. Ngày chính xác sẽ cập nhật khi trường công bố.",
   "h-lich": "Giờ học ở hai cơ sở. Chọn ca phù hợp rồi đăng ký học thử ở cuối trang.",
   "h-khoi": "Giải thích Khối H và Khối V thi môn gì, vào ngành nào, để em chọn đúng khối.",
-  "h-dk": "Điền họ tên, lớp và số điện thoại để đăng ký học thử miễn phí. Thầy sẽ gọi lại tư vấn. Trang cũng đếm ngược còn bao nhiêu ngày đến kỳ thi của em.",
+  "h-dk": "Điền họ tên, lớp và số điện thoại để đăng ký học thử miễn phí. Anh chị sẽ gọi lại tư vấn. Trang cũng đếm ngược còn bao nhiêu ngày đến kỳ thi của em.",
   "h-xh": "Bảng hạng F → SSS+, cách kiếm XP và các thành tựu. Hạng của em tự cập nhật khi đi học, nộp bài và có bài nổi bật.",
 };
 (function ghiChu() {
@@ -872,7 +872,7 @@ const GHI_CHU = {
 })();
 /* ================= Bài vẽ nổi bật: tuần / tháng / năm, vòng xoay 3D =================
    Chỉ hiện TOP 5 do quản lý chọn (hạng 1–5). Bài khác nằm ở mục "Bài vẽ học viên".
-   Thầy cô thấy nút "+" ở cuối vòng xoay để đăng bài vẽ của học viên. */
+   Anh chị thấy nút "+" ở cuối vòng xoay để đăng bài vẽ của học viên. */
 (function noiBat() {
   const box = $("#nb-ring"); if (!box) return;
   const TEN = { tuan: "tuần", thang: "tháng", nam: "năm" };
@@ -904,7 +904,7 @@ const GHI_CHU = {
     // Khoá so sánh nhẹ: không ghép cả chuỗi ảnh base64 (rất nặng) mỗi lần tải lại, chỉ dùng độ dài + thời điểm đăng
     const k = [ky, !!user && isTeacher, isAdmin, XP_DONG.length, TT_DONG.length, ...ds.map(b => [b.id || "", b.luc || 0, b.anh ? b.anh.length : 0, b.top, b.hocVien, b.loai, b.ghiChu, b.chucVu, b.biDanh, biDanhCua(b), b.mau, b.hang].join("~"))].join("|");
     if (k === sig) return; sig = k;
-    if (!ds.length && !coThem()) { box.innerHTML = `<p class="nb-rong">Chưa có bài nổi bật ${TEN[ky]}. ${ky === "tuan" ? "Thầy cô sẽ cập nhật bài đẹp mỗi tuần." : `Bài tuần trước tự chuyển sang đây khi ${ky === "thang" ? "qua 1 tuần" : "qua 1 tháng"}.`}</p>`; return; }
+    if (!ds.length && !coThem()) { box.innerHTML = `<p class="nb-rong">Chưa có bài nổi bật ${TEN[ky]}. ${ky === "tuan" ? "Anh chị sẽ cập nhật bài đẹp mỗi tuần." : `Bài tuần trước tự chuyển sang đây khi ${ky === "thang" ? "qua 1 tuần" : "qua 1 tháng"}.`}</p>`; return; }
     box.innerHTML = `<div class="gv-stage nb-stage">${ds.map((b, i) => `<figure class="nb-card${b.nv ? " nb-nv nv-" + nhanVienLop(b) : ""}" data-i="${i}">
         ${b.nv ? `<span class="nb-nv-tag">${esc(nhanVienTen(b))}</span>` : ""}
         ${isAdmin && b.id ? `<button type="button" class="nb-more" data-mn="${esc(b.id)}" aria-label="Tuỳ chọn: sửa link, xoá bài">⋮</button>` : ""}
@@ -976,9 +976,9 @@ function renderGiaoVien() {
       </button></article>`;
   }).join("")}</div>
   <div class="gv-ctl">
-    <button type="button" class="gv-nav" id="gv-prev" aria-label="Thầy cô trước">‹</button>
+    <button type="button" class="gv-nav" id="gv-prev" aria-label="Anh chị trước">‹</button>
     <div class="gv-dots" id="gv-dots">${GIAO_VIEN.map((g, i) => `<button type="button" data-i="${i}" aria-label="${esc(g.ten)}"></button>`).join("")}</div>
-    <button type="button" class="gv-nav" id="gv-next" aria-label="Thầy cô sau">›</button>
+    <button type="button" class="gv-nav" id="gv-next" aria-label="Anh chị sau">›</button>
   </div>`;
 
   const ds = GIAO_VIEN.filter(g => g.anh);
@@ -1127,7 +1127,7 @@ renderHonor();
 renderGiaoVien();
 
 /* ================= Đăng ký học thử ================= */
-// Gửi thẳng cho thầy qua email (không bắt phụ huynh tự sao chép), kèm nút Gọi / Zalo dự phòng.
+// Gửi thẳng cho anh chị qua email (không bắt phụ huynh tự sao chép), kèm nút Gọi / Zalo dự phòng.
 const SDT_LOP = String(LIEN_HE.sdt || "").replace(/\D/g, "");
 $("#dk-call").href = "tel:" + SDT_LOP;
 $("#dk-zalo").href = ZALO_LINK;
@@ -1194,8 +1194,8 @@ $("#dk-zalo").href = ZALO_LINK;
       hv.set(k, (hv.get(k) || []).concat(`${r.truong}${d ? ": " + d : ""}`)); });
     hv.forEach((v, k) => { const [ten, nam] = k.split("|"); them("Bảng vàng", ten, `Khoá ${nam} · ${v.join(" · ")}`, "#bang-vang"); });
     LICH_THI.forEach(e => them("Lịch thi", e.ten, `${e.dot} · ${e.hienThi}/${e.ngay.slice(0, 4)}`, "#lich-thi", e.truong));
-    them("Trang", "Đăng ký học thử", "Gửi thông tin, thầy gọi lại tư vấn · đếm ngược ngày thi", "#dang-ky", "dang ky hoc thu tu van hoc phi lien he so dien thoai zalo");
-    them("Trang", "Tài khoản học viên", "Đăng nhập, giáo trình, bài tập, nhắn tin thầy cô", "#tai-khoan", "dang nhap dang ky tai khoan giao trinh bai tap");
+    them("Trang", "Đăng ký học thử", "Gửi thông tin, anh chị gọi lại tư vấn · đếm ngược ngày thi", "#dang-ky", "dang ky hoc thu tu van hoc phi lien he so dien thoai zalo");
+    them("Trang", "Tài khoản học viên", "Đăng nhập, giáo trình, bài tập, nhắn tin anh chị", "#tai-khoan", "dang nhap dang ky tai khoan giao trinh bai tap");
     them("Liên hệ", "Gọi " + (LIEN_HE.sdt || "") + " · Zalo " + (LIEN_HE.zaloHienThi || LIEN_HE.zalo || ""), "Cơ sở Bình Phú · Kim Quan, Thạch Thất", "#dang-ky", "lien he dien thoai zalo dia chi co so");
     return ds;
   };
@@ -1215,7 +1215,7 @@ $("#dk-zalo").href = ZALO_LINK;
   const ve = () => {
     kq = tim(q.value); sel = Math.min(sel, Math.max(0, kq.length - 1));
     ul.innerHTML = kq.length ? kq.map((x, i) => `<li role="option" aria-selected="${i === sel}"><a href="${x.url}" data-i="${i}"><i>${esc(x.loai)}</i><b>${to(x.ten, q.value)}</b><span>${to(x.mo, q.value)}</span></a></li>`).join("")
-      : `<li class="tk-rong">Không tìm thấy “${esc(q.value)}”. Thử từ khác, hoặc <a href="#dang-ky">nhắn thầy</a>.</li>`;
+      : `<li class="tk-rong">Không tìm thấy “${esc(q.value)}”. Thử từ khác, hoặc <a href="#dang-ky">nhắn anh chị</a>.</li>`;
     $("#tk-goi").textContent = q.value ? `${kq.length} kết quả · ↑↓ để chọn · Enter để mở` : "Gợi ý: “hình hoạ”, “kiến trúc”, “9,5”, “Kim Quan”, tên học viên…";
   };
   const mo = () => { ov.hidden = false; document.body.style.overflow = "hidden"; q.value = ""; sel = 0; ve(); setTimeout(() => q.focus(), 20); };
@@ -1238,7 +1238,7 @@ $("#dk-zalo").href = ZALO_LINK;
 /* ================= Giao diện điện ảnh: hero, menu, thanh gọi nhanh ================= */
 (function cine() {
   const nav = $("nav"), hero = $("#gioi-thieu"), root = document.documentElement;
-  // Số liệu trên hero lấy thẳng từ Bảng vàng + lịch thi, thầy không phải sửa tay
+  // Số liệu trên hero lấy thẳng từ Bảng vàng + lịch thi, anh chị không phải sửa tay
   if (BANG_VANG.length) {
     const diem = BANG_VANG.flatMap(r => Object.entries(r.diem || {}).filter(([m]) => !/phỏng vấn/i.test(m)).map(([, d]) => Number(d))).filter(d => !isNaN(d));
     if (diem.length) $("#hs-top").textContent = fmtDiem(Math.max(...diem));
@@ -1271,7 +1271,7 @@ $("#dk-zalo").href = ZALO_LINK;
   { const box = $("#sp-p");
     if (box) box.innerHTML = SAN_PHAM.map(p => {
       const ext = !!p.link;
-      return `<a class="link" href="${esc(p.link || "#dang-ky")}"${ext ? ' target="_blank" rel="noopener"' : ""}><b>${esc(p.ten)}</b><small>${esc(ext ? p.moTa : "Sắp ra mắt · hỏi thầy")}</small></a>`;
+      return `<a class="link" href="${esc(p.link || "#dang-ky")}"${ext ? ' target="_blank" rel="noopener"' : ""}><b>${esc(p.ten)}</b><small>${esc(ext ? p.moTa : "Sắp ra mắt · hỏi anh chị")}</small></a>`;
     }).join(""); }
 
   // Menu toàn màn hình trên điện thoại
@@ -1356,7 +1356,7 @@ $("#dk-zalo").href = ZALO_LINK;
   // Khối H/V: trên điện thoại thu gọn phần chi tiết
   if (matchMedia("(max-width:640px)").matches) $$(".khoi-dl").forEach(d => d.open = false);
 
-  // Video nền (nếu thầy đã điền VIDEO_BIA): mờ dần vào/ra mỗi vòng lặp, chạy bằng requestAnimationFrame
+  // Video nền (nếu anh chị đã điền VIDEO_BIA): mờ dần vào/ra mỗi vòng lặp, chạy bằng requestAnimationFrame
   const conn = navigator.connection || {};
   if (VIDEO_BIA && !conn.saveData && !matchMedia("(prefers-reduced-motion:reduce)").matches) {
     const v = document.createElement("video");
@@ -1386,7 +1386,7 @@ $("#f-dk").addEventListener("submit", ev => {
   if (!/^(0|\+84)\d{9,10}$/.test(sdt)) {
     st.textContent = "Số điện thoại chưa đúng. Viết 10 số, bắt đầu bằng số 0."; st.classList.add("err"); $("#dk-sdt").focus(); return;
   }
-  const lines = ["Chào thầy, em muốn đăng ký học thử / tư vấn:",
+  const lines = ["Chào anh chị, em muốn đăng ký học thử / tư vấn:",
     "- Học sinh: " + v("#dk-ten"), "- SĐT phụ huynh: " + sdt, "- Đang học: " + v("#dk-lop"),
     "- Muốn học: " + v("#dk-khoi"), "- Hình thức: " + v("#dk-hinh")];
   if (v("#dk-truong")) lines.push("- Trường muốn thi: " + v("#dk-truong"));
@@ -1394,7 +1394,7 @@ $("#f-dk").addEventListener("submit", ev => {
   const text = lines.join("\n");
   $("#dk-text").textContent = text;
   $("#dk-out").hidden = false; $("#dk-status").textContent = ""; st.textContent = "";
-  $("#dk-ok").textContent = "Đã gửi cho thầy! Thầy sẽ gọi lại cho bố mẹ em sớm. Cần gấp thì gọi hoặc nhắn Zalo ngay bên dưới.";
+  $("#dk-ok").textContent = "Đã gửi cho anh chị! Anh chị sẽ gọi lại cho bố mẹ em sớm. Cần gấp thì gọi hoặc nhắn Zalo ngay bên dưới.";
   $("#dk-out").scrollIntoView({ behavior: "smooth", block: "nearest" });
   dropDraft("nhap-hocthu");
   if (dkSent === text) return; // bấm 2 lần không gửi trùng
@@ -1407,7 +1407,7 @@ $("#f-dk").addEventListener("submit", ev => {
       "Hình thức": v("#dk-hinh"), "Trường muốn thi": v("#dk-truong"), "Câu hỏi": v("#dk-ghichu") })
   }).then(r => { if (!r.ok) throw 0; }).catch(() => {
     dkSent = "";
-    $("#dk-ok").textContent = "Mạng yếu nên chưa gửi tự động được. Em bấm Gọi thầy hoặc Nhắn Zalo (dán tin nhắn bên dưới) nhé.";
+    $("#dk-ok").textContent = "Mạng yếu nên chưa gửi tự động được. Em bấm Gọi quản lý hoặc Nhắn Zalo (dán tin nhắn bên dưới) nhé.";
   });
 });
 $("#dk-copy").onclick = () => copyText($("#dk-text").textContent, $("#dk-status"), "Đã sao chép. Dán vào Zalo hoặc Messenger để gửi cho lớp.", $("#dk-text"));
@@ -1439,14 +1439,14 @@ function renderLocks(state) {
   const msg = {
     checking: ["Đang kiểm tra tài khoản…", "Chờ một chút nhé."],
     setup: ["Web chưa được kết nối Firebase", "Giáo viên cần dán cấu hình Firebase vào file firebase-config.js."],
-    out: ["Em cần đăng nhập để xem mục này", "Mục này chỉ dành cho học viên chính thức đã được thầy duyệt Gmail."],
-    pending: ["Gmail của em chưa được duyệt", "Em đã đăng nhập nhưng thầy chưa duyệt Gmail này."]
+    out: ["Em cần đăng nhập để xem mục này", "Mục này chỉ dành cho học viên chính thức đã được anh chị duyệt Gmail."],
+    pending: ["Gmail của em chưa được duyệt", "Em đã đăng nhập nhưng anh chị chưa duyệt Gmail này."]
   }[state];
   $$("[data-lock]").forEach(el => {
     el.hidden = state === "ok";
     if (state === "ok") return;
     el.innerHTML = `<svg viewBox="0 0 24 24"><use href="#i-lock"/></svg><h3>${msg[0]}</h3><p class="muted">${msg[1]}</p>
-      ${state === "checking" || state === "setup" ? "" : `<ol><li>Đăng nhập (lần đầu thì tạo tài khoản) bằng Gmail em dùng để học.</li><li>Gửi yêu cầu duyệt ở trang Đăng nhập / Đăng ký.</li><li>Khi thầy duyệt xong, mở lại trang này.</li></ol>
+      ${state === "checking" || state === "setup" ? "" : `<ol><li>Đăng nhập (lần đầu thì tạo tài khoản) bằng Gmail em dùng để học.</li><li>Gửi yêu cầu duyệt ở trang Đăng nhập / Đăng ký.</li><li>Khi anh chị duyệt xong, mở lại trang này.</li></ol>
       <div class="ctas"><a class="btn primary" href="#tai-khoan">Đăng nhập / Đăng ký</a><a class="btn" href="#dang-ky">Chưa là học viên? Đăng ký học</a></div>`}`;
   });
   $("#gt-body").hidden = state !== "ok";
@@ -1484,7 +1484,7 @@ function renderAccount(pending) {
   $("#card-wait").hidden = !(canReg && pendingReq && !editingReq);
   if (!configured) {
     $("#who-name").textContent = "Web chưa kết nối Firebase";
-    $("#who-mail").textContent = "Thầy cần dán mã kết nối vào config/firebase-config.js.";
+    $("#who-mail").textContent = "Anh chị cần dán mã kết nối vào config/firebase-config.js.";
     $("#who-status").innerHTML = ""; setStep(1); return;
   }
   if (!user) {
@@ -1503,7 +1503,7 @@ function renderAccount(pending) {
   { const q = $("#btn-ql"); q.hidden = !isTeacher || needVerify; q.href = isAdmin ? "#duyet" : "#diem-danh"; }
   if (needVerify) {
     $("#who-status").innerHTML = `<span class="chip line">Chưa xác nhận Gmail</span>`;
-    $("#verify-text").textContent = `Thầy đã gửi một thư xác nhận vào ${mail}. Em bấm link trong thư để chứng minh Gmail này là của em.`;
+    $("#verify-text").textContent = `Anh chị đã gửi một thư xác nhận vào ${mail}. Em bấm link trong thư để chứng minh Gmail này là của em.`;
     setStep(1); return;
   }
   const quyen = ds => `<ul class="quyen">${ds.map(x => `<li>${x}</li>`).join("")}</ul>`;
@@ -1512,7 +1512,7 @@ function renderAccount(pending) {
   if (approved) { $("#who-status").innerHTML = `<span class="chip ok">Đã duyệt</span> Em đã vào học được rồi.`; setStep(4); return; }
   if (pendingReq && !editingReq) {
     $("#who-status").innerHTML = `<span class="chip line">Chờ duyệt</span>`;
-    $("#wait-text").textContent = `Em đã gửi ngày ${fmtDate(pendingReq.guiLuc)}. Thầy duyệt xong, trang này tự mở khoá, em không cần làm gì thêm.`;
+    $("#wait-text").textContent = `Em đã gửi ngày ${fmtDate(pendingReq.guiLuc)}. Anh chị duyệt xong, trang này tự mở khoá, em không cần làm gì thêm.`;
     setStep(3); return;
   }
   $("#who-status").innerHTML = `<span class="chip line">Chưa gửi thông tin</span> Làm tiếp bước 2 ở bên dưới.`;
@@ -1537,7 +1537,7 @@ function khoaTuChuongTrinh(ct) {
   if (/khối h/i.test(s)) return ["Hình hoạ cơ bản", "Hình hoạ người", "Màu & bố cục màu"];
   if (/khối v/i.test(s)) return ["Hình hoạ cơ bản", "Hình hoạ tượng", "Mỹ thuật 2"];
   if (/cơ bản/i.test(s)) return ["Hình hoạ cơ bản"];
-  return KHOA_GOC.slice(); // học online, cấp tốc, chưa rõ: mở hết, thầy bớt sau
+  return KHOA_GOC.slice(); // học online, cấp tốc, chưa rõ: mở hết, anh chị bớt sau
 }
 const khoaCuaHv = hv => {
   const k = hv && Array.isArray(hv.khoaHoc) ? hv.khoaHoc.filter(x => KHOA_GOC.includes(x)) : [];
@@ -1554,7 +1554,7 @@ function capNhatTheKhoa() {
   const cap = khoaDuocCap(), daVao = !!user && !needVerify;
   $$("#khoa-hoc .course").forEach(c => {
     const vao = cap.includes(goc((c.querySelector("h3") || {}).textContent));
-    c.dataset.cta = vao ? "Vào học →" : approved ? "Nhắn thầy để học thêm khoá này →" : daVao ? "Xem tình trạng duyệt tài khoản →" : "Đăng ký học thử →";
+    c.dataset.cta = vao ? "Vào học →" : approved ? "Nhắn anh chị để học thêm khoá này →" : daVao ? "Xem tình trạng duyệt tài khoản →" : "Đăng ký học thử →";
     c.classList.toggle("vao", vao);
   });
 }
@@ -1565,7 +1565,7 @@ function moTheKhoa(c) {
     location.hash = "#giao-trinh";
     if (lessons.length) {
       renderLessons();
-      if (!lessons.some(l => goc(l.khoa) === ten)) toast(`Khoá ${ten} chưa có bài trên giáo trình, thầy sẽ cập nhật sớm.`);
+      if (!lessons.some(l => goc(l.khoa) === ten)) toast(`Khoá ${ten} chưa có bài trên giáo trình, anh chị sẽ cập nhật sớm.`);
     }
     return;
   }
@@ -1611,7 +1611,7 @@ const MAU_ID = id => /^bai-/.test(id) || GT_LO_TRINH.some(x => x[0] === id);
 async function dongBoBaiHoc() {
   if (daDongBo || !isAdmin || !db) return; daDongBo = true;
   try {
-    const { BAN, BAI_HOC } = await import("../../data/bai-hoc.js?v=20261009f");
+    const { BAN, BAI_HOC } = await import("../../data/bai-hoc.js?v=20261010bf");
     const meta = (await getDoc(doc(db, "giaotrinh", "_meta"))).data() || {};
     if (meta.ban === BAN) return;
     const xoa = new Set(meta.daxoa || []), co = new Set(lessons.map(l => l.id));
@@ -1682,7 +1682,7 @@ function renderLessons() {
   $("#lesson").innerHTML =
     `<div class="bai-chuyen"><button type="button" data-go="-1" aria-label="Bài trước" ${idx <= 0 ? "disabled" : ""}>‹</button><span class="num">Bài ${idx + 1}/${list.length}</span><button type="button" data-go="1" aria-label="Bài sau" ${idx >= list.length - 1 ? "disabled" : ""}>›</button></div>
      <p class="eyebrow">${esc(l.khoa)}</p><h3 style="font-size:1.5rem;margin-top:4px">${esc(l.ten)}</h3>
-     ${body}${l.ghichu ? `<p class="gc"><b>Thầy dặn:</b> ${esc(l.ghichu)}</p>` : ""}
+     ${body}${l.ghichu ? `<p class="gc"><b>Anh chị dặn:</b> ${esc(l.ghichu)}</p>` : ""}
      <div class="foot">${isTeacher ? "" : `<button class="btn small" id="mark">${myProgress.bai[l.id] ? "Đã học xong ✓" : "Đánh dấu đã học"}</button>`}
      ${isAdmin ? `<button class="btn small" id="del-l">Xoá bài này</button>` : ""}</div>`;
   if ($("#mark")) $("#mark").onclick = () => toggleProgress("bai", l.id).then(renderLessons);
@@ -1703,7 +1703,7 @@ const chuaDat = fb => TIEU_CHI.filter(([k]) => fb && fb.tieuChi && fb.tieuChi[k]
 function nopLai(id) {
   myProgress.baitap[id] = Date.now(); saveData();
   timed("Nộp lại bài", setDoc(doc(db, "tiendo", mail), { bai: myProgress.bai, baitap: myProgress.baitap, anh: myAvatar || "", capNhat: Date.now() }))
-    .then(() => toast("Đã báo thầy: em đã nộp lại bài. Cố lên!"))
+    .then(() => toast("Đã báo anh chị: em đã nộp lại bài. Cố lên!"))
     .catch(() => alertStatus("Chưa gửi được. Kiểm tra mạng rồi bấm lại."));
   renderHomework(); if (typeof capNhatNhac === "function") capNhatNhac();
 }
@@ -1731,7 +1731,7 @@ function renderHomework() {
     .sort((a,b) => hwView === "open" ? String(a.han || "9999").localeCompare(String(b.han || "9999")) : String(b.han).localeCompare(String(a.han)));
   $("#hw-results").textContent = `${list.length} bài tập · ${hwView === "open" ? "Hạn gần nhất trước" : "Hết hạn gần nhất trước"}`;
   if (!list.length) {
-    $("#hw-list").innerHTML = `<div class="hw-empty"><b>${q || khoa ? "Không tìm thấy bài phù hợp" : hwView === "open" ? "Chưa có bài tập đang làm" : "Chưa có bài hết hạn"}</b><p>${q || khoa ? "Thử đổi từ khóa hoặc chọn lại khóa học." : isTeacher ? "Bắt đầu bằng một đề bài và tài liệu hướng dẫn." : "Bài thầy cô giao sẽ xuất hiện tại đây."}</p>${q || khoa ? '<button class="btn small" type="button" id="hw-clear">Xóa bộ lọc</button>' : ""}</div>`;
+    $("#hw-list").innerHTML = `<div class="hw-empty"><b>${q || khoa ? "Không tìm thấy bài phù hợp" : hwView === "open" ? "Chưa có bài tập đang làm" : "Chưa có bài hết hạn"}</b><p>${q || khoa ? "Thử đổi từ khóa hoặc chọn lại khóa học." : isTeacher ? "Bắt đầu bằng một đề bài và tài liệu hướng dẫn." : "Bài anh chị giao sẽ xuất hiện tại đây."}</p>${q || khoa ? '<button class="btn small" type="button" id="hw-clear">Xóa bộ lọc</button>' : ""}</div>`;
     if ($("#hw-clear")) $("#hw-clear").onclick = () => { $("#hw-search").value = ""; courseSelect.value = ""; renderHomework(); };
     return;
   }
@@ -1749,9 +1749,9 @@ function renderHomework() {
     return `<div class="hw" data-nhac-id="${esc("bt-" + h.id)}"><div><p class="eyebrow">${esc(h.khoa)}${h.lop ? " · " + esc(h.lop) : ""}</p><h3>${esc(h.ten)}</h3></div>
       <p class="due ${n <= 1 ? "late" : ""}">${due}</p>${h.mota ? `<p class="desc">${esc(h.mota)}</p>` : ""}
       ${homeworkFilesHTML(h)}
-      ${!isTeacher && fb ? `<p class="fb ${fb.trangThai === "lamlai" ? "lamlai" : fb.trangThai === "dat" ? "dat" : ""}"><b>Thầy nhận xét${fb.diem ? ` · Điểm ${esc(fb.diem)}` : ""}:</b> ${esc(fb.nhanXet || "")}${fb.tieuChi ? `<span class="tc-ket">${TIEU_CHI.map(([k, t]) => `<i class="${fb.tieuChi[k] === false ? "chua" : "ok"}">${fb.tieuChi[k] === false ? "✗" : "✓"} ${t}</i>`).join("")}</span>` : ""}<br><span class="muted">${esc(fb.nguoiCham || "")} · ${fmtDate(fb.luc)}</span></p>` : ""}
-      ${!isTeacher && canLamLai(fb, myProgress.baitap[h.id]) ? `<div class="lamlai-box"><b>⚠ Bài này cần làm lại</b><span>Chưa đạt: ${esc(chuaDat(fb).join(", ") || "theo nhận xét của thầy")}.${fb.hanLamLai ? ` Hạn nộp lại: <b>${ngayVN(fb.hanLamLai)}</b>` : ""} Làm lại sớm để không bị chậm tiến độ cả lớp nhé.</span><button class="btn small primary" data-nl="${esc(h.id)}">Em đã làm lại · Nộp lại</button></div>` : ""}
-      ${!isTeacher && daNopLai(fb, myProgress.baitap[h.id]) ? `<p class="nl-cho">✓ Đã nộp lại, chờ thầy chấm lại.</p>` : ""}
+      ${!isTeacher && fb ? `<p class="fb ${fb.trangThai === "lamlai" ? "lamlai" : fb.trangThai === "dat" ? "dat" : ""}"><b>Anh chị nhận xét${fb.diem ? ` · Điểm ${esc(fb.diem)}` : ""}:</b> ${esc(fb.nhanXet || "")}${fb.tieuChi ? `<span class="tc-ket">${TIEU_CHI.map(([k, t]) => `<i class="${fb.tieuChi[k] === false ? "chua" : "ok"}">${fb.tieuChi[k] === false ? "✗" : "✓"} ${t}</i>`).join("")}</span>` : ""}<br><span class="muted">${esc(fb.nguoiCham || "")} · ${fmtDate(fb.luc)}</span></p>` : ""}
+      ${!isTeacher && canLamLai(fb, myProgress.baitap[h.id]) ? `<div class="lamlai-box"><b>⚠ Bài này cần làm lại</b><span>Chưa đạt: ${esc(chuaDat(fb).join(", ") || "theo nhận xét của anh chị")}.${fb.hanLamLai ? ` Hạn nộp lại: <b>${ngayVN(fb.hanLamLai)}</b>` : ""} Làm lại sớm để không bị chậm tiến độ cả lớp nhé.</span><button class="btn small primary" data-nl="${esc(h.id)}">Em đã làm lại · Nộp lại</button></div>` : ""}
+      ${!isTeacher && daNopLai(fb, myProgress.baitap[h.id]) ? `<p class="nl-cho">✓ Đã nộp lại, chờ anh chị chấm lại.</p>` : ""}
       ${isTeacher ? "" : anhHocVien(h)}
       <div class="acts">${isTeacher ? staffBar : studentBar}</div>
       ${isTeacher && gradeOpen.has(h.id) ? gradeTable(h) : ""}</div>`;
@@ -1943,7 +1943,7 @@ async function downloadHomeworkFile(b) {
     a.href = url; a.download = String(f.name).replace(/[\\/]/g,"_"); document.body.append(a); a.click(); a.remove();
     setTimeout(() => URL.revokeObjectURL(url),60000);
     toast("Đã tải tài liệu. Kiểm tra mục tải xuống của thiết bị.");
-  } catch (e) { toast(e?.code === 'storage/object-not-found' ? "Tệp không còn trong kho. Nhờ thầy cô cập nhật lại tài liệu." : "Chưa tải được tài liệu. Kiểm tra kết nối hoặc liên hệ thầy cô.","err"); }
+  } catch (e) { toast(e?.code === 'storage/object-not-found' ? "Tệp không còn trong kho. Nhờ anh chị cập nhật lại tài liệu." : "Chưa tải được tài liệu. Kiểm tra kết nối hoặc liên hệ anh chị.","err"); }
   finally { b.disabled = false; label.textContent = old; }
 }
 async function deleteHomework(id) {
@@ -2044,7 +2044,7 @@ async function checkRules() {
     const code = (e && e.code) || "";
     box.className = "sv-status bad";
     box.innerHTML = code === "permission-denied"
-      ? `<b>⚠ Luật bảo mật trên Firebase đang là bản CŨ</b>, nên phiếu học viên gửi bị máy chủ chặn (thầy vẫn nhận email nhưng danh sách trống).
+      ? `<b>⚠ Luật bảo mật trên Firebase đang là bản CŨ</b>, nên phiếu học viên gửi bị máy chủ chặn (anh chị vẫn nhận email nhưng danh sách trống).
          <ol><li>Bấm <b>Sao chép luật mới</b>.</li><li>Bấm <b>Mở trang dán luật</b> → xoá hết chữ cũ trong khung → dán vào → bấm <b>Publish</b>.</li><li>Quay lại đây, bấm <b>Kiểm tra lại</b>.</li></ol>
          <div class="ctas" style="margin-top:8px"><button class="btn primary small" type="button" id="sv-copy">Sao chép luật mới</button>
          <a class="btn small" target="_blank" rel="noopener" href="https://console.firebase.google.com/project/${esc(firebaseConfig.projectId)}/firestore/databases/-default-/rules">Mở trang dán luật</a>
@@ -2096,12 +2096,12 @@ function renderRequests() {
     if (vaiTro === "giaovien") batch.set(doc(db, "giaovien", r.id), { ten: r.ten, gmail: r.gmail, sdt: r.sdt || "", coso: r.coso || "", ghiChu: r.ghiChu || "", duyetLuc: Date.now() });
     else batch.set(doc(db, "hocvien", r.id), { ...data, lop: r.chuongTrinh || r.lop || "", khoaHoc, duyetLuc: Date.now() });
     batch.delete(doc(db, "yeucau", r.id));
-    toast(`Đã duyệt ${r.ten}. ${vaiTro === "giaovien" ? "Thầy/cô" : "Em"} ấy mở lại web là vào được.`);
+    toast(`Đã duyệt ${r.ten}. ${vaiTro === "giaovien" ? "Anh/chị" : "Em"} ấy mở lại web là vào được.`);
     timed("Duyệt " + r.ten, batch.commit()).catch(() => { requests.unshift(r); renderRequests(); toast("Chưa duyệt được " + r.ten + ". Kiểm tra mạng rồi bấm lại.", "err"); });
   });
   $$("#requests [data-no]").forEach(b => confirmButton(b, () => deleteDoc(doc(db, "yeucau", b.dataset.no)), "Bấm lần nữa để từ chối"));
 }
-/* ===== Thông tin học viên: khối, cơ sở, SĐT, trường thi; xin đổi tên (thầy duyệt) ===== */
+/* ===== Thông tin học viên: khối, cơ sở, SĐT, trường thi; xin đổi tên (anh chị duyệt) ===== */
 const TRUONG_THI = ["HAU", "MTCN", "HUCE", "SIS", "NUAE", "Khác"];
 let doiTen = [], doiTenCuaToi = null, doiTenDaTai = "";
 // Ngày thi theo TRƯỜNG THI DỰ KIẾN học viên đã chọn (lấy từ lịch thi LICH_THI).
@@ -2144,8 +2144,8 @@ function renderHvInfo() {
     </form>
     ${donCuaToiHTML()}
     <div class="hv-doiten">${dang
-      ? `<p class="muted">Đã gửi yêu cầu đổi tên thành <b>${esc(dang.tenMoi)}</b>. Đang chờ thầy duyệt.</p>`
-      : `<form id="f-doiten" novalidate><label>Xin đổi họ tên (thầy duyệt trước khi đổi)<input id="doiten-moi" maxlength="80" autocomplete="name" placeholder="Họ và tên mới"></label>
+      ? `<p class="muted">Đã gửi yêu cầu đổi tên thành <b>${esc(dang.tenMoi)}</b>. Đang chờ anh chị duyệt.</p>`
+      : `<form id="f-doiten" novalidate><label>Xin đổi họ tên (anh chị duyệt trước khi đổi)<input id="doiten-moi" maxlength="80" autocomplete="name" placeholder="Họ và tên mới"></label>
          <div><button class="btn" type="submit">Gửi yêu cầu đổi tên</button> <span class="status" id="doiten-st" role="status"></span></div></form>`}
     </div>`;
   $$("#hv-info [data-dadong]").forEach(b => b.onclick = () => danhDauDaChuyen(b.dataset.dadong));
@@ -2167,7 +2167,7 @@ function renderHvInfo() {
     if (moi.length < 2) { st.textContent = "Nhập họ và tên mới."; return; }
     st.textContent = "Đang gửi…";
     timed("Gửi yêu cầu đổi tên", setDoc(doc(db, "doiten", mail), { tenMoi: moi, tenCu: myHv.ten || "", luc: Date.now() }))
-      .then(() => { doiTenCuaToi = { tenMoi: moi }; toast("Đã gửi yêu cầu. Thầy duyệt xong tên sẽ đổi."); renderHvInfo(); })
+      .then(() => { doiTenCuaToi = { tenMoi: moi }; toast("Đã gửi yêu cầu. Anh chị duyệt xong tên sẽ đổi."); renderHvInfo(); })
       .catch(() => { st.textContent = "Chưa gửi được. Kiểm tra mạng rồi bấm lại."; });
   };
 }
@@ -2278,13 +2278,13 @@ function thongKe(dd, hv, fb) {
   if (keys.length && (streak >= 2 || perWeek < MUC_TIEU.buoiToiThieu * 0.67)) muc = "bad";
   else if (keys.length && (perWeek + 0.01 < need || perWeek < MUC_TIEU.buoiToiThieu || (avg !== null && avg < MUC_TIEU.diemDat))) muc = "warn";
   const loi = [];
-  if (!keys.length) loi.push(["info", "Chưa có buổi điểm danh nào. Thầy cô sẽ điểm danh sau mỗi buổi học, tiến độ của em hiện ở đây."]);
+  if (!keys.length) loi.push(["info", "Chưa có buổi điểm danh nào. Anh chị sẽ điểm danh sau mỗi buổi học, tiến độ của em hiện ở đây."]);
   if (streak >= 2) loi.push(["bad", `Em đã vắng ${streak} buổi liên tiếp. Đi học lại ngay buổi tới để không bị hổng bài nhé.`]);
-  if (keys.length && !records28) loi.push(["info", "Chưa có điểm danh trong 4 tuần gần đây. Nhờ thầy cô kiểm tra lại trước khi đánh giá số buổi đi học."]);
-  if (keys.length && daysLeft === 0) loi.push(["info", "Đã đến ngày thi mục tiêu. Nhờ thầy cô cập nhật lịch học tiếp theo."]);
-  else if (keys.length && need === 0) loi.push(["ok", "Em đã đủ số giờ học mục tiêu. Tiếp tục luyện bài theo hướng dẫn của thầy cô."]);
-  else if (records28) loi.push([perWeek + 0.01 < suggested ? "warn" : "ok", `4 tuần qua đã ghi nhận em đi ${co28} buổi. Lịch học đề xuất: ${suggested} buổi/tuần, dựa trên số giờ còn thiếu và mức tối thiểu của lớp. Trao đổi với thầy cô để sắp xếp lịch phù hợp.`]);
-  if (avg !== null && avg < MUC_TIEU.diemDat) loi.push(["warn", `Điểm bài tập gần đây trung bình ${nf1(avg)}, mục tiêu ${nf1(MUC_TIEU.diemDat)}. Làm đủ bài về nhà và hỏi thầy chỗ chưa vững.`]);
+  if (keys.length && !records28) loi.push(["info", "Chưa có điểm danh trong 4 tuần gần đây. Nhờ anh chị kiểm tra lại trước khi đánh giá số buổi đi học."]);
+  if (keys.length && daysLeft === 0) loi.push(["info", "Đã đến ngày thi mục tiêu. Nhờ anh chị cập nhật lịch học tiếp theo."]);
+  else if (keys.length && need === 0) loi.push(["ok", "Em đã đủ số giờ học mục tiêu. Tiếp tục luyện bài theo hướng dẫn của anh chị."]);
+  else if (records28) loi.push([perWeek + 0.01 < suggested ? "warn" : "ok", `4 tuần qua đã ghi nhận em đi ${co28} buổi. Lịch học đề xuất: ${suggested} buổi/tuần, dựa trên số giờ còn thiếu và mức tối thiểu của lớp. Trao đổi với anh chị để sắp xếp lịch phù hợp.`]);
+  if (avg !== null && avg < MUC_TIEU.diemDat) loi.push(["warn", `Điểm bài tập gần đây trung bình ${nf1(avg)}, mục tiêu ${nf1(MUC_TIEU.diemDat)}. Làm đủ bài về nhà và hỏi anh chị chỗ chưa vững.`]);
   else if (avg !== null) loi.push(["ok", `Điểm bài tập trung bình ${nf1(avg)} — vượt mục tiêu ${nf1(MUC_TIEU.diemDat)}. Tiếp tục luyện đề theo thời gian thi thật.`]);
   if (daysLeft <= 60 && daysLeft > 0) loi.push(["warn", `Chỉ còn ${daysLeft} ngày. Giai đoạn nước rút: mỗi buổi nghỉ là mất một bài luyện đề.`]);
   return { keys, co, vang, phep, co28, records28, trackedDays, span, perWeek, att, streak, khoi, gioCan, ngayThi, daysLeft, gio, need, suggested, readiness, avg, pass, muc, loi };
@@ -2317,9 +2317,9 @@ function tinNhanPhuHuynh(r, t) {
   return intro + `Trong 4 tuần qua (${ngayVN(start)}–${ngayVN(todayVN())}), lớp ghi nhận em đi học ${t.co28} buổi.`
     + (t.trackedDays < 28 ? ` Dữ liệu mới được theo dõi trong ${t.trackedDays} ngày gần đây.` : "")
     + (t.streak >= 2 ? ` Em đã vắng ${t.streak} buổi liên tiếp không tính các buổi nghỉ phép.` : "")
-    + (t.daysLeft > 0 ? ` Còn ${t.daysLeft} ngày đến ngày thi mục tiêu (${ngayVN(t.ngayThi)}).` : " Đã đến ngày thi mục tiêu; thầy cô sẽ cập nhật lịch học tiếp theo.")
+    + (t.daysLeft > 0 ? ` Còn ${t.daysLeft} ngày đến ngày thi mục tiêu (${ngayVN(t.ngayThi)}).` : " Đã đến ngày thi mục tiêu; anh chị sẽ cập nhật lịch học tiếp theo.")
     + (t.suggested !== null ? ` Lớp đề xuất em học ${t.suggested} buổi/tuần để bổ sung số giờ còn thiếu và duy trì việc luyện tập.`
-      : t.need === 0 ? " Em đã đủ số giờ học mục tiêu và tiếp tục luyện bài theo hướng dẫn của thầy cô." : "")
+      : t.need === 0 ? " Em đã đủ số giờ học mục tiêu và tiếp tục luyện bài theo hướng dẫn của anh chị." : "")
     + (t.avg !== null ? ` Điểm bài tập gần đây trung bình ${nf1(t.avg)}/10.` : "")
     + " Bố mẹ cùng lớp trao đổi để sắp xếp lịch học phù hợp cho em nhé. Cảm ơn bố mẹ!";
 }
@@ -2439,7 +2439,7 @@ function renderTiles() {
   box.hidden = !show; { const xh = $("#xep-hang"); if (xh) xh.hidden = !show; }
   { const na = $("#nav-acct"), hv = !!user && show; let k = $("#nav-ka");
     if (hv) { const ten = (!isTeacher && myHv && myHv.ten) || (user && user.displayName) || (mail || "").split("@")[0];
-      // học viên: khung theo hạng · thầy cô: khung riêng (Quản lý vàng, Giáo viên xanh)
+      // học viên: khung theo hạng · anh chị: khung riêng (Quản lý vàng, Giáo viên xanh)
       const t = isTeacher ? (isAdmin ? { r: { ma: "QL", mau: "#ffc400", kim: "Quản lý", ten: "Quản lý lớp" }, i: 5 } : { r: { ma: "GV", mau: "#57a6ff", kim: "Giáo viên", ten: "Giáo viên" }, i: 3 })
         : tinhRank(myDiemdanh, myProgress, myFeedback, ten);
       if (!k) { k = document.createElement("span"); k.id = "nav-ka"; na.prepend(k); }
@@ -2463,7 +2463,7 @@ function renderTiles() {
   const daHoc = Object.values(myProgress.bai || {}).filter(Boolean).length;
   const moBai = homework.filter(h => !h.han || h.han >= today).length;
   const tiles = [
-    { href: "#lam-viec", t: "Trao đổi", n: tin + tb + viec, d: tin + tb + viec ? [tin && `${tin} tin nhắn mới`, tb && `${tb} thông báo mới`, viec && `${viec} việc chưa xong`].filter(Boolean).join(" · ") : (isTeacher ? "Nhắn tin, thông báo, giao việc" : "Nhắn thầy cô, xem thông báo của lớp") },
+    { href: "#lam-viec", t: "Trao đổi", n: tin + tb + viec, d: tin + tb + viec ? [tin && `${tin} tin nhắn mới`, tb && `${tb} thông báo mới`, viec && `${viec} việc chưa xong`].filter(Boolean).join(" · ") : (isTeacher ? "Nhắn tin, thông báo, giao việc" : "Nhắn anh chị, xem thông báo của lớp") },
     isAdmin && { href: "#duyet", t: "Quản lý học viên", n: reqCount, d: `${roster.length} học viên · % đỗ · Top 5 tuần` + (reqCount ? ` · ${reqCount} chờ duyệt` : "") },
     isTeacher && { href: "#diem-danh", t: "Điểm danh", d: "Điểm danh buổi hôm nay" },
     { href: "#bai-tap", t: isTeacher ? "Giao & chấm bài tập" : "Bài tập", d: moBai ? `${moBai} bài đang mở` : "Chưa có bài đang mở" },
@@ -2505,7 +2505,7 @@ function luuAvatar(url) {
   const w = $("#who-ava"); if (w) w.onclick = () => f && f.click();
 }
 
-/* ================= Thầy cô cộng XP / trao thành tựu ngay trên web ================= */
+/* ================= Anh chị cộng XP / trao thành tựu ngay trên web ================= */
 let xhDS = [], xhLoi = false;
 function renderXHQL() {
   const box = $("#xh-ql"); if (!box) return;
@@ -2523,7 +2523,7 @@ function renderXHQL() {
       <datalist id="xh-ds-ten">${ten.map(t => `<option value="${esc(t)}">`).join("")}</datalist>
       <div class="seg xh-loai" role="group" aria-label="Loại"><button type="button" data-l="xp" aria-pressed="true">+ XP</button><button type="button" data-l="thanhtuu" aria-pressed="false">🏆 Thành tựu</button></div>
       <label class="xh-xp">Số XP<select id="xh-xp">${[20, 50, 100, 200, 500].map(n => `<option value="${n}">+${n} XP</option>`).join("")}</select></label>
-      <label class="xh-tt" hidden>Thành tựu<select id="xh-tt">${THANH_TUU.map(a => `<option value="${a.ma}">${esc(a.ten)}${a.trao ? " (thầy trao)" : ""}</option>`).join("")}</select></label>
+      <label class="xh-tt" hidden>Thành tựu<select id="xh-tt">${THANH_TUU.map(a => `<option value="${a.ma}">${esc(a.ten)}${a.trao ? " (anh chị trao)" : ""}</option>`).join("")}</select></label>
       <label class="xh-gc">Lý do<input id="xh-gc" maxlength="120" required placeholder="VD: Bài màu tuần 3 xuất sắc"></label>
       <button class="btn primary" type="submit">Lưu</button><span class="status" id="xh-st"></span>
     </form>
@@ -2645,7 +2645,7 @@ async function xacNhanDon(id) {
 }
 async function danhDauDaChuyen(id) {
   const b = writeBatch(db); b.update(doc(db, "dondh", id), { trangThai: "da_bao", baoLuc: Date.now() });
-  try { await timed("Báo đã chuyển khoản", b.commit()); toast("Đã báo. Thầy kiểm tra và xác nhận nhé."); }
+  try { await timed("Báo đã chuyển khoản", b.commit()); toast("Đã báo. Anh chị kiểm tra và xác nhận nhé."); }
   catch (e) { toast("Chưa báo được. Kiểm tra mạng rồi bấm lại.", "err"); }
 }
 function donCuaToiHTML() {
@@ -2654,7 +2654,7 @@ function donCuaToiHTML() {
   return `<div class="hv-don"><h4 class="kho-h4">Đơn hoạ cụ của em</h4>${cho.map(d => `<div class="hv-don-i">
     <div><b>${tenMon(d.items)}</b></div>
     <div>Tổng <b class="num">${vnd(d.tong)}</b> · Nội dung chuyển khoản: <b class="num">${esc(d.ma)}</b></div>
-    ${d.trangThai === "da_bao" ? `<p class="muted">Em đã báo chuyển khoản. Thầy xác nhận xong là đơn tự đóng.</p>` : `<button class="btn small" type="button" data-dadong="${esc(d.id)}">Em đã chuyển khoản</button>`}
+    ${d.trangThai === "da_bao" ? `<p class="muted">Em đã báo chuyển khoản. Anh chị xác nhận xong là đơn tự đóng.</p>` : `<button class="btn small" type="button" data-dadong="${esc(d.id)}">Em đã chuyển khoản</button>`}
   </div>`).join("")}</div>`;
 }
 function tongTuDau() {
@@ -2677,11 +2677,11 @@ function renderKho() {
   sec.hidden = !(user && isAdmin);
   if (sec.hidden) return;
   const body = $("#kho-body");
-  if (khoLoi) { body.innerHTML = `<p class="xh-loi">Máy chủ chưa cho mở Kho (${esc(khoLoi)}). Thầy dán luật bảo mật mới (firestore.rules) một lần là dùng được.</p>`; return; }
+  if (khoLoi) { body.innerHTML = `<p class="xh-loi">Máy chủ chưa cho mở Kho (${esc(khoLoi)}). Anh chị dán luật bảo mật mới (firestore.rules) một lần là dùng được.</p>`; return; }
   if (!khoDaTai) { body.innerHTML = `<p class="muted">Đang tải kho…</p>`; return; }
   const ds = monKho();
   if (!ds.length) {
-    body.innerHTML = `<div class="kho-trong"><b>Kho chưa có dữ liệu.</b><p class="muted">Bấm nút dưới để tạo kho từ sổ hoạ cụ tháng 07 (${HOA_CU.length} món, kèm số tồn ghi trong sổ). Sau đó thầy kiểm kho thực tế và sửa lại số tồn.</p>
+    body.innerHTML = `<div class="kho-trong"><b>Kho chưa có dữ liệu.</b><p class="muted">Bấm nút dưới để tạo kho từ sổ hoạ cụ tháng 07 (${HOA_CU.length} món, kèm số tồn ghi trong sổ). Sau đó anh chị kiểm kho thực tế và sửa lại số tồn.</p>
       <button class="btn primary" id="kho-tao" type="button">Tạo kho từ sổ hoạ cụ</button> <span class="status" id="kho-tao-st"></span></div>`;
     $("#kho-tao").onclick = async () => {
       $("#kho-tao-st").textContent = "Đang tạo…";
@@ -2778,7 +2778,7 @@ function taiCSV(ten, rows) {
   const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" })); a.download = ten; a.click();
   setTimeout(() => URL.revokeObjectURL(a.href), 2000);
 }
-// Đầu tháng: tự gửi báo cáo lãi lỗ tháng trước vào Gmail thầy (một lần, ghi nhớ trên máy chủ)
+// Đầu tháng: tự gửi báo cáo lãi lỗ tháng trước vào Gmail anh chị (một lần, ghi nhớ trên máy chủ)
 async function baoCaoThang() {
   if (!isAdmin || !EMAIL_NHAN_THONG_BAO || !khoDaTai) return;
   const d = new Date(todayVN() + "T12:00:00"); d.setMonth(d.getMonth() - 1);
@@ -2846,7 +2846,7 @@ function capNhatNhac() {
         if (canLamLai(fb, nop)) ds.push({ id: "ll-" + h.id + (fb.luc || ""), icon: "⚠️", muc: "gap", tieuDe: `Làm lại: ${h.ten}`, nd: `Chưa đạt ${chuaDat(fb).join(", ") || "tiêu chí"}${fb.hanLamLai ? ` · hạn ${ngayVN(fb.hanLamLai)}` : ""}. Làm lại rồi bấm Nộp lại.`, link: "#bai-tap", hw: "open", dich: `[data-nhac-id="${CSS.escape("bt-" + h.id)}"]` });
         else if (!nop && h.han) { const n = daysUntil(h.han), dich = `[data-nhac-id="${CSS.escape("bt-" + h.id)}"]`;
           if (n >= 0 && n <= 2) ds.push({ id: "han-" + h.id, icon: "⏰", muc: n === 0 ? "gap" : "", tieuDe: `${n === 0 ? "Hôm nay" : n === 1 ? "Ngày mai" : "Còn 2 ngày"} hết hạn: ${h.ten}`, nd: "Chưa đánh dấu nộp bài.", link: "#bai-tap", hw: "open", dich });
-          else if (n < 0 && n >= -7) ds.push({ id: "tre-" + h.id, icon: "🐢", muc: "gap", tieuDe: `Quá hạn: ${h.ten}`, nd: "Nộp muộn còn hơn không nộp. Nộp xong nhắn thầy một câu nhé.", link: "#bai-tap", hw: "past", dich }); }
+          else if (n < 0 && n >= -7) ds.push({ id: "tre-" + h.id, icon: "🐢", muc: "gap", tieuDe: `Quá hạn: ${h.ten}`, nd: "Nộp muộn còn hơn không nộp. Nộp xong nhắn anh chị một câu nhé.", link: "#bai-tap", hw: "past", dich }); }
       });
     } else {
       const choCham = homework.reduce((a, h) => a + roster.filter(r => { const fb = feedbackAll[r.id]?.[h.id], nop = progressAll[r.id]?.baitap?.[h.id]; return (nop && !fb) || daNopLai(fb, nop); }).length, 0);
@@ -2884,7 +2884,7 @@ function capNhatNhac() {
   t.nhacViec(ds);
 }
 const bo2 = s => String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/đ/g, "d").toLowerCase();
-/* Gửi tin cho thầy trong kênh trao đổi riêng của học viên (dùng cho "Soạn tin mua hoạ cụ") */
+/* Gửi tin cho anh chị trong kênh trao đổi riêng của học viên (dùng cho "Soạn tin mua hoạ cụ") */
 window.__guiTinThay = async nd => {
   if (!db || !mail || isTeacher) throw new Error("chua-dang-nhap");
   const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 7), luc = Date.now();
@@ -2935,7 +2935,7 @@ function lvStart() {
   if (isAdmin) listenLV(collection(db, "traodoi"), snap => { lvKenh = snap.docs.map(d => ({ id: d.id, ...d.data() })); renderLV(); });
   else if (isTeacher) listenLV(query(collection(db, "traodoi"), where("vaiTro", "==", "hocvien")), snap => { lvKenh = snap.docs.map(d => ({ id: d.id, ...d.data() })); renderLV(); });
   if (!isAdmin) listenLV(doc(db, "traodoi", mail), d => { lvMine = d.exists() ? { id: d.id, ...d.data() } : null; renderLV(); });
-  if (!isTeacher) lvOpen = mail; // học viên: chỉ có 1 cuộc trò chuyện với thầy cô
+  if (!isTeacher) lvOpen = mail; // học viên: chỉ có 1 cuộc trò chuyện với anh chị
   if (isAdmin) khoStart();
 }
 function lvOnShow() {
@@ -2960,14 +2960,14 @@ function renderLV() {
   if (!$("#lv-body")) return;
   $("#lv-intro").textContent = isAdmin ? "Nhắn tin với học viên và giáo viên, đăng thông báo, giao việc cho giáo viên."
     : isTeacher ? "Nhắn tin với học viên và quản lý, xem thông báo và việc được giao."
-    : "Nhắn tin riêng với thầy cô và xem thông báo của lớp.";
+    : "Nhắn tin riêng với anh chị và xem thông báo của lớp.";
   $("#tb-gui").disabled = !isAdmin; if (!isAdmin) $("#tb-gui").value = "tatca";
   let warn = $("#lv-warn");
   if (lvErr) {
     if (!warn) { warn = document.createElement("p"); warn.id = "lv-warn"; warn.className = "sv-status bad"; $("#lv-body").prepend(warn); }
     warn.innerHTML = lvErr === "permission-denied"
-      ? (isAdmin ? `<b>⚠ Khu Trao đổi cần luật bảo mật mới.</b> Thầy vào trang <a href="#duyet">Duyệt</a>, bấm "Sao chép luật mới" rồi dán vào Firebase như lần trước.`
-                 : "Khu Trao đổi đang được thầy cập nhật, em quay lại sau nhé.")
+      ? (isAdmin ? `<b>⚠ Khu Trao đổi cần luật bảo mật mới.</b> Anh chị vào trang <a href="#duyet">Duyệt</a>, bấm "Sao chép luật mới" rồi dán vào Firebase như lần trước.`
+                 : "Khu Trao đổi đang được anh chị cập nhật, em quay lại sau nhé.")
       : "Mạng chập chờn, chưa tải được tin nhắn. Đang thử lại…";
     warn.hidden = false;
   } else if (warn) warn.hidden = true;
@@ -2979,7 +2979,7 @@ function renderLV() {
 
 /* ----- Tin nhắn ----- */
 function tenKenh(k) {
-  if (!isTeacher) return "Thầy cô lớp Thạch Thất";
+  if (!isTeacher) return "Anh chị lớp Thạch Thất";
   if (k === mail) return "Quản lý lớp";
   const m = lvKenh.find(x => x.id === k), r = roster.find(x => x.id === k), g = teachers.find(x => x.id === k);
   return (m && m.ten) || (r && r.ten) || (g && g.ten) || k;
@@ -3048,7 +3048,7 @@ function renderChat() {
   if (!lvOpen) return;
   const k = lvOpen;
   $("#chat-ten").textContent = tenKenh(k);
-  $("#chat-sub").textContent = !isTeacher ? "Tin nhắn riêng, chỉ thầy cô của lớp đọc được."
+  $("#chat-sub").textContent = !isTeacher ? "Tin nhắn riêng, chỉ anh chị của lớp đọc được."
     : k === mail ? "Chỉ quản lý đọc được." : vaiTroKenh(k) === "giaovien" ? " · Giáo viên" : " · Học viên — giáo viên và quản lý cùng xem";
   $("#chat-back").hidden = !isTeacher;
   const all = lvMsgs.concat(lvPending);
@@ -3060,7 +3060,7 @@ function renderChat() {
       <div class="msg${toi ? " toi" : ""}${m._dang ? " dang" : ""}${m._loi ? " loi" : ""}">
         ${!toi && !nhom ? `<span class="m-who">${esc(m.ten || m.tu)}${m.vt && m.vt !== "hv" ? ` · ${VT_TEN[m.vt]}` : ""}</span>` : ""}
         <p>${esc(m.nd)}</p><span class="m-time num">${m._loi ? "Chưa gửi được" : m._dang ? "Đang gửi…" : esc(new Date(m.luc).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" }))}</span></div>`;
-  }).join("") : `<p class="muted m-empty">${!isTeacher ? "Em có câu hỏi về bài vẽ, lịch học hay xin nghỉ? Nhắn ở đây, thầy cô sẽ trả lời sớm." : "Chưa có tin nhắn. Gõ tin đầu tiên ở bên dưới."}</p>`;
+  }).join("") : `<p class="muted m-empty">${!isTeacher ? "Em có câu hỏi về bài vẽ, lịch học hay xin nghỉ? Nhắn ở đây, anh chị sẽ trả lời sớm." : "Chưa có tin nhắn. Gõ tin đầu tiên ở bên dưới."}</p>`;
   if (atBottom || all.length && all[all.length - 1].tu === mail) box.scrollTop = box.scrollHeight;
 }
 $("#chat-nd").addEventListener("input", e => { const t = e.target; t.style.height = "auto"; t.style.height = Math.min(t.scrollHeight, 140) + "px"; });
@@ -3103,10 +3103,10 @@ function renderTB() {
 }
 // Mẫu thông báo có sẵn: chọn mẫu sẽ điền tiêu đề và nội dung, người viết sửa phần trong [ ]
 const MAU_TB = {
-  top: ["🏆 Top bài vẽ tuần [số tuần]", "Chúc mừng các em [tên 1], [tên 2], [tên 3], [tên 4], [tên 5].\nXem bài và nhận xét của thầy trong mục Bài nổi bật."],
+  top: ["🏆 Top bài vẽ tuần [số tuần]", "Chúc mừng các em [tên 1], [tên 2], [tên 3], [tên 4], [tên 5].\nXem bài và nhận xét của anh chị trong mục Bài nổi bật."],
   xuatsac: ["⭐ Bài tập [tên bài] được chấm Xuất sắc", "Bài của em [tên học viên] đã được đăng lên Bài vẽ học viên.\nCác em xem để học cách bố cục và xử lý sắc độ."],
   tintuc: ["📢 [Tiêu đề tin]", "[Một hai câu tóm tắt tin].\nBấm Xem chi tiết trong mục Tin nổi bật để đọc đầy đủ."],
-  lichhoc: ["📅 Thay đổi lịch học tuần [số tuần]", "Lớp [tên lớp] chuyển từ [giờ cũ] sang [giờ mới] vào [ngày].\nCác em sắp xếp thời gian giúp thầy nhé."],
+  lichhoc: ["📅 Thay đổi lịch học tuần [số tuần]", "Lớp [tên lớp] chuyển từ [giờ cũ] sang [giờ mới] vào [ngày].\nCác em sắp xếp thời gian giúp anh chị nhé."],
   baitap: ["✏️ Bài tập mới: [tên bài]", "Hạn nộp: [ngày giờ].\nCác em chụp bài (tối đa 3 ảnh) và nộp trong mục Bài tập."],
   online: ["🎨 Mở đăng ký lớp online", "Lớp luyện thi online của Dreamers sắp khai giảng [tháng].\nĐăng ký nhận lịch sớm ngay tại trang chủ."]
 };
@@ -3197,7 +3197,7 @@ function renderViec() {
     const tre = !c.xong && c.han && c.han < today;
     return `<li class="cv${c.xong ? " xong" : ""}${tre ? " tre" : ""}">
       <label class="cv-chk"><input type="checkbox" data-cv="${esc(c.id)}" ${c.xong ? "checked" : ""}><span>${esc(c.viec)}</span></label>
-      <span class="cv-meta muted">${c.cho === "tatca" ? "Tất cả giáo viên" : esc((teachers.find(t => t.id === c.cho) || {}).ten || (c.cho === mail ? "Thầy/cô" : c.cho))}
+      <span class="cv-meta muted">${c.cho === "tatca" ? "Tất cả giáo viên" : esc((teachers.find(t => t.id === c.cho) || {}).ten || (c.cho === mail ? "Anh/chị" : c.cho))}
         ${c.han ? ` · ${tre ? "<b>Quá hạn</b> " : "Hạn "}${esc(new Date(c.han + "T00:00").toLocaleDateString("vi-VN"))}` : ""}
         ${c.xong ? ` · Xong bởi ${esc(c.xongBoi || "")}` : ""}</span>
       ${isAdmin ? `<button type="button" class="btn small" data-xcv="${esc(c.id)}">Xoá</button>` : ""}</li>`;
@@ -3302,7 +3302,7 @@ async function onUser(u) {
   }
   // Máy chủ không trả lời trong 8 giây thì coi như chưa hỏi được (để dùng quyền đã lưu và tự thử lại), không để treo mãi
   const hanTuoi = p => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej({ code: "timeout" }), 8000))]);
-  let tuChoiQuyen = false, tuLoi = ""; // tuChoiQuyen: máy chủ từ chối đọc; tuLoi: mã lỗi để báo thầy
+  let tuChoiQuyen = false, tuLoi = ""; // tuChoiQuyen: máy chủ từ chối đọc; tuLoi: mã lỗi để báo anh chị
   const exists = async (col) => { try { return (await hanTuoi(getDoc(doc(db, col, mail)))).exists(); } catch (e) { if (e && e.code === "permission-denied") tuChoiQuyen = true; return false; } };
   // Hỏi cả 4 thông tin cùng lúc thay vì lần lượt, để trang hiện nhanh hơn.
   const getData = async (col) => {
@@ -3340,11 +3340,11 @@ async function onUser(u) {
     } else if (tuChoiQuyen) {
       // Bị từ chối quyền đọc: không để "đang kiểm tra" mãi. Hiện rõ hướng xử lý, vẫn tự thử lại ngầm.
       renderLocks("pending"); renderAccount(false);
-      if (u.__thuLai === 1) toast("Máy chủ từ chối đọc tài khoản. Em thử tải lại trang (hoặc đăng xuất rồi đăng nhập lại); nếu vẫn vậy, báo thầy kiểm tra.", "err");
+      if (u.__thuLai === 1) toast("Máy chủ từ chối đọc tài khoản. Em thử tải lại trang (hoặc đăng xuất rồi đăng nhập lại); nếu vẫn vậy, báo anh chị kiểm tra.", "err");
       return;
     } else if (u.__thuLai >= 2) {
       // Đã thử lại mà vẫn chưa đọc được: hiện rõ mã lỗi và nút tải lại, không để "đang kiểm tra" mãi.
-      $$("[data-lock]").forEach(el => { el.hidden = false; el.innerHTML = `<h3>Chưa đọc được hồ sơ tài khoản</h3><p class="muted">Máy chủ chưa trả lời (mã: ${esc(tuLoi)}). Web vẫn tự thử lại. Thử tải lại trang; nếu vẫn vậy, chụp màn hình này gửi thầy.</p><div class="ctas"><button class="btn primary" type="button" onclick="location.reload()">Tải lại ngay</button></div>`; });
+      $$("[data-lock]").forEach(el => { el.hidden = false; el.innerHTML = `<h3>Chưa đọc được hồ sơ tài khoản</h3><p class="muted">Máy chủ chưa trả lời (mã: ${esc(tuLoi)}). Web vẫn tự thử lại. Thử tải lại trang; nếu vẫn vậy, chụp màn hình này gửi anh chị.</p><div class="ctas"><button class="btn primary" type="button" onclick="location.reload()">Tải lại ngay</button></div>`; });
       return;
     } else {
       renderLocks("checking");
@@ -3360,7 +3360,7 @@ async function onUser(u) {
       await setDoc(doc(db, "yeucau", mail), { ...unsent, guiLuc: Date.now() });
       store.set(UNSENT + mail, null); dropDraft("nhap-tk-" + mail);
       pending = unsent; guiEmailThongBao(unsent, "Phiếu này trước đó chưa lưu được, nay đã tự gửi lại thành công.");
-      toast("Phiếu của em đã gửi được cho thầy.");
+      toast("Phiếu của em đã gửi được cho anh chị.");
     } catch (e) { /* vẫn lỗi: để lần sau thử tiếp */ }
     if (mail !== (u.email || "").toLowerCase() || user !== u) return;
   }
@@ -3368,11 +3368,11 @@ async function onUser(u) {
   saveSession(pending);
   renderLocks(canLearn ? "ok" : "pending");
   renderAccount(pending);
-  // Theo dõi quyền theo thời gian thực: thầy vừa duyệt là màn hình học viên tự mở khoá,
+  // Theo dõi quyền theo thời gian thực: anh chị vừa duyệt là màn hình học viên tự mở khoá,
   // bị thu hồi thì tự khoá — không phải bấm tải lại.
   const watchRole = (col, has) => unsubs.push(onSnapshot(doc(db, col, mail), d => {
     if (user !== u || d.exists() === has) return;
-    if (!has) toast(col === "giaovien" ? "Quản lý đã duyệt thầy/cô làm giáo viên!" : "Thầy đã duyệt! Em vào học được rồi.");
+    if (!has) toast(col === "giaovien" ? "Quản lý đã duyệt anh/chị làm giáo viên!" : "Anh chị đã duyệt! Em vào học được rồi.");
     onUser(u);
   }, () => {}));
   if (!isAdmin) {
@@ -3463,7 +3463,7 @@ async function startFirebase() {
     catch (e) { db = getFirestore(app); }
     // Mở sẵn kết nối tới máy chủ ngay khi vào trang, để lúc đăng nhập không phải chờ.
     getDoc(doc(db, "admins", "_mo-ket-noi")).catch(() => {});
-    // XP thưởng & thành tựu thầy trao trên web: ai cũng xem được (hiện ở Top rank)
+    // XP thưởng & thành tựu anh chị trao trên web: ai cũng xem được (hiện ở Top rank)
     onSnapshot(collection(db, "xephang"), snap => {
       const all = snap.docs.map(d => ({ id: d.id, ...d.data() }));
       XP_DONG = all.filter(x => x.loai === "xp").map(x => ({ ...x, xp: Number(x.xp) || 0 }));
@@ -3472,7 +3472,7 @@ async function startFirebase() {
       veTopRank(); dispatchEvent(new Event("xephang-doi"));
       try { renderTiles(); renderMyProg(); renderXHQL(); } catch (e) {}
     }, () => { xhLoi = true; try { renderXHQL(); } catch (e) {} });
-    // Bài vẽ thầy cô đăng + Top 5 quản lý chọn: ai cũng xem được trên trang chủ
+    // Bài vẽ anh chị đăng + Top 5 quản lý chọn: ai cũng xem được trên trang chủ
     onSnapshot(collection(db, "baive"), snap => {
       BAIVE_DONG = snap.docs.map(d => ({ id: d.id, ...d.data() })).map(b => ({ ...b, hang: Number(b.hang) || 0 })); baiVeLoi = false;
       // Gom các lần dữ liệu thay đổi liên tiếp (ví dụ khi đang chuyển bài) thành một lần vẽ lại, tránh ảnh chớp
@@ -3515,8 +3515,8 @@ function pwError(e) {
     "auth/invalid-email": "Gmail viết chưa đúng. VD: tenem@gmail.com",
     "auth/too-many-requests": "Thử sai nhiều lần quá. Chờ vài phút rồi thử lại, hoặc bấm “Quên mật khẩu?”.",
     "auth/network-request-failed": "Mất kết nối mạng. Kiểm tra wifi/4G rồi thử lại.",
-    "auth/operation-not-allowed": "Đăng nhập bằng mật khẩu chưa được bật. Thầy vào Firebase → Authentication → Sign-in method → Email/Password → Enable → Save.",
-    "auth/configuration-not-found": "Firebase Authentication chưa được bật. Thầy vào Firebase → Authentication → Get started → bật Email/Password.",
+    "auth/operation-not-allowed": "Đăng nhập bằng mật khẩu chưa được bật. Anh chị vào Firebase → Authentication → Sign-in method → Email/Password → Enable → Save.",
+    "auth/configuration-not-found": "Firebase Authentication chưa được bật. Anh chị vào Firebase → Authentication → Get started → bật Email/Password.",
     "auth/invalid-api-key": "Mã kết nối Firebase không đúng. Kiểm tra lại file config/firebase-config.js.",
     "auth/internal-error": "Lỗi tạm thời từ máy chủ. Thử lại sau ít phút."
   })[c] || `Chưa làm được (mã lỗi: ${c || "không rõ"}). Thử lại sau ít phút.`;
@@ -3653,7 +3653,7 @@ function submitTo(form, statusEl, busy, okMsg, write, keep) {
     });
   });
 }
-/* Đăng ký tài khoản: lưu vào Firebase + gửi email báo cho thầy */
+/* Đăng ký tài khoản: lưu vào Firebase + gửi email báo cho anh chị */
 const cleanPhone = x => String(x || "").replace(/[\s.\-()]/g, "");
 const okPhone = x => /^(0|\+84)\d{9,10}$/.test(cleanPhone(x));
 let regSent = "";
@@ -3685,8 +3685,8 @@ $("#f-reg").addEventListener("submit", async ev => {
   setDoc(doc(db, "yeucau", mail), data).then(() => {
     mark("✓ Gửi đăng ký", t);
     dropDraft("nhap-tk-" + forMail); store.set(UNSENT + forMail, null);
-    toast("Đã gửi cho thầy. Thầy duyệt xong, trang tự mở khoá.");
-    // Bấm gửi nhiều lần (hoặc sửa mà không đổi gì) thì không gửi email trùng cho thầy.
+    toast("Đã gửi cho anh chị. Anh chị duyệt xong, trang tự mở khoá.");
+    // Bấm gửi nhiều lần (hoặc sửa mà không đổi gì) thì không gửi email trùng cho anh chị.
     const sig = JSON.stringify({ ...data, guiLuc: 0 });
     if (sig !== regSent) { regSent = sig; guiEmailThongBao(data); }
   }, e => {
@@ -3697,8 +3697,8 @@ $("#f-reg").addEventListener("submit", async ev => {
     const code = (e && e.code) || "loi";
     st.classList.add("err");
     if (code === "permission-denied" || code === "failed-precondition" || code === "not-found") {
-      st.textContent = "Máy chủ của lớp đang chưa nhận phiếu (lỗi cài đặt phía thầy, không phải lỗi của em). Thầy đã được báo qua email. Lần sau em mở lại trang này, phiếu sẽ tự gửi lại.";
-      guiEmailThongBao(data, "PHIẾU CHƯA LƯU ĐƯỢC LÊN WEB (mã lỗi: " + code + "). Thầy mở trang Duyệt học viên để xem cách sửa.");
+      st.textContent = "Máy chủ của lớp đang chưa nhận phiếu (lỗi cài đặt phía anh chị, không phải lỗi của em). Anh chị đã được báo qua email. Lần sau em mở lại trang này, phiếu sẽ tự gửi lại.";
+      guiEmailThongBao(data, "PHIẾU CHƯA LƯU ĐƯỢC LÊN WEB (mã lỗi: " + code + "). Anh chị mở trang Duyệt học viên để xem cách sửa.");
     } else {
       st.textContent = "Mạng yếu nên chưa gửi được. Kiểm tra wifi/4G rồi bấm Gửi lại (chữ em đã điền vẫn còn).";
     }
@@ -3719,7 +3719,7 @@ function applyRoleFields() {
   });
   $("#f-reg .chi-hv-text").textContent = gv
     ? "Tôi đồng ý gửi thông tin này cho quản lý lớp để duyệt tài khoản giáo viên."
-    : "Bố mẹ em đã đồng ý cho em gửi thông tin này. Chỉ thầy cô của lớp xem được.";
+    : "Bố mẹ em đã đồng ý cho em gửi thông tin này. Chỉ anh chị của lớp xem được.";
 }
 $$("#f-reg .chi-hv [required], #f-reg .chi-hv[required]").forEach(i => i.dataset.req = "1");
 $$("#f-reg label.chi-hv > input[required], #f-reg label.chi-hv > select[required]").forEach(i => i.dataset.req = "1");
@@ -3743,7 +3743,7 @@ $("#btn-check").onclick = async () => {
   if (!auth || !auth.currentUser) { location.reload(); return; }
   b.disabled = true; b.textContent = "Đang kiểm tra…";
   try { await onUser(auth.currentUser); } finally { b.disabled = false; b.textContent = "Kiểm tra lại"; }
-  if (!approved && !isTeacher) toast("Thầy chưa duyệt. Khi thầy duyệt, trang này tự mở khoá, em không cần bấm lại.");
+  if (!approved && !isTeacher) toast("Anh chị chưa duyệt. Khi anh chị duyệt, trang này tự mở khoá, em không cần bấm lại.");
 };
 
 function guiEmailThongBao(d, canhBao) {
@@ -3780,9 +3780,9 @@ submitTo($("#f-hv"), $("#hv-status"), "Đang duyệt…", "Đã duyệt. Ngườ
 /* ---------- Nạp giáo trình có sẵn ---------- */
 $("#btn-seed").onclick = async () => {
   const st = $("#seed-status"); st.textContent = "Đang nạp…";
-  // Chỉ tải giáo trình mẫu khi thầy bấm nạp (đỡ nặng trang cho mọi người khác)
-  const { GIAO_TRINH_MAU } = await import("../../data/giao-trinh-mau.js?v=20261009f");
-  const { BAN, BAI_HOC } = await import("../../data/bai-hoc.js?v=20261009f");
+  // Chỉ tải giáo trình mẫu khi anh chị bấm nạp (đỡ nặng trang cho mọi người khác)
+  const { GIAO_TRINH_MAU } = await import("../../data/giao-trinh-mau.js?v=20261010bf");
+  const { BAN, BAI_HOC } = await import("../../data/bai-hoc.js?v=20261010bf");
   const batch = writeBatch(db);
   GIAO_TRINH_MAU.forEach(([id, khoa, ten, loai, thutu, buoc, ghichu]) => batch.set(doc(db, "giaotrinh", id), { khoa, ten, loai, thutu, buoc, ghichu }));
   BAI_HOC.forEach(({ id, ...d }) => batch.set(doc(db, "giaotrinh", id), { ...d, buoc: [], ghichu: "" }));
@@ -3871,7 +3871,7 @@ function moDangBai(sua) {
       <datalist id="bv-ds">${tenHV.map(t => `<option value="${esc(t)}">`).join("")}</datalist>
       <fieldset class="chon-loai"><legend>Đây là bài gì? *</legend>${LOAI_BAI.map(l => `<label><input type="radio" name="bv-loai" value="${esc(l.ten)}"${s.loai === l.ten ? " checked" : ""}><span>${esc(l.ten)}</span></label>`).join("")}</fieldset>
       <label>Người vẽ là<select id="bv-vaitro">${["Học viên", "Trợ giảng", "Giáo viên", "Quản lý"].map(v => `<option${(s.chucVu || "Học viên") === v ? " selected" : ""}>${v}</option>`).join("")}</select></label>
-      <label>Biệt danh (không bắt buộc)<input id="bv-bidanh" maxlength="30" autocomplete="off" placeholder="VD: Thầy Gấu, Cô Mây" value="${esc(biDanhCua(s))}"></label>
+      <label>Biệt danh (không bắt buộc)<input id="bv-bidanh" maxlength="30" autocomplete="off" placeholder="VD: Anh Gấu, Chị Mây" value="${esc(biDanhCua(s))}"></label>
       <label>Ghi chú<input id="bv-gc" maxlength="120" placeholder="VD: Bố cục màu tuần 3 · 8,5 điểm" value="${esc(s.ghiChu || "")}"></label>
       <label>Mô tả ngắn bức tranh (không bắt buộc)<textarea id="bv-mota" maxlength="300" rows="3" placeholder="VD: Tĩnh vật bình hoa huệ và chai thủy tinh, bố cục chéo, sáng tối mạnh ở thân bình">${esc(s.moTa || "")}</textarea></label>
       <label>Giáo viên hướng dẫn<input id="bv-gvhd" list="bv-gv" maxlength="80" autocomplete="off" placeholder="VD: Nguyễn Văn Hùng" value="${esc(s.gvhd || "")}"></label>
@@ -4173,7 +4173,7 @@ function renderTop5() {
     <div class="tq5">${[1, 2, 3, 4, 5].map(k => { const b = o(k); return `<div class="t5-o h${k}">
       <span class="t5-so">TOP ${k}</span>${b ? `<img src="${esc(b.anh)}" alt="">` : `<span class="t5-trong">Trống</span>`}
       <select data-t5="${k}" aria-label="Chọn bài Top ${k}"><option value="">${b ? "— Bỏ khỏi Top —" : "Chọn bài…"}</option>${gan.map(x => `<option value="${esc(x.id)}"${b && b.id === x.id ? " selected" : ""}>${esc(x.hocVien)} · ${esc(x.loai)} · ${ngayVN(x.ngay)}</option>`).join("")}</select></div>`; }).join("")}</div>
-    <p><button type="button" class="btn primary" data-dang-bai>+ Đăng bài vẽ mới</button> <span class="muted">${gan.length} bài thầy cô đăng trong 45 ngày qua</span></p>`;
+    <p><button type="button" class="btn primary" data-dang-bai>+ Đăng bài vẽ mới</button> <span class="muted">${gan.length} bài anh chị đăng trong 45 ngày qua</span></p>`;
   $$("#ql-top5 [data-t5]").forEach(s => s.onchange = () => {
     const k = Number(s.dataset.t5), cu = o(k), id = s.value;
     (id ? datTop(id, k) : cu ? datTop(cu.id, 0) : Promise.resolve()).then(() => toast(id ? `Đã đặt Top ${k} tuần.` : `Đã bỏ Top ${k}.`)).catch(() => { toast("Chưa lưu được. Kiểm tra mạng hoặc luật bảo mật.", "err"); renderTop5(); });
