@@ -26,7 +26,7 @@ jobs:
       - uses: actions/configure-pages@v5
       # Gắn mã phiên bản mới vào đường dẫn file, để trình duyệt luôn tải bản mới nhất.
       - name: Gắn mã phiên bản
-        run: sed -i -E "s/\?v=[0-9A-Za-z]+/?v=${GITHUB_SHA::8}/g" index.html assets/js/app.js
+        run: sed -i -E "s/\?v=[0-9A-Za-z]+/?v=${GITHUB_SHA::8}/g" index.html assets/js/*.js
       - uses: actions/upload-pages-artifact@v3
         with:
           path: .

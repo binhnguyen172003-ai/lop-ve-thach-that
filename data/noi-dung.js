@@ -239,3 +239,54 @@ export const XP_THUONG = [
 export const AVATAR = {
   "Đặng Huy Hoàn": "assets/img/avatar/dang-huy-hoan.webp",
 };
+
+// ===== HOẠ CỤ BÁN TẠI LỚP (theo sổ "HỌA CỤ" tháng 07) =====
+// gia: giá bán cho học viên · von: giá nhập · loai: Hình hoạ / Màu / MT2 / Phụ kiện
+// can: các khoá nên mua món này (để trợ lý gợi ý)
+export const HOA_CU = [
+  { ma: "chi-koh", ten: "Bút chì KOH", loai: "Hình hoạ", gia: 12000, von: 8800, can: ["Cơ bản", "Khối H", "Khối V"] },
+  { ma: "tay", ten: "Tẩy", loai: "Hình hoạ", gia: 7000, von: 5000, can: ["Cơ bản", "Khối H", "Khối V"] },
+  { ma: "tay-ganh", ten: "Tẩy ganh", loai: "Hình hoạ", gia: 5000, von: 1800, can: ["Cơ bản", "Khối H", "Khối V"] },
+  { ma: "tay-dat-set", ten: "Tẩy đất sét", loai: "Hình hoạ", gia: 9000, von: 6000, can: ["Khối H", "Khối V"] },
+  { ma: "bang-a3", ten: "Bảng vẽ A3", loai: "Hình hoạ", gia: 15000, von: 8500, can: ["Cơ bản", "Khối H", "Khối V"] },
+  { ma: "bang-dinh", ten: "Băng dính giấy", loai: "Hình hoạ", gia: 5000, von: 2750, can: ["Cơ bản", "Khối H", "Khối V"] },
+  { ma: "bo-but", ten: "Bộ bút cơ bản", loai: "Hình hoạ", gia: 120000, von: 91000, can: ["Cơ bản"] },
+  { ma: "dao", ten: "Dao gọt chì", loai: "Hình hoạ", gia: 15000, von: 12500, can: ["Cơ bản", "Khối H", "Khối V"] },
+  { ma: "luoi-dao", ten: "Lưỡi dao", loai: "Hình hoạ", gia: 18000, von: 12000, can: [] },
+  { ma: "noi-1", ten: "Nối bút 1 đầu", loai: "Hình hoạ", gia: 9000, von: 7000, can: [] },
+  { ma: "noi-2", ten: "Nối bút 2 đầu", loai: "Hình hoạ", gia: 12000, von: 9000, can: [] },
+  { ma: "giay-a1", ten: "Giấy A1 (tờ)", loai: "Hình hoạ", gia: 2500, von: 1400, can: ["Khối H", "Khối V"] },
+  { ma: "3let", ten: "3 let", loai: "Hình hoạ", gia: 28000, von: 22000, can: [] },
+  { ma: "di-bay", ten: "Di bay", loai: "Hình hoạ", gia: 30000, von: 24000, can: [] },
+  { ma: "di-chi", ten: "Di chì", loai: "Hình hoạ", gia: 15000, von: 10000, can: [] },
+  { ma: "co", ten: "Cọ", loai: "Màu", gia: 15000, von: 9500, can: ["Khối H"] },
+  { ma: "ho", ten: "Hồ", loai: "Màu", gia: 5000, von: 2666, can: ["Khối H"] },
+  { ma: "lo-ho", ten: "Lọ nước hồ", loai: "Màu", gia: 8000, von: 3200, can: [] },
+  { ma: "bot-nang", ten: "Màu bột nặng", loai: "Màu", gia: 12000, von: 8000, can: ["Khối H"] },
+  { ma: "bot-do", ten: "Màu bột đỏ", loai: "Màu", gia: 20000, von: 13000, can: [] },
+  { ma: "bot-xanh", ten: "Màu bột xanh", loai: "Màu", gia: 24000, von: 18000, can: [] },
+  { ma: "pentel", ten: "Màu Pentel", loai: "Màu", gia: 360000, von: 310000, can: [] },
+  { ma: "pay", ten: "Pay (bảng pha)", loai: "Màu", gia: 16000, von: 12000, can: ["Khối H"] },
+  { ma: "xit-am", ten: "Xịt ẩm màu", loai: "Màu", gia: 39000, von: 34000, can: [] },
+  { ma: "xo-nho", ten: "Xô rửa cọ nhỏ", loai: "Màu", gia: 38000, von: 32184, can: ["Khối H"] },
+  { ma: "xo-to", ten: "Xô rửa cọ to", loai: "Màu", gia: 45000, von: 35100, can: [] },
+  { ma: "hop-bot", ten: "Hộp đựng bột màu", loai: "Màu", gia: 2000, von: 1100, can: [] },
+  { ma: "hop-pha", ten: "Hộp pha màu sẵn", loai: "Màu", gia: 16000, von: 13000, can: [] },
+  { ma: "hop-bao-quan", ten: "Hộp bảo quản màu", loai: "Màu", gia: 40000, von: 39000, can: [] },
+  { ma: "khan-giay", ten: "Khăn giấy", loai: "Màu", gia: 9000, von: 7500, can: [] },
+  { ma: "chi-duc", ten: "Bút chì Đức đen", loai: "MT2", gia: 20000, von: 16000, can: ["Khối V"] },
+  { ma: "compa", ten: "Compa", loai: "MT2", gia: 16000, von: 14000, can: ["Khối V"] },
+  { ma: "sketch", ten: "Sổ sketch", loai: "MT2", gia: 45000, von: 38000, can: [] },
+  { ma: "thuoc", ten: "Thước kỹ thuật", loai: "MT2", gia: 20000, von: 17000, can: ["Khối V"] },
+  { ma: "combo-mt2-kv", ten: "Combo MT2 Khối V", loai: "MT2", gia: 101000, von: 77500, can: ["Khối V"] },
+  { ma: "combo-mt2-kh", ten: "Combo MT2 Khối H", loai: "MT2", gia: 81000, von: 69000, can: [] },
+  { ma: "moc-combo-mtcn", ten: "Móc combo MTCN", loai: "Phụ kiện", gia: 35000, von: 13200, can: [] },
+  { ma: "ghim", ten: "Ghim cài áo", loai: "Phụ kiện", gia: 15000, von: 6000, can: [] },
+  { ma: "moc-hau", ten: "Móc khoá HAU", loai: "Phụ kiện", gia: 20000, von: 6600, can: [] },
+  { ma: "moc-mtcn", ten: "Móc khoá MTCN", loai: "Phụ kiện", gia: 20000, von: 6600, can: [] },
+  { ma: "moc-tom", ten: "Móc khoá tôm", loai: "Phụ kiện", gia: 20000, von: 6600, can: [] },
+  { ma: "moc-capy", ten: "Móc khoá Capy", loai: "Phụ kiện", gia: 20000, von: 0, can: [] },
+  { ma: "sticker", ten: "Sticker (bộ 5)", loai: "Phụ kiện", gia: 5000, von: 2000, can: [] },
+];
+// Số tồn theo sổ tháng 07 — dùng làm số đầu kỳ khi mở Kho lần đầu (thầy kiểm kho thực tế rồi sửa trên web)
+export const TON_DAU_KY = { "chi-koh": 73, tay: 6, "tay-ganh": 31, "tay-dat-set": 3, "bang-a3": 15, "bang-dinh": 9, "bo-but": 12, dao: 9, "luoi-dao": 4, "noi-1": 1, "giay-a1": 50, "3let": 10, "di-bay": 2, "di-chi": 3, co: 40, ho: 9, "lo-ho": 32, "bot-nang": 26, "bot-do": 15, "bot-xanh": 19, pentel: 3, pay: 10, "xit-am": 4, "xo-nho": 17, "xo-to": 1, "hop-bot": 60, "khan-giay": 16, "chi-duc": 21, sketch: 4, thuoc: 3, "combo-mt2-kv": 3, "moc-capy": 16 };

@@ -21,6 +21,8 @@ async function loadFirebase() {
 }
 
 const $ = s => document.querySelector(s);
+// Trợ lý (chat + nhắc việc) tải riêng, không làm chậm trang
+const troLyPromise = import("./tro-ly.js?v=20261009b").catch(e => console.warn("Chưa tải được trợ lý", e));
 window.__appOk = true;
 document.querySelectorAll(".slow-bar").forEach(el => el.remove());
 
@@ -670,8 +672,8 @@ document.addEventListener("keydown", e => {
     { ma: "lt-co-ban", ten: "Hình hoạ cơ bản", cho: "Người mới bắt đầu · nền tảng cho cả Khối H và V", mau: "#c9d1dc" },
     { ma: "tuong-lo-trinh", ten: "Hình hoạ tượng", cho: "Khối V · thi Kiến trúc, Xây dựng", mau: "#e0b97a", them: "hh-quy-trinh" },
     { ma: "hhn-lo-trinh", ten: "Hình hoạ người", cho: "Khối H · thi Mỹ thuật Công nghiệp, Sư phạm", mau: "#f39b6d", them: "hhn-11-chuyen-de" },
-    { ma: "mau-lo-trinh", ten: "Màu & bố cục màu", cho: "Khối H, V · bố cục trang trí màu", mau: "#ff5fa2", them: "bcm-trinh-tu" },
-    { ma: "mt2-lo-trinh", ten: "Mỹ thuật 2", cho: "Khối H · tư duy sáng tạo, bố cục", mau: "#57a6ff", them: "mt2-yeu-to" },
+    { ma: "mau-lo-trinh", ten: "Màu & bố cục màu", cho: "Khối H · bố cục trang trí màu", mau: "#ff5fa2", them: "bcm-trinh-tu" },
+    { ma: "mt2-lo-trinh", ten: "Mỹ thuật 2", cho: "Khối V · tư duy sáng tạo, bố cục", mau: "#57a6ff", them: "mt2-yeu-to" },
   ].map(m => ({ ...m, d: GT_LO_TRINH.find(x => x[0] === m.ma), p: m.them && GT_LO_TRINH.find(x => x[0] === m.them) })).filter(m => m.d);
   let chon = 0;
   const tach = st => { const i = st.indexOf(" · "); return i > 0 ? [st.slice(0, i), st.slice(i + 3)] : ["", st]; };
@@ -687,6 +689,10 @@ document.addEventListener("keydown", e => {
       <p class="lt-cta">Muốn biết em nên bắt đầu từ đâu? <a href="#dang-ky">Đăng ký học thử để thầy xếp lộ trình riêng →</a></p>`;
     tabs.querySelectorAll("button").forEach(b => b.onclick = () => { chon = +b.dataset.i; ve(); });
   };
+  // Bấm "Lộ trình học" trên menu / link #lo-trinh → tự mở thẻ
+  const moThe = () => { if (location.hash === "#lo-trinh") $("#lt-wrap").open = true; };
+  addEventListener("hashchange", moThe); moThe();
+  document.addEventListener("click", e => { const a = e.target.closest && e.target.closest('a[href="#lo-trinh"]'); if (a) $("#lt-wrap").open = true; });
   tabs.addEventListener("keydown", e => { if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return; chon = (chon + (e.key === "ArrowRight" ? 1 : MON.length - 1)) % MON.length; ve(); tabs.querySelectorAll("button")[chon].focus(); });
   ve();
 })();
@@ -1276,6 +1282,7 @@ function renderAccount(pending) {
     $("#who-status").innerHTML = ""; $("#who-avatar").hidden = true;
     $("#nav-acct-t").textContent = "Đăng nhập";
     { const k = $("#nav-ka"); if (k) { k.remove(); $("#nav-acct").classList.remove("has-ka"); } }
+    baoTroLy(false);
     setStep(1); return;
   }
   $("#who-name").textContent = user.displayName || "Xin chào";
@@ -1354,7 +1361,21 @@ function renderLessons() {
 }
 
 /* ---------- Bài tập ---------- */
+/* ---------- Chấm theo 3 tiêu chí: chưa đạt thì học viên phải nộp lại ---------- */
+const TIEU_CHI = [["hinh", "Hình cơ bản"], ["sacdo", "Sắc độ"], ["tongthe", "Tổng thể"]];
+const nopLuc = v => typeof v === "number" ? v : (v ? 1 : 0);          // thời điểm học viên bấm nộp (bản cũ lưu true)
+const canLamLai = (fb, nop) => fb && fb.trangThai === "lamlai" && !(nopLuc(nop) > (fb.luc || 0));
+const daNopLai = (fb, nop) => fb && fb.trangThai === "lamlai" && nopLuc(nop) > (fb.luc || 0);
+const chuaDat = fb => TIEU_CHI.filter(([k]) => fb && fb.tieuChi && fb.tieuChi[k] === false).map(([, t]) => t);
+function nopLai(id) {
+  myProgress.baitap[id] = Date.now(); saveData();
+  timed("Nộp lại bài", setDoc(doc(db, "tiendo", mail), { bai: myProgress.bai, baitap: myProgress.baitap, anh: myAvatar || "", capNhat: Date.now() }))
+    .then(() => toast("Đã báo thầy: em đã nộp lại bài. Cố lên!"))
+    .catch(() => alertStatus("Chưa gửi được. Kiểm tra mạng rồi bấm lại."));
+  renderHomework(); if (typeof capNhatNhac === "function") capNhatNhac();
+}
 function renderHomework() {
+  try { capNhatNhac(); } catch (e) {}
   // Không vẽ lại khi giáo viên đang gõ điểm/nhận xét, tránh mất chữ đang gõ.
   const ae = document.activeElement;
   if (ae && ae.closest && ae.closest(".grade") && ae.matches("input")) { needRedraw = true; return; }
@@ -1363,7 +1384,7 @@ function renderHomework() {
   $("#hw-intro").textContent = isTeacher ? "Giao đề, chia sẻ tài liệu và theo dõi bài nộp của học viên trong một không gian." : "Đọc đề, tải tài liệu và theo dõi hạn nộp tại đây. Bài vẽ nộp trên lớp hoặc qua nhóm lớp.";
   const open = homework.filter(h => !h.han || daysUntil(h.han) >= 0);
   const soon = open.filter(h => h.han && daysUntil(h.han) <= 3);
-  const done = isTeacher ? homework.filter(h => roster.some(r => progressAll[r.id]?.baitap?.[h.id] && !feedbackAll[r.id]?.[h.id])).length : homework.filter(h => myProgress.baitap[h.id]).length;
+  const done = isTeacher ? homework.filter(h => roster.some(r => (progressAll[r.id]?.baitap?.[h.id] && !feedbackAll[r.id]?.[h.id]) || daNopLai(feedbackAll[r.id]?.[h.id], progressAll[r.id]?.baitap?.[h.id]))).length : homework.filter(h => myProgress.baitap[h.id]).length;
   $("#hw-count-open").textContent = open.length;
   $("#hw-count-past").textContent = homework.length - open.length;
   $("#hw-overview").innerHTML = `<article><span>Đang làm</span><b class="num">${open.length}</b><small>Bài còn thời gian</small></article><article><span>Sắp đến hạn</span><b class="num">${soon.length}</b><small>Trong 3 ngày tới</small></article><article><span>${isTeacher ? "Cần chấm" : "Đã nộp"}</span><b class="num">${done}</b><small>${isTeacher ? "Bài có học viên chờ chấm" : "Bài đã đánh dấu nộp"}</small></article>`;
@@ -1395,11 +1416,15 @@ function renderHomework() {
     return `<div class="hw"><div><p class="eyebrow">${esc(h.khoa)}${h.lop ? " · " + esc(h.lop) : ""}</p><h3>${esc(h.ten)}</h3></div>
       <p class="due ${n <= 1 ? "late" : ""}">${due}</p>${h.mota ? `<p class="desc">${esc(h.mota)}</p>` : ""}
       ${homeworkFilesHTML(h)}
-      ${!isTeacher && fb ? `<p class="fb"><b>Thầy nhận xét${fb.diem ? ` · Điểm ${esc(fb.diem)}` : ""}:</b> ${esc(fb.nhanXet || "")}<br><span class="muted">${esc(fb.nguoiCham || "")} · ${fmtDate(fb.luc)}</span></p>` : ""}
+      ${!isTeacher && fb ? `<p class="fb ${fb.trangThai === "lamlai" ? "lamlai" : fb.trangThai === "dat" ? "dat" : ""}"><b>Thầy nhận xét${fb.diem ? ` · Điểm ${esc(fb.diem)}` : ""}:</b> ${esc(fb.nhanXet || "")}${fb.tieuChi ? `<span class="tc-ket">${TIEU_CHI.map(([k, t]) => `<i class="${fb.tieuChi[k] === false ? "chua" : "ok"}">${fb.tieuChi[k] === false ? "✗" : "✓"} ${t}</i>`).join("")}</span>` : ""}<br><span class="muted">${esc(fb.nguoiCham || "")} · ${fmtDate(fb.luc)}</span></p>` : ""}
+      ${!isTeacher && canLamLai(fb, myProgress.baitap[h.id]) ? `<div class="lamlai-box"><b>⚠ Bài này cần làm lại</b><span>Chưa đạt: ${esc(chuaDat(fb).join(", ") || "theo nhận xét của thầy")}.${fb.hanLamLai ? ` Hạn nộp lại: <b>${ngayVN(fb.hanLamLai)}</b>` : ""} Làm lại sớm để không bị chậm tiến độ cả lớp nhé.</span><button class="btn small primary" data-nl="${esc(h.id)}">Em đã làm lại · Nộp lại</button></div>` : ""}
+      ${!isTeacher && daNopLai(fb, myProgress.baitap[h.id]) ? `<p class="nl-cho">✓ Đã nộp lại, chờ thầy chấm lại.</p>` : ""}
       <div class="acts">${isTeacher ? staffBar : studentBar}</div>
       ${isTeacher && gradeOpen.has(h.id) ? gradeTable(h) : ""}</div>`;
   }).join("");
   $$("#hw-list [data-hw]").forEach(b => b.onclick = () => toggleProgress("baitap", b.dataset.hw).then(renderHomework));
+  $$("#hw-list [data-nl]").forEach(b => b.onclick = () => nopLai(b.dataset.nl));
+  $$("#hw-list .tc-t").forEach(b => b.onclick = () => { const v = b.getAttribute("aria-pressed") !== "true"; b.setAttribute("aria-pressed", v); gradeDraft[b.dataset.key] = v; });
   $$("#hw-list [data-del]").forEach(b => confirmButton(b, () => deleteHomework(b.dataset.del)));
   $$("#hw-list [data-file]").forEach(b => b.onclick = () => downloadHomeworkFile(b));
   $$("#hw-list [data-grade]").forEach(b => b.onclick = () => {
@@ -1415,14 +1440,17 @@ function gradeTable(h) {
     const fb = (feedbackAll[r.id] || {})[h.id] || {};
     const k1 = `${h.id}|${r.id}|diem`, k2 = `${h.id}|${r.id}|nx`;
     const d = gradeDraft[k1] ?? fb.diem ?? "", nx = gradeDraft[k2] ?? fb.nhanXet ?? "";
-    return `<div class="g-row">
-      <div class="g-who"><b>${esc(r.ten)}</b> ${done ? '<span class="chip ok">Đã nộp</span>' : '<span class="chip line">Chưa nộp</span>'}
+    const tc = k => { const key = `${h.id}|${r.id}|tc-${k}`; return gradeDraft[key] ?? (fb.tieuChi ? fb.tieuChi[k] !== false : true); };
+    const nopLaiRoi = daNopLai(fb, done);
+    return `<div class="g-row ${nopLaiRoi ? "nop-lai" : ""}">
+      <div class="g-who"><b>${esc(r.ten)}</b> ${nopLaiRoi ? '<span class="chip warn">Đã nộp lại · chấm lại</span>' : fb.trangThai === "lamlai" ? '<span class="chip bad">Đang phải làm lại</span>' : done ? '<span class="chip ok">Đã nộp</span>' : '<span class="chip line">Chưa nộp</span>'}
         <span class="muted">${esc(r.chuongTrinh || r.lop || "")}</span></div>
       <div class="g-in">
         <label>Điểm<input class="g-diem" data-key="${esc(k1)}" value="${esc(d)}" maxlength="6" inputmode="decimal" placeholder="VD: 8"></label>
         <label class="g-nx-l">Nhận xét<input class="g-nx" data-key="${esc(k2)}" value="${esc(nx)}" maxlength="300" placeholder="Nhận xét ngắn"></label>
         <button class="btn small primary" data-save="${esc(h.id)}|${esc(r.id)}">${fb.luc ? "Lưu lại" : "Lưu"}</button>
-      </div></div>`;
+      </div>
+      <div class="g-tc"><span class="muted">Đạt tiêu chí (bỏ chọn nếu chưa đạt → học viên phải nộp lại):</span>${TIEU_CHI.map(([k, t]) => `<button type="button" class="tc-t" data-key="${esc(h.id)}|${esc(r.id)}|tc-${k}" data-k="${k}" aria-pressed="${tc(k)}">${t}</button>`).join("")}</div></div>`;
   }).join("");
   return `<div class="grade">${items}</div>`;
 }
@@ -1431,9 +1459,12 @@ async function saveGrade(btn) {
   const k1 = `${hid}|${email}|diem`, k2 = `${hid}|${email}|nx`;
   const row = btn.closest(".g-row");
   const diem = row.querySelector(".g-diem").value.trim(), nhanXet = row.querySelector(".g-nx").value.trim();
+  const tieuChi = {}; row.querySelectorAll(".tc-t").forEach(b => { tieuChi[b.dataset.k] = b.getAttribute("aria-pressed") === "true"; delete gradeDraft[b.dataset.key]; });
+  const dat = Object.values(tieuChi).every(Boolean);
+  const han = new Date(Date.now() + 3 * 864e5 + 7 * 36e5).toISOString().slice(0, 10);
   delete gradeDraft[k1]; delete gradeDraft[k2];
-  btn.textContent = "Đã lưu ✓";
-  timed("Lưu điểm", setDoc(doc(db, "nhanxet", email), { [hid]: { diem, nhanXet, nguoiCham: (user && user.displayName) || mail, luc: Date.now() } }, { merge: true }))
+  btn.textContent = dat ? "Đã lưu ✓" : "Đã lưu · yêu cầu làm lại";
+  timed("Lưu điểm", setDoc(doc(db, "nhanxet", email), { [hid]: { diem, nhanXet, tieuChi, trangThai: dat ? "dat" : "lamlai", hanLamLai: dat ? "" : han, nguoiCham: (user && user.displayName) || mail, luc: Date.now() } }, { merge: true }))
     .catch(() => { gradeDraft[k1] = diem; gradeDraft[k2] = nhanXet; btn.textContent = "Lỗi, bấm lưu lại"; });
 }
 $$("#hw-filter .tab").forEach(b => b.onclick = () => {
@@ -1881,6 +1912,7 @@ function renderAccNav() {
   $("#acc-nav").hidden = page === "home" || shown < 2;
 }
 function updBadges() {
+  try { capNhatNhac(); } catch (e) {}
   const tin = lvUnreadMsgs(), tb = lvUnreadTB(), viec = lvMyOpenTasks();
   const set = (id, n) => { const el = $(id); if (el) { el.textContent = n > 99 ? "99+" : n; el.hidden = !n; } };
   set("#lv-n-tin", tin); set("#lv-n-tb", tb); set("#lv-n-viec", viec);
@@ -1904,6 +1936,7 @@ function renderTiles() {
     if (hv) { const av = $("#who-avatar"); if (av) av.hidden = true; const ten = (myHv && myHv.ten) || (user && user.displayName), t = tinhRank(myDiemdanh, myProgress, myFeedback, ten), tt = tinhThanhTuu(myDiemdanh, myProgress, myFeedback, ten, homework);
       wr.innerHTML = `${khungAvatar(t.r, t.i, ten, myAvatar || (user && user.photoURL), "md")}${huyHieu(t.r, t.i, "xs", ten)}<span class="muted"><b class="num">${t.xp} XP</b> · ${tt.filter(a => a.cap).length}/${tt.length} thành tựu</span><a href="#xep-hang">Xem hạng & thành tựu ↓</a>`; } } }
   { const av = $("#av-doi"); if (av) av.hidden = !user; }
+  baoTroLy(show);
   if (!show) { box.innerHTML = ""; return; }
   const today = todayVN();
   const tin = lvUnreadMsgs(), tb = lvUnreadTB(), viec = lvMyOpenTasks();
@@ -1946,6 +1979,58 @@ function luuAvatar(url) {
   });
   const x = $("#av-xoa"); if (x) x.onclick = () => luuAvatar("");
 }
+
+/* ================= Nối với trợ lý: ai đang đăng nhập + danh sách nhắc việc ================= */
+function baoTroLy(show) {
+  troLyPromise.then(() => {
+    const t = window.__troLy; if (!t) return;
+    if (!show || !user) { t.dangNhap(null); return; }
+    const hv = myHv || {};
+    t.dangNhap({ ten: (!isTeacher && hv.ten) || user.displayName || "", mail, vaiTro: isAdmin ? "ql" : isTeacher ? "gv" : "hv",
+      khoi: String(hv.chuongTrinh || hv.khoi || hv.lop || "").match(/Khối [HV]|Cơ bản/i)?.[0] || "", coso: hv.coso || "" });
+    capNhatNhac();
+  });
+}
+const THU = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"];
+function capNhatNhac() {
+  const t = window.__troLy; if (!t || !user) return;
+  const ds = [], hom = todayVN(), thu = THU[new Date(hom + "T12:00:00").getDay()];
+  try {
+    if (!isTeacher) {
+      const cs = String((myHv && myHv.coso) || "");
+      Object.entries(THOI_GIAN_BIEU).filter(([ten]) => !cs || bo2(ten).includes(bo2(cs))).forEach(([ten, ca]) => CA_HOC.forEach(c => {
+        const mon = (ca[c.ma] || {})[thu];
+        if (mon) ds.push({ id: "hoc-" + hom + c.ma + ten, icon: "🎨", muc: "", tieuDe: `Hôm nay có buổi ${mon} · ${c.ten} ${c.gio}`, nd: `${ten}. Đi học đều +10 XP mỗi buổi, đừng để rank nằm im.`, link: "#tai-khoan" });
+      }));
+      homework.forEach(h => {
+        const fb = myFeedback[h.id], nop = myProgress.baitap[h.id];
+        if (canLamLai(fb, nop)) ds.push({ id: "ll-" + h.id + (fb.luc || ""), icon: "⚠️", muc: "gap", tieuDe: `Làm lại: ${h.ten}`, nd: `Chưa đạt ${chuaDat(fb).join(", ") || "tiêu chí"}${fb.hanLamLai ? ` · hạn ${ngayVN(fb.hanLamLai)}` : ""}. Làm lại rồi bấm Nộp lại.`, link: "#bai-tap" });
+        else if (!nop && h.han) { const n = daysUntil(h.han);
+          if (n >= 0 && n <= 2) ds.push({ id: "han-" + h.id, icon: "⏰", muc: n === 0 ? "gap" : "", tieuDe: `${n === 0 ? "Hôm nay" : n === 1 ? "Ngày mai" : "Còn 2 ngày"} hết hạn: ${h.ten}`, nd: "Chưa đánh dấu nộp bài.", link: "#bai-tap" });
+          else if (n < 0 && n >= -7) ds.push({ id: "tre-" + h.id, icon: "🐢", muc: "gap", tieuDe: `Quá hạn: ${h.ten}`, nd: "Nộp muộn còn hơn không nộp. Nộp xong nhắn thầy một câu nhé.", link: "#bai-tap" }); }
+      });
+    } else {
+      const choCham = homework.reduce((a, h) => a + roster.filter(r => { const fb = feedbackAll[r.id]?.[h.id], nop = progressAll[r.id]?.baitap?.[h.id]; return (nop && !fb) || daNopLai(fb, nop); }).length, 0);
+      if (choCham) ds.push({ id: "cham-" + choCham, icon: "📝", muc: "gap", tieuDe: `${choCham} bài đang chờ chấm`, nd: "Có cả bài học viên đã nộp lại.", link: "#bai-tap" });
+      if (isAdmin && reqCount) ds.push({ id: "duyet-" + reqCount, icon: "🙋", muc: "gap", tieuDe: `${reqCount} yêu cầu chờ duyệt`, link: "#duyet" });
+      if (typeof khoSapHet === "function") { const het = khoSapHet(); if (het.length) ds.push({ id: "kho-" + het.join(), icon: "📦", muc: "", tieuDe: `Kho sắp hết ${het.length} món`, nd: het.slice(0, 4).join(", "), link: "#kho" }); }
+    }
+    const tin = lvUnreadMsgs(), tb = lvUnreadTB();
+    if (tin) ds.push({ id: "tin-" + tin, icon: "💬", muc: "", tieuDe: `${tin} tin nhắn mới`, link: "#lam-viec" });
+    if (tb) ds.push({ id: "tb-" + tb, icon: "📣", muc: "", tieuDe: `${tb} thông báo mới của lớp`, link: "#lam-viec" });
+  } catch (e) { console.warn(e); }
+  t.nhacViec(ds);
+}
+const bo2 = s => String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/đ/g, "d").toLowerCase();
+/* Gửi tin cho thầy trong kênh trao đổi riêng của học viên (dùng cho "Soạn tin mua hoạ cụ") */
+window.__guiTinThay = async nd => {
+  if (!db || !mail || isTeacher) throw new Error("chua-dang-nhap");
+  const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 7), luc = Date.now();
+  const b = writeBatch(db);
+  b.set(doc(db, "traodoi", mail), { vaiTro: "hocvien", ten: tenToi(), cuoi: nd.slice(0, 80), cuoiTu: mail, capNhat: luc, xemHV: luc }, { merge: true });
+  b.set(doc(db, `traodoi/${mail}/tin`, id), { tu: mail, ten: tenToi(), vt: "hv", nd: nd.slice(0, 1000), luc });
+  await timed("Gửi tin", b.commit());
+};
 
 /* ================= Làm việc: tin nhắn · thông báo · việc cần làm ================= */
 const vtCua = () => isAdmin ? "ql" : isTeacher ? "gv" : "hv";
