@@ -1521,9 +1521,9 @@ function renderLessons() {
     `<button data-id="${esc(l.id)}" aria-current="${l.id === lessonId}"><span class="tick ${myProgress.bai[l.id] ? "done" : ""}"></span>${esc(l.ten)}</button>`).join("");
   $$("#lesson-nav button").forEach(b => b.onclick = () => {
     lessonId = b.dataset.id; renderLessons();
-    // Trên điện thoại bài học nằm dưới danh sách: tự cuộn tới, để bấm là thấy ngay.
-    const top = $("#lesson").getBoundingClientRect().top;
-    if (top > innerHeight * 0.5 || top < 0) $("#lesson").scrollIntoView({ behavior: "smooth", block: "start" });
+    // Trên điện thoại danh sách bài nằm dưới nội dung: bấm bài nào là cuộn lên đúng phần nội dung bài đó.
+    if (innerWidth <= 640) $("#lesson").scrollIntoView({ behavior: "smooth", block: "start" });
+    else { const top = $("#lesson").getBoundingClientRect().top; if (top > innerHeight * 0.5 || top < 0) $("#lesson").scrollIntoView({ behavior: "smooth", block: "start" }); }
   });
   const l = list.find(x => x.id === lessonId);
   const items = Array.isArray(l.buoc) ? l.buoc : [];

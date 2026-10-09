@@ -2210,3 +2210,10 @@ body.hop-mo{overflow:hidden}
 
 /* Bàn phím điện thoại: khung chat co lại đúng phần còn trống, ô nhập luôn hiện */
 @media (max-width:640px){.tl-khung.to .tl-go,.tl-khung .tl-go{position:relative;z-index:2;background:#10131b}}
+
+/* Điện thoại: nội dung bài lên trên, danh sách bài chuyển xuống dưới dạng danh sách dọc */
+@media (max-width:640px){
+  .lesson{order:1}
+  .lesson-nav{order:2;grid-auto-flow:row;grid-auto-columns:auto;overflow:visible;gap:6px;padding-top:6px;border-top:1px solid var(--rule)}
+  .lesson-nav button{white-space:normal;line-height:1.35}
+}
