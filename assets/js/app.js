@@ -62,7 +62,7 @@ addEventListener("error", e => {
 });
 /* ---------- Mở tức thì ở lần sau + dùng được khi mạng yếu ---------- */
 if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost") && !/[?&]khongcache/.test(location.search))
-  addEventListener("load", () => navigator.serviceWorker.register("sw.js?v=20261010q").catch(() => {}));
+  addEventListener("load", () => navigator.serviceWorker.register("sw.js?v=20261010r").catch(() => {}));
 
 /* ---------- Đo tốc độ: mở web kèm ?chandoan=1 để xem từng bước mất bao lâu ---------- */
 const DIAG = /[?&]chandoan/.test(location.search);
@@ -309,12 +309,12 @@ function showLb(i) {
   galCur = (i + galList.length) % galList.length; const b = galList[galCur];
   $("#lb-img").src = b.anh; $("#lb-img").alt = b.moTa || "";
   $("#lb-cap").textContent = `${galCur + 1} / ${galList.length} · ${[b.hocVien, b.loai, b.moTa || b.ghiChu, b.gvhd && "GVHD: " + b.gvhd, b.tgiang && "Trợ giảng: " + b.tgiang, b.chucVu && b.chucVu !== "Học viên" && "Người vẽ: " + b.chucVu, b.mau && "Bài mẫu giáo viên"].filter(Boolean).join(" · ")}`;
-  $("#lb").hidden = false;
+  $("#lb").hidden = false; document.body.classList.add("lb-mo"); // bong bóng Chì dời lên trên, không đè chữ mô tả
   window.__troLy?.goiYBai(b.hocVien ? `bài của ${b.hocVien}` : (b.loai || "bài vẽ này"));
 }
 $("#lb-prev").onclick = () => showLb(galCur - 1);
 $("#lb-next").onclick = () => showLb(galCur + 1);
-const dongLb = () => { $("#lb").hidden = true; window.__troLy?.anGoiYBai(); };
+const dongLb = () => { $("#lb").hidden = true; document.body.classList.remove("lb-mo"); window.__troLy?.anGoiYBai(); };
 $("#lb-close").onclick = dongLb;
 $("#lb").addEventListener("click", e => { if (e.target === $("#lb")) dongLb(); });
 document.addEventListener("keydown", e => {
