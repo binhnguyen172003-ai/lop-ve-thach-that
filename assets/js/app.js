@@ -64,7 +64,7 @@ addEventListener("error", e => {
 });
 /* ---------- Mở tức thì ở lần sau + dùng được khi mạng yếu ---------- */
 if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost") && !/[?&]khongcache/.test(location.search))
-  addEventListener("load", () => navigator.serviceWorker.register("sw.js?v=20261010bh").catch(() => {}));
+  addEventListener("load", () => navigator.serviceWorker.register("sw.js?v=20261010bj").catch(() => {}));
 
 /* ---------- Đo tốc độ: mở web kèm ?chandoan=1 để xem từng bước mất bao lâu ---------- */
 const DIAG = /[?&]chandoan/.test(location.search);
@@ -172,6 +172,7 @@ function daysUntil(iso) {
   return Math.round((Date.UTC(y, m - 1, d) - today) / 86400000);
 }
 let examFilter = "all";
+let lichGon = true;
 function renderExams() {
   const list = LICH_THI.map(e => ({ t: e.truong, truong: e.ten, dot: e.dot, ngay: e.ngay, hien: e.hienThi, n: daysUntil(e.ngay) }));
   const shown = list.filter(e => examFilter === "all" || e.t === examFilter || e.t === "THPT");
@@ -188,36 +189,56 @@ function renderExams() {
     $("#cd-lead").innerHTML = `<p>Mùa thi này đã kết thúc. Lớp sẽ cập nhật lịch năm sau.</p>`;
   }
 
-  // Dòng thời gian NẰM NGANG: trục ở giữa, mỗi ngày thi một mốc, thẻ so le trên – dưới.
   const MA = { XD: "HUCE", QG: "SIS", SP: "NUAE", MTCN: "MTCN", HAU: "HAU" };
   const mau = t => t === "THPT" ? "#8a919c" : (TRUONG[MA[t]] || {}).mau || "#5b6068";
   const tenGon = s => s.replace("ĐHQG Hà Nội · Trường KH Liên ngành & Nghệ thuật", "ĐHQG Hà Nội · KH Liên ngành & Nghệ thuật");
-  const ngays = [...new Set(shown.map(e => e.ngay))].sort();
   const box = $("#months");
   box.className = "months lth";
+  const ngays = [...new Set(shown.map(e => e.ngay))].sort();
   if (!ngays.length) { box.innerHTML = `<p class="muted">Chưa có lịch thi cho lựa chọn này.</p>`; return; }
+  // Điện thoại: chỉ hiện 3 kỳ gần nhất, bấm nút mới xem cả lịch
+  const gan = new Set(shown.filter(e => e.n >= 0).sort((a, b) => a.n - b.n).slice(0, 3));
+  const dong = (e0, g, qua) => `<div class="lth-d"><b class="num">${esc(e0.hien)}</b><span class="num">${qua ? "Đã thi" : "Còn " + e0.n + " ngày"}</span></div>
+      <ul>${g.map(e => `<li style="--c:${mau(e.t)}"><i>${esc(e.t === "THPT" ? "THPT" : MA[e.t] || e.t)}</i><span>${esc(tenGon(e.truong))}<em>${esc(e.dot)}</em></span></li>`).join("")}</ul>`;
 
+  // ---- Điện thoại: sơ đồ cây DỌC, thân ở giữa (hoặc bên trái khi màn hẹp) ----
+  let side = 0;
+  const doc = Object.keys(MONTH).map(m => {
+    const evs = shown.filter(e => e.ngay.slice(5, 7) === m);
+    if (!evs.length) return "";
+    const ngs = [...new Set(evs.map(e => e.ngay))].sort();
+    return `<div class="tl-m${evs.some(e => gan.has(e)) ? "" : " xa"}"><span>${esc(MONTH[m])}</span></div>` + ngs.map(ng => {
+      const g = evs.filter(e => e.ngay === ng), e0 = g[0], qua = e0.n < 0;
+      return `<div class="tl-n ${side++ % 2 ? "R" : "L"}${qua ? " past" : ""}${g.some(e => gan.has(e)) ? "" : " xa"}">
+        <i class="tl-dot" style="--c:${mau(e0.t)}"></i>
+        <div class="tl-card">${dong(e0, g, qua)}</div></div>`;
+    }).join("");
+  }).join("");
+
+  // ---- Máy tính: dòng thời gian NẰM NGANG, thẻ so le trên – dưới trục ----
   let thangDaRa = "";
   const cot = ngays.map((ng, i) => {
     const g = shown.filter(e => e.ngay === ng), e0 = g[0], qua = e0.n < 0, tren = i % 2 === 0;
     const thang = ng.slice(5, 7);
     const nhan = thang !== thangDaRa ? (thangDaRa = thang, `<span class="lth-thang">${esc(MONTH[thang] || "")}</span>`) : "";
-    const the = `<article class="lth-the">
-        <p class="lth-ngay"><b class="num">${esc(e0.hien)}</b><span class="num">${qua ? "Đã thi" : "Còn " + e0.n + " ngày"}</span></p>
-        <ul>${g.map(e => `<li style="--c:${mau(e.t)}"><i>${esc(e.t === "THPT" ? "THPT" : MA[e.t] || e.t)}</i><span>${esc(tenGon(e.truong))}<em>${esc(e.dot)}</em></span></li>`).join("")}</ul>
-      </article>`;
+    const the = `<article class="lth-the">${dong(e0, g, qua)}</article>`;
     return `<div class="lth-cot${qua ? " qua" : ""}">
         <div class="lth-tren">${tren ? the + `<i class="lth-can"></i>` : ""}</div>
         <div class="lth-truc"><i class="lth-cham" style="--c:${mau(e0.t)}"></i>${nhan}</div>
         <div class="lth-duoi">${tren ? "" : `<i class="lth-can"></i>` + the}</div>
       </div>`;
   }).join("");
-  box.innerHTML = `<div class="lth-cuon" id="lth-cuon" tabindex="0" role="group" aria-label="Dòng thời gian các kỳ thi"><div class="lth-hang">${cot}</div></div>
-    <p class="lth-goiy muted">Vuốt ngang (hoặc giữ Shift + lăn chuột) để xem hết dòng thời gian.</p>`;
+
+  const con = shown.length - gan.size;
+  box.innerHTML =
+    `<div class="tl lth-doc${lichGon ? " gon" : ""}">${doc}</div>
+     <div class="lth-doc-more"${con > 0 ? "" : " hidden"}><button class="btn" type="button" id="lth-more">${lichGon ? `Xem cả lịch (${shown.length} kỳ thi) ▼` : "Thu gọn ▲"}</button></div>
+     <div class="lth-ngang"><div class="lth-cuon" id="lth-cuon" tabindex="0" role="group" aria-label="Dòng thời gian các kỳ thi"><div class="lth-hang">${cot}</div></div>
+       <p class="lth-goiy muted">Vuốt ngang hoặc giữ Shift và lăn chuột để xem hết dòng thời gian.</p></div>`;
+  const nut = $("#lth-more"); if (nut) nut.onclick = () => { lichGon = !lichGon; renderExams(); };
   // Mở ra là cuộn tới kỳ thi gần nhất cho dễ nhìn
   const cuon = $("#lth-cuon"), toi = [...box.querySelectorAll(".lth-cot")].find(c => !c.classList.contains("qua"));
   if (cuon && toi) cuon.scrollLeft = Math.max(0, toi.offsetLeft - 16);
-  const more = $("#months-more"); if (more) more.hidden = true;
 }
 $("#exam-filters").innerHTML = [{ truong: "all", ten: "Tất cả" }, ...BO_LOC_TRUONG]
   .map(f => `<button class="tab" data-f="${esc(f.truong)}" aria-selected="${f.truong === "all"}">${esc(f.ten)}</button>`).join("");

@@ -2542,3 +2542,19 @@ body.hop-mo{overflow:hidden}
 @media (min-width:641px) and (max-width:899px){
   #top-rank .tr-list{max-width:none}
 }
+
+/* ===== Lịch thi: điện thoại dùng sơ đồ cây DỌC, máy tính dùng dòng thời gian NGANG ===== */
+.lth-doc,.lth-doc-more{display:none}
+.lth-doc[hidden],.lth-doc-more[hidden]{display:none}
+@media (max-width:860px){
+  .lth-ngang{display:none}
+  .lth-doc{display:block;position:relative;max-width:900px;margin:22px auto 0;padding-block:6px}
+  .lth-doc-more:not([hidden]){display:flex;justify-content:center;margin-top:12px}
+  .lth-doc-more .btn{width:100%;justify-content:center}
+  .lth-doc.gon .tl-n.xa,.lth-doc.gon .tl-m.xa{display:none}
+}
+/* Dòng ngày + đếm ngược dùng chung cho cả hai kiểu */
+.lth-d{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+.lth-d b{font:italic 600 1.35rem/1 var(--f-serif)}
+.lth-d span{font-size:.76rem;font-weight:700;color:var(--accent);white-space:nowrap}
+@media (max-width:640px){.lth-d b{font-size:1.2rem}}
