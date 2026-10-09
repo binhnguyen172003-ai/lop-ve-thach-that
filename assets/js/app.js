@@ -64,7 +64,7 @@ addEventListener("error", e => {
 });
 /* ---------- Mở tức thì ở lần sau + dùng được khi mạng yếu ---------- */
 if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost") && !/[?&]khongcache/.test(location.search))
-  addEventListener("load", () => navigator.serviceWorker.register("sw.js?v=20261010ao").catch(() => {}));
+  addEventListener("load", () => navigator.serviceWorker.register("sw.js?v=20261010ap").catch(() => {}));
 
 /* ---------- Đo tốc độ: mở web kèm ?chandoan=1 để xem từng bước mất bao lâu ---------- */
 const DIAG = /[?&]chandoan/.test(location.search);
@@ -330,7 +330,15 @@ function renderGallery() {
       $("#gal-filters").insertAdjacentHTML("beforeend", `<button type="button" class="tab" id="gal-dontrung">🧹 Xoá ${n} bài trùng</button>`);
       confirmButton($("#gal-dontrung"), async () => {
         const xoa = timBaiTrung(); if (!xoa.length) return;
-        const lo = writeBatch(db); xoa.forEach(x => lo.delete(doc(db, x.kind, x.id)));
+        const lo = writeBatch(db);
+        xoa.forEach(x => {
+          // Bản trùng đang giữ hạng Top: chuyển hạng sang bản còn lại trước khi xoá
+          if (String(x.id).startsWith("seed-nb-") && x.hang) {
+            const giu = BAIVE_DONG.find(y => String(y.id).startsWith("seed-ve-") && String(y.hocVien).trim().toLowerCase() === String(x.hocVien).trim().toLowerCase() && y.loai === x.loai);
+            if (giu) lo.set(doc(db, "baive", giu.id), { hang: x.hang, ngayTop: x.ngayTop || x.ngay || "" }, { merge: true });
+          }
+          lo.delete(doc(db, x.kind, x.id));
+        });
         await lo.commit(); toast(`Đã xoá ${xoa.length} bài trùng.`);
       }, `Bấm lần nữa để xoá ${n} bài trùng`);
     }
