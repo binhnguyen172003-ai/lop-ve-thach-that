@@ -2567,8 +2567,8 @@ function capNhatNhac() {
     }
     // Khung giờ cố định do quản lý đặt: từ giờ đã hẹn đến hết ngày thì vẫn hiện trong Nhắc việc
     lichDenGio().forEach(x => {
-      ds.push({ id: "lich-" + x.id + "-" + hom, icon: "⏰", muc: "", tieuDe: x.ten || "Nhắc việc", nd: x.nd || "", link: "#lam-viec", tab: "tb", dich: "#lv-tb" });
-      const dau = "lichbao-" + x.id + "-" + hom;
+      ds.push({ id: "lich-" + x.id + "-" + x.lanHen, icon: "⏰", muc: "", tieuDe: x.ten || "Nhắc việc", nd: x.nd || "", link: "#lam-viec", tab: "tb", dich: "#lv-tb" });
+      const dau = "lichbao-" + x.id + "-" + x.lanHen;
       if (!lichDaBao.has(dau)) { lichDaBao.add(dau); toast(`⏰ ${x.ten || "Nhắc việc"}${x.nd ? ": " + x.nd : ""}`); }
     });
     // Mỗi ngày một nhắc: còn bao nhiêu ngày đến kỳ thi (theo khối của học viên)
@@ -2576,8 +2576,9 @@ function capNhatNhac() {
       const khoiHv = khoiOf(myHv), ngayThi = MUC_TIEU.ngayThi[khoiHv] || MUC_TIEU.ngayThi["Khối H"], conNgay = daysUntil(ngayThi);
       if (conNgay > 0) {
         ds.push({ id: "ngaythi-" + hom, icon: "🗓", muc: "", tieuDe: `Còn ${conNgay} ngày đến kỳ thi`, nd: `Mốc ôn luyện dự kiến ${ngayVN(ngayThi)}. Đây không phải lịch thi chính thức.`, link: "#giao-trinh", dich: "#my-prog" });
-        const dau = "ngaythi-" + hom;
-        if (!lichDaBao.has(dau)) { lichDaBao.add(dau); toast(`🗓 Còn ${conNgay} ngày đến kỳ thi`); }
+        // toast một lần mỗi 24 giờ (nhớ trên máy này)
+        let lanBao = 0; try { lanBao = Number(localStorage.getItem("lvtt-ngaythi-bao")) || 0; } catch (e) {}
+        if (Date.now() - lanBao >= 86400000) { toast(`🗓 Còn ${conNgay} ngày đến kỳ thi`); try { localStorage.setItem("lvtt-ngaythi-bao", String(Date.now())); } catch (e) {} }
       }
     }
     const tin = lvUnreadMsgs(), tb = lvUnreadTB();
@@ -2845,11 +2846,21 @@ const LICH_MAU = {
   nop: ["Nhắc nộp bài", "21:00", "Kiểm tra bài tập trong mục Bài tập. Chụp ảnh rõ, tối đa 3 ảnh, nộp trước hạn."]
 };
 const phutTuGio = s => { const [h, m] = String(s || "").split(":").map(Number); return h * 60 + m; };
-// Các khung giờ đã đến và đúng ngày hôm nay (thứ 2 = 0 … chủ nhật = 6)
+// Thứ 2 = 0 … chủ nhật = 6
+// Nhắc đã tới giờ và còn hiện trong vòng 24 giờ kể từ giờ hẹn (có thể gồm cả lần hẹn hôm qua)
 function lichDenGio() {
   if (!user || !lichNhac.length) return [];
-  const now = new Date(), hm = now.getHours() * 60 + now.getMinutes(), thu = (now.getDay() + 6) % 7;
-  return lichNhac.filter(x => x.bat !== false && (x.ngay || []).includes(thu) && phutTuGio(x.gio) <= hm);
+  const now = new Date(), phutHomNay = now.getHours() * 60 + now.getMinutes(), out = [];
+  lichNhac.forEach(x => {
+    if (x.bat === false) return;
+    for (let d = 0; d <= 1; d++) {
+      const ngay = new Date(now.getFullYear(), now.getMonth(), now.getDate() - d);
+      if (!(x.ngay || []).includes((ngay.getDay() + 6) % 7)) continue;
+      const troi = d * 1440 + phutHomNay - phutTuGio(x.gio);
+      if (troi >= 0 && troi < 1440) out.push({ ...x, lanHen: ngay.toLocaleDateString("sv-SE") });
+    }
+  });
+  return out;
 }
 function renderLichNhac() {
   const box = $("#lich-ds"); if (!box) return;
