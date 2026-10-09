@@ -2530,3 +2530,15 @@ body.hop-mo{overflow:hidden}
   .lth-goiy{text-align:left;padding-inline:12px}
 }
 @media (prefers-reduced-motion:no-preference){.lth-cuon{scroll-behavior:smooth}}
+
+/* ===== Top rank: khung rộng bằng các mục khác, hạng 1 chạy suốt, còn lại chia hai cột ===== */
+@media (min-width:900px){
+  #top-rank .tr-list{max-width:none;grid-template-columns:1fr 1fr;gap:10px 12px;padding:12px}
+  #top-rank .tr-list li:first-child{grid-column:1/-1}
+  /* Hạng 1 chạy suốt nên cho thoáng hơn một chút */
+  #top-rank .tr-list li:first-child{padding-block:14px}
+}
+/* Bề ngang vừa phải khi màn hình trung bình, không dính sát mép */
+@media (min-width:641px) and (max-width:899px){
+  #top-rank .tr-list{max-width:none}
+}
