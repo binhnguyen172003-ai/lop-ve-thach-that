@@ -2464,3 +2464,16 @@ body.hop-mo{overflow:hidden}
 .hop .tn-text{max-height:none}
 .hop .tn-anh{border-radius:12px;margin:10px 0}
 .hop .tn-dau{margin:0 0 6px}
+
+/* ===== Trang Tài khoản: các khung thẳng hàng, không chỗ hẹp chỗ rộng ===== */
+#v-tai-khoan .step-card{max-width:none}
+/* Form đăng nhập vẫn hẹp cho dễ đọc, nhưng nằm giữa khung nên không lệch */
+#v-tai-khoan .pw-box{max-width:660px;margin-inline:auto}
+#v-tai-khoan #who-status{max-width:72ch}
+#v-tai-khoan .hv-doiten form{max-width:560px}
+/* Ô thông tin và ô nhập giãn đều theo chiều ngang khung */
+#v-tai-khoan .hv-dl{grid-template-columns:repeat(auto-fit,minmax(180px,1fr))}
+#v-tai-khoan .hv-form{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+/* Khoảng cách giữa khung tài khoản và các mục dưới cho đều nhau */
+#v-tai-khoan .acc-tiles{margin-block:20px}
+#v-tai-khoan .acc-xh{margin-top:20px;padding-top:24px}
