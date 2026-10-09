@@ -2282,3 +2282,12 @@ body.hop-mo{overflow:hidden}
 @keyframes cineDust{from{transform:translate(0,0)}to{transform:translate(-3%,-4%)}}
 @keyframes cineGrade{from{opacity:.7}to{opacity:1}}
 @media (prefers-reduced-motion:reduce){.cine-sweep{display:none}}
+
+/* ----- Lấp lánh quanh tiêu đề bìa: hiện lên rồi mất, lệch pha nhau ----- */
+.cine-h1{position:relative}
+.spk{position:absolute;left:var(--x,0);top:var(--y,0);width:var(--s,14px);height:var(--s,14px);pointer-events:none;opacity:0;transform:scale(0) rotate(0deg);
+  background:linear-gradient(135deg,#fff 0%,#ffe9a6 55%,#ffc83d 100%);clip-path:polygon(50% 0,62% 38%,100% 50%,62% 62%,50% 100%,38% 62%,0 50%,38% 38%);
+  filter:drop-shadow(0 0 5px rgba(255,220,120,.9))}
+@media (prefers-reduced-motion:no-preference){.spk{animation:spk 3.6s ease-in-out infinite both;animation-delay:var(--d,0s)}}
+@media (prefers-reduced-motion:reduce){.spk{display:none}}
+@keyframes spk{0%,100%{opacity:0;transform:scale(0) rotate(0deg)}14%{opacity:1;transform:scale(1) rotate(45deg)}28%{opacity:0;transform:scale(.2) rotate(110deg)}}
