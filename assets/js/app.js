@@ -5,7 +5,7 @@
 import { firebaseConfig, ADMIN_EMAIL, EMAIL_NHAN_THONG_BAO } from "../../config/firebase-config.js?v=20261009b";
 import { FILE_LIMITS, FILE_TYPES, fileExt, fileSize, validateFiles, attachmentStorage, uploadError, validAttachmentPath } from "./attachments.js?v=20261009b";
 import { GIAO_TRINH_MAU as GT_LO_TRINH } from "../../data/giao-trinh-mau.js?v=20261009f";
-import { LIEN_HE, NAM_THI, LICH_THI, BO_LOC_TRUONG, CA_HOC, THOI_GIAN_BIEU, BAI_VE, BANG_VANG, TRUONG, MUC_TIEU, GIAO_VIEN, VIDEO_BIA, BAI_NOI_BAT, THANH_TUU_TRAO, XP_THUONG, AVATAR, SO_DU_THI, HOA_CU, TON_DAU_KY, BAN_TIN } from "../../data/noi-dung.js?v=20261010av";
+import { LIEN_HE, NAM_THI, LICH_THI, BO_LOC_TRUONG, CA_HOC, THOI_GIAN_BIEU, BAI_VE, BANG_VANG, TRUONG, MUC_TIEU, GIAO_VIEN, VIDEO_BIA, BAI_NOI_BAT, THANH_TUU_TRAO, XP_THUONG, AVATAR, SO_DU_THI, HOA_CU, TON_DAU_KY, BAN_TIN, SAN_PHAM } from "../../data/noi-dung.js?v=20261010aw";
 
 // Firebase được tải riêng, để phần giới thiệu vẫn chạy kể cả khi mạng chậm hoặc chưa cấu hình.
 const FB = "https://www.gstatic.com/firebasejs/10.12.2/";
@@ -64,7 +64,7 @@ addEventListener("error", e => {
 });
 /* ---------- Mở tức thì ở lần sau + dùng được khi mạng yếu ---------- */
 if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost") && !/[?&]khongcache/.test(location.search))
-  addEventListener("load", () => navigator.serviceWorker.register("sw.js?v=20261010av").catch(() => {}));
+  addEventListener("load", () => navigator.serviceWorker.register("sw.js?v=20261010aw").catch(() => {}));
 
 /* ---------- Đo tốc độ: mở web kèm ?chandoan=1 để xem từng bước mất bao lâu ---------- */
 const DIAG = /[?&]chandoan/.test(location.search);
@@ -1274,6 +1274,7 @@ $("#dk-zalo").href = ZALO_LINK;
     const o = (href, t, d) => `<a href="${esc(href)}" style="--i:${i++}"><b>${esc(t)}</b>${d ? `<small>${esc(d)}</small>` : ""}</a>`;
     $("#menu-links").innerHTML = $$("nav .dd").map(dd => `<div class="mn-g"><h4>${esc(dd.querySelector(".dd-t").textContent.trim())}</h4><div class="mn-ds">${
       [...dd.querySelectorAll("a.link")].map(a => o(a.getAttribute("href"), (a.querySelector("b") || a).textContent.trim(), (a.querySelector("small") || {}).textContent || "")).join("")}</div></div>`).join("")
+      + `<div class="mn-g"><h4>Sản phẩm</h4><div class="mn-ds">${SAN_PHAM.map(p => o(p.link || "#dang-ky", p.ten, p.link ? p.moTa : "Sắp ra mắt · hỏi thầy")).join("")}</div></div>`
       + `<div class="mn-g"><h4>Khác</h4><div class="mn-ds">${o("#tai-khoan", "Tài khoản", "Học viên · Giáo viên")}${o("#dang-ky", "Liên hệ", "Gọi · Zalo · chỉ đường")}</div></div>`; }
   const setMenu = open => {
     ov.classList.toggle("open", open); ov.setAttribute("aria-hidden", !open); burger.setAttribute("aria-expanded", open);

@@ -25,6 +25,26 @@ export const LIEN_HE = {
   pinterest: { link: "https://pin.it/YkmIUW1tr" },
 };
 
+// ---------- SẢN PHẨM THÊM (hiện trong menu ☰ trên điện thoại) ----------
+// link: dán link Google Drive (chia sẻ "Bất kỳ ai có link") vào đây. Để trống = hiện "Sắp ra mắt".
+// thongTin: ghi chú nội bộ cho thầy, không hiện trên web.
+export const SAN_PHAM = [
+  {
+    ten: "Khoá học nâng cao",
+    moTa: "Luyện nâng cao cho học viên đã có nền",
+    link: "",
+    gia: "",
+    thongTin: "Đối tượng, số buổi, lịch học, học phí, cách đăng ký",
+  },
+  {
+    ten: "Ebook",
+    moTa: "Tài liệu bài tập và bài giảng dạng PDF",
+    link: "",
+    gia: "",
+    thongTin: "Tên sách, số trang, nội dung chính, giá",
+  },
+];
+
 
 // ---------- 2. LỊCH THI NĂNG KHIẾU ----------
 // truong: mã trường để lọc (phải có trong BO_LOC_TRUONG bên dưới), hoặc "THPT".
