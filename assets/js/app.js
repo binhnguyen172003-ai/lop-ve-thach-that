@@ -64,7 +64,7 @@ addEventListener("error", e => {
 });
 /* ---------- Mở tức thì ở lần sau + dùng được khi mạng yếu ---------- */
 if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost") && !/[?&]khongcache/.test(location.search))
-  addEventListener("load", () => navigator.serviceWorker.register("sw.js?v=20261010bj").catch(() => {}));
+  addEventListener("load", () => navigator.serviceWorker.register("sw.js?v=20261010bk").catch(() => {}));
 
 /* ---------- Đo tốc độ: mở web kèm ?chandoan=1 để xem từng bước mất bao lâu ---------- */
 const DIAG = /[?&]chandoan/.test(location.search);
@@ -303,6 +303,9 @@ const LOAI_BAI = [
   { ten: "Màu", art: "v-mau", moTa: "Bố cục trang trí màu Khối H" },
   { ten: "Mỹ thuật 2", art: "v-mt2", moTa: "Bố cục tạo hình Khối V" },
   { ten: "Tĩnh vật", art: "v-khoi", moTa: "Tĩnh vật: bình, chai, vải, trái cây" },
+  { ten: "Bút sắt", art: "v-mt2", moTa: "Ký hoạ bút sắt, nét mảnh, đan nét" },
+  { ten: "Mực nho", art: "v-khoi", moTa: "Mực nho: mảng đậm nhạt, loang nước" },
+  { ten: "Màu nước", art: "v-mau", moTa: "Màu nước: loang, chồng lớp, giữ sáng" },
 ];
 let galFilter = "all", galList = [], galCur = 0;
 const artCard = (l, note) => `<div class="gal-art">${l.img ? `<span class="art art-img" style="-webkit-mask-image:url(${l.img});mask-image:url(${l.img})" aria-hidden="true"></span>` : `<svg class="art" aria-hidden="true"><use href="#${l.art}"/></svg>`}
