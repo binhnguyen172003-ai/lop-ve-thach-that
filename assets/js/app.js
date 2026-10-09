@@ -64,7 +64,7 @@ addEventListener("error", e => {
 });
 /* ---------- Mở tức thì ở lần sau + dùng được khi mạng yếu ---------- */
 if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost") && !/[?&]khongcache/.test(location.search))
-  addEventListener("load", () => navigator.serviceWorker.register("sw.js?v=20261010as").catch(() => {}));
+  addEventListener("load", () => navigator.serviceWorker.register("sw.js?v=20261010at").catch(() => {}));
 
 /* ---------- Đo tốc độ: mở web kèm ?chandoan=1 để xem từng bước mất bao lâu ---------- */
 const DIAG = /[?&]chandoan/.test(location.search);
@@ -285,7 +285,8 @@ const artCard = (l, note) => `<div class="gal-art">${l.img ? `<span class="art a
 function galTatCa() {
   // Bài thầy cô đăng trên web (mới nhất trước) + bài có sẵn trong file data
   // Bài viết sẵn đã chuyển thành bài web (mã seed-ve-i) thì không hiện lần nữa
-  return [...BAIVE_DONG.slice().sort((x, y) => (y.luc || 0) - (x.luc || 0)), ...BAI_VE.filter((b, i) => !BAIVE_DONG.some(x => x.id === "seed-ve-" + i))];
+  // Bản chuyển tự động (seed-…) không hiện; bài viết sẵn trong file dữ liệu hiện như trước
+  return [...BAIVE_DONG.filter(b => !String(b.id).startsWith("seed-")).sort((x, y) => (y.luc || 0) - (x.luc || 0)), ...BAI_VE];
 }
 // Tìm bài đăng trùng: cùng học viên + loại + ảnh (bài vẽ), hoặc cùng tiêu đề (bản tin).
 // Trong mỗi nhóm giữ một bản: ưu tiên bản chuyển tự động (seed-…), không bao giờ xoá bản seed-…
@@ -324,7 +325,7 @@ function renderGallery() {
     .concat(LOAI_BAI.map(l => `<button class="tab" data-g="${esc(l.ten)}" aria-selected="${galFilter === l.ten}">${esc(l.ten)} <span class="num">${count(l.ten)}</span></button>`)).join("");
   $$("#gal-filters .tab").forEach(b => b.onclick = () => { galFilter = b.dataset.g; renderGallery(); });
   // Quản lý: nút dọn bài đăng trùng (giữ bản chuyển tự động "seed-…", xoá bản đăng tay trùng; bấm 2 lần mới xoá)
-  if (isAdmin && has) {
+  if (false && isAdmin && has) { // tạm tắt nút dọn bài trùng: không tự xoá bài của quản lý
     const trung = timBaiTrung(), n = trung.length;
     if (n) {
       $("#gal-filters").insertAdjacentHTML("beforeend", `<button type="button" class="tab" id="gal-dontrung">🧹 Xoá ${n} bài trùng</button>`);
@@ -884,7 +885,7 @@ const GHI_CHU = {
   const nhanVienTen = b => (b.chucVu && b.chucVu !== "Học viên" ? b.chucVu : "Giáo viên");
   const nhanVienLop = b => ({ "Trợ giảng": "tg", "Quản lý": "ql" })[b.chucVu] || "gv"; // mỗi vai trò một khung màu
   const locNoiBat = k => { const daCo = new Set();
-    const ds = [...BAI_NOI_BAT.filter((b, i) => !b.trung && !BAIVE_DONG.some(x => x.id === "seed-nb-" + i)), ...BAIVE_DONG.map(b => ({ ...b, ngay: (b.hang >= 1 && b.hang <= 5 && b.ngayTop) || b.ngay, dong: true }))].filter(b => mucCua(b) === k)
+    const ds = [...BAI_NOI_BAT, ...BAIVE_DONG.filter(b => !String(b.id).startsWith("seed-")).map(b => ({ ...b, ngay: (b.hang >= 1 && b.hang <= 5 && b.ngayTop) || b.ngay, dong: true }))].filter(b => mucCua(b) === k)
       .map(b => ({ ...b, nv: nhanVienBai(b), top: !b.tg && !nhanVienBai(b) && b.hang >= 1 && b.hang <= 5 ? b.hang : 0 }))
       .sort((a, b) => (a.top || 99) - (b.top || 99) || (b.dong ? 1 : 0) - (a.dong ? 1 : 0) || (tuoi(a) || 0) - (tuoi(b) || 0) || (b.luc || 0) - (a.luc || 0));
     ds.forEach(b => { if (b.top) { if (daCo.has(b.top)) b.top = 0; else daCo.add(b.top); } });
@@ -3465,9 +3466,7 @@ async function startFirebase() {
       BAIVE_DONG = snap.docs.map(d => ({ id: d.id, ...d.data() })).map(b => ({ ...b, hang: Number(b.hang) || 0 })); baiVeLoi = false;
       // Gom các lần dữ liệu thay đổi liên tiếp (ví dụ khi đang chuyển bài) thành một lần vẽ lại, tránh ảnh chớp
       clearTimeout(baiHen); baiHen = setTimeout(() => { renderGallery(); veTopRank(); dispatchEvent(new Event("baive-doi")); }, 250);
-      try { renderTop5(); renderTiles(); } catch (e) {}
-      if (isAdmin) setTimeout(chuyenBaiTinhSangWeb, 2000);
-    }, () => { baiVeLoi = true; try { renderTop5(); } catch (e) {} });
+      try { renderTop5(); renderTiles(); } catch (e) {}    }, () => { baiVeLoi = true; try { renderTop5(); } catch (e) {} });
     // Bản tin nổi bật
     onSnapshot(collection(db, "bantin"), snap => { BANTIN_DONG = snap.docs.map(d => ({ id: d.id, ...d.data() })); banTinLoi = false; renderBanTin(); },
       () => { banTinLoi = true; });
@@ -3987,7 +3986,7 @@ const MUC_TIN = { tuyensinh: "Tuyển sinh", tinlop: "Thông báo lớp", hoacu:
 let tnLoc = "all";
 function banTinTatCa() {
   const t = x => x.luc || Date.parse((x.ngay || "1970-01-01") + "T08:00:00+07:00") || 0;
-  return [...BANTIN_DONG, ...BAN_TIN.filter((x, i) => !BANTIN_DONG.some(y => y.id === "seed-tin-" + i)).map(x => ({ ...x, id: "", codinh: BAN_TIN.indexOf(x) }))].sort((a, b) => (b.ghim ? 1 : 0) - (a.ghim ? 1 : 0) || t(b) - t(a));
+  return [...BANTIN_DONG.filter(t => !String(t.id).startsWith("seed-")), ...BAN_TIN.map((x, i) => ({ ...x, id: "", codinh: i }))].sort((a, b) => (b.ghim ? 1 : 0) - (a.ghim ? 1 : 0) || t(b) - t(a));
 }
 // "Tin nổi bật" ngay dưới mục Về lớp: vòng xoay tin tuyển sinh, thông báo, bài đăng (bấm thẻ giữa để mở link)
 let tbSig = "";

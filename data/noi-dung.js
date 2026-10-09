@@ -207,14 +207,14 @@ export const VIDEO_BIA = "";
 // Web tự chia theo ngày:  0–7 ngày → Top Tuần · 8–30 ngày → Top Tháng · 31–365 ngày → Top Năm
 // Không cần xoá bài cũ: bài tự chuyển mục khi đủ ngày.
 export const BAI_NOI_BAT = [
-  { ngay: "2026-10-09", hang: 1, anh: "assets/img/bai-ve/bao-tuong.webp", hocVien: "Nguyễn Văn Bảo", loai: "Tượng", ghiChu: "Hình hoạ tượng cơ bản", trung: true },
-  { ngay: "2026-10-09", hang: 2, anh: "assets/img/bai-ve/bao-sac-do.webp", hocVien: "Nguyễn Văn Bảo", loai: "Mỹ thuật 2", ghiChu: "Bố cục sắc độ", trung: true },
-  { ngay: "2026-10-09", anh: "assets/img/bai-ve/khang-mau.webp", hocVien: "Khang", loai: "Màu", trung: true },
-  { ngay: "2026-10-09", anh: "assets/img/bai-ve/linh-mau.webp", hocVien: "Linh", loai: "Màu", trung: true },
-  { ngay: "2026-10-09", anh: "assets/img/bai-ve/thuy-chan-dung.webp", hocVien: "Thùy", loai: "Hình hoạ người", ghiChu: "Chân dung", trung: true },
-  { ngay: "2026-10-09", anh: "assets/img/bai-ve/nam-sac-do.webp", hocVien: "Nam", loai: "Mỹ thuật 2", ghiChu: "Bố cục sắc độ", trung: true },
-  { ngay: "2026-07-01", hang: 1, anh: "assets/img/bai-ve/hoan-vua.webp", hocVien: "Đặng Huy Hoàn", loai: "Tượng", ghiChu: "Tượng vua · bài khổ lớn" },
-  { ngay: "2026-10-09", tg: true, anh: "assets/img/bai-ve/huyen-linh-mau.webp", hocVien: "Kiều Huyền Linh", loai: "Bài mẫu trợ giảng · Màu", trung: true },
+  { ngay: "2026-10-09", hang: 1, anh: "assets/img/bai-ve/bao-tuong.webp", hocVien: "Nguyễn Văn Bảo", loai: "Tượng", ghiChu: "Hình hoạ tượng cơ bản" },
+  { ngay: "2026-10-09", hang: 2, anh: "assets/img/bai-ve/bao-sac-do.webp", hocVien: "Nguyễn Văn Bảo", loai: "Mỹ thuật 2", ghiChu: "Bố cục sắc độ" },
+  { ngay: "2026-10-09", anh: "assets/img/bai-ve/khang-mau.webp", hocVien: "Khang", loai: "Màu" },
+  { ngay: "2026-10-09", anh: "assets/img/bai-ve/linh-mau.webp", hocVien: "Linh", loai: "Màu" },
+  { ngay: "2026-10-09", anh: "assets/img/bai-ve/thuy-chan-dung.webp", hocVien: "Thùy", loai: "Hình hoạ người", ghiChu: "Chân dung" },
+  { ngay: "2026-10-09", anh: "assets/img/bai-ve/nam-sac-do.webp", hocVien: "Nam", loai: "Mỹ thuật 2", ghiChu: "Bố cục sắc độ" },
+  { ngay: "2026-07-01", hang: 1, anh: "assets/img/bai-ve/hoan-vua.webp", hocVien: "Đặng Huy Hoàn", loai: "Hình hoạ tượng", ghiChu: "Tượng vua · bài khổ lớn" },
+  { ngay: "2026-10-09", tg: true, anh: "assets/img/bai-ve/huyen-linh-mau.webp", hocVien: "Kiều Huyền Linh", loai: "Bài mẫu trợ giảng · Màu" },
 ];
 
 // ===== THÀNH TỰU DO THẦY TRAO (thi thử, top chăm chỉ…) =====
