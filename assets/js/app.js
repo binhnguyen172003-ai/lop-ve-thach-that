@@ -3188,10 +3188,12 @@ async function onUser(u) {
   } else if (!(cachedSession && cachedSession.mail === mail)) {
     renderLocks("pending"); renderAccount(false);
   }
-  const exists = async (col) => { try { return (await getDoc(doc(db, col, mail))).exists(); } catch (e) { return false; } };
+  // Máy chủ không trả lời trong 8 giây thì coi như chưa hỏi được (để dùng quyền đã lưu và tự thử lại), không để treo mãi
+  const hanTuoi = p => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej({ code: "timeout" }), 8000))]);
+  const exists = async (col) => { try { return (await hanTuoi(getDoc(doc(db, col, mail)))).exists(); } catch (e) { return false; } };
   // Hỏi cả 4 thông tin cùng lúc thay vì lần lượt, để trang hiện nhanh hơn.
   const getData = async (col) => {
-    try { const d = await getDoc(doc(db, col, mail)); return d.exists() ? (d.data() || {}) : null; }
+    try { const d = await hanTuoi(getDoc(doc(db, col, mail))); return d.exists() ? (d.data() || {}) : null; }
     catch (e) { if (e && e.code !== "permission-denied") serverIssue(e); return undefined; } // undefined = chưa hỏi được, khác null = không có
   };
   const tr = performance.now();
