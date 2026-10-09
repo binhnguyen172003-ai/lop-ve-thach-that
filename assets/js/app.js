@@ -17,7 +17,7 @@ let getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleT
 let user = null, mail = "", isAdmin = false, isTeacher = false, approved = false, needVerify = false;
 // Bài vẽ thầy cô đăng trên web (Firestore: baive). Bài được quản lý chọn Top 1–5 thì thành "bài nổi bật".
 let BAIVE_DONG = [], BANTIN_DONG = [], baiVeLoi = false, banTinLoi = false;
-const NB_DONG = () => BAIVE_DONG.filter(b => b.hang >= 1 && b.hang <= 5).map(b => ({ ...b, ngay: b.ngayTop || b.ngay, dong: true }));
+const NB_DONG = () => BAIVE_DONG.filter(b => (b.hang >= 1 && b.hang <= 5) || b.mau).map(b => ({ ...b, ngay: b.ngayTop || b.ngay, dong: true }));
 const nbAll = () => [...BAI_NOI_BAT, ...NB_DONG()];
 async function loadFirebase() {
   const [a, au, fs] = await Promise.all([import(FB + "firebase-app.js"), import(FB + "firebase-auth.js"), import(FB + "firebase-firestore.js")]);
@@ -62,7 +62,7 @@ addEventListener("error", e => {
 });
 /* ---------- Mở tức thì ở lần sau + dùng được khi mạng yếu ---------- */
 if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost") && !/[?&]khongcache/.test(location.search))
-  addEventListener("load", () => navigator.serviceWorker.register("sw.js?v=20261010o").catch(() => {}));
+  addEventListener("load", () => navigator.serviceWorker.register("sw.js?v=20261010p").catch(() => {}));
 
 /* ---------- Đo tốc độ: mở web kèm ?chandoan=1 để xem từng bước mất bao lâu ---------- */
 const DIAG = /[?&]chandoan/.test(location.search);
@@ -308,7 +308,7 @@ function renderGallery() {
 function showLb(i) {
   galCur = (i + galList.length) % galList.length; const b = galList[galCur];
   $("#lb-img").src = b.anh; $("#lb-img").alt = b.moTa || "";
-  $("#lb-cap").textContent = `${galCur + 1} / ${galList.length} · ${[b.hocVien, b.loai, b.moTa || b.ghiChu, b.gvhd && "GVHD: " + b.gvhd, b.tgiang && "Trợ giảng: " + b.tgiang].filter(Boolean).join(" · ")}`;
+  $("#lb-cap").textContent = `${galCur + 1} / ${galList.length} · ${[b.hocVien, b.loai, b.moTa || b.ghiChu, b.gvhd && "GVHD: " + b.gvhd, b.tgiang && "Trợ giảng: " + b.tgiang, b.chucVu && b.chucVu !== "Học viên" && "Người vẽ: " + b.chucVu, b.mau && "Bài mẫu giáo viên"].filter(Boolean).join(" · ")}`;
   $("#lb").hidden = false;
   window.__troLy?.goiYBai(b.hocVien ? `bài của ${b.hocVien}` : (b.loai || "bài vẽ này"));
 }
@@ -3757,14 +3757,16 @@ function moDangBai() {
   const { el, dong } = moHop(`<h3>Đăng bài vẽ học viên</h3>
     <form id="f-bv" class="hop-f" novalidate>
       <label class="anh-chon" for="bv-anh"><img id="bv-xem" alt="" hidden><span id="bv-chu"><b>📷 Chọn ảnh bài vẽ</b><small>Chụp thẳng, đủ sáng, không lệch khung</small></span><input id="bv-anh" type="file" accept="image/*"></label>
-      <label>Tên học viên *<input id="bv-ten" list="bv-ds" maxlength="80" autocomplete="off" placeholder="VD: Nguyễn Văn An"></label>
+      <label>Họ và tên *<input id="bv-ten" list="bv-ds" maxlength="80" autocomplete="off" placeholder="VD: Nguyễn Văn An"></label>
       <datalist id="bv-ds">${tenHV.map(t => `<option value="${esc(t)}">`).join("")}</datalist>
       <fieldset class="chon-loai"><legend>Đây là bài gì? *</legend>${LOAI_BAI.map((l, i) => `<label><input type="radio" name="bv-loai" value="${esc(l.ten)}"${i === 0 ? "" : ""}><span>${esc(l.ten)}</span></label>`).join("")}</fieldset>
+      <label>Người vẽ là<select id="bv-vaitro"><option>Học viên</option><option>Trợ giảng</option><option>Giáo viên</option></select></label>
       <label>Ghi chú<input id="bv-gc" maxlength="120" placeholder="VD: Bố cục màu tuần 3 · 8,5 điểm"></label>
       <label>Giáo viên hướng dẫn<input id="bv-gvhd" list="bv-gv" maxlength="80" autocomplete="off" placeholder="VD: Nguyễn Văn Hùng"></label>
       <label>Trợ giảng<input id="bv-tg" list="bv-gv" maxlength="80" autocomplete="off" placeholder="VD: Đỗ Hữu Trường"></label>
       <datalist id="bv-gv">${GIAO_VIEN.map(g => `<option value="${esc(g.ten)}">`).join("")}</datalist>
       <label>Link kèm theo (không bắt buộc)<input id="bv-link" type="url" inputmode="url" maxlength="300" placeholder="https://… (video, bài đăng Facebook)"></label>
+      ${isAdmin ? `<label class="check"><input type="checkbox" id="bv-mau"> Bài mẫu giáo viên (hiện trong Bài nổi bật)</label>` : ""}
       ${isAdmin ? `<label>Đưa lên Bài vẽ nổi bật<select id="bv-top"><option value="0">Không — chỉ vào mục Bài vẽ học viên</option>${[1, 2, 3, 4, 5].map(k => `<option value="${k}">Top ${k} tuần này</option>`).join("")}</select></label>`
         : `<p class="muted hop-ghi">Bài vào mục <b>Bài vẽ học viên</b>. Quản lý sẽ chọn Top 5 bài nổi bật mỗi tuần.</p>`}
       <div class="hop-nut"><button class="btn primary" type="submit" id="bv-gui">Đăng bài</button><button class="btn" type="button" data-dong>Huỷ</button></div>
@@ -3782,13 +3784,15 @@ function moDangBai() {
     e.preventDefault(); st.classList.remove("err");
     const hocVien = el.querySelector("#bv-ten").value.trim(), loai = (el.querySelector('[name="bv-loai"]:checked') || {}).value || "";
     const link = el.querySelector("#bv-link").value.trim(), top = Number((el.querySelector("#bv-top") || {}).value || 0);
-    const loi = !anh ? "Chưa chọn ảnh bài vẽ." : !hocVien ? "Nhập tên học viên." : !loai ? "Chọn đây là bài gì (Màu, Tượng…)." : !linkHopLe(link) ? "Link phải bắt đầu bằng https://" : "";
+    const loi = !anh ? "Chưa chọn ảnh bài vẽ." : !hocVien ? "Nhập họ và tên." : !loai ? "Chọn đây là bài gì (Màu, Tượng…)." : !linkHopLe(link) ? "Link phải bắt đầu bằng https://" : "";
     if (loi) { st.textContent = loi; st.classList.add("err"); return; }
     const nut = el.querySelector("#bv-gui"); nut.disabled = true; st.textContent = "Đang đăng…";
     const ref = doc(collection(db, "baive"));
     const gvhd = el.querySelector("#bv-gvhd").value.trim(), tgiang = el.querySelector("#bv-tg").value.trim();
     const data = { anh, hocVien, loai, ghiChu: el.querySelector("#bv-gc").value.trim(), link, ngay: todayVN(), hang: 0, ngayTop: "", nguoi: mail, tenNguoi: tenToi(), luc: Date.now() };
     if (gvhd) data.gvhd = gvhd; if (tgiang) data.tgiang = tgiang; // ghi khi có điền
+    data.chucVu = el.querySelector("#bv-vaitro").value || "Học viên";
+    if (isAdmin && el.querySelector("#bv-mau") && el.querySelector("#bv-mau").checked) data.mau = true;
     try {
       await timed("Đăng bài vẽ", setDoc(ref, data));
       if (isAdmin && top) await datTop(ref.id, top);
