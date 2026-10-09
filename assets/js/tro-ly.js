@@ -522,9 +522,36 @@ function tinMua() {
 const nhacKey = () => nhac.map(n => n.id).sort().join("|");
 function veNhac() {
   const ds = $("#tl-nhac-ds"); if (!ds) return;
-  ds.innerHTML = nhac.length ? nhac.map(n => `<a class="tl-nh ${n.muc || ""}" href="${esc(n.link || "#tai-khoan")}"><span>${n.icon || "•"}</span><div><b>${esc(n.tieuDe)}</b>${n.nd ? `<small>${esc(n.nd)}</small>` : ""}</div></a>`).join("")
+  ds.innerHTML = nhac.length ? nhac.map((n, i) => `<a class="tl-nh ${n.muc || ""}" href="${esc(n.link || "#tai-khoan")}" data-i="${i}"><span>${n.icon || "•"}</span><div><b>${esc(n.tieuDe)}</b>${n.nd ? `<small>${esc(n.nd)}</small>` : ""}</div></a>`).join("")
     : `<p class="tl-rong">Không có việc gì cần nhắc. Rảnh thế thì… vẽ thêm một bài đi 😏</p>`;
-  ds.querySelectorAll("a").forEach(a => a.onclick = () => { $("#tl-nhac").hidden = true; });
+  ds.onclick = e => {
+    const a = e.target.closest("a.tl-nh"); if (!a) return;
+    e.preventDefault();
+    $("#tl-nhac").hidden = true; $("#tl-nhac-nut").setAttribute("aria-expanded", "false");
+    diDen(nhac[Number(a.dataset.i)]);
+  };
+}
+// Mở đúng trang, đúng tab, rồi cuộn tới đúng tin/bài/thông báo được nhắc và làm nổi bật một lúc
+function diDen(n) {
+  if (!n) return;
+  const link = n.link || "#tai-khoan";
+  const tim = () => {
+    if (n.tab && window.__lvTab) window.__lvTab(n.tab);
+    if (n.hw && window.__hwView) window.__hwView(n.hw);
+    if (!n.dich) return;
+    let lan = 0;
+    const thu = () => {
+      const el = document.querySelector(n.dich);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+        el.classList.add("nhac-nhay");
+        setTimeout(() => el.classList.remove("nhac-nhay"), 2200);
+      } else if (++lan < 25) setTimeout(thu, 200);   // chờ dữ liệu Firebase tải xong
+    };
+    setTimeout(thu, 150);
+  };
+  if (location.hash === link) tim();
+  else { location.hash = link; setTimeout(tim, 80); }
 }
 function capNhatDem() {
   const dem = $("#tl-dem"); if (!dem) return;

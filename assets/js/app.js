@@ -1592,7 +1592,7 @@ function renderHomework() {
         <button class="btn small primary" data-grade="${esc(h.id)}">${gradeOpen.has(h.id) ? "Đóng chấm bài" : "Chấm bài"}</button>
         <button class="btn small" data-del="${esc(h.id)}">Xoá</button>`;
     const studentBar = `<button class="btn small" data-hw="${esc(h.id)}">${myProgress.baitap[h.id] ? "Đã nộp ✓" : "Đánh dấu đã nộp"}</button>`;
-    return `<div class="hw"><div><p class="eyebrow">${esc(h.khoa)}${h.lop ? " · " + esc(h.lop) : ""}</p><h3>${esc(h.ten)}</h3></div>
+    return `<div class="hw" data-nhac-id="${esc("bt-" + h.id)}"><div><p class="eyebrow">${esc(h.khoa)}${h.lop ? " · " + esc(h.lop) : ""}</p><h3>${esc(h.ten)}</h3></div>
       <p class="due ${n <= 1 ? "late" : ""}">${due}</p>${h.mota ? `<p class="desc">${esc(h.mota)}</p>` : ""}
       ${homeworkFilesHTML(h)}
       ${!isTeacher && fb ? `<p class="fb ${fb.trangThai === "lamlai" ? "lamlai" : fb.trangThai === "dat" ? "dat" : ""}"><b>Thầy nhận xét${fb.diem ? ` · Điểm ${esc(fb.diem)}` : ""}:</b> ${esc(fb.nhanXet || "")}${fb.tieuChi ? `<span class="tc-ket">${TIEU_CHI.map(([k, t]) => `<i class="${fb.tieuChi[k] === false ? "chua" : "ok"}">${fb.tieuChi[k] === false ? "✗" : "✓"} ${t}</i>`).join("")}</span>` : ""}<br><span class="muted">${esc(fb.nguoiCham || "")} · ${fmtDate(fb.luc)}</span></p>` : ""}
@@ -1649,6 +1649,7 @@ async function saveGrade(btn) {
 $$("#hw-filter .tab").forEach(b => b.onclick = () => {
   hwView = b.dataset.h; $$("#hw-filter .tab").forEach(x => x.setAttribute("aria-selected", x === b)); renderHomework();
 });
+window.__hwView = v => { const b = $(`#hw-filter .tab[data-h="${v}"]`); if (b) b.click(); };   // cho Nhắc việc mở đúng tab bài tập
 $("#hw-search").oninput = renderHomework;
 $("#hw-course").onchange = renderHomework;
 $("#hw-new").onclick = () => { $("#hw-composer").open = true; $("#hw-composer").scrollIntoView({block:"start", behavior:matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth"}); $("#bt-ten").focus({preventScroll:true}); };
@@ -2414,20 +2415,25 @@ function capNhatNhac() {
       }));
       homework.forEach(h => {
         const fb = myFeedback[h.id], nop = myProgress.baitap[h.id];
-        if (canLamLai(fb, nop)) ds.push({ id: "ll-" + h.id + (fb.luc || ""), icon: "⚠️", muc: "gap", tieuDe: `Làm lại: ${h.ten}`, nd: `Chưa đạt ${chuaDat(fb).join(", ") || "tiêu chí"}${fb.hanLamLai ? ` · hạn ${ngayVN(fb.hanLamLai)}` : ""}. Làm lại rồi bấm Nộp lại.`, link: "#bai-tap" });
-        else if (!nop && h.han) { const n = daysUntil(h.han);
-          if (n >= 0 && n <= 2) ds.push({ id: "han-" + h.id, icon: "⏰", muc: n === 0 ? "gap" : "", tieuDe: `${n === 0 ? "Hôm nay" : n === 1 ? "Ngày mai" : "Còn 2 ngày"} hết hạn: ${h.ten}`, nd: "Chưa đánh dấu nộp bài.", link: "#bai-tap" });
-          else if (n < 0 && n >= -7) ds.push({ id: "tre-" + h.id, icon: "🐢", muc: "gap", tieuDe: `Quá hạn: ${h.ten}`, nd: "Nộp muộn còn hơn không nộp. Nộp xong nhắn thầy một câu nhé.", link: "#bai-tap" }); }
+        if (canLamLai(fb, nop)) ds.push({ id: "ll-" + h.id + (fb.luc || ""), icon: "⚠️", muc: "gap", tieuDe: `Làm lại: ${h.ten}`, nd: `Chưa đạt ${chuaDat(fb).join(", ") || "tiêu chí"}${fb.hanLamLai ? ` · hạn ${ngayVN(fb.hanLamLai)}` : ""}. Làm lại rồi bấm Nộp lại.`, link: "#bai-tap", hw: "open", dich: `[data-nhac-id="${CSS.escape("bt-" + h.id)}"]` });
+        else if (!nop && h.han) { const n = daysUntil(h.han), dich = `[data-nhac-id="${CSS.escape("bt-" + h.id)}"]`;
+          if (n >= 0 && n <= 2) ds.push({ id: "han-" + h.id, icon: "⏰", muc: n === 0 ? "gap" : "", tieuDe: `${n === 0 ? "Hôm nay" : n === 1 ? "Ngày mai" : "Còn 2 ngày"} hết hạn: ${h.ten}`, nd: "Chưa đánh dấu nộp bài.", link: "#bai-tap", hw: "open", dich });
+          else if (n < 0 && n >= -7) ds.push({ id: "tre-" + h.id, icon: "🐢", muc: "gap", tieuDe: `Quá hạn: ${h.ten}`, nd: "Nộp muộn còn hơn không nộp. Nộp xong nhắn thầy một câu nhé.", link: "#bai-tap", hw: "past", dich }); }
       });
     } else {
       const choCham = homework.reduce((a, h) => a + roster.filter(r => { const fb = feedbackAll[r.id]?.[h.id], nop = progressAll[r.id]?.baitap?.[h.id]; return (nop && !fb) || daNopLai(fb, nop); }).length, 0);
-      if (choCham) ds.push({ id: "cham-" + choCham, icon: "📝", muc: "gap", tieuDe: `${choCham} bài đang chờ chấm`, nd: "Có cả bài học viên đã nộp lại.", link: "#bai-tap" });
-      if (isAdmin && reqCount) ds.push({ id: "duyet-" + reqCount, icon: "🙋", muc: "gap", tieuDe: `${reqCount} yêu cầu chờ duyệt`, link: "#duyet" });
-      if (typeof khoSapHet === "function") { const het = khoSapHet(); if (het.length) ds.push({ id: "kho-" + het.join(), icon: "📦", muc: "", tieuDe: `Kho sắp hết ${het.length} món`, nd: het.slice(0, 4).join(", "), link: "#kho" }); }
+      if (choCham) ds.push({ id: "cham-" + choCham, icon: "📝", muc: "gap", tieuDe: `${choCham} bài đang chờ chấm`, nd: "Có cả bài học viên đã nộp lại.", link: "#bai-tap", dich: "#hw-list" });
+      if (isAdmin && reqCount) ds.push({ id: "duyet-" + reqCount, icon: "🙋", muc: "gap", tieuDe: `${reqCount} yêu cầu chờ duyệt`, link: "#duyet", dich: "#ql-duyet-h" });
+      if (typeof khoSapHet === "function") { const het = khoSapHet(); if (het.length) ds.push({ id: "kho-" + het.join(), icon: "📦", muc: "", tieuDe: `Kho sắp hết ${het.length} món`, nd: het.slice(0, 4).join(", "), link: "#kho", dich: "#kho" }); }
     }
     const tin = lvUnreadMsgs(), tb = lvUnreadTB();
-    if (tin) ds.push({ id: "tin-" + tin, icon: "💬", muc: "", tieuDe: `${tin} tin nhắn mới`, link: "#lam-viec" });
-    if (tb) ds.push({ id: "tb-" + tb, icon: "📣", muc: "", tieuDe: `${tb} thông báo mới của lớp`, link: "#lam-viec" });
+    if (tin) ds.push({ id: "tin-" + tin, icon: "💬", muc: "", tieuDe: `${tin} tin nhắn mới`, link: "#lam-viec", tab: "tin", dich: "#lv-tin" });
+    // Mỗi thông báo chưa đọc là một nhắc việc riêng: bấm vào sẽ nhảy đúng tới thông báo đó
+    if (tb) {
+      const chuaXem = lvTB.filter(x => x.luc > store.get(tbSeenKey(), 0) && x.tacGia !== mail).sort((a, b) => b.luc - a.luc);
+      chuaXem.slice(0, 3).forEach(x => ds.push({ id: "tb-" + x.id, icon: "📣", muc: "", tieuDe: "Thông báo: " + (x.tieuDe || "mới của lớp"), nd: String(x.nd || "").slice(0, 100), link: "#lam-viec", tab: "tb", dich: `[data-nhac-id="${CSS.escape("tb-" + x.id)}"]` }));
+      if (tb > 3) ds.push({ id: "tb-more-" + tb, icon: "📣", muc: "", tieuDe: `Còn ${tb - 3} thông báo mới khác`, link: "#lam-viec", tab: "tb", dich: "#lv-tb" });
+    }
   } catch (e) { console.warn(e); }
   t.nhacViec(ds);
 }
@@ -2499,6 +2505,7 @@ function setLvTab(t) {
   renderLV();
 }
 $$("#lv-tabs [data-lv]").forEach(b => b.onclick = () => setLvTab(b.dataset.lv));
+window.__lvTab = setLvTab;   // cho khung Nhắc việc mở đúng tab khi bấm nhắc
 $$("#chat-filter [data-cf]").forEach(b => b.onclick = () => { chatFilter = b.dataset.cf; $$("#chat-filter [data-cf]").forEach(x => x.setAttribute("aria-selected", x === b)); renderChatList(); });
 $$("#cv-filter [data-cv]").forEach(b => b.onclick = () => { cvView = b.dataset.cv; $$("#cv-filter [data-cv]").forEach(x => x.setAttribute("aria-selected", x === b)); renderViec(); });
 
@@ -2639,7 +2646,7 @@ $("#f-chat").addEventListener("submit", async e => {
 /* ----- Thông báo ----- */
 function renderTB() {
   const list = lvTB.slice().sort((a, b) => b.luc - a.luc);
-  $("#tb-list").innerHTML = list.length ? list.map(t => `<article class="tb${t.gui === "giaovien" ? " noibo" : ""}">
+  $("#tb-list").innerHTML = list.length ? list.map(t => `<article class="tb${t.gui === "giaovien" ? " noibo" : ""}" data-nhac-id="${esc("tb-" + t.id)}">
       <div class="tb-head">${t.gui === "giaovien" ? `<span class="chip line">Nội bộ giáo viên</span>` : ""}<b>${esc(t.tieuDe || "Thông báo")}</b>
         <span class="muted num">${esc(t.ten || "")} · ${esc(fmtDate(t.luc))}</span></div>
       <p>${esc(t.nd).replace(/\n/g, "<br>")}</p>
