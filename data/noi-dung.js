@@ -334,7 +334,8 @@ export const SO_DU_THI = { 2025: 0, 2026: 0 };
 export const BAN_TIN = [
   { muc: "lythuyet", ngay: "2026-10-10", tieuDe: "Gọt chì đúng cách và lưu ý khi mang bút vào phòng thi",
     nd: "Gọt phần gỗ trước, để lõi chì lộ khoảng 1 cm. Gọt đều tay, tránh bẻ mạnh làm gãy chì.\nMài đầu chì nhẹ để lấy nét đậm, gọt trước khi đi thi, đừng để đến phòng thi mới gọt.\nChuẩn bị ít nhất 2 bút chì, 1 cục tẩy mềm, 1 gọt chì nhỏ gọn. Kiểm tra quy định của hội đồng thi về dụng cụ được mang vào.",
-    link: "https://s.shopee.vn/30odcyYlVL" },
+    link: "https://s.shopee.vn/30odcyYlVL",
+    anh: "assets/img/tin/got-chi.png" },
   { muc: "tuyensinh", ngay: "2026-10-09", tieuDe: "Dự kiến thay đổi tuyển sinh trình độ đại học năm 2027 (ĐH Kiến trúc Hà Nội)",
     nd: "Trường Đại học Kiến trúc Hà Nội công bố thông báo về dự kiến thay đổi trong tuyển sinh trình độ đại học năm 2027.\nBấm \"Mở link\" để đọc chi tiết trên trang chính thức của trường.",
     link: "https://hau.edu.vn/Thong-bao-ve-du-kien-thay-doi-trong-tuyen-sinh-trinh-do-dai-hoc-nam-2027-cua-Truong-Dai-hoc-Kien-truc-Ha-Noi_n4870.html",
