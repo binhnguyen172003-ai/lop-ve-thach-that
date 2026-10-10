@@ -3525,3 +3525,32 @@ table.roster.cc-cp{min-width:0}
   .tab-duoi a[aria-current="page"] svg{background:transparent;box-shadow:none;transform:translateY(-26px);transition:transform .45s cubic-bezier(.34,1.56,.64,1) .05s,color .3s}
 }
 @media(max-width:760px) and (prefers-reduced-motion:reduce){body.co-tab .tab-duoi.co-chon::before{transition:none}}
+
+/* ===== Menu trên cùng: hiệu ứng rê chuột kiểu Apple (máy tính) ===== */
+@media (hover:hover) and (pointer:fine){
+  nav .wrap{position:relative}
+  .nav-pill{position:absolute;z-index:0;height:36px;border-radius:999px;pointer-events:none;opacity:0;
+    background:color-mix(in srgb,var(--ink) 9%,transparent);box-shadow:inset 0 1px 0 color-mix(in srgb,#fff 12%,transparent);
+    transition:left .35s cubic-bezier(.22,1,.36,1),width .35s cubic-bezier(.22,1,.36,1),top .35s,opacity .25s}
+  .nav-pill.on{opacity:1}
+  nav .dd,nav a.link.solo,nav .nav-search{position:relative;z-index:1}
+  nav{position:sticky}
+  nav::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:1px;pointer-events:none;opacity:0;transition:opacity .3s;
+    background:radial-gradient(160px 1px at var(--mx,50%) 50%,color-mix(in srgb,#fff 85%,transparent),transparent)}
+  nav::before{content:"";position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .3s;
+    background:radial-gradient(260px 80px at var(--mx,50%) 100%,color-mix(in srgb,var(--accent) 10%,transparent),transparent 70%)}
+  nav.roi::after,nav.roi::before{opacity:1}
+}
+@media (prefers-reduced-motion:reduce){.nav-pill{transition:opacity .2s}}
+/* Đang rê / kéo ngang thanh dưới đáy: vòng tròn bám theo nhanh, không nảy */
+@media(max-width:760px){
+  body.co-tab .tab-duoi.luot::before{transition:left .12s ease-out}
+  body.co-tab .tab-duoi{touch-action:pan-y}
+}
+@media(max-width:760px){
+  body.co-tab .tab-duoi.luot a[aria-current="page"]:not(.gan) svg{transform:none;color:var(--graphite);stroke:currentColor}
+  body.co-tab .tab-duoi.luot a[aria-current="page"]:not(.gan) span{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+  body.co-tab .tab-duoi.luot a.gan svg{transform:translateY(-26px);color:#0b0d14;stroke:#0b0d14}
+  body.co-tab .tab-duoi a svg{transition:transform .3s cubic-bezier(.34,1.56,.64,1),color .2s}
+}
+@media(max-width:760px){body.co-tab .tab-duoi.luot a[aria-current="page"]:not(.gan){align-content:center}}
