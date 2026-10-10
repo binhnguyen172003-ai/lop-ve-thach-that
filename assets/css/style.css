@@ -3015,3 +3015,22 @@ main.wrap[id^="v-"]:not(#v-home){min-height:calc(100svh - var(--nav-h,57px))}
 .roster td.hv-o small{display:block;color:var(--graphite);font-size:.8rem;overflow-wrap:anywhere;line-height:1.4}
 
 #gv-kq-o{margin-top:10px}.ql-nho{grid-column:1/-1;margin:0;font-weight:600;font-size:.9rem}
+
+/* Lịch phân công dạy (Vận hành → Ca dạy) */
+.lpc{display:grid;gap:10px;margin-bottom:16px;padding:14px}
+.lpc-dau{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;justify-content:space-between}
+.lpc-cs{display:flex;gap:6px;flex-wrap:wrap}.lpc-cs .tab{min-height:36px;padding:4px 12px}
+.lpc-tuan{display:flex;gap:8px;align-items:center}.lpc-tuan .btn{min-width:40px}
+.lpc-bao{margin:0;font-size:.85rem}.lpc-bao:not(.muted){color:var(--warn);font-weight:600}
+.lpc-cuon{overflow-x:auto;margin-inline:-4px}
+.lpc-bang{border-collapse:separate;border-spacing:4px;width:100%;min-width:640px;font-size:.8rem;table-layout:fixed}
+.lpc-bang th{font-weight:600;text-align:center;color:var(--graphite);padding:4px}.lpc-bang tbody th{text-align:left;width:92px}
+.lpc-bang th.hom{color:var(--ink)}
+.lpc-bang td{vertical-align:top;background:var(--paper);border:1px solid var(--rule);border-radius:10px;padding:6px;height:74px}
+.lpc-bang td.hom{border-color:color-mix(in srgb,#2ec4b6 60%,var(--rule))}
+.lpc-bang td.thieu{background:color-mix(in srgb,#f5c400 12%,var(--paper));border-color:color-mix(in srgb,#f5c400 50%,var(--rule))}
+.lpc-bang td.lpc-nghi{background:none;border-style:dashed;opacity:.4}
+.lpc-mon{display:block;font-size:.7rem;font-weight:700;color:var(--graphite);margin-bottom:4px}
+.lpc-gv{display:block;padding:2px 6px;margin-bottom:3px;border-radius:6px;background:color-mix(in srgb,var(--accent) 16%,transparent);font-weight:600;overflow-wrap:anywhere}
+.lpc-gv.toi{background:color-mix(in srgb,#2ec4b6 22%,transparent)}
+.lpc-xep{border:1px dashed var(--rule);background:none;color:var(--accent);border-radius:6px;padding:2px 6px;font:inherit;font-size:.72rem;cursor:pointer;min-height:28px;width:100%}

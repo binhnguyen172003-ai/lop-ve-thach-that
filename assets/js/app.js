@@ -2497,6 +2497,7 @@ function renderRequests() {
           ${line("Mục tiêu", [r.khoi, r.namThi, r.mucTieu].filter(Boolean).join(" · "))}${line("Lời nhắn", r.ghiChu)}
         </div></details>
       <label class="kc-wrap req-la"><span class="muted">Duyệt là <small>· quản lý xét chức vụ, người gửi không cần chọn đúng</small></span><select class="req-cv" data-cv="${esc(r.id)}" aria-label="Duyệt là">${["Học viên", ...CHUC_VU].map(c => `<option${c === (gv ? "Trợ giảng" : "Học viên") ? " selected" : ""}>${c}</option>`).join("")}</select></label>
+      <label class="kc-wrap req-mon"><span class="muted">Môn phụ trách</span>${chonMonGV("req-mon-s", "", `data-mon="${esc(r.id)}"`)}</label>
       <div class="kc-wrap"><span class="muted">Cấp khoá học <small>· chọn trước khi bấm Duyệt, em sẽ thấy nút "Vào học" ở các khoá này</small></span>${oChonKhoa(r.id, khoaTuChuongTrinh(r.chuongTrinh))}</div></div>`;
   }).join("");
   $$("#requests [data-ok]").forEach(b => b.onclick = async () => {
@@ -2505,7 +2506,7 @@ function renderRequests() {
     const khoaHoc = khoaDaChon(r.id), la = ($(`[data-cv="${CSS.escape(r.id)}"]`) || {}).value || (r.vaiTro === "giaovien" ? "Trợ giảng" : "Học viên");
     const { id, ...data } = r, vaiTro = la === "Học viên" ? "hocvien" : "giaovien", cv = la; delete data.vaiTro;
     const batch = writeBatch(db);
-    if (vaiTro === "giaovien") batch.set(doc(db, "giaovien", r.id), { ten: r.ten, gmail: r.gmail, sdt: r.sdt || "", coso: r.coso || "", ghiChu: r.ghiChu || "", chucVu: cv, duyetLuc: Date.now() });
+    if (vaiTro === "giaovien") batch.set(doc(db, "giaovien", r.id), { ten: r.ten, gmail: r.gmail, sdt: r.sdt || "", coso: r.coso || "", ghiChu: r.ghiChu || "", chucVu: cv, mon: ($(`[data-mon="${CSS.escape(r.id)}"]`) || {}).value || "", duyetLuc: Date.now() });
     else batch.set(doc(db, "hocvien", r.id), { ...data, vaiTro: "hocvien", lop: r.chuongTrinh || r.lop || "", khoaHoc, duyetLuc: Date.now() });
     batch.delete(doc(db, "yeucau", r.id));
     const nhan = b.textContent, ok = `Đã duyệt ${r.ten}${vaiTro === "giaovien" ? " · " + cv : ""}. ${vaiTro === "giaovien" ? "Anh/chị" : "Em"} ấy mở lại web là vào được.`;
@@ -2521,7 +2522,8 @@ function renderRequests() {
   $$("#requests [data-no]").forEach(b => confirmButton(b, () => deleteDoc(doc(db, "yeucau", b.dataset.no)), "Bấm lần nữa để từ chối"));
   $$("#requests [data-cv]").forEach(sel => { const doi = () => { const the = sel.closest(".req-item"), nut = the && the.querySelector("[data-ok]"), kc = the && the.querySelector(".khoa-cap");
       if (nut) nut.textContent = sel.value === "Học viên" ? "✓ Duyệt học viên" : "✓ Duyệt · " + sel.value;
-      if (kc) kc.closest(".kc-wrap").hidden = sel.value !== "Học viên"; };
+      if (kc) kc.closest(".kc-wrap").hidden = sel.value !== "Học viên";
+      const mon = the && the.querySelector(".req-mon"); if (mon) mon.hidden = sel.value === "Học viên"; };
     sel.onchange = doi; doi(); });
 }
 /* ===== Thông tin học viên: khối, cơ sở, SĐT, trường thi; xin đổi tên (anh chị duyệt) ===== */
@@ -2651,10 +2653,15 @@ function renderRoster() {
 function renderTeachers() {
   renderRoster(); // cập nhật nút Trao quyền GV / chữ "Đang là GV" trong bảng học viên
   if (!teachers.length) { $("#teachers").innerHTML = `<tbody><tr><td class="muted">Chưa có giáo viên nào. Quản lý luôn có toàn quyền.</td></tr></tbody>`; return; }
-  $("#teachers").innerHTML = `<thead><tr><th>Họ tên</th><th>Chức vụ</th><th>Gmail</th><th>Cơ sở</th><th>Điện thoại</th><th>Ngày duyệt</th><th></th></tr></thead><tbody>` +
-    teachers.map(t => `<tr><td>${esc(t.ten)}</td><td>${chonChucVu("gv-cv", t.chucVu, `data-gvcv="${esc(t.id)}"`)}</td><td>${esc(t.gmail)}</td><td>${esc(t.coso)}</td><td class="num">${esc(t.sdt)}</td>
+  $("#teachers").innerHTML = `<thead><tr><th>Họ tên</th><th>Chức vụ</th><th>Môn phụ trách</th><th>Gmail</th><th>Cơ sở</th><th>Điện thoại</th><th>Ngày duyệt</th><th></th></tr></thead><tbody>` +
+    teachers.map(t => `<tr><td>${esc(t.ten)}</td><td>${chonChucVu("gv-cv", t.chucVu, `data-gvcv="${esc(t.id)}"`)}</td><td>${chonMonGV("gv-mon", t.mon, `data-gvmon="${esc(t.id)}"`)}</td><td>${esc(t.gmail)}</td><td>${esc(t.coso)}</td><td class="num">${esc(t.sdt)}</td>
       <td class="num">${fmtDate(t.duyetLuc)}</td><td><button class="btn small" data-rmgv="${esc(t.id)}">Gỡ quyền giáo viên</button></td></tr>`).join("") + `</tbody>`;
   $$("#teachers [data-rmgv]").forEach(b => confirmButton(b, () => deleteDoc(doc(db, "giaovien", b.dataset.rmgv)), "Bấm lần nữa để gỡ quyền"));
+  $$("#teachers [data-gvmon]").forEach(sel => sel.onchange = () => { const cu = (teachers.find(t => t.id === sel.dataset.gvmon) || {}).mon || "";
+    sel.disabled = true;
+    timed("Đổi môn phụ trách", setDoc(doc(db, "giaovien", sel.dataset.gvmon), { mon: sel.value }, { merge: true }))
+      .then(() => toast(sel.value ? "Đã đặt môn phụ trách: " + sel.value + "." : "Đã bỏ môn phụ trách."), () => { sel.value = cu; toast("Chưa đổi được môn. Kiểm tra mạng rồi thử lại.", "err"); })
+      .finally(() => { sel.disabled = false; }); });
   $$("#teachers [data-gvcv]").forEach(sel => sel.onchange = () => { const cu = (teachers.find(t => t.id === sel.dataset.gvcv) || {}).chucVu || "Trợ giảng";
     sel.disabled = true;
     timed("Đổi chức vụ", setDoc(doc(db, "giaovien", sel.dataset.gvcv), { chucVu: sel.value }, { merge: true }))
@@ -4228,6 +4235,9 @@ $("#btn-resend").onclick = () => pwBusy($("#btn-resend"), "Đang gửi…", asyn
 // Chờ máy chủ xác nhận: "ok" | "cho" (quá thời gian, mạng chậm — lệnh vẫn đang gửi) | ném lỗi nếu bị từ chối
 // Chức vụ của anh chị trong lớp: quản lý chọn lúc duyệt / trao quyền (quyền trên web như nhau)
 const CHUC_VU = ["Trợ giảng", "Trợ giảng chính", "Giáo viên", "Giáo viên chính"];
+// Môn anh chị phụ trách: dùng để gợi ý người dạy khi xếp lịch phân công
+const MON_GV = ["Hình hoạ", "Màu", "Hình hoạ + Màu", "Mỹ thuật 2", "Tất cả"];
+const chonMonGV = (cls, cur, extra = "") => `<select class="${cls}" ${extra} aria-label="Môn phụ trách"><option value="">— Chưa chọn —</option>${MON_GV.map(m => `<option${m === cur ? " selected" : ""}>${m}</option>`).join("")}</select>`;
 const chonChucVu = (cls, cur, extra = "") => `<select class="${cls}" ${extra} aria-label="Chức vụ">${CHUC_VU.map(c => `<option${c === (cur || "Trợ giảng") ? " selected" : ""}>${c}</option>`).join("")}</select>`;
 // Form chỉ gửi một lần: đang gửi thì bỏ qua lần bấm thứ hai (chống thông báo / việc / đơn bị trùng)
 function motLan(form, fn) {
