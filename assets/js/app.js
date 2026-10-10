@@ -1875,7 +1875,7 @@ function renderLessons() {
       <div class="gt-td-so"><b class="num">${xong}/${baiSo.length}</b><span>bài đã hoàn thành</span><b class="num gt-pt">${pt}%</b></div>
       <div class="gt-bar" role="progressbar" aria-valuenow="${pt}" aria-valuemin="0" aria-valuemax="100" aria-label="Tiến độ môn"><i style="width:${pt}%"></i></div>
       <ul class="gt-td-ds"><li><span class="gt-dot xong"></span>Hoàn thành <b class="num">${xong}</b></li><li><span class="gt-dot dang"></span>Đang học <b class="num">${dang}</b></li><li><span class="gt-dot chua"></span>Chưa học <b class="num">${baiSo.length - xong - dang}</b></li></ul>
-      ${tiep ? `<button type="button" class="btn primary gt-tiep" data-mo="${esc(tiep.id)}"><small>Bài tiếp theo</small><span>Bài ${pad2b(baiSo.indexOf(tiep) + 1)} · ${esc(tiep.ten.replace(/^(Bài|Chuyên đề)\s*[\d–-]+\s*[–-]\s*/i, ""))} →</span></button>` : `<p class="gt-xong-het">🎉 Em đã hoàn thành cả môn này!</p>`}`;
+      ${tiep ? `<button type="button" class="btn primary gt-tiep" data-mo="${esc(tiep.id)}"><small>Bài tiếp theo</small><span>Bài ${pad2b(baiSo.indexOf(tiep) + 1)} · ${esc(tiep.ten.replace(/^(Bài|Chuyên đề)\s*[\d–-]+\s*[–-]\s*/i, ""))}</span><i aria-hidden="true">→</i></button>` : `<p class="gt-xong-het">🎉 Em đã hoàn thành cả môn này!</p>`}`;
   }
   // ---- Bộ lọc trạng thái
   const LOC = isTeacher ? [] : [["tat", "Tất cả", baiSo.length], ["dang", "Đang học", dang], ["chua", "Chưa học", baiSo.length - xong - dang], ["xong", "Hoàn thành", xong]];
