@@ -606,6 +606,7 @@ function vongXoay(box, st, cards, dots, prev, next, onCenter) {
       const a = Math.abs(d);
       c.style.transform = `translateX(${d * (mob ? 62 : 72)}%) translateZ(${-a * (mob ? 140 : 180)}px) rotateY(${-d * 28}deg)`;
       c.style.opacity = a > 2 ? 0 : a === 2 ? .45 : a === 1 ? .85 : 1;
+      c.style.filter = a === 0 ? "" : `blur(${a === 1 ? 1.5 : 3}px) brightness(${a === 1 ? .75 : .55})`; // thẻ càng xa càng mờ, tối (kiểu băng chuyền kính)
       c.style.zIndex = 10 - a; c.style.pointerEvents = a > 2 ? "none" : "";
       c.classList.toggle("on", d === 0); c.setAttribute("aria-hidden", a > 2);
     });
