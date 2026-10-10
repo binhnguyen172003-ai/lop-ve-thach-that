@@ -112,6 +112,23 @@ export const DO_MANG = {
 };
 
 
+// Việc cần làm cuối mỗi buổi (giáo viên tick trước khi kết thúc ca, mục Vận hành → Trực nhật).
+export const VIEC_CUOI_BUOI = [
+  "Xếp mẫu tượng, khối, tĩnh vật về đúng kệ",
+  "Thu bảng vẽ, giá vẽ về góc",
+  "Lau bàn, quét sàn khu vẽ",
+  "Đổ rác, thay túi rác mới",
+  "Tắt điện, quạt, điều hoà; đóng cửa sổ, khoá cửa",
+];
+
+// Phiếu chấm mặc định khi tạo đề thi thử (mỗi dòng: [tiêu chí, điểm tối đa]). Giáo viên sửa được khi tạo đề.
+export const TIEU_CHI_THI = {
+  "Hình hoạ":   [["Bố cục", 2], ["Dựng hình, tỷ lệ", 3], ["Sắc độ, khối", 3], ["Tổng thể, chất cảm", 2]],
+  "Bố cục màu": [["Bố cục", 3], ["Màu sắc", 3], ["Ý tưởng", 2], ["Kỹ thuật thể hiện", 2]],
+  "Mỹ thuật 2": [["Bố cục", 3], ["Sắc độ", 3], ["Ý tưởng", 2], ["Tổng thể", 2]],
+};
+
+
 // ---------- 4. BÀI VẼ HỌC VIÊN (trang chủ) ----------
 // Bước 1: đưa ảnh vào thư mục  assets/img/bai-ve/  (nên dưới 300KB).
 // Bước 2: thêm một dòng bên dưới.

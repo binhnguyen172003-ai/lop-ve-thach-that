@@ -32,6 +32,7 @@ Nguyên tắc: **mỗi việc chỉ sửa đúng một file**. Nội dung hay đ
 ├── assets/
 │   ├── css/style.css       Giao diện (màu, chữ, bố cục)
 │   ├── js/app.js           Logic: đếm ngày, đăng nhập, giáo trình, bài tập
+│   ├── js/van-hanh.js      Thi thử, ca dạy, bàn giao, sự cố, trực nhật, nhật ký sửa
 │   └── img/                Biểu tượng ứng dụng + bai-ve/ (ảnh bài vẽ học viên)
 ├── data/
 │   ├── noi-dung.js         ★ NỘI DUNG HAY ĐỔI: liên hệ, lịch thi, thời gian biểu, bài vẽ, bảng vàng, mục tiêu giờ học

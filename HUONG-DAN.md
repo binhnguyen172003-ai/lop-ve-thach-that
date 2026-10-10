@@ -105,6 +105,28 @@ Ai thấy gì trong khu Làm việc:
 - **Giáo viên:** nhắn với mọi học viên, nhắn riêng quản lý, đăng thông báo chung, tick xong việc được giao.
 - **Quản lý:** thấy tất cả, đăng thông báo nội bộ chỉ giáo viên đọc, giao và xoá việc.
 
+## Thi thử & Vận hành lớp (bản cập nhật tháng 10/2026)
+
+> **Bắt buộc làm 1 lần:** mở file `firestore.rules` → sao chép toàn bộ → Firebase Console → Firestore Database → **Rules** → dán đè → **Publish**.
+> Chưa dán thì 2 trang mới báo “Tính năng mới chưa bật được trên máy chủ”. Trang **Quản lý** cũng có nút **Sao chép luật mới** khi phát hiện luật cũ.
+
+| Việc | Làm ở đâu | Ai dùng |
+|---|---|---|
+| Tạo đề thi thử (thời lượng, giờ mở/đóng, đề, ảnh đề, phiếu chấm) | Tài khoản → **⏱️ Thi thử** → Tạo đề thi thử | Giáo viên, quản lý |
+| Làm bài thi thử: bấm Bắt đầu → đồng hồ chạy → chụp ảnh bài → Nộp | Tài khoản → Thi thử | Học viên |
+| Chấm theo phiếu tiêu chí + nhận xét | Thi thử → Xem & chấm bài | Giáo viên, quản lý |
+| Xem điểm từng lần và biểu đồ tiến bộ | Thi thử → Kết quả các lần thi | Học viên |
+| Xếp ca dạy (có lặp 4 tuần) | Tài khoản → **🛠️ Vận hành** → Ca dạy | Quản lý |
+| Xin đổi ca / duyệt đổi ca | Vận hành → Ca dạy | Giáo viên gửi, quản lý duyệt |
+| Ghi bàn giao cuối ca (học viên đang làm gì, cần sửa gì, buổi sau) | Vận hành → Bàn giao | Giáo viên |
+| Báo thiếu đồ, đồ hỏng (kèm ảnh) → Đã nhận → Đang xử lý → Hoàn thành | Vận hành → Sự cố | Mọi người gửi, quản lý xử lý |
+| Lịch trực nhật + kiểm tra cuối buổi | Vận hành → Trực nhật | Giáo viên sửa lịch & xác nhận; học viên xem |
+| Xem ai sửa gì, khôi phục dữ liệu xoá/sửa nhầm | Vận hành → **Nhật ký sửa** | Chỉ quản lý |
+
+- Việc cuối buổi và phiếu chấm mặc định theo môn: sửa trong `data/noi-dung.js` (`VIEC_CUOI_BUOI`, `TIEU_CHI_THI`).
+- Nhật ký tự ghi mỗi lần giáo viên/quản lý thêm, sửa, xoá: học viên, nhận xét/điểm, điểm danh, bài tập, giáo trình, lịch nhắc, bài vẽ, bản tin, kho, ca dạy, thi thử… Nhật ký không ai sửa hay xoá được. Mục có ảnh quá lớn (trên ~600 KB) chỉ ghi lại việc sửa, không lưu được bản để khôi phục.
+- Giờ bắt đầu và giờ nộp bài thi được máy chủ đối chiếu, học viên không khai lùi giờ được; nộp quá giờ vẫn nhận nhưng ghi “nộp muộn”.
+
 ## Gặp lỗi thường gặp
 
 | Hiện tượng | Cách xử lý |
