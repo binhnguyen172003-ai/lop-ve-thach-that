@@ -3309,3 +3309,19 @@ table.roster.cc-cp{min-width:0}
 .bt-chon-ds .tv-chk span{min-width:0;overflow-wrap:anywhere}
 /* Lịch phân công trên màn hình cảm ứng: nút sửa / gỡ trong ô đủ lớn để bấm bằng ngón tay */
 @media (pointer:coarse){.lpc-gv-nut button{min-width:34px;min-height:34px}.lpc-gv{align-items:center}}
+
+/* Thanh Đi nhanh: khung 400px theo mẫu navigation, co theo màn hình. */
+@media(max-width:760px){
+  body.co-tab .tab-duoi:not([hidden]){
+    --primary-bg:var(--paper);
+    left:50%;right:auto;bottom:calc(12px + env(safe-area-inset-bottom,0px));
+    transform:translateX(-50%);width:min(400px,calc(100% - 24px));height:70px;
+    box-sizing:border-box;padding:4px;display:flex;justify-content:center;align-items:center;
+    background:var(--primary-bg);border:1px solid var(--rule);border-radius:10px;
+    box-shadow:0 15px 25px rgba(0,0,0,.2);
+  }
+  .tab-duoi a{flex:1;min-width:0;height:100%}
+  .tab-duoi a[aria-current="page"]::before{top:0;border-radius:3px}
+  body.co-tab{padding-bottom:calc(94px + env(safe-area-inset-bottom,0px))}
+  body.co-tab #tl-cum,body.co-tab #toast{bottom:calc(94px + env(safe-area-inset-bottom,0px))}
+}
