@@ -40,6 +40,23 @@ service cloud.firestore {
     function hvDaDuyet(mail) {
       return exists(/databases/$(database)/documents/hocvien/$(mail));
     }
+    // Học viên thuần (không kiêm giáo viên): giáo viên chỉ được vào kênh trao đổi của những người này
+    function chiHocVien(mail) {
+      return hvDaDuyet(mail) && !exists(/databases/$(database)/documents/giaovien/$(mail));
+    }
+    // Ảnh lưu dạng chữ: chỉ nhận dữ liệu ảnh thật (chặn chèn mã độc qua ảnh)
+    function anhHopLe(v) {
+      return v is string && v.matches('^data:image/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$');
+    }
+    // Link kèm bài/tin: chỉ https:// hoặc mục trong web (#...)
+    function linkHopLe(d) {
+      return !('link' in d) || d.link == '' || (d.link is string && d.link.size() <= 300
+        && (d.link.matches('^https://[^ "<>]+$') || d.link.matches('^#[a-z0-9-]+$')));
+    }
+    // Tên/vai trò hiển thị trong tin nhắn phải đúng với người gửi
+    function vtDung(d) {
+      return !('vt' in d) || (d.vt == 'ql' && isAdmin()) || (d.vt == 'gv' && isTeacher()) || (d.vt == 'hv' && !isAdmin() && !isTeacher());
+    }
 
     // Giáo trình: ai đã duyệt cũng đọc được; chỉ quản lý sửa.
     match /giaotrinh/{id} {
@@ -178,12 +195,12 @@ service cloud.firestore {
       allow create, update: if isAdmin()
         || (isMe(kenh) && isStudent() && !isTeacher() && request.resource.data.vaiTro == 'hocvien')
         || (isMe(kenh) && isTeacher() && !isAdmin() && request.resource.data.vaiTro == 'giaovien')
-        || (isTeacher() && request.resource.data.vaiTro == 'hocvien' && hvDaDuyet(kenh));
+        || (isTeacher() && request.resource.data.vaiTro == 'hocvien' && chiHocVien(kenh));
       allow delete: if isAdmin();
       match /tin/{id} {
-        allow read: if isAdmin() || isMe(kenh) || (isTeacher() && hvDaDuyet(kenh));
-        allow create: if (isAdmin() || (isMe(kenh) && (isStudent() || isTeacher())) || (isTeacher() && hvDaDuyet(kenh)))
-          && request.resource.data.tu == myEmail()
+        allow read: if isAdmin() || isMe(kenh) || (isTeacher() && chiHocVien(kenh));
+        allow create: if (isAdmin() || (isMe(kenh) && (isStudent() || isTeacher())) || (isTeacher() && chiHocVien(kenh)))
+          && request.resource.data.tu == myEmail() && vtDung(request.resource.data)
           && request.resource.data.nd is string && request.resource.data.nd.size() > 0 && request.resource.data.nd.size() <= 1000;
         allow delete: if isAdmin();
       }
@@ -226,8 +243,8 @@ service cloud.firestore {
         && request.resource.data.anh is string && request.resource.data.anh.size() <= 950000
         && request.resource.data.hocVien is string && request.resource.data.hocVien.size() > 0 && request.resource.data.hocVien.size() <= 80
         && request.resource.data.loai in ['Cơ bản', 'Hình hoạ người', 'Tượng', 'Màu', 'Mỹ thuật 2', 'Tĩnh vật', 'Bút sắt', 'Mực nho', 'Màu nước']
-        && shortText(request.resource.data, 'ghiChu', 120) && shortText(request.resource.data, 'link', 300)
-        && (isAdmin() || request.resource.data.hang == 0);
+        && shortText(request.resource.data, 'ghiChu', 120) && shortText(request.resource.data, 'link', 300) && linkHopLe(request.resource.data)
+        && (isAdmin() || (request.resource.data.hang == 0 && !('mau' in request.resource.data && request.resource.data.mau == true)));
       allow update: if isAdmin()
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['hang', 'ngayTop'])
         && request.resource.data.hang is int && request.resource.data.hang >= 0 && request.resource.data.hang <= 5;
@@ -236,7 +253,7 @@ service cloud.firestore {
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['hocVien', 'loai', 'ghiChu', 'link', 'moTa', 'chucVu', 'biDanh', 'gvhd', 'tgiang', 'mau', 'anh'])
         && request.resource.data.hocVien is string && request.resource.data.hocVien.size() > 0 && request.resource.data.hocVien.size() <= 80
         && request.resource.data.anh is string && request.resource.data.anh.size() <= 950000
-        && shortText(request.resource.data, 'ghiChu', 120) && shortText(request.resource.data, 'link', 300)
+        && shortText(request.resource.data, 'ghiChu', 120) && shortText(request.resource.data, 'link', 300) && linkHopLe(request.resource.data)
         && shortText(request.resource.data, 'moTa', 300) && shortText(request.resource.data, 'biDanh', 30)
         && shortText(request.resource.data, 'gvhd', 80) && shortText(request.resource.data, 'tgiang', 80);
       allow delete: if isAdmin() || (isStaff() && resource.data.nguoi == myEmail());
@@ -250,7 +267,7 @@ service cloud.firestore {
         && request.resource.data.muc in ['tuyensinh', 'tinlop', 'hoacu', 'lythuyet', 'kinhnghiem']
         && request.resource.data.tieuDe is string && request.resource.data.tieuDe.size() > 0 && request.resource.data.tieuDe.size() <= 120
         && request.resource.data.nd is string && request.resource.data.nd.size() > 0 && request.resource.data.nd.size() <= 3000
-        && shortText(request.resource.data, 'link', 300)
+        && shortText(request.resource.data, 'link', 300) && linkHopLe(request.resource.data)
         && (!('anh' in request.resource.data) || (request.resource.data.anh is string && request.resource.data.anh.size() <= 500000))
         && (isAdmin() || request.resource.data.ghim == false);
       allow update: if isAdmin() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['ghim']);
@@ -260,7 +277,7 @@ service cloud.firestore {
         && request.resource.data.muc in ['tuyensinh', 'tinlop', 'hoacu', 'lythuyet', 'kinhnghiem']
         && request.resource.data.tieuDe is string && request.resource.data.tieuDe.size() > 0 && request.resource.data.tieuDe.size() <= 120
         && request.resource.data.nd is string && request.resource.data.nd.size() > 0 && request.resource.data.nd.size() <= 3000
-        && shortText(request.resource.data, 'link', 300)
+        && shortText(request.resource.data, 'link', 300) && linkHopLe(request.resource.data)
         && (!('anh' in request.resource.data) || (request.resource.data.anh is string && request.resource.data.anh.size() <= 500000));
       allow delete: if isAdmin() || (isStaff() && resource.data.tacGia == myEmail());
     }
@@ -270,12 +287,15 @@ service cloud.firestore {
     match /thithu/{id} {
       allow read: if isStudent() || isStaff();
       allow create, update: if isStaff()
+        && (request.method == 'create' ? request.resource.data.nguoi == myEmail()
+            : (isAdmin() || resource.data.nguoi == myEmail()) && request.resource.data.nguoi == resource.data.nguoi)
         && request.resource.data.tieuDe is string && request.resource.data.tieuDe.size() > 0 && request.resource.data.tieuDe.size() <= 120
         && request.resource.data.phut is int && request.resource.data.phut >= 5 && request.resource.data.phut <= 600
         && request.resource.data.moTu is number && request.resource.data.dongLuc is number
         && request.resource.data.tieuChi is list && request.resource.data.tieuChi.size() > 0 && request.resource.data.tieuChi.size() <= 10
         && shortText(request.resource.data, 'deBai', 4000)
-        && (!('anhDe' in request.resource.data) || (request.resource.data.anhDe is string && request.resource.data.anhDe.size() <= 500000));
+        && (!('anhDe' in request.resource.data) || request.resource.data.anhDe == ''
+            || (anhHopLe(request.resource.data.anhDe) && request.resource.data.anhDe.size() <= 500000));
       allow delete: if isAdmin() || (isStaff() && resource.data.nguoi == myEmail());
     }
     // Bài thi: mã = <mã đề>__<gmail>. Học viên bắt đầu (giờ bắt đầu do máy chủ đối chiếu), nộp một lần; anh chị chấm.
@@ -295,6 +315,7 @@ service cloud.firestore {
           && request.resource.data.nop > request.time.toMillis() - 120000
           && request.resource.data.nop < request.time.toMillis() + 120000
           && request.resource.data.anh is list && request.resource.data.anh.size() > 0 && request.resource.data.anh.size() <= 2
+          && anhHopLe(request.resource.data.anh[0]) && (request.resource.data.anh.size() < 2 || anhHopLe(request.resource.data.anh[1]))
           && shortText(request.resource.data, 'ghiChu', 500))
         || (isStaff() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['cham']));
       allow delete: if isAdmin();
@@ -327,7 +348,7 @@ service cloud.firestore {
       allow read: if isStaff() || (signedIn() && resource.data.ai == myEmail());
       allow create: if (isStaff() || isStudent()) && request.resource.data.ai == myEmail() && request.resource.data.trangThai == 'moi'
         && request.resource.data.moTa is string && request.resource.data.moTa.size() > 0 && request.resource.data.moTa.size() <= 1000
-        && (!('anh' in request.resource.data) || (request.resource.data.anh is string && request.resource.data.anh.size() <= 400000));
+        && (!('anh' in request.resource.data) || (anhHopLe(request.resource.data.anh) && request.resource.data.anh.size() <= 400000));
       allow update: if isAdmin() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['trangThai', 'capNhat', 'xuLy', 'phanHoi'])
         && request.resource.data.trangThai in ['moi', 'danhan', 'dangxuly', 'xong'] && shortText(request.resource.data, 'phanHoi', 500);
       allow delete: if isAdmin();
@@ -348,7 +369,12 @@ service cloud.firestore {
     match /nhatky/{id} {
       allow read: if isAdmin();
       allow create: if isStaff() && request.resource.data.ai == myEmail() && request.resource.data.luc is int
-        && request.resource.data.col is string && request.resource.data.ma is string;
+        && request.resource.data.col in ['hocvien', 'giaovien', 'nhanxet', 'diemdanh', 'baitap', 'giaotrinh', 'lichnhac', 'tiendo', 'xephang', 'baive', 'bantin', 'kho',
+             'thongbao', 'congviec', 'doiten', 'caday', 'trucnhat', 'thithu', 'thithubai', 'suco', 'bangiao', 'kiemtra', 'doica']
+        && request.resource.data.loai in ['tao', 'sua', 'xoa'] && request.resource.data.ma is string
+        // Giáo viên không được tạo / xoá hồ sơ ở các bảng chỉ quản lý thao tác → nhật ký kiểu đó chắc chắn là giả
+        && (isAdmin() || request.resource.data.loai == 'sua'
+            || !(request.resource.data.col in ['hocvien', 'giaovien', 'caday', 'kho', 'xephang', 'giaotrinh', 'lichnhac', 'tiendo']));
       allow update, delete: if false;
     }
 
