@@ -220,6 +220,21 @@ addEventListener("scroll", () => { if (khoaCuon) viTriCuon[khoaCuon] = scrollY; 
     if (Math.abs(y - yTruoc) < 10) return;
     c.classList.toggle("tl-an", y > yTruoc && y > 160); yTruoc = y;
   }, { passive: true }); }
+// Cuộn tới một mục rồi canh lại cho đúng: ảnh, bảng phía trên tải xong làm trang dài ra giữa chừng khiến mục bị "tụt".
+// Trừ chiều cao thanh trên cùng đang ghim; người dùng chạm / cuộn thì thôi không canh nữa.
+function cuonToi(el, block = "start") {
+  if (!el) return;
+  const lech = () => { let h = 0; document.querySelectorAll("body > nav, .acc-nav").forEach(n => { const st = getComputedStyle(n).position, b = n.getBoundingClientRect();
+    if ((st === "sticky" || st === "fixed") && b.bottom > 0 && b.top < innerHeight / 4 && b.height < innerHeight / 3) h = Math.max(h, b.bottom); }); return h + 12; };
+  const dich = () => { const b = el.getBoundingClientRect(); return block === "center" ? b.top + b.height / 2 - (innerHeight + lech()) / 2 : b.top - lech(); };
+  const ac = new AbortController(); ["touchstart", "wheel", "keydown"].forEach(t => addEventListener(t, () => ac.abort(), { passive: true, signal: ac.signal }));
+  scrollBy({ top: dich(), behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+  let lan = 0, yTruoc = -1;
+  const kiem = () => { if (ac.signal.aborted) return; if (++lan > 14) return ac.abort();
+    const y = scrollY, d = dich(); if (y === yTruoc && Math.abs(d) > 6) scrollBy({ top: d, behavior: "auto" }); yTruoc = y; setTimeout(kiem, 180); };
+  setTimeout(kiem, 300);
+}
+window.__cuonToi = cuonToi;
 function route() {
   const kCu = khoaCuon, k = khoaLichSu(), yCu = kCu !== k ? viTriCuon[k] : undefined; khoaCuon = k;
   const h = location.hash.replace("#", "");
@@ -228,12 +243,12 @@ function route() {
     // (VD #ql-duyet-h trong Quản lý). Nhảy tới mục đó thay vì coi là trang lạ rồi quay về trang chủ.
     const el = document.getElementById(h);
     const trongTrangDangMo = el && el.closest("main[id^='v-']") && !el.closest("main[id^='v-']").hidden;
-    if (trongTrangDangMo) { el.scrollIntoView({ block: "start" }); return; }
+    if (trongTrangDangMo) { cuonToi(el); return; }
     // Mục nằm trong một trang khác (VD #nang-cao trong Giáo trình): mở trang đó rồi cuộn tới mục
     const trang = el && el.closest("main[id^='v-']");
     if (trang && trang.id !== "v-home" && PAGES.includes(trang.id.slice(2))) {
       history.replaceState(null, "", "#" + trang.id.slice(2)); route();
-      requestAnimationFrame(() => setTimeout(() => { if (el.offsetParent) el.scrollIntoView({ block: "start", behavior: "smooth" }); }, 60));
+      requestAnimationFrame(() => setTimeout(() => { if (el.offsetParent) cuonToi(el); }, 60));
       return;
     }
   }
