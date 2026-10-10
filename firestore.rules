@@ -206,7 +206,7 @@ service cloud.firestore {
       }
     }
 
-    // ===== HẠNG & THÀNH TỰU: thầy cô cộng XP / trao thành tựu; ai cũng xem (hiện ở Top rank) =====
+    // ===== HẠNG & THÀNH TỰU: anh chị cộng XP / trao thành tựu; ai cũng xem (hiện ở Top rank) =====
     match /xephang/{id} {
       allow read: if true;
       allow create: if isAdmin()
