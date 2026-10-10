@@ -2074,9 +2074,6 @@ body.tl-dang-keo{-webkit-user-select:none;user-select:none}
 .tn-text{font-size:.9rem;line-height:1.55;color:var(--graphite);max-height:10.5em;overflow:hidden;display:grid;gap:6px}
 .tn-the.mo .tn-text{max-height:none}
 .tn-them-chu{min-height:28px;padding:0;font-size:.82rem}
-.tn-hc{list-style:none;margin:4px 0 0;padding:0;display:grid;gap:4px}
-.tn-hc li{display:flex;justify-content:space-between;gap:10px;padding:5px 10px;border-radius:8px;background:var(--paper);color:var(--ink);font-size:.85rem}
-.tn-hc li.tong{background:var(--accent-soft);font-weight:700}
 .tn-cuoi{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px}.tn-meta{font-size:.76rem;margin-right:auto}
 .tn-cuoi .linkish{min-height:28px;padding:0;font-size:.8rem}
 /* Hộp thoại (đăng bài vẽ, đăng bản tin) */
@@ -2607,6 +2604,3 @@ body.hop-mo{overflow:hidden}
 .gc-i{position:relative}
 .gc-i::before{content:"";position:absolute;inset:-12px}
 .cine-schools a{display:inline-block;padding:8px 6px}
-.cai-app{border:0;font:inherit;cursor:pointer;margin-top:10px}
-.cai-app[hidden]{display:none}
-.cai-app svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
