@@ -422,6 +422,17 @@ $$("#sched-tabs .tab").forEach(b => b.onclick = () => {
   renderSched(b.dataset.s);
 });
 renderSched(CO_SO[0]);
+// Thời gian biểu quản lý sửa trên web (Vận hành → Lịch phân công → Sửa thời gian biểu) đè lên bản trong file dữ liệu.
+// Sửa thẳng vào THOI_GIAN_BIEU dùng chung nên lịch học, "Hôm nay học gì", lịch phân công, trợ lý đều đổi theo.
+const TKB_KHOA = "lvkv-tkb";
+function apTKB(d, luu) {
+  if (!d || typeof d !== "object") return;
+  CO_SO.forEach(cs => { const moi = d[cs]; if (!moi || typeof moi !== "object") return; CA_HOC.forEach(c => { THOI_GIAN_BIEU[cs][c.ma] = { ...(moi[c.ma] || {}) }; }); });
+  if (luu) try { localStorage.setItem(TKB_KHOA, JSON.stringify(d)); } catch (e) {}
+  const s = $("#sched-tabs [aria-selected=\"true\"]"); renderSched(s ? s.dataset.s : CO_SO[0]); renderHomNay();
+  try { vanHanhM && vanHanhM.veLai(); } catch (e) {}
+}
+try { apTKB(JSON.parse(localStorage.getItem(TKB_KHOA) || "null")); } catch (e) {}
 
 /* ================= Liên hệ & mạng xã hội ================= */
 const ZALO_LOP = String(LIEN_HE.zalo || LIEN_HE.sdt || "").replace(/\D/g, "");
@@ -4353,6 +4364,8 @@ async function startFirebase() {
       // Gom các lần dữ liệu thay đổi liên tiếp (ví dụ khi đang chuyển bài) thành một lần vẽ lại, tránh ảnh chớp
       clearTimeout(baiHen); baiHen = setTimeout(() => { renderGallery(); veTopRank(); dispatchEvent(new Event("baive-doi")); }, 250);
       try { renderTop5(); renderTiles(); } catch (e) {}    }, () => { baiVeLoi = true; try { renderTop5(); } catch (e) {} });
+    // Thời gian biểu quản lý sửa trên web (ai cũng đọc được)
+    onSnapshot(doc(db, "cauhinh", "thoigianbieu"), d => { if (d.exists()) apTKB((d.data() || {}).tkb, true); }, () => {});
     // Bản tin nổi bật
     onSnapshot(collection(db, "bantin"), snap => { BANTIN_DONG = snap.docs.map(d => ({ id: d.id, ...d.data() })); banTinLoi = false; renderBanTin(); },
       () => { banTinLoi = true; });

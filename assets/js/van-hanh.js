@@ -328,6 +328,7 @@ function hanhDongVH(loai, id, btn) {
   if (loai === "lich-cs") { csLich = id; return ve(); }
   if (loai === "lich-sua") return moSuaCa(D.ca.find(c => c.id === id));
   if (loai === "lich-xoa") return moXoaCa(D.ca.find(c => c.id === id));
+  if (loai === "tkb-sua") return moSuaTKB();
   if (loai === "lich-xep") { // điền sẵn ngày, ca, cơ sở vào khung Xếp ca; gợi ý trước giáo viên đúng môn
     const [n, ca, mon] = id.split("|"), f = $("#ca-ngay"); if (!f) return;
     f.value = n; $("#ca-ca").value = ca; $("#ca-cs").value = csLich;
@@ -430,6 +431,30 @@ function dsCa() {
 // Lịch tuần phân công dạy: mỗi ô = một ca trong ngày ở cơ sở đang xem, hiện môn của ca (theo thời gian biểu) và ai dạy
 const monGV = id => { const g = (C.giaoVien() || []).find(x => x.id === id); return (g && g.mon) || ""; };
 const hopMon = (monGv, monCa) => !monGv || monGv === "Tất cả" || monGv.includes(monCa) || (monCa === "Hình hoạ" && /hình hoạ/i.test(monGv));
+// Quản lý sửa thời gian biểu cố định của từng cơ sở: mỗi ngày một hàng, mỗi ca một ô chọn môn ("Trống" = không học ca đó)
+function moSuaTKB() {
+  const cs = "Cơ sở " + csLich, tkb = THOI_GIAN_BIEU[cs] || {}, NGAY = ["T2", "T3", "T4", "T5", "T6", "T7", "CN"];
+  const mon = [...new Set(["Hình hoạ", "Màu", "Mỹ thuật 2", "Bố cục", ...Object.values(THOI_GIAN_BIEU).flatMap(x => CA_HOC.flatMap(c => Object.values(x[c.ma] || {})))])].filter(Boolean);
+  const o = (d, ca) => `<select data-d="${d}" data-ca="${ca.ma}" aria-label="${TEN_THU[d] || d} ca ${esc(ca.ten.toLowerCase())}"><option value="">Trống</option>${mon.map(m => `<option${(tkb[ca.ma] || {})[d] === m ? " selected" : ""}>${esc(m)}</option>`).join("")}</select>`;
+  const h = C.moHop(`<h3>Sửa thời gian biểu · ${esc(cs)}</h3>
+    <p class="muted">Chọn môn cho từng ca. Chọn <b>Trống</b> để xoá buổi đó. Lưu xong, lịch học trên web và lịch phân công đổi ngay cho cả lớp.</p>
+    <div class="tkb-sua"><table><thead><tr><th></th>${CA_HOC.map(c => `<th>${esc(c.ten)}<br><small class="muted num">${esc(c.gio)}</small></th>`).join("")}</tr></thead>
+    <tbody>${NGAY.map(d => `<tr><th>${esc(TEN_THU[d] || d)}</th>${CA_HOC.map(c => `<td>${o(d, c)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>
+    <label class="tkb-mon">Thêm môn mới (nếu chưa có trong danh sách)<input id="tkb-mon-moi" maxlength="30" placeholder="VD: Trang trí"></label>
+    <p class="status" id="tkb-st"></p>
+    <div class="hop-nut"><button class="btn" type="button" data-dong>Huỷ</button><button class="btn primary" type="button" id="tkb-luu">Lưu thời gian biểu</button></div>`, "Sửa thời gian biểu");
+  const moi = h.el.querySelector("#tkb-mon-moi");
+  moi.onchange = () => { const v = moi.value.trim(); if (!v || mon.includes(v)) return; mon.push(v); h.el.querySelectorAll(".tkb-sua select").forEach(s => s.add(new Option(v, v))); moi.value = ""; C.toast(`Đã thêm môn "${v}" vào danh sách chọn.`); };
+  h.el.querySelector("#tkb-luu").onclick = async () => {
+    const ban = {}; CA_HOC.forEach(c => { ban[c.ma] = {}; });
+    h.el.querySelectorAll(".tkb-sua select").forEach(s => { if (s.value) ban[s.dataset.ca][s.dataset.d] = s.value; });
+    const tatCa = Object.fromEntries(Object.entries(THOI_GIAN_BIEU).map(([k, v]) => [k, k === cs ? ban : Object.fromEntries(CA_HOC.map(c => [c.ma, { ...(v[c.ma] || {}) }]))]));
+    const { db, fs: { doc, setDoc } } = C, st = h.el.querySelector("#tkb-st"); st.textContent = "Đang lưu…";
+    try { await setDoc(doc(db, "cauhinh", "thoigianbieu"), { tkb: tatCa, luc: Date.now(), nguoi: C.mail });
+      C.toast("Đã lưu thời gian biểu " + cs + "."); h.dong ? h.dong() : h.el.closest(".hop-ov")?.remove(); }
+    catch (e) { st.className = "status err"; st.textContent = e && e.code === "permission-denied" ? "Máy chủ chưa cho lưu: cần đưa luật bảo mật mới (firestore.rules) lên Firebase." : "Chưa lưu được, kiểm tra mạng rồi thử lại."; }
+  };
+}
 function lichPhanCong() {
   if (!csLich || !CO_SO.includes(csLich)) csLich = CO_SO[0];
   const goc = new Date(C.homNay() + "T12:00:00"); goc.setDate(goc.getDate() - ((goc.getDay() + 6) % 7) + 7 * tuanLich); // thứ 2 của tuần
@@ -446,6 +471,7 @@ function lichPhanCong() {
   return `<section class="card lpc" aria-label="Lịch phân công dạy"><div class="lpc-dau"><b>Lịch phân công dạy</b>
       <div class="lpc-cs">${CO_SO.map(c => `<button type="button" class="tab" data-x="lich-cs" data-id="${esc(c)}" aria-selected="${c === csLich}">${esc(c)}</button>`).join("")}</div>
       <div class="lpc-tuan"><button type="button" class="btn small" data-x="lich-tuan" data-id="-1" aria-label="Tuần trước">‹</button><span class="num">${ngayVN(ngay[0]).slice(0, -5)} – ${ngayVN(ngay[6])}</span><button type="button" class="btn small" data-x="lich-tuan" data-id="1" aria-label="Tuần sau">›</button>${tuanLich ? `<button type="button" class="linkish" data-x="lich-tuan" data-id="0">Tuần này</button>` : ""}</div></div>
+    ${C.isAdmin ? `<p class="lpc-tkb"><button type="button" class="btn small" data-x="tkb-sua">✏️ Sửa thời gian biểu ${esc(csLich)}</button><small class="muted">Đổi môn, đổi ca hoặc xoá buổi học cố định của cơ sở này.</small></p>` : ""}
     ${thieu ? `<p class="lpc-bao">⚠ ${thieu} ca có lớp nhưng chưa xếp người dạy${C.isAdmin ? " — bấm “+ Xếp” ở ô tô vàng" : ""}.</p>` : `<p class="muted lpc-bao">Đủ người dạy cho các ca có lớp trong tuần này.</p>`}
     <div class="lpc-cuon"><table class="lpc-bang"><thead><tr><th></th>${ngay.map(n => `<th class="${n === hom ? "hom" : ""}">${TEN_THU[thuCua(n)].replace("Thứ ", "T")}<br><small class="num">${ngayVN(n).slice(0, -5)}</small></th>`).join("")}</tr></thead>
     <tbody>${CA_HOC.map(ca => `<tr><th>Ca ${esc(ca.ten.toLowerCase())}<br><small class="num muted">${esc(ca.gio)}</small></th>${ngay.map(n => o(n, ca)).join("")}</tr>`).join("")}</tbody></table></div></section>`;

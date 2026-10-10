@@ -104,8 +104,8 @@ export const CA_HOC = [
 export const THOI_GIAN_BIEU = {
   "Cơ sở Bình Phú": {
     sang:  { CN: "Hình hoạ" },
-    chieu: {},
-    toi:   { T2: "Màu", T3: "Hình hoạ", T4: "Hình hoạ", T5: "Hình hoạ", T6: "Màu", T7: "Hình hoạ", CN: "Hình hoạ" },
+    chieu: { CN: "Hình hoạ" },
+    toi:   { T2: "Màu", T3: "Hình hoạ", T4: "Hình hoạ", T5: "Hình hoạ", T6: "Màu", T7: "Hình hoạ" },
   },
   "Cơ sở Kim Quan": {
     sang:  {},
