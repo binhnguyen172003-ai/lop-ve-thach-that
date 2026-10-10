@@ -1468,6 +1468,19 @@ $("#dk-zalo").href = ZALO_LINK;
   const sap = LICH_THI.map(e => ({ ...e, n: daysUntil(e.ngay) })).filter(e => e.n >= 0).sort((a, b) => a.n - b.n)[0];
   if (sap && !store.get("lvkv-moc-thi", null)) datBadgeThi(sap, "đầu tiên");
 
+  // Hiệu ứng rê chuột kiểu Apple (chỉ máy có chuột): ô sáng trượt theo mục đang rê + vệt sáng chạy theo chuột dọc mép menu
+  if (matchMedia("(hover: hover) and (pointer: fine)").matches) {
+    const wrap = nav.querySelector(".wrap"), pill = document.createElement("span");
+    pill.className = "nav-pill"; pill.setAttribute("aria-hidden", "true"); wrap.prepend(pill);
+    const muc = () => [...wrap.querySelectorAll(".dd-t, a.link.solo, .nav-search")].filter(x => x.offsetParent);
+    const dat = el => { const r = el.getBoundingClientRect(), w = wrap.getBoundingClientRect();
+      pill.style.cssText = `left:${r.left - w.left + wrap.scrollLeft - 12}px;top:${r.top - w.top + (r.height - 36) / 2}px;width:${r.width + 24}px`; pill.classList.add("on"); };
+    wrap.addEventListener("pointerover", e => { const el = muc().find(x => x.contains(e.target)); if (el) dat(el); });
+    wrap.addEventListener("pointerleave", () => pill.classList.remove("on"));
+    nav.addEventListener("pointermove", e => { const r = nav.getBoundingClientRect(); nav.style.setProperty("--mx", (e.clientX - r.left) + "px"); nav.classList.add("roi"); }, { passive: true });
+    nav.addEventListener("pointerleave", () => nav.classList.remove("roi"));
+  }
+
   // Menu trong suốt khi nằm trên hero, có nền khi cuộn xuống
   const setNavH = () => root.style.setProperty("--nav-h", nav.offsetHeight + "px");
   requestAnimationFrame(setNavH); addEventListener("resize", setNavH, { passive: true });
