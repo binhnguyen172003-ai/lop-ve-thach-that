@@ -66,6 +66,22 @@ addEventListener("error", e => {
 if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost") && !/[?&]khongcache/.test(location.search))
   addEventListener("load", () => navigator.serviceWorker.register("sw.js?v=20261010br").catch(() => {}));
 
+/* ---------- Cài web thành ứng dụng trên màn hình chính (Android: bấm là cài; iPhone: hướng dẫn 2 bước) ---------- */
+{
+  const nut = $("#cai-app");
+  const daCai = () => matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+  const ios = /iphone|ipad|ipod/i.test(navigator.userAgent) && !/crios|fxios/i.test(navigator.userAgent);
+  let hoi = null;
+  const hien = () => { if (nut) nut.hidden = daCai() || (!hoi && !ios); };
+  addEventListener("beforeinstallprompt", e => { e.preventDefault(); hoi = e; hien(); });
+  addEventListener("appinstalled", () => { hoi = null; hien(); toast("Đã cài ứng dụng. Mở từ màn hình chính nhé."); });
+  hien();
+  if (nut) nut.addEventListener("click", async () => {
+    if (hoi) { hoi.prompt(); try { await hoi.userChoice; } catch (e) {} hoi = null; hien(); }
+    else toast("Bấm nút Chia sẻ ⎙ ở thanh Safari, chọn \u201cThêm vào MH chính\u201d.");
+  });
+}
+
 /* ---------- Đo tốc độ: mở web kèm ?chandoan=1 để xem từng bước mất bao lâu ---------- */
 const DIAG = /[?&]chandoan/.test(location.search);
 const T0 = performance.now();

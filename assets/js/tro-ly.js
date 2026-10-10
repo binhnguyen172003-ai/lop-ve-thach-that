@@ -324,7 +324,7 @@ function dung() {
       <div class="tl-hoi" id="tl-hoi">
         <div class="tl-tin" id="tl-tin" aria-live="polite"></div>
         <div class="tl-goi" id="tl-goi"></div>
-        <form class="tl-go" id="tl-go"><input id="tl-nd" maxlength="400" autocomplete="off" placeholder="Hỏi Chì về lớp, khối thi, hoạ cụ…"><button class="btn small primary" type="submit">Gửi</button></form>
+        <form class="tl-go" id="tl-go"><input id="tl-nd" aria-label="Câu hỏi cho Chì" maxlength="400" autocomplete="off" placeholder="Hỏi Chì về lớp, khối thi, hoạ cụ…"><button class="btn small primary" type="submit">Gửi</button></form>
       </div>
       <div class="tl-mua" id="tl-mua" hidden></div>
       <div class="tl-dk" id="tl-dk" hidden></div>

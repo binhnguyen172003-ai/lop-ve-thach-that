@@ -958,7 +958,7 @@ html,body{overflow-x:clip}
 .gv-nav{width:44px;height:44px;border-radius:50%;border:1px solid var(--rule);background:var(--sheet);color:var(--ink);font-size:1.5rem;line-height:1;cursor:pointer;display:grid;place-items:center}
 .gv-nav:hover{border-color:var(--accent);color:var(--accent)}
 .gv-dots{display:flex;gap:2px}
-.gv-dots button{width:22px;height:40px;border:0;background:none;padding:0;cursor:pointer;display:grid;place-items:center}
+.gv-dots button{width:28px;height:40px;border:0;background:none;padding:0;cursor:pointer;display:grid;place-items:center}
 .gv-dots button::after{content:"";width:8px;height:8px;border-radius:4px;background:var(--rule);transition:width .3s,background .3s}
 .gv-dots button[aria-current="true"]::after{width:20px;background:var(--accent)}
 @media (max-width:640px){
@@ -2602,3 +2602,11 @@ body.hop-mo{overflow:hidden}
 /* Vòng xoay bản tin: khung cao vừa đúng thẻ, thẻ không bị treo lên trên để hở đáy */
 #ban-tin .tb-stage{height:308px}
 @media (max-width:640px){#ban-tin .tb-stage{height:294px}}
+
+/* Vùng bấm tối thiểu ~44px trên điện thoại (nhìn vẫn nhỏ gọn, chỉ rộng vùng chạm) */
+.gc-i{position:relative}
+.gc-i::before{content:"";position:absolute;inset:-12px}
+.cine-schools a{display:inline-block;padding:8px 6px}
+.cai-app{border:0;font:inherit;cursor:pointer;margin-top:10px}
+.cai-app[hidden]{display:none}
+.cai-app svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
