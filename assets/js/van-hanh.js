@@ -5,9 +5,9 @@
 // =====================================================================
 import { CA_HOC, THOI_GIAN_BIEU, VIEC_CUOI_BUOI, TIEU_CHI_THI } from "../../data/noi-dung.js?v=20261010bh";
 
-let tuanLich = 0, csLich = "", thangCC = 0, gvCC = ""; // chấm công: tháng đang xem (0 = tháng này), giáo viên đang xem // lịch phân công dạy: tuần đang xem (0 = tuần này), cơ sở đang xem
+let tuanLich = 0, csLich = "", thangCC = 0, gvCC = "", viewCC = "hom"; // chấm công: tháng đang xem (0 = tháng này), giáo viên đang xem // lịch phân công dạy: tuần đang xem (0 = tuần này), cơ sở đang xem
 let C = null, huy = [], dongHo = 0, anhThi = [], tabVH = "", locSC = "mo", timBG = "", locNK = "", chiCaToi = false;
-const D = { thi: [], bai: [], ca: [], doica: [], bg: [], suco: [], truc: {}, kt: [], nk: [], loi: "" };
+const D = { thi: [], bai: [], ca: [], doica: [], bg: [], suco: [], truc: {}, kt: [], nk: [], bl: [], dc: [], sua: [], loi: "" };
 
 const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -40,12 +40,16 @@ export function batDau(ctx) {
   nghe(C.isTeacher ? collection(db, "thithubai") : query(collection(db, "thithubai"), where("mail", "==", C.mail)), r => D.bai = r);
   nghe(collection(db, "trucnhat"), r => { D.truc = {}; r.forEach(x => D.truc[x.id] = x); });
   if (C.isTeacher) {
-    nghe(query(collection(db, "caday"), orderBy("ngay")), r => D.ca = r);
+    nghe(query(collection(db, "caday"), orderBy("ngay")), r => { D.ca = r; if (C.doiCa) C.doiCa(); });
     nghe(C.isAdmin ? collection(db, "doica") : query(collection(db, "doica"), where("tu", "==", C.mail)), r => D.doica = r.sort((a, b) => b.luc - a.luc));
     nghe(query(collection(db, "bangiao"), orderBy("luc", "desc"), limit(80)), r => D.bg = r);
     nghe(collection(db, "suco"), r => D.suco = r.sort((a, b) => b.luc - a.luc));
     nghe(query(collection(db, "kiemtra"), orderBy("luc", "desc"), limit(40)), r => D.kt = r);
     if (C.isAdmin) nghe(query(collection(db, "nhatky"), orderBy("luc", "desc"), limit(200)), r => D.nk = r);
+    // lương: giáo viên chỉ đọc được phần của mình (luật máy chủ chặn phần người khác)
+    nghe(C.isAdmin ? collection(db, "luongdc") : query(collection(db, "luongdc"), where("gv", "==", C.mail)), r => D.dc = r);
+    nghe(C.isAdmin ? collection(db, "bangluong") : query(collection(db, "bangluong"), where("gv", "==", C.mail)), r => D.bl = r);
+    nghe(C.isAdmin ? collection(db, "suacong") : query(collection(db, "suacong"), where("tu", "==", C.mail)), r => D.sua = r.sort((a, b) => b.luc - a.luc));
   } else nghe(query(collection(db, "suco"), where("ai", "==", C.mail)), r => D.suco = r.sort((a, b) => b.luc - a.luc));
   const nav = $('#acc-nav [data-acc="van-hanh"]');
   if (nav) nav.innerHTML = C.isTeacher ? '<i aria-hidden="true">🛠️</i>Vận hành <span class="nbadge num" id="acc-vh-n" hidden></span>' : '<i aria-hidden="true">🧹</i>Trực nhật';
@@ -55,12 +59,14 @@ export function batDau(ctx) {
 }
 export function dung() {
   huy.forEach(u => { try { u(); } catch (e) {} }); huy = []; C = null; clearInterval(dongHo); anhThi = [];
-  Object.assign(D, { thi: [], bai: [], ca: [], doica: [], bg: [], suco: [], truc: {}, kt: [], nk: [], loi: "" });
+  Object.assign(D, { thi: [], bai: [], ca: [], doica: [], bg: [], suco: [], truc: {}, kt: [], nk: [], bl: [], dc: [], sua: [], loi: "" });
   ["#tt-body", "#vh-body"].forEach(s => { if ($(s)) $(s).innerHTML = ""; });
 }
 let veHen = 0;
 function ve() { cancelAnimationFrame(veHen); veHen = requestAnimationFrame(() => { veThi(); veVH(); demViec(); }); }
 export const veLai = ve;
+// ca đã xếp trong ngày (trang Điểm danh dùng để chỉ mở cơ sở anh chị được phân công); null khi chưa tải xong
+export const caNgay = ngay => C && C.isTeacher && !D.loi ? D.ca.filter(c => c.ngay === ngay) : null;
 
 const hopLoi = () => `<div class="vh-loi"><b>Tính năng mới chưa bật được trên máy chủ.</b>
   <p>${C.isAdmin ? "Anh chị vào <b>Quản lý</b> → khung kiểm tra máy chủ → <b>Sao chép luật mới</b> → dán vào Firebase → <b>Publish</b>. Xong tải lại trang." : "Quản lý lớp cần cập nhật luật bảo mật. Em báo anh chị giúp nhé."}</p>
@@ -273,8 +279,14 @@ function veVH() {
   ganDanhSach();
 }
 const danhSach = () => ({ ca: dsCa, cc: dsCC, bg: dsBG, sc: dsSC, tn: dsTN, nk: dsNK })[tabVH]();
+// điện thoại: bảng công / lương hiện dạng thẻ, mỗi ô mang tên cột của nó
+function nhanCot(goc) {
+  goc.querySelectorAll("table.cc-bang").forEach(t => { const ten = [...t.querySelectorAll("thead th")].map(th => th.textContent.trim());
+    t.querySelectorAll("tbody tr").forEach(tr => [...tr.cells].forEach((td, i) => { if (ten[i] && !td.dataset.l) td.dataset.l = ten[i]; })); });
+}
 function ganDanhSach() {
   const box = $("#vh-body .vh-ds-ngoai"); if (!box) return;
+  nhanCot(box);
   $$("#vh-body [data-x]").forEach(b => b.onclick = () => hanhDongVH(b.dataset.x, b.dataset.id, b));
   const tim = box.querySelector("#bg-tim"); if (tim) tim.oninput = () => { timBG = tim.value; const l = box.querySelector("#bg-kq"); if (l) { l.innerHTML = dsBGKetQua(); l.querySelectorAll("[data-x]").forEach(b => b.onclick = () => hanhDongVH(b.dataset.x, b.dataset.id, b)); } };
   box.querySelectorAll("[data-loc]").forEach(b => b.onclick = () => { locSC = b.dataset.loc; veVH(); });
@@ -291,11 +303,17 @@ function hanhDongVH(loai, id, btn) {
   if (loai === "cc-thang") { thangCC = id === "0" ? 0 : thangCC + Number(id); return ve(); }
   if (loai === "cc-gv") { gvCC = id; return ve(); }
   if (loai === "cc-cham") return moChamCong(D.ca.find(x => x.id === id));
-  if (loai === "cc-gia") return datGiaCa(id);
-  if (loai === "cc-link") return datLinkLuong(id);
   if (loai === "cc-csv") return taiBangCong();
+  if (loai === "cc-csv-luong") return taiBangLuong();
   if (loai === "cc-vao" || loai === "cc-ra") return vaoRaCa(id, loai.slice(3), btn);
   if (loai === "cc-kpi") return datKPI(id);
+  if (loai === "cc-view") { viewCC = id; return ve(); }
+  if (loai === "cc-sua") return moSuaGio(D.ca.find(x => x.id === id));
+  if (loai === "sua-ok" || loai === "sua-ko") return xuLySua(id, loai === "sua-ok", btn);
+  if (loai === "cc-phieu") return moPhieu(id);
+  if (loai === "cc-thuongcc") return thuongChuyenCan(id, btn);
+  if (loai === "cc-chot") return xacNhan(btn, () => chotLuong(btn, false), "Bấm lần nữa để chốt");
+  if (loai === "cc-molai") return xacNhan(btn, () => chotLuong(btn, true), "Bấm lần nữa để mở lại");
   if (loai === "lich-tuan") { tuanLich = id === "0" ? 0 : tuanLich + Number(id); return ve(); }
   if (loai === "lich-cs") { csLich = id; return ve(); }
   if (loai === "lich-xep") { // điền sẵn ngày, ca, cơ sở vào khung Xếp ca; gợi ý trước giáo viên đúng môn
@@ -398,153 +416,358 @@ function lichPhanCong() {
     <div class="lpc-cuon"><table class="lpc-bang"><thead><tr><th></th>${ngay.map(n => `<th class="${n === hom ? "hom" : ""}">${TEN_THU[thuCua(n)].replace("Thứ ", "T")}<br><small class="num">${ngayVN(n).slice(0, -5)}</small></th>`).join("")}</tr></thead>
     <tbody>${CA_HOC.map(ca => `<tr><th>Ca ${esc(ca.ten.toLowerCase())}<br><small class="num muted">${esc(ca.gio)}</small></th>${ngay.map(n => o(n, ca)).join("")}</tr>`).join("")}</tbody></table></div></section>`;
 }
-/* ================= CHẤM CÔNG · TỔNG CÔNG · LƯƠNG · HẠCH TOÁN THEO CƠ SỞ =================
-   Mỗi ca đã xếp (caday) là một buổi công. Quản lý bấm vào ca trên lịch tháng để chấm:
-   Có mặt = 1 công · Nửa công = 0,5 · Vắng = 0. Giáo viên xem được công của mình. */
+/* ================= CHẤM CÔNG · LƯƠNG · TRỢ CẤP · HẠCH TOÁN THEO CƠ SỞ =================
+   Mỗi ca đã xếp (caday) là một buổi. Giáo viên tự Vô ca / Kết ca; máy chủ khoá giờ nên không tự sửa được,
+   muốn sửa thì gửi "Báo sai giờ" để quản lý duyệt. Ca tối: vào sau 19:00 là muộn, ra trước 21:00 là về sớm;
+   ca sáng/chiều theo giờ trên thời gian biểu. Muộn / về sớm CHỈ GHI NHẬN, không tự trừ lương.
+   Tổng lương = lương các ca hợp lệ + trợ cấp + thưởng − khấu trừ (thưởng/khấu trừ do quản lý tạo, có lý do).
+   Tháng đã chốt hiển thị đúng số liệu lúc chốt, đổi đơn giá sau đó không ảnh hưởng. */
 const CONG = [[1, "Có mặt", "ok"], [0.5, "Nửa công", "warn"], [0, "Vắng", "bad"]];
+const LUONG_CV = { "Trợ giảng": 80000, "Trợ giảng chính": 120000, "Giáo viên": 160000, "Giáo viên chính": 200000 };
+// trợ cấp đi lại / buổi: ngày thường theo cơ sở; thứ 7, CN ai dạy cũng 30k (thay cho mức theo cơ sở)
+const TRO_CAP = { "BPhú": 50000, "KQuan": 60000 }, TC_CUOI_TUAN = 30000;
+const THUONG = [["Chuyên cần", 200000], ["Chất lượng giảng dạy", 100000], ["Giới thiệu học viên", 350000], ["Bài mẫu", 100000], ["Khác", 0]];
+const THUONG_CC = 200000, MUON_TOI_DA = 2;
 const csNgan = cs => /bình phú/i.test(cs) ? "BPhú" : /kim quan/i.test(cs) ? "KQuan" : cs;
 const caNgan = ma => ({ sang: "S", chieu: "C", toi: "T" })[ma] || ma;
 const vndCC = n => (Math.round(n || 0)).toLocaleString("vi-VN") + "đ";
+const soN = n => (n || 0).toLocaleString("vi-VN");
 const soCC = x => { let t = String(x ?? "").trim().replace(/\s|đ|₫/gi, ""); if (/^\d{1,3}([.,]\d{3})+$/.test(t)) t = t.replace(/[.,]/g, ""); else t = t.replace(",", "."); return t === "" ? NaN : Number(t); };
-const MUON_PHUT = 15, MUON_TOI_DA = 2; // vô ca trễ quá 15 phút là muộn; KPI cho phép tối đa 2 lần muộn/tháng
-const gioBatDau = c => { const m = /^(\d{1,2})h(\d{2})/.exec(gioCa(c.ca)); return m ? new Date(`${c.ngay}T${pad(m[1])}:${m[2]}:00`).getTime() : 0; };
-const laMuon = c => c.vao && gioBatDau(c) && c.vao > gioBatDau(c) + MUON_PHUT * 60000;
+const lucCua = (ngay, hhmm) => new Date(`${ngay}T${hhmm}:00`).getTime();
+const gioPhut = t => { const d = new Date(t); return `${pad(d.getHours())}:${pad(d.getMinutes())}`; };
+// [hạn vào ca, giờ ra ca] của một ca (mili giây)
+function mocCa(c) {
+  if (c.ca === "toi") return [lucCua(c.ngay, "19:00"), lucCua(c.ngay, "21:00")];
+  const m = /(\d{1,2})h(\d{2})\D+(\d{1,2})h(\d{2})/.exec(gioCa(c.ca));
+  return m ? [lucCua(c.ngay, `${pad(m[1])}:${m[2]}`), lucCua(c.ngay, `${pad(m[3])}:${m[4]}`)] : [0, 0];
+}
+const gioBatDau = c => mocCa(c)[0];
+const phutMuon = c => c.vao && mocCa(c)[0] ? Math.max(0, Math.floor((c.vao - mocCa(c)[0]) / 60000)) : 0;
+const phutSom = c => c.ra && mocCa(c)[1] ? Math.max(0, Math.ceil((mocCa(c)[1] - c.ra) / 60000)) : 0;
+const laMuon = c => phutMuon(c) > 0;
+// ca đã qua giờ ra 30 phút mà thiếu mốc vào / ra (quản lý đã chấm tay thì thôi)
+function thieuCham(c) {
+  if (typeof c.cong === "number") return "";
+  const r = mocCa(c)[1] || lucCua(c.ngay, "23:59");
+  if (Date.now() < r + 30 * 60000) return "";
+  return !c.vao ? "vao" : !c.ra ? "ra" : "";
+}
+const TEN_THIEU = { vao: "Thiếu chấm vào", ra: "Thiếu chấm ra" };
 // công thực tế: quản lý chấm thì theo quản lý; chưa chấm mà đã vô ca + kết ca thì tự tính 1 công
 const congCua = c => typeof c.cong === "number" ? c.cong : c.vao && c.ra ? 1 : null;
-const gioPhut = t => { const d = new Date(t); return `${pad(d.getHours())}:${pad(d.getMinutes())}`; };
-function kpiCua(k, g) {
-  const cong = Object.values(k.cs).reduce((a, b) => a + b, 0), chiTieu = Number(g.kpiCong) || 0;
-  const muc = [[`Công ≥ ${chiTieu || "?"}`, chiTieu ? cong >= chiTieu : null, chiTieu ? `${cong.toLocaleString("vi-VN")}/${chiTieu}` : "chưa đặt chỉ tiêu"],
-    [`Đi muộn ≤ ${MUON_TOI_DA} lần`, k.muon <= MUON_TOI_DA, `${k.muon} lần`], ["Không vắng ca", k.vang === 0, `${k.vang} ca vắng`]];
-  return { cong, chiTieu, muc, du: chiTieu > 0 && muc.every(x => x[1]) };
+const cuoiTuan = ngay => [0, 6].includes(new Date(ngay + "T12:00:00").getDay());
+const giaCua = g => Number(g.luongCa) > 0 ? Number(g.luongCa) : LUONG_CV[g.chucVu] || LUONG_CV["Trợ giảng"];
+function troCap(c, g) {
+  if (c.tcTat) return [0, "Tắt cho ca này"];
+  const tat = g.tcTat || {};
+  if (cuoiTuan(c.ngay)) return tat.ct ? [0, "Đã tắt trợ cấp cuối tuần"] : [TC_CUOI_TUAN, "Cuối tuần"];
+  const cs = csNgan(c.coSo);
+  return !TRO_CAP[cs] ? [0, "—"] : tat.cs ? [0, "Đã tắt trợ cấp cơ sở"] : [TRO_CAP[cs], cs === "BPhú" ? "Bình Phú" : "Kim Quan"];
+}
+const gvCua = id => (C.isAdmin ? C.giaoVien().find(g => g.id === id) : id === C.mail ? { id, ten: C.ten, ...(C.gvToi() || {}) } : null) || { id };
+const xepCa = (a, b) => String(a.ngay).localeCompare(String(b.ngay)) || CA_HOC.findIndex(x => x.ma === a.ca) - CA_HOC.findIndex(x => x.ma === b.ca);
+// Bảng lương của một giáo viên trong tháng (tháng đã chốt: lấy bản đã chốt)
+function tinhLuong(gv, thang) {
+  const chot = D.bl.find(b => b.id === `${thang}__${gv}`); if (chot) return { ...chot, daChot: true };
+  const g = gvCua(gv), gia = giaCua(g), daCo = new Set(), dong = [];
+  D.ca.filter(c => c.gv === gv && String(c.ngay).startsWith(thang)).sort(xepCa).forEach(c => {
+    const khoa = c.ngay + "|" + c.ca, trung = daCo.has(khoa); daCo.add(khoa); // một người không thể dạy 2 nơi cùng ca: ca thứ hai không tính tiền
+    const v = trung ? null : congCua(c), cong = v || 0, [tc, tcLoai] = troCap(c, g);
+    dong.push({ id: c.id, ngay: c.ngay, ca: c.ca, coSo: c.coSo || "", cv: g.chucVu || "Trợ giảng", gia, cong, luong: cong * gia, tc: cong * tc, tcLoai: trung ? "Trùng ca — không tính" : tcLoai,
+      vao: c.vao || 0, ra: c.ra || 0, muon: phutMuon(c), som: phutSom(c), thieu: trung ? "" : thieuCham(c), vang: v === 0, chua: !trung && v === null, trung });
+  });
+  const dc = D.dc.filter(x => x.gv === gv && x.thang === thang).sort((a, b) => a.luc - b.luc).map(x => ({ id: x.id, loai: x.loai, muc: x.muc, tien: x.tien, lyDo: x.lyDo }));
+  const s = k => dong.reduce((a, r) => a + r[k], 0), cong = s("cong"), luong = s("luong"), tc = s("tc");
+  const thuong = dc.filter(x => x.loai === "thuong").reduce((a, x) => a + x.tien, 0), tru = dc.filter(x => x.loai === "tru").reduce((a, x) => a + x.tien, 0);
+  const theoCS = {}; dong.forEach(r => { const k = csNgan(r.coSo); theoCS[k] = (theoCS[k] || 0) + r.luong + r.tc; });
+  return { gv, ten: g.ten || (D.ca.find(c => c.gv === gv) || {}).gvTen || gv, thang, cv: g.chucVu || "Trợ giảng", gia, dong, dc, cong, luong, tc, thuong, tru, tong: luong + tc + thuong - tru, theoCS };
+}
+function thongKeCC(L) {
+  const d = L.dong;
+  return { ngay: new Set(d.filter(r => r.cong > 0).map(r => r.ngay)).size, ca: d.length, muon: d.filter(r => r.muon > 0).length, phutMuon: d.reduce((a, r) => a + r.muon, 0),
+    som: d.filter(r => r.som > 0).length, phutSom: d.reduce((a, r) => a + r.som, 0), thieu: d.filter(r => r.thieu).length, vang: d.filter(r => r.vang).length, chua: d.filter(r => r.chua).length };
+}
+function kpiCua(L, g) {
+  const t = thongKeCC(L), chiTieu = Number(g.kpiCong) || 0;
+  const muc = [[`Công ≥ ${chiTieu || "chỉ tiêu"}`, chiTieu ? L.cong >= chiTieu : null, chiTieu ? `${soN(L.cong)}/${chiTieu}` : "chưa đặt chỉ tiêu"],
+    [`Đi muộn ≤ ${MUON_TOI_DA} lần`, t.muon <= MUON_TOI_DA, `${t.muon} lần`], ["Không vắng ca", t.vang === 0, `${t.vang} ca vắng`], ["Không thiếu chấm công", t.thieu === 0, `${t.thieu} ca`]];
+  return { t, chiTieu, muc, du: L.cong > 0 && muc.every(x => x[1] !== false) };
 }
 function thangDangXem() { const d = new Date(C.homNay() + "T12:00:00"); d.setDate(1); d.setMonth(d.getMonth() + thangCC); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}`; }
-const dsGV = () => C.isAdmin ? C.giaoVien() : [{ id: C.mail, ten: C.ten, ...(C.gvToi() || {}) }];
-function caTrongThang(thang) {
-  const gv = C.isAdmin ? gvCC : C.mail;
-  return D.ca.filter(c => String(c.ngay).startsWith(thang) && (!gv || c.gv === gv));
+// mọi giáo viên có ca hoặc khoản thưởng/khấu trừ trong tháng
+function gvTrongThang(thang) {
+  if (!C.isAdmin) return [C.mail];
+  return [...new Set([...D.ca.filter(c => String(c.ngay).startsWith(thang)).map(c => c.gv), ...D.dc.filter(x => x.thang === thang).map(x => x.gv), ...D.bl.filter(b => b.thang === thang).map(b => b.gv)])];
 }
-function tongCong(thang) {
-  const kq = {};
-  D.ca.filter(c => String(c.ngay).startsWith(thang) && (C.isAdmin || c.gv === C.mail)).forEach(c => {
-    const k = kq[c.gv] ||= { gv: c.gv, ten: c.gvTen || c.gv, ca: 0, chua: 0, vang: 0, muon: 0, ngay: new Set(), cs: {} };
-    k.ca++; const cs = csNgan(c.coSo), v = congCua(c); k.cs[cs] ||= 0; if (laMuon(c)) k.muon++;
-    if (v === null) k.chua++; else { if (v === 0) k.vang++; else k.ngay.add(c.ngay); k.cs[cs] += v; }
-  });
-  return Object.values(kq).sort((a, b) => String(a.ten).localeCompare(String(b.ten), "vi"));
-}
+const bangThang = thang => gvTrongThang(thang).map(gv => tinhLuong(gv, thang)).sort((a, b) => String(a.ten).localeCompare(String(b.ten), "vi"));
 function paneCC() {
-  return `<p class="muted">${C.isAdmin ? "Mỗi ca đã xếp ở mục Ca dạy là một buổi công. Giáo viên tự bấm <b>Vô ca</b>/<b>Kết ca</b> (đủ cả hai tự tính 1 công; ✓ đúng giờ, ⏰ muộn quá " + MUON_PHUT + " phút). Bấm vào ca trên lịch để chấm lại <b>Có mặt</b>, <b>Nửa công</b> hoặc <b>Vắng</b>. Cuối tháng xem tổng công, lương và hạch toán chi lương từng cơ sở ở bảng dưới lịch." : "Đến lớp bấm <b>Vô ca</b>, về bấm <b>Kết ca</b>. Lịch dưới cho thấy những ngày anh/chị đã đi và KPI tháng đủ hay thiếu."}</p>`;
+  return `<p class="muted">${C.isAdmin ? "Giáo viên tự <b>Vô ca</b> / <b>Kết ca</b>. Ca tối vào sau <b>19:00</b> là muộn, ra trước <b>21:00</b> là về sớm — web chỉ ghi nhận, không tự trừ lương. Lương = ca hợp lệ + trợ cấp + thưởng − khấu trừ." : "Đến lớp bấm <b>Vô ca</b> (ca tối trước 19:00), về bấm <b>Kết ca</b> (từ 21:00). Giờ đã ghi không tự sửa được — sai thì bấm <b>Báo sai giờ</b> để quản lý duyệt."}</p>`;
 }
 function dsCC() {
-  const thang = thangDangXem(), [y, m] = thang.split("-").map(Number), hom = C.homNay();
-  const dau = new Date(y, m - 1, 1), lech = (dau.getDay() + 6) % 7, soNgay = new Date(y, m, 0).getDate();
-  const ca = caTrongThang(thang), theoNgay = {}; ca.forEach(c => (theoNgay[c.ngay] ||= []).push(c));
-  const o = [];
-  for (let i = 0; i < lech; i++) o.push(`<div class="cc-o trong"></div>`);
-  for (let d = 1; d <= soNgay; d++) {
-    const n = `${thang}-${pad(d)}`, cs = (theoNgay[n] || []).sort((a, b) => CA_HOC.findIndex(x => x.ma === a.ca) - CA_HOC.findIndex(x => x.ma === b.ca));
-    o.push(`<div class="cc-o${n === hom ? " hom" : ""}${(lech + d - 1) % 7 >= 5 ? " cuoituan" : ""}"><span class="cc-so num">${d}</span>
-      ${cs.map(c => { const t = CONG.find(x => x[0] === congCua(c)); const nhan = `${c.vao ? (laMuon(c) ? "⏰" : "✓") : ""}${csNgan(c.coSo)} ${caNgan(c.ca)}${C.isAdmin && !gvCC ? " · " + esc(String(c.gvTen || "").split(" ").pop()) : ""}`;
-        return C.isAdmin ? `<button type="button" class="cc-chip ${t ? t[2] : "chua"}" data-x="cc-cham" data-id="${esc(c.id)}" title="${esc((c.gvTen || c.gv) + " · ca " + tenCa(c.ca).toLowerCase() + " · " + c.coSo + " · " + (t ? t[1] : "chưa chấm") + (c.vao ? " · vào " + gioPhut(c.vao) + (laMuon(c) ? " (muộn)" : "") : "") + (c.ra ? " · ra " + gioPhut(c.ra) : ""))}">${nhan}</button>`
-          : `<span class="cc-chip ${t ? t[2] : "chua"}" title="${esc((t ? t[1] : "Chưa chấm") + (c.vao ? " · vào " + gioPhut(c.vao) + (laMuon(c) ? " (muộn)" : "") : "") + (c.ra ? " · ra " + gioPhut(c.ra) : ""))}">${nhan}</span>`; }).join("")}</div>`);
-  }
-  const tc = tongCong(thang), gvMap = Object.fromEntries(dsGV().map(g => [g.id, g])), ngay = new Date(hom + "T12:00:00").getDate();
-  const tongCS = {}; let tongLuong = 0, chuaChamTong = 0;
-  const dong = tc.map(k => { const g = gvMap[k.gv] || {}, gia = Number(g.luongCa) || 0, cong = Object.values(k.cs).reduce((a, b) => a + b, 0); chuaChamTong += k.chua;
-    Object.entries(k.cs).forEach(([cs, v]) => { tongCS[cs] = (tongCS[cs] || 0) + v * gia; }); tongLuong += cong * gia;
-    const kp = kpiCua(k, g);
-    return `<tr><td><b>${esc(k.ten)}</b>${g.chucVu ? `<small>${esc(g.chucVu)}${g.mon ? " · " + esc(g.mon) : ""}</small>` : ""}</td><td class="num">${k.ngay.size}</td><td class="num">${k.ca}</td>
-      <td class="num">${(k.cs.BPhú || 0).toLocaleString("vi-VN")}</td><td class="num">${(k.cs.KQuan || 0).toLocaleString("vi-VN")}</td><td class="num"><b>${cong.toLocaleString("vi-VN")}</b></td>
-      <td class="num">${k.vang || ""}${k.chua ? ` <span class="chip warn">${k.chua} chưa chấm</span>` : ""}</td><td class="num">${k.muon || ""}</td>
-      <td><span class="chip ${kp.du ? "ok" : kp.chiTieu ? "bad" : ""}" title="${esc(kp.muc.map(x => x[0] + ": " + x[2]).join(" · "))}">${kp.du ? "Đủ KPI" : kp.chiTieu ? "Thiếu KPI" : "Chưa đặt"}</span>${C.isAdmin ? ` <button type="button" class="linkish" data-x="cc-kpi" data-id="${esc(k.gv)}">Chỉ tiêu</button>` : ""}</td>
-      <td class="num">${gia ? vndCC(gia) : "—"}${C.isAdmin ? ` <button type="button" class="linkish" data-x="cc-gia" data-id="${esc(k.gv)}">Đặt</button>` : ""}</td><td class="num"><b>${gia ? vndCC(cong * gia) : "—"}</b></td>
-      <td>${g.linkLuong ? `<a href="${esc(g.linkLuong)}" target="_blank" rel="noopener">Bảng lương ↗</a>` : '<span class="muted">—</span>'}${C.isAdmin ? ` <button type="button" class="linkish" data-x="cc-link" data-id="${esc(k.gv)}">${g.linkLuong ? "Đổi" : "Gắn link"}</button>` : ""}</td></tr>`; }).join("");
-  const cuoiThang = C.isAdmin && thangCC === 0 && ngay >= 28 || C.isAdmin && thangCC === -1 && ngay <= 5;
-  return `${cuoiThang ? `<div class="cc-bao">💰 <b>Cuối tháng ${m}/${y}:</b> tổng công đã sẵn sàng${chuaChamTong ? ` (còn <b>${chuaChamTong}</b> ca chưa chấm — chấm nốt trước khi gửi lương)` : ""}. Kiểm tra bảng dưới rồi gửi lương. <button type="button" class="btn small primary" data-x="cc-csv">Tải bảng công tháng</button></div>` : ""}
-${caHomNay()}${C.isAdmin ? "" : kpiToi(tc, gvMap)}
-    <section class="card cc" aria-label="Lịch chấm công tháng"><div class="cc-dau">
-      <div class="lpc-tuan"><button type="button" class="btn small" data-x="cc-thang" data-id="-1" aria-label="Tháng trước">‹</button><b class="cc-thang">Tháng ${m}, ${y}</b><button type="button" class="btn small" data-x="cc-thang" data-id="1" aria-label="Tháng sau">›</button>${thangCC ? `<button type="button" class="linkish" data-x="cc-thang" data-id="0">Tháng này</button>` : ""}</div>
-      ${C.isAdmin ? `<div class="lpc-cs cc-loc"><button type="button" class="tab" data-x="cc-gv" data-id="" aria-selected="${!gvCC}">Tất cả</button>${C.giaoVien().map(g => `<button type="button" class="tab" data-x="cc-gv" data-id="${esc(g.id)}" aria-selected="${gvCC === g.id}">${esc(g.ten || g.id)}</button>`).join("")}</div>` : ""}</div>
-      <div class="cc-luoi" role="grid"><div class="cc-thu">T2</div><div class="cc-thu">T3</div><div class="cc-thu">T4</div><div class="cc-thu">T5</div><div class="cc-thu">T6</div><div class="cc-thu">T7</div><div class="cc-thu">CN</div>${o.join("")}</div>
-      <p class="cc-chu"><span class="cc-chip chua">Chưa chấm</span><span class="cc-chip ok">Có mặt · 1 công</span><span class="cc-chip warn">Nửa công</span><span class="cc-chip bad">Vắng</span> <small class="muted">BPhú = Bình Phú · KQuan = Kim Quan · S/C/T = ca sáng/chiều/tối</small></p></section>
-    <h3 class="vh-h2">Tổng công tháng ${m}/${y}${C.isAdmin ? " · lương · hạch toán theo cơ sở" : ""}</h3>
-    ${tc.length ? `<div class="roster-wrap cc-bang-o"><table class="roster cc-bang"><thead><tr><th>Giáo viên</th><th>Ngày đi</th><th>Số ca</th><th>Công BPhú</th><th>Công KQuan</th><th>Tổng công</th><th>Vắng</th><th>Muộn</th><th>KPI</th><th>Đơn giá/ca</th><th>Lương</th><th>Bảng lương</th></tr></thead><tbody>${dong}</tbody>
-      ${C.isAdmin ? `<tfoot><tr><th>Hạch toán chi lương</th><td colspan="11"><b>Bình Phú:</b> ${vndCC(tongCS.BPhú)} · <b>Kim Quan:</b> ${vndCC(tongCS.KQuan)} · <b>Tổng:</b> ${vndCC(tongLuong)}</td></tr></tfoot>` : ""}</table></div>
-      ${C.isAdmin ? `<div class="vh-nut"><button type="button" class="btn small" data-x="cc-csv">Tải bảng công tháng (CSV, mở bằng Excel)</button></div>` : ""}`
-      : `<p class="muted vh-trong">Tháng ${m}/${y} chưa có ca nào${C.isAdmin ? ". Xếp ca ở mục Ca dạy, mỗi ca là một buổi công." : " được xếp cho anh/chị."}</p>`}`;
+  const views = C.isAdmin ? [["hom", "Hôm nay"], ["thang", "Chấm công tháng"], ["luong", "Bảng lương"]] : [["hom", "Ca hôm nay"], ["thang", "Công & KPI"], ["luong", "Phiếu lương"]];
+  if (!views.some(v => v[0] === viewCC)) viewCC = "hom";
+  return `<div class="tabs cc-view" role="tablist" aria-label="Chấm công">${views.map(([k, t]) => `<button type="button" class="tab" role="tab" data-x="cc-view" data-id="${k}" aria-selected="${viewCC === k}">${t}</button>`).join("")}</div>`
+    + ({ hom: viewHom, thang: viewThang, luong: viewLuong })[viewCC]();
 }
-// thẻ "Ca hôm nay": giáo viên tự bấm Vô ca khi đến lớp, Kết ca khi về (giống điểm danh của học viên)
-function caHomNay() {
-  if (C.isAdmin) return theoDoiHomNay();
-  const ds = D.ca.filter(c => c.ngay === C.homNay() && c.gv === C.mail).sort((a, b) => gioBatDau(a) - gioBatDau(b));
-  if (!ds.length) return C.isAdmin ? "" : `<section class="card cc-hom"><h3>Ca hôm nay</h3><p class="muted">Hôm nay anh/chị không có ca dạy.</p></section>`;
-  return `<section class="card cc-hom" aria-label="Vô ca, kết ca hôm nay"><h3>Ca hôm nay</h3>${ds.map(c => `<div class="cc-hom-ca">
-    <div><b>Ca ${esc(tenCa(c.ca).toLowerCase())}</b> <span class="num muted">${esc(gioCa(c.ca))}</span> · ${esc(c.coSo)}
-      <small>${c.vao ? `Vào <b class="num">${gioPhut(c.vao)}</b>${laMuon(c) ? ' <span class="chip bad">muộn</span>' : ' <span class="chip ok">đúng giờ</span>'}` : "Chưa vô ca"}${c.ra ? ` · Ra <b class="num">${gioPhut(c.ra)}</b>` : ""}</small></div>
-    ${!c.vao ? `<button type="button" class="btn primary" data-x="cc-vao" data-id="${esc(c.id)}">Vô ca</button>` : !c.ra ? `<button type="button" class="btn" data-x="cc-ra" data-id="${esc(c.id)}">Kết ca</button>` : '<span class="chip ok">Xong ca ✓</span>'}</div>`).join("")}</section>`;
+function thangNav() {
+  const [y, m] = thangDangXem().split("-").map(Number);
+  return `<div class="lpc-tuan"><button type="button" class="btn small" data-x="cc-thang" data-id="-1" aria-label="Tháng trước">‹</button><b class="cc-thang">Tháng ${m}, ${y}</b><button type="button" class="btn small" data-x="cc-thang" data-id="1" aria-label="Tháng sau">›</button>${thangCC ? `<button type="button" class="linkish" data-x="cc-thang" data-id="0">Tháng này</button>` : ""}</div>`;
 }
-// Quản lý: bảng theo dõi giáo viên đi dạy hôm nay — ai đã vô ca, đang dạy, muộn, chưa tới
+/* ---------- Hôm nay ---------- */
+function viewHom() {
+  if (!C.isAdmin) return caHomNay() + suaCuaToi();
+  const hom = C.homNay(), ngay = Number(hom.slice(8)), [y, m] = hom.split("-").map(Number);
+  const bao = ngay >= 28 ? `<div class="cc-bao">💰 <b>Cuối tháng ${m}/${y}:</b> kiểm tra bảng công, duyệt thưởng rồi <b>chốt bảng lương</b> để gửi lương. <button type="button" class="btn small primary" data-x="cc-view" data-id="luong">Mở bảng lương</button></div>` : "";
+  return bao + theoDoiHomNay() + hocVienHomNay() + chiPhiNhanSu() + suaChoDuyet();
+}
+function trangThaiCa(c) {
+  const [v, r] = mocCa(c), bay = Date.now(), th = thieuCham(c);
+  if (th) return ["bad", TEN_THIEU[th]];
+  if (c.ra) return phutSom(c) ? ["warn", `Về sớm ${phutSom(c)} phút`] : ["ok", "Đã kết ca"];
+  if (c.vao) return laMuon(c) ? ["warn", `Đang dạy · muộn ${phutMuon(c)} phút`] : ["ok", "Đang dạy"];
+  if (typeof c.cong === "number") return ["", "Quản lý đã chấm"];
+  return v && bay > v ? ["bad", "Chưa vô ca"] : ["", "Chưa tới giờ"];
+}
+// học viên không có lịch cố định theo ca, nên "xong điểm danh" do anh chị dạy ca đó bấm xác nhận
+const ddChip = c => { const n = C.ddCa ? C.ddCa(c.ngay, c.ca, c.coSo).da : 0;
+  return c.ddXong ? `<span class="chip ok">Xong điểm danh · ${n} em</span>` : c.vao ? `<span class="chip warn">Chưa xong điểm danh${n ? ` · ${n} em` : ""}</span>` : ""; };
+// Quản lý: ai đang trong ca, muộn, về sớm, chưa chấm công; ca nào chưa điểm danh xong
 function theoDoiHomNay() {
   const ds = D.ca.filter(c => c.ngay === C.homNay()).sort((a, b) => gioBatDau(a) - gioBatDau(b) || String(a.coSo).localeCompare(String(b.coSo), "vi"));
-  const bay = Date.now();
-  const tt = c => c.ra ? ["ok", "Đã kết ca"] : c.vao ? [laMuon(c) ? "warn" : "ok", laMuon(c) ? "Đang dạy · vào muộn" : "Đang dạy"] : gioBatDau(c) && bay > gioBatDau(c) + MUON_PHUT * 60000 ? ["bad", "Chưa vô ca"] : ["", "Chưa tới giờ"];
-  const dem = { day: ds.filter(c => c.vao && !c.ra).length, xong: ds.filter(c => c.ra).length, thieu: ds.filter(c => tt(c)[0] === "bad").length };
-  return `<section class="card cc-hom" aria-label="Theo dõi giáo viên đi dạy hôm nay"><h3>Hôm nay · ${ds.length} ca <small class="muted">${dem.day} đang dạy · ${dem.xong} xong ca${dem.thieu ? ` · <b class="cc-do">${dem.thieu} chưa vô ca</b>` : ""}</small></h3>
-    ${ds.length ? ds.map(c => { const [k, chu] = tt(c); return `<div class="cc-hom-ca"><div><b>${esc(c.gvTen || c.gv)}</b> · ca ${esc(tenCa(c.ca).toLowerCase())} <span class="num muted">${esc(gioCa(c.ca))}</span> · ${esc(c.coSo)}
+  const tt = ds.map(trangThaiCa), dem = { day: ds.filter(c => c.vao && !c.ra).length, xong: ds.filter(c => c.ra).length, bad: tt.filter(x => x[0] === "bad").length, warn: tt.filter(x => x[0] === "warn").length };
+  return `<section class="card cc-hom" aria-label="Theo dõi giáo viên đi dạy hôm nay"><h3>Giáo viên hôm nay · ${ds.length} ca <small class="muted">${dem.day} đang dạy · ${dem.xong} xong ca${dem.warn ? ` · ${dem.warn} muộn/về sớm` : ""}${dem.bad ? ` · <b class="cc-do">${dem.bad} chưa / thiếu chấm công</b>` : ""}</small></h3>
+    ${ds.length ? ds.map((c, i) => { const [k, chu] = tt[i]; return `<div class="cc-hom-ca"><div><b>${esc(c.gvTen || c.gv)}</b> · ca ${esc(tenCa(c.ca).toLowerCase())} · ${esc(c.coSo)}
       <small>${c.vao ? `Vào <b class="num">${gioPhut(c.vao)}</b>` : "Chưa vô ca"}${c.ra ? ` · Ra <b class="num">${gioPhut(c.ra)}</b>` : ""}</small></div>
-      <div class="cc-hom-nut"><span class="chip ${k}">${chu}</span>${c.gv === C.mail && !c.ra ? `<button type="button" class="btn ${c.vao ? "" : "primary"}" data-x="${c.vao ? "cc-ra" : "cc-vao"}" data-id="${esc(c.id)}">${c.vao ? "Kết ca" : "Vô ca"}</button>` : ""}</div></div>`; }).join("")
+      <div class="cc-hom-nut"><span class="chip ${k}">${chu}</span>${ddChip(c)}${c.gv === C.mail && !c.ra ? `<button type="button" class="btn ${c.vao ? "" : "primary"}" data-x="${c.vao ? "cc-ra" : "cc-vao"}" data-id="${esc(c.id)}">${c.vao ? "Kết ca" : "Vô ca"}</button>` : ""}<button type="button" class="linkish" data-x="cc-cham" data-id="${esc(c.id)}">Sửa</button></div></div>`; }).join("")
       : '<p class="muted">Hôm nay chưa xếp ca nào.</p>'}</section>`;
 }
-function kpiToi(tc, gvMap) {
-  const k = tc.find(x => x.gv === C.mail) || { cs: {}, ca: 0, vang: 0, muon: 0, chua: 0, ngay: new Set() }, kp = kpiCua(k, gvMap[C.mail] || {});
-  return `<section class="card cc-kpi" aria-label="KPI tháng của tôi"><h3>KPI tháng · <span class="chip ${kp.du ? "ok" : kp.chiTieu ? "bad" : ""}">${kp.du ? "Đủ — được xét thưởng" : kp.chiTieu ? "Còn thiếu" : "Quản lý chưa đặt chỉ tiêu"}</span></h3>
-    <p class="muted">Đã đi <b class="num">${k.ngay.size}</b> ngày · <b class="num">${k.ca}</b> ca được xếp${k.chua ? ` · ${k.chua} ca chưa tính công` : ""}</p>
-    <ul class="cc-kpi-ds">${kp.muc.map(([t, dat, so]) => `<li class="${dat === null ? "" : dat ? "ok" : "bad"}"><span>${dat === null ? "•" : dat ? "✓" : "✗"} ${esc(t)}</span><b class="num">${esc(so)}</b></li>`).join("")}</ul>
-    ${kp.chiTieu ? `<div class="cc-thanh" role="progressbar" aria-valuemin="0" aria-valuemax="${kp.chiTieu}" aria-valuenow="${kp.cong}"><i style="width:${Math.min(100, kp.cong / kp.chiTieu * 100)}%"></i></div>` : ""}</section>`;
+function hocVienHomNay() {
+  const t = C.ddNgay ? C.ddNgay(C.homNay()) : null; if (!t) return "";
+  const o = cs => { const x = t[cs] || {}; return `<div class="cc-hv"><b>${cs}</b><span><b class="num">${(x.co || 0) + (x.muon || 0) + (x.bu || 0)}</b> có mặt${x.muon ? ` (${x.muon} muộn)` : ""}${x.bu ? ` · ${x.bu} học bù` : ""}</span><span><b class="num">${(x.vang || 0) + (x.phep || 0)}</b> vắng${x.phep ? ` (${x.phep} có phép)` : ""}</span></div>`; };
+  return `<section class="card" aria-label="Học viên hôm nay"><h3>Học viên hôm nay</h3><div class="cc-hv-luoi">${o("Bình Phú")}${o("Kim Quan")}</div></section>`;
+}
+// chi phí nhân sự (lương ca + trợ cấp) theo ngày / tuần / tháng, từng cơ sở — tạm tính theo đơn giá hiện tại
+function chiPhiNhanSu() {
+  const hom = C.homNay(), d = new Date(hom + "T12:00:00"), t2 = new Date(d); t2.setDate(d.getDate() - (d.getDay() + 6) % 7);
+  const iso = x => `${x.getFullYear()}-${pad(x.getMonth() + 1)}-${pad(x.getDate())}`, cn = new Date(t2); cn.setDate(t2.getDate() + 6);
+  const khoang = [["Hôm nay", hom, hom], ["Tuần này", iso(t2), iso(cn)], ["Tháng này", hom.slice(0, 8) + "01", hom.slice(0, 8) + "31"]];
+  // tính qua bảng lương từng người để không đếm ca trùng và dùng đúng số liệu tháng đã chốt
+  const thang = [...new Set([iso(t2).slice(0, 7), hom.slice(0, 7), iso(cn).slice(0, 7)])], dong = thang.flatMap(t => gvTrongThang(t).flatMap(gv => tinhLuong(gv, t).dong));
+  const tien = (a, b) => { const o = { BPhú: 0, KQuan: 0, khac: 0 }; dong.filter(r => r.ngay >= a && r.ngay <= b).forEach(r => { const k = csNgan(r.coSo); o[k in o ? k : "khac"] += r.luong + r.tc; }); return o; };
+  return `<section class="card" aria-label="Chi phí nhân sự"><h3>Chi phí nhân sự <small class="muted">lương ca + trợ cấp đã chấm, chưa gồm thưởng</small></h3>
+    <div class="roster-wrap"><table class="roster cc-cp"><thead><tr><th></th><th>Bình Phú</th><th>Kim Quan</th><th>Tổng</th></tr></thead><tbody>${khoang.map(([t, a, b]) => { const o = tien(a, b); return `<tr><th>${t}</th><td class="num">${vndCC(o.BPhú)}</td><td class="num">${vndCC(o.KQuan)}</td><td class="num"><b>${vndCC(o.BPhú + o.KQuan + o.khac)}</b></td></tr>`; }).join("")}</tbody></table></div></section>`;
+}
+// thẻ "Ca hôm nay" của giáo viên: Vô ca → điểm danh lớp → Kết ca
+function caHomNay() {
+  const ds = D.ca.filter(c => c.ngay === C.homNay() && c.gv === C.mail).sort((a, b) => gioBatDau(a) - gioBatDau(b));
+  if (!ds.length) return `<section class="card cc-hom"><h3>Ca hôm nay</h3><p class="muted">Hôm nay anh/chị không có ca dạy.</p></section>`;
+  return `<section class="card cc-hom" aria-label="Vô ca, kết ca hôm nay"><h3>Ca hôm nay</h3>${ds.map(c => { const [k, chu] = trangThaiCa(c), [v, r] = mocCa(c); return `<div class="cc-hom-ca">
+    <div><b>Ca ${esc(tenCa(c.ca).toLowerCase())}</b> · ${esc(c.coSo)} <small>Vào trước <b class="num">${gioPhut(v)}</b> · ra từ <b class="num">${gioPhut(r)}</b></small>
+      <small>${c.vao ? `Vào <b class="num">${gioPhut(c.vao)}</b>` : "Chưa vô ca"}${c.ra ? ` · Ra <b class="num">${gioPhut(c.ra)}</b>` : ""} <span class="chip ${k}">${chu}</span> ${ddChip(c)}</small></div>
+    <div class="cc-hom-nut">${!c.vao ? `<button type="button" class="btn primary" data-x="cc-vao" data-id="${esc(c.id)}">Vô ca</button>`
+      : `<a class="btn${c.ra ? "" : " primary"}" href="#diem-danh" data-dd-mo="${esc(c.ngay + "|" + c.ca + "|" + c.coSo)}">Điểm danh lớp</a>${c.ra ? '<span class="chip ok">Xong ca ✓</span>' : `<button type="button" class="btn" data-x="cc-ra" data-id="${esc(c.id)}">Kết ca</button>`}`}
+      ${c.vao ? `<button type="button" class="linkish" data-x="cc-sua" data-id="${esc(c.id)}">Báo sai giờ</button>` : ""}</div></div>`; }).join("")}</section>`;
 }
 async function vaoRaCa(id, truong, btn) {
   const c = D.ca.find(x => x.id === id); if (!c || c.gv !== C.mail || c[truong]) return;
   if (truong === "vao" && c.ngay !== C.homNay()) return C.toast("Chỉ vô ca được trong ngày của ca.", "err");
   const { db, fs: { doc, setDoc } } = C;
-  await guiNut(btn, () => setDoc(doc(db, "caday", id), { [truong]: Date.now() }, { merge: true }), truong === "vao" ? "Đã vô ca ✓ Dạy tốt nhé!" : "Đã kết ca ✓ Cảm ơn anh/chị!");
+  const ok = await guiNut(btn, () => setDoc(doc(db, "caday", id), { [truong]: Date.now() }, { merge: true }), truong === "vao" ? "Đã vô ca ✓ Mở Điểm danh lớp để điểm danh học viên." : "Đã kết ca ✓ Cảm ơn anh/chị!");
+  // kết ca vẫn ghi giờ thật; chỉ nhắc nếu còn học viên chưa điểm danh
+  if (ok && truong === "ra" && !c.ddXong) C.toast(`Đã ghi giờ ra. Lưu ý: ca này chưa xong điểm danh học viên ${c.coSo} — vào Điểm danh lớp để hoàn thành.`, "err");
+}
+/* ---------- Báo sai giờ (giáo viên) → quản lý duyệt ---------- */
+function moSuaGio(c) {
+  if (!c || c.gv !== C.mail) return;
+  const { db, fs: { doc, setDoc, collection } } = C;
+  const h = C.moHop(`<h3>Báo sai giờ chấm công</h3><p>Ca ${esc(tenCa(c.ca).toLowerCase())} · ${TEN_THU[thuCua(c.ngay)]} ${ngayVN(c.ngay)} · ${esc(c.coSo)}</p>
+    <div class="cc-gio"><label>Giờ vào đúng<input type="time" id="sg-vao" value="${c.vao ? gioPhut(c.vao) : ""}"></label><label>Giờ ra đúng<input type="time" id="sg-ra" value="${c.ra ? gioPhut(c.ra) : ""}"></label></div>
+    <label>Lý do<textarea id="sg-ly" maxlength="300" placeholder="VD: Quên bấm Kết ca, thực tế về lúc 21:05"></textarea></label>
+    <p class="muted">Quản lý duyệt thì giờ mới được cập nhật. Giờ cũ vẫn lưu trong nhật ký.</p>
+    <div class="hop-nut"><button class="btn" type="button" data-dong>Huỷ</button><button class="btn primary" type="button" id="sg-gui">Gửi quản lý</button></div>`, "Báo sai giờ");
+  h.el.querySelector("#sg-gui").onclick = async e => {
+    if (!val("sg-ly")) return C.toast("Ghi lý do để quản lý duyệt nhé.", "err");
+    if (!val("sg-vao") && !val("sg-ra")) return C.toast("Điền giờ vào hoặc giờ ra đúng.", "err");
+    if (await guiNut(e.target, () => setDoc(doc(collection(db, "suacong")), { ca: c.id, ngay: c.ngay, tu: C.mail, tuTen: C.ten, vao: val("sg-vao"), ra: val("sg-ra"), lyDo: val("sg-ly"), trangThai: "cho", luc: Date.now() }), "Đã gửi quản lý ✓")) h.dong();
+  };
+}
+function suaCuaToi() {
+  const ds = D.sua.filter(s => s.tu === C.mail).slice(0, 6); if (!ds.length) return "";
+  return `<section class="card"><h3>Báo sai giờ đã gửi</h3>${ds.map(s => `<div class="cc-hom-ca"><div>${ngayVN(s.ngay)} · vào ${esc(s.vao || "—")} · ra ${esc(s.ra || "—")}<small>${esc(s.lyDo)}</small></div><span class="chip ${s.trangThai === "dongy" ? "ok" : s.trangThai === "tuchoi" ? "bad" : "warn"}">${s.trangThai === "dongy" ? "Đã duyệt" : s.trangThai === "tuchoi" ? "Không duyệt" : "Chờ duyệt"}</span></div>`).join("")}</section>`;
+}
+function suaChoDuyet() {
+  const ds = D.sua.filter(s => s.trangThai === "cho"); if (!ds.length) return "";
+  return `<section class="card cc-sua" aria-label="Yêu cầu sửa giờ"><h3>Yêu cầu sửa giờ chấm công <span class="nbadge num">${ds.length}</span></h3>${ds.map(s => { const c = D.ca.find(x => x.id === s.ca) || {}; return `<div class="cc-hom-ca"><div><b>${esc(s.tuTen || s.tu)}</b> · ${ngayVN(s.ngay)} · ca ${esc(tenCa(c.ca || "").toLowerCase())} ${esc(c.coSo || "")}
+    <small>Đang ghi: vào ${c.vao ? gioPhut(c.vao) : "—"} · ra ${c.ra ? gioPhut(c.ra) : "—"} → xin sửa: vào <b>${esc(s.vao || "giữ nguyên")}</b> · ra <b>${esc(s.ra || "giữ nguyên")}</b></small><small>${esc(s.lyDo)}</small></div>
+    <div class="cc-hom-nut"><button type="button" class="btn small primary" data-x="sua-ok" data-id="${esc(s.id)}">Duyệt</button><button type="button" class="btn small" data-x="sua-ko" data-id="${esc(s.id)}">Không duyệt</button></div></div>`; }).join("")}</section>`;
+}
+async function xuLySua(id, dongY, btn) {
+  const s = D.sua.find(x => x.id === id); if (!s || !C.isAdmin) return;
+  const c = D.ca.find(x => x.id === s.ca), { db, fs: { doc, writeBatch } } = C, b = writeBatch(db);
+  if (dongY) { if (!c) return C.toast("Ca này đã bị xoá.", "err");
+    const moi = { suaBoi: C.mail, suaLuc: Date.now() }; if (/^\d{2}:\d{2}$/.test(s.vao)) moi.vao = lucCua(c.ngay, s.vao); if (/^\d{2}:\d{2}$/.test(s.ra)) moi.ra = lucCua(c.ngay, s.ra);
+    b.set(doc(db, "caday", c.id), moi, { merge: true }); }
+  b.update(doc(db, "suacong", id), { trangThai: dongY ? "dongy" : "tuchoi", xuLy: C.mail, xuLyLuc: Date.now() });
+  await guiNut(btn, () => b.commit(), dongY ? "Đã duyệt và sửa giờ ✓" : "Đã từ chối");
+}
+/* ---------- Chấm công tháng ---------- */
+function luoiThang(thang, loc) {
+  const [y, m] = thang.split("-").map(Number), hom = C.homNay(), lech = (new Date(y, m - 1, 1).getDay() + 6) % 7, soNgay = new Date(y, m, 0).getDate();
+  const theoNgay = {}; D.ca.filter(c => String(c.ngay).startsWith(thang) && (!loc || c.gv === loc)).forEach(c => (theoNgay[c.ngay] ||= []).push(c));
+  const o = []; for (let i = 0; i < lech; i++) o.push(`<div class="cc-o trong"></div>`);
+  for (let d = 1; d <= soNgay; d++) {
+    const n = `${thang}-${pad(d)}`, cs = (theoNgay[n] || []).sort(xepCa);
+    o.push(`<div class="cc-o${n === hom ? " hom" : ""}${(lech + d - 1) % 7 >= 5 ? " cuoituan" : ""}"><span class="cc-so num">${d}</span>${cs.map(c => {
+      const t = CONG.find(x => x[0] === congCua(c)), th = thieuCham(c), dau = th ? "!" : c.vao ? (laMuon(c) || phutSom(c) ? "⏰" : "✓") : "";
+      const nhan = `${dau}${csNgan(c.coSo)} ${caNgan(c.ca)}${C.isAdmin && !loc ? " · " + esc(String(c.gvTen || "").split(" ").pop()) : ""}`;
+      const tip = esc(`${c.gvTen || c.gv} · ca ${tenCa(c.ca).toLowerCase()} · ${c.coSo} · ${t ? t[1] : th ? TEN_THIEU[th] : "chưa chấm"}${c.vao ? " · vào " + gioPhut(c.vao) + (laMuon(c) ? ` (muộn ${phutMuon(c)}′)` : "") : ""}${c.ra ? " · ra " + gioPhut(c.ra) + (phutSom(c) ? ` (sớm ${phutSom(c)}′)` : "") : ""}`);
+      const cls = `cc-chip ${t ? t[2] : th ? "bad" : "chua"}`;
+      return C.isAdmin ? `<button type="button" class="${cls}" data-x="cc-cham" data-id="${esc(c.id)}" title="${tip}">${nhan}</button>` : `<span class="${cls}" title="${tip}">${nhan}</span>`; }).join("")}</div>`);
+  }
+  return `<div class="cc-luoi" role="grid"><div class="cc-thu">T2</div><div class="cc-thu">T3</div><div class="cc-thu">T4</div><div class="cc-thu">T5</div><div class="cc-thu">T6</div><div class="cc-thu">T7</div><div class="cc-thu">CN</div>${o.join("")}</div>
+    <p class="cc-chu"><span class="cc-chip chua">Chưa chấm</span><span class="cc-chip ok">Có mặt · 1 công</span><span class="cc-chip warn">Nửa công</span><span class="cc-chip bad">Vắng / thiếu chấm</span> <small class="muted">✓ đúng giờ · ⏰ muộn / về sớm · ! thiếu chấm · BPhú/KQuan · S/C/T = ca sáng/chiều/tối</small></p>`;
+}
+function viewThang() {
+  const thang = thangDangXem(), [y, m] = thang.split("-").map(Number);
+  const loc = C.isAdmin ? `<div class="lpc-cs cc-loc"><button type="button" class="tab" data-x="cc-gv" data-id="" aria-selected="${!gvCC}">Tất cả</button>${C.giaoVien().map(g => `<button type="button" class="tab" data-x="cc-gv" data-id="${esc(g.id)}" aria-selected="${gvCC === g.id}">${esc(g.ten || g.id)}</button>`).join("")}</div>` : "";
+  const lich = `<section class="card cc" aria-label="Lịch chấm công tháng"><div class="cc-dau">${thangNav()}${loc}</div>${luoiThang(thang, C.isAdmin ? gvCC : C.mail)}</section>`;
+  if (!C.isAdmin) { const L = tinhLuong(C.mail, thang); return kpiToi(L) + lich + caCuaToi(L); }
+  const bang = bangThang(thang);
+  const dong = bang.map(L => { const g = gvCua(L.gv), t = thongKeCC(L), kp = kpiCua(L, g); return `<tr><td class="hv-o"><b>${esc(L.ten)}</b><small>${esc(L.cv)}${g.mon ? " · " + esc(g.mon) : ""}</small></td>
+    <td class="num">${t.ngay}</td><td class="num">${t.ca}</td><td class="num"><b>${soN(L.cong)}</b></td><td class="num">${t.muon ? `${t.muon} <small>(${t.phutMuon}′)</small>` : ""}</td><td class="num">${t.som ? `${t.som} <small>(${t.phutSom}′)</small>` : ""}</td>
+    <td class="num">${t.thieu ? `<span class="chip bad">${t.thieu}</span>` : ""}</td><td class="num">${t.vang || ""}${t.chua ? ` <span class="chip warn">${t.chua} chưa chấm</span>` : ""}</td>
+    <td><span class="chip ${kp.du ? "ok" : "bad"}" title="${esc(kp.muc.map(x => x[0] + ": " + x[2]).join(" · "))}">${kp.du ? "Đủ KPI" : "Thiếu KPI"}</span> <button type="button" class="linkish" data-x="cc-kpi" data-id="${esc(L.gv)}">Chỉ tiêu</button></td></tr>`; }).join("");
+  return lich + `<h3 class="vh-h2">Tổng hợp công tháng ${m}/${y}</h3>${bang.length ? `<div class="roster-wrap cc-bang-o"><table class="roster cc-bang"><thead><tr><th>Giáo viên</th><th>Ngày đi</th><th>Số ca</th><th>Công</th><th>Đi muộn</th><th>Về sớm</th><th>Thiếu chấm</th><th>Vắng</th><th>KPI</th></tr></thead><tbody>${dong}</tbody></table></div>
+    <div class="vh-nut"><button type="button" class="btn small" data-x="cc-csv">Tải bảng công tháng (Excel)</button></div>` : `<p class="muted vh-trong">Tháng ${m}/${y} chưa có ca nào. Xếp ca ở mục Ca dạy, mỗi ca là một buổi công.</p>`}`;
+}
+function kpiToi(L) {
+  const kp = kpiCua(L, gvCua(C.mail)), t = kp.t;
+  return `<section class="card cc-kpi" aria-label="KPI tháng của tôi"><div class="cc-dau">${thangNav()}</div><h3>KPI tháng · <span class="chip ${kp.du ? "ok" : "bad"}">${kp.du ? "Đủ — được xét thưởng chuyên cần" : "Còn thiếu"}</span></h3>
+    <p class="muted">Đã đi <b class="num">${t.ngay}</b> ngày · <b class="num">${soN(L.cong)}</b> công · <b class="num">${t.ca}</b> ca được xếp${t.chua ? ` · ${t.chua} ca chưa tính công` : ""}</p>
+    <ul class="cc-kpi-ds">${kp.muc.map(([ten, dat, so]) => `<li class="${dat === null ? "" : dat ? "ok" : "bad"}"><span>${dat === null ? "•" : dat ? "✓" : "✗"} ${esc(ten)}</span><b class="num">${esc(so)}</b></li>`).join("")}</ul>
+    ${kp.chiTieu ? `<div class="cc-thanh" role="progressbar" aria-valuemin="0" aria-valuemax="${kp.chiTieu}" aria-valuenow="${L.cong}"><i style="width:${Math.min(100, L.cong / kp.chiTieu * 100)}%"></i></div>` : ""}</section>`;
+}
+function caCuaToi(L) {
+  if (!L.dong.length) return "";
+  return `<h3 class="vh-h2">Các ca trong tháng</h3><div class="roster-wrap cc-bang-o"><table class="roster cc-bang"><thead><tr><th>Ngày</th><th>Ca · cơ sở</th><th>Vào</th><th>Ra</th><th>Ghi nhận</th><th></th></tr></thead><tbody>${L.dong.map(r => `<tr>
+    <td class="num">${TEN_THU[thuCua(r.ngay)]} ${ngayVN(r.ngay)}</td><td>${esc(tenCa(r.ca))} · ${esc(r.coSo)}</td><td class="num">${r.vao ? gioPhut(r.vao) : "—"}</td><td class="num">${r.ra ? gioPhut(r.ra) : "—"}</td>
+    <td>${[r.muon ? `<span class="chip warn">Muộn ${r.muon}′</span>` : "", r.som ? `<span class="chip warn">Về sớm ${r.som}′</span>` : "", r.thieu ? `<span class="chip bad">${TEN_THIEU[r.thieu]}</span>` : "", r.vang ? '<span class="chip bad">Vắng</span>' : "", r.trung ? '<span class="chip">Trùng ca</span>' : ""].join(" ") || (r.cong ? `<span class="chip ok">${soN(r.cong)} công</span>` : '<span class="muted">—</span>')}</td>
+    <td>${r.ngay <= C.homNay() ? `<button type="button" class="linkish" data-x="cc-sua" data-id="${esc(r.id)}">Báo sai giờ</button>` : ""}</td></tr>`).join("")}</tbody></table></div>`;
+}
+/* ---------- Bảng lương ---------- */
+function phieuLuong(L) {
+  const [y, m] = L.thang.split("-").map(Number);
+  return `<div class="cc-phieu"><div class="cc-phieu-dau"><div><b>${esc(L.ten)}</b><small>${esc(L.cv)} · ${vndCC(L.gia)}/buổi · tháng ${m}/${y}</small></div><span class="chip ${L.daChot ? "ok" : "warn"}">${L.daChot ? "Đã chốt " + ngayVN(new Date(L.chotLuc).toISOString().slice(0, 10)) : "Tạm tính"}</span></div>
+    ${L.dong.length ? `<div class="roster-wrap cc-bang-o"><table class="roster cc-bang"><thead><tr><th>Buổi</th><th>Cơ sở</th><th>Vị trí</th><th>Công</th><th>Lương ca</th><th>Trợ cấp</th></tr></thead><tbody>${L.dong.map(r => `<tr${r.cong ? "" : ' class="cc-mo"'}>
+      <td class="num">${ngayVN(r.ngay)} · ${esc(caNgan(r.ca))}</td><td>${esc(csNgan(r.coSo))}</td><td>${esc(r.cv)}</td><td class="num">${r.trung ? "trùng" : r.chua ? "chưa chấm" : soN(r.cong)}</td><td class="num">${vndCC(r.luong)}</td><td class="num">${vndCC(r.tc)} <small class="muted">${esc(r.tc || r.trung || /Tắt/.test(r.tcLoai) ? r.tcLoai : "")}</small></td></tr>`).join("")}</tbody></table></div>` : '<p class="muted">Chưa có ca nào trong tháng.</p>'}
+    ${L.dc.length ? `<ul class="cc-dc">${L.dc.map(x => `<li class="${x.loai}"><span>${x.loai === "thuong" ? "＋ Thưởng" : "− Khấu trừ"} · ${esc(x.muc)}<small>${esc(x.lyDo)}</small></span><b class="num">${x.loai === "thuong" ? "+" : "−"}${vndCC(x.tien)}</b>${C.isAdmin && !L.daChot ? `<button type="button" class="linkish" data-dc-xoa="${esc(x.id)}">Xoá</button>` : ""}</li>`).join("")}</ul>` : ""}
+    <dl class="cc-tong"><div><dt>Lương các ca hợp lệ (${soN(L.cong)} công)</dt><dd>${vndCC(L.luong)}</dd></div><div><dt>Trợ cấp</dt><dd>${vndCC(L.tc)}</dd></div><div><dt>Thưởng</dt><dd>+${vndCC(L.thuong)}</dd></div><div><dt>Khấu trừ</dt><dd>−${vndCC(L.tru)}</dd></div><div class="cc-thuc"><dt>Thực nhận</dt><dd>${vndCC(L.tong)}</dd></div></dl></div>`;
+}
+function viewLuong() {
+  const thang = thangDangXem(), [y, m] = thang.split("-").map(Number);
+  if (!C.isAdmin) { const L = tinhLuong(C.mail, thang), g = gvCua(C.mail);
+    return `<section class="card"><div class="cc-dau">${thangNav()}</div>${phieuLuong(L)}<div class="vh-nut"><button type="button" class="btn small" data-x="cc-csv-luong">Tải phiếu lương (Excel)</button>${g.linkLuong ? ` <a class="btn small" href="${esc(g.linkLuong)}" target="_blank" rel="noopener">Bảng lương Drive/Canva ↗</a>` : ""}</div>
+      <p class="muted">Chỉ anh/chị xem được phiếu lương của mình. Muộn / về sớm chỉ ghi nhận, không tự trừ lương.</p></section>`; }
+  const bang = bangThang(thang), chot = bang.length && bang.every(L => L.daChot), coChot = bang.some(L => L.daChot);
+  const tong = k => bang.reduce((a, L) => a + L[k], 0), cs = k => bang.reduce((a, L) => a + (L.theoCS[k] || 0), 0);
+  const dong = bang.map(L => `<tr><td class="hv-o"><b>${esc(L.ten)}</b><small>${esc(L.cv)} · ${vndCC(L.gia)}/buổi</small></td><td class="num">${soN(L.cong)}</td><td class="num">${vndCC(L.luong)}</td><td class="num">${vndCC(L.tc)}</td><td class="num">${L.thuong ? "+" + vndCC(L.thuong) : ""}</td><td class="num">${L.tru ? "−" + vndCC(L.tru) : ""}</td><td class="num"><b>${vndCC(L.tong)}</b></td>
+    <td>${L.daChot ? '<span class="chip ok">Đã chốt</span> ' : ""}<button type="button" class="btn small" data-x="cc-phieu" data-id="${esc(L.gv)}">Phiếu lương</button></td></tr>`).join("");
+  // gợi ý thưởng chuyên cần: đủ KPI (đủ công, không vắng, không thiếu chấm, muộn ≤ 2), xếp người nhiều công nhất lên đầu
+  const ung = bang.map(L => ({ L, kp: kpiCua(L, gvCua(L.gv)) })).filter(x => x.kp.du).sort((a, b) => b.L.cong - a.L.cong);
+  const daThuong = gv => D.dc.some(x => x.gv === gv && x.thang === thang && x.muc === "Chuyên cần");
+  const goiY = ung.length ? `<section class="card cc-goiy"><h3>Gợi ý thưởng chuyên cần ${vndCC(THUONG_CC)}</h3><p class="muted">Đi dạy đủ (đủ KPI, không vắng, không thiếu chấm công, muộn ≤ ${MUON_TOI_DA} lần) — xếp theo số công. Quản lý duyệt thì khoản thưởng mới vào lương.</p>
+    ${ung.map(({ L }, i) => `<div class="cc-hom-ca"><div><b>${esc(L.ten)}</b>${i === 0 ? ' <span class="chip ok">Chăm nhất</span>' : ""}<small>${soN(L.cong)} công · ${thongKeCC(L).muon} lần muộn</small></div>${daThuong(L.gv) ? '<span class="chip ok">Đã duyệt</span>' : L.daChot ? '<span class="chip">Tháng đã chốt</span>' : `<button type="button" class="btn small primary" data-x="cc-thuongcc" data-id="${esc(L.gv)}">Duyệt thưởng</button>`}</div>`).join("")}</section>` : "";
+  return `<section class="card"><div class="cc-dau">${thangNav()}</div>
+    ${bang.length ? `<div class="roster-wrap cc-bang-o"><table class="roster cc-bang"><thead><tr><th>Giáo viên</th><th>Công</th><th>Lương ca</th><th>Trợ cấp</th><th>Thưởng</th><th>Khấu trừ</th><th>Thực nhận</th><th></th></tr></thead><tbody>${dong}</tbody>
+      <tfoot><tr><th>Hạch toán chi lương</th><td colspan="7"><b>Bình Phú:</b> ${vndCC(cs("BPhú"))} · <b>Kim Quan:</b> ${vndCC(cs("KQuan"))} · <b>Thưởng − khấu trừ:</b> ${vndCC(tong("thuong") - tong("tru"))} · <b>Tổng chi:</b> ${vndCC(tong("tong"))}</td></tr></tfoot></table></div>
+      <div class="vh-nut"><button type="button" class="btn small" data-x="cc-csv-luong">Tải bảng lương (Excel)</button>
+        ${chot ? `<button type="button" class="btn small" data-x="cc-molai">Mở lại để sửa</button>` : `<button type="button" class="btn small primary" data-x="cc-chot">${coChot ? "Chốt nốt phần chưa chốt" : `Chốt bảng lương tháng ${m}`}</button>`}</div>
+      <p class="muted">${chot ? "Tháng đã chốt: số liệu giữ nguyên dù đổi đơn giá hay chức vụ sau này." : "Đang tạm tính theo đơn giá hiện tại. Chốt để giữ nguyên số liệu tháng này."}</p>`
+      : `<p class="muted vh-trong">Tháng ${m}/${y} chưa có ca nào.</p>`}</section>${goiY}`;
+}
+// phiếu lương chi tiết + chỉnh đơn giá, trợ cấp, thưởng / khấu trừ (quản lý)
+function moPhieu(gv) {
+  const thang = thangDangXem(), L = tinhLuong(gv, thang), g = gvCua(gv), tat = g.tcTat || {};
+  const { db, fs: { doc, setDoc, deleteDoc, collection } } = C;
+  const h = C.moHop(`<h3>Phiếu lương</h3>${phieuLuong(L)}
+    ${L.daChot ? '<p class="muted">Tháng đã chốt. Mở lại ở bảng lương nếu cần sửa.</p>' : `<details class="cc-chinh" open><summary><b>Thưởng / khấu trừ</b></summary>
+      <div class="cc-gio"><label>Loại<select id="dc-loai"><option value="thuong">Thưởng</option><option value="tru">Khấu trừ</option></select></label>
+        <label>Khoản<select id="dc-muc">${THUONG.map(([t, v]) => `<option value="${esc(t)}" data-v="${v}">${esc(t)}</option>`).join("")}<option value="Điều chỉnh">Khấu trừ / điều chỉnh</option></select></label>
+        <label>Số tiền<input id="dc-tien" inputmode="numeric" placeholder="VD 200.000" value="${THUONG[0][1].toLocaleString("vi-VN")}"></label></div>
+      <label>Lý do (bắt buộc)<input id="dc-ly" maxlength="300" placeholder="VD: Đi dạy đủ 20 buổi, không muộn"></label>
+      <div class="hop-nut"><button type="button" class="btn primary" id="dc-them">Thêm vào phiếu lương</button></div></details>`}
+    <details class="cc-chinh"><summary><b>Đơn giá &amp; trợ cấp của ${esc(L.ten)}</b></summary>
+      <p class="muted">Theo chức vụ: ${Object.entries(LUONG_CV).map(([k, v]) => `${k} ${vndCC(v)}`).join(" · ")}. Đổi đơn giá chỉ ảnh hưởng tháng chưa chốt.</p>
+      <label>Lương/buổi riêng (để trống = theo chức vụ ${esc(g.chucVu || "Trợ giảng")})<input id="pl-gia" inputmode="numeric" value="${Number(g.luongCa) > 0 ? Number(g.luongCa).toLocaleString("vi-VN") : ""}"></label>
+      <label class="cc-tick"><input type="checkbox" id="pl-cs"${tat.cs ? "" : " checked"}> Trợ cấp cơ sở ngày thường (Bình Phú 50k · Kim Quan 60k)</label>
+      <label class="cc-tick"><input type="checkbox" id="pl-ct"${tat.ct ? "" : " checked"}> Trợ cấp cuối tuần 30k/buổi</label>
+      <label>Link bảng lương Drive/Canva (không bắt buộc)<input id="pl-link" value="${esc(g.linkLuong || "")}" placeholder="https://"></label>
+      <div class="hop-nut"><button type="button" class="btn" id="pl-luu">Lưu cài đặt</button></div></details>
+    <div class="hop-nut"><button class="btn" type="button" data-dong>Đóng</button></div>`, "Phiếu lương");
+  nhanCot(h.el);
+  const muc = h.el.querySelector("#dc-muc"); if (muc) muc.onchange = () => { const v = Number(muc.selectedOptions[0].dataset.v); if (v) h.el.querySelector("#dc-tien").value = v.toLocaleString("vi-VN"); h.el.querySelector("#dc-loai").value = muc.value === "Điều chỉnh" ? "tru" : "thuong"; };
+  const them = h.el.querySelector("#dc-them"); if (them) them.onclick = async e => {
+    const tien = soCC(val("dc-tien")), ly = val("dc-ly"), loai = val("dc-loai");
+    if (!(tien > 0) || !Number.isInteger(tien)) return C.toast("Số tiền chưa đúng. Chỉ gõ số, VD 200.000.", "err");
+    if (!ly) return C.toast("Thưởng / khấu trừ phải ghi lý do.", "err");
+    if (await guiNut(e.target, () => setDoc(doc(collection(db, "luongdc")), { gv, gvTen: L.ten, thang, loai, muc: val("dc-muc"), tien, lyDo: ly, boi: C.mail, luc: Date.now() }), loai === "thuong" ? "Đã thêm thưởng ✓" : "Đã thêm khấu trừ ✓")) { h.dong(); moPhieu(gv); }
+  };
+  h.el.querySelectorAll("[data-dc-xoa]").forEach(b => b.onclick = () => xacNhan(b, async () => { if (await ghi(deleteDoc(doc(db, "luongdc", b.dataset.dcXoa)), "Đã xoá khoản này")) { h.dong(); moPhieu(gv); } }, "Bấm lần nữa để xoá"));
+  h.el.querySelector("#pl-luu").onclick = async e => {
+    const t = val("pl-gia"), gia = t ? soCC(t) : 0, link = val("pl-link");
+    if (t && !(gia > 0)) return C.toast("Lương/buổi chưa đúng. Chỉ gõ số, VD 150.000.", "err");
+    if (link && !/^https:\/\/[^\s"'<>]+$/i.test(link)) return C.toast("Link phải bắt đầu bằng https://", "err");
+    if (await guiNut(e.target, () => setDoc(doc(db, "giaovien", gv), { luongCa: gia, linkLuong: link, tcTat: { cs: !h.el.querySelector("#pl-cs").checked, ct: !h.el.querySelector("#pl-ct").checked } }, { merge: true }), "Đã lưu cài đặt lương ✓")) { h.dong(); moPhieu(gv); }
+  };
+}
+async function thuongChuyenCan(gv, btn) {
+  const thang = thangDangXem(), L = tinhLuong(gv, thang), { db, fs: { doc, setDoc } } = C;
+  if (D.dc.some(x => x.gv === gv && x.thang === thang && x.muc === "Chuyên cần")) return C.toast("Đã duyệt thưởng chuyên cần tháng này rồi.");
+  // mã cố định theo người + tháng: bấm 2 lần cũng chỉ có một khoản thưởng
+  await guiNut(btn, () => setDoc(doc(db, "luongdc", `cc__${thang}__${gv}`), { gv, gvTen: L.ten, thang, loai: "thuong", muc: "Chuyên cần", tien: THUONG_CC, lyDo: `Đủ KPI tháng: ${soN(L.cong)} công, không vắng, không thiếu chấm công`, boi: C.mail, luc: Date.now() }), "Đã duyệt thưởng chuyên cần ✓");
+}
+async function chotLuong(btn, moLai) {
+  const thang = thangDangXem(), { db, fs: { doc, writeBatch } } = C, b = writeBatch(db);
+  if (moLai) D.bl.filter(x => x.thang === thang).forEach(x => b.delete(doc(db, "bangluong", x.id)));
+  else bangThang(thang).filter(L => !L.daChot).forEach(L => { const { daChot, ...ban } = L; b.set(doc(db, "bangluong", `${thang}__${L.gv}`), { ...ban, chotLuc: Date.now(), chotBoi: C.mail }); });
+  await guiNut(btn, () => b.commit(), moLai ? "Đã mở lại bảng lương — số liệu tính lại theo dữ liệu hiện tại" : "Đã chốt bảng lương ✓");
 }
 async function datKPI(gv) {
-  const g = C.giaoVien().find(x => x.id === gv) || { ten: gv };
-  const t = prompt(`Chỉ tiêu công/tháng để ${g.ten || gv} đủ KPI xét thưởng (VD 16). Ngoài ra KPI còn yêu cầu đi muộn ≤ ${MUON_TOI_DA} lần và không vắng ca:`, g.kpiCong || ""); if (t === null) return;
-  const v = soCC(t); if (!(v >= 0)) return C.toast("Chỉ gõ số, VD 16.", "err");
+  const g = gvCua(gv);
+  const t = prompt(`Chỉ tiêu công/tháng để ${g.ten || gv} đủ KPI (VD 16). Ngoài ra KPI còn yêu cầu đi muộn ≤ ${MUON_TOI_DA} lần, không vắng và không thiếu chấm công. Để trống để bỏ chỉ tiêu:`, g.kpiCong || ""); if (t === null) return;
+  const v = t.trim() ? soCC(t) : 0; if (!(v >= 0)) return C.toast("Chỉ gõ số, VD 16.", "err");
   const { db, fs: { doc, setDoc } } = C; await ghi(setDoc(doc(db, "giaovien", gv), { kpiCong: v }, { merge: true }), "Đã đặt chỉ tiêu KPI ✓");
 }
+// quản lý chấm / sửa một ca: công, giờ vào / ra, tắt trợ cấp ca này
 function moChamCong(c) {
   if (!c || !C.isAdmin) return;
   const { db, fs: { doc, setDoc, deleteField } } = C;
-  const h = C.moHop(`<h3>Chấm công</h3><p><b>${esc(c.gvTen || c.gv)}</b> · ${TEN_THU[thuCua(c.ngay)]} ${ngayVN(c.ngay)} · ca ${esc(tenCa(c.ca).toLowerCase())} <span class="num muted">${esc(gioCa(c.ca))}</span> · ${esc(c.coSo)}</p>
-    <div class="cc-chon">${CONG.map(([v, t, k]) => `<button type="button" class="btn ${c.cong === v ? "primary" : ""} cc-${k}" data-cong="${v}">${t}</button>`).join("")}<button type="button" class="btn" data-cong="">Bỏ chấm</button></div>
+  const h = C.moHop(`<h3>Chấm công</h3><p><b>${esc(c.gvTen || c.gv)}</b> · ${TEN_THU[thuCua(c.ngay)]} ${ngayVN(c.ngay)} · ca ${esc(tenCa(c.ca).toLowerCase())} · ${esc(c.coSo)}</p>
+    <p class="muted">${c.vao ? `Vào ${gioPhut(c.vao)}${laMuon(c) ? ` (muộn ${phutMuon(c)} phút)` : ""}` : "Chưa vô ca"} · ${c.ra ? `Ra ${gioPhut(c.ra)}${phutSom(c) ? ` (về sớm ${phutSom(c)} phút)` : ""}` : "chưa kết ca"}${c.suaBoi ? " · đã được quản lý sửa giờ" : ""}</p>
+    <div class="cc-chon">${CONG.map(([v, t, k]) => `<button type="button" class="btn ${c.cong === v ? "primary" : ""} cc-${k}" data-cong="${v}">${t}</button>`).join("")}<button type="button" class="btn" data-cong="">Tự tính theo vô/kết ca</button></div>
+    <details class="cc-chinh"><summary><b>Sửa giờ vào / ra</b></summary><div class="cc-gio"><label>Giờ vào<input type="time" id="cc-v" value="${c.vao ? gioPhut(c.vao) : ""}"></label><label>Giờ ra<input type="time" id="cc-r" value="${c.ra ? gioPhut(c.ra) : ""}"></label></div>
+      <div class="hop-nut"><button type="button" class="btn" id="cc-luu-gio">Lưu giờ</button></div></details>
+    <label class="cc-tick"><input type="checkbox" id="cc-tc"${c.tcTat ? "" : " checked"}> Tính trợ cấp cho ca này</label>
     <div class="hop-nut"><button class="btn" type="button" data-dong>Đóng</button></div>`, "Chấm công");
-  h.el.querySelectorAll("[data-cong]").forEach(b => b.onclick = async () => {
-    const v = b.dataset.cong === "" ? deleteField() : Number(b.dataset.cong);
-    if (await guiNut(b, () => setDoc(doc(db, "caday", c.id), { cong: v, chamBoi: C.mail, chamLuc: Date.now() }, { merge: true }), "Đã chấm công ✓")) h.dong();
-  });
-}
-async function datGiaCa(gv) {
-  const g = C.giaoVien().find(x => x.id === gv) || { ten: gv }, cu = Number(g.luongCa) || "";
-  const t = prompt(`Đơn giá 1 công (1 ca) của ${g.ten || gv} (đ):`, cu); if (t === null) return;
-  const v = soCC(t); if (!(v >= 0)) return C.toast("Số chưa đúng. Chỉ gõ số, VD 150.000.", "err");
-  const { db, fs: { doc, setDoc } } = C; await ghi(setDoc(doc(db, "giaovien", gv), { luongCa: v }, { merge: true }), "Đã đặt đơn giá ✓");
-}
-async function datLinkLuong(gv) {
-  const g = C.giaoVien().find(x => x.id === gv) || { ten: gv };
-  const t = prompt(`Link bảng lương của ${g.ten || gv} (Google Drive, Canva… bắt đầu bằng https://). Để trống để bỏ link:`, g.linkLuong || ""); if (t === null) return;
-  const v = t.trim(); if (v && !/^https:\/\/[^\s"'<>]+$/i.test(v)) return C.toast("Link phải bắt đầu bằng https://", "err");
-  const { db, fs: { doc, setDoc } } = C; await ghi(setDoc(doc(db, "giaovien", gv), { linkLuong: v }, { merge: true }), v ? "Đã gắn link bảng lương ✓" : "Đã bỏ link ✓");
+  const luu = (b, moi, nhan) => guiNut(b, () => setDoc(doc(db, "caday", c.id), { ...moi, chamBoi: C.mail, chamLuc: Date.now() }, { merge: true }), nhan);
+  h.el.querySelectorAll("[data-cong]").forEach(b => b.onclick = async () => { if (await luu(b, { cong: b.dataset.cong === "" ? deleteField() : Number(b.dataset.cong) }, "Đã chấm công ✓")) h.dong(); });
+  h.el.querySelector("#cc-luu-gio").onclick = async e => { const v = val("cc-v"), r = val("cc-r");
+    if (await luu(e.target, { vao: v ? lucCua(c.ngay, v) : deleteField(), ra: r ? lucCua(c.ngay, r) : deleteField(), suaBoi: C.mail, suaLuc: Date.now() }, "Đã sửa giờ ✓")) h.dong(); };
+  h.el.querySelector("#cc-tc").onchange = e => luu(e.target, { tcTat: !e.target.checked }, e.target.checked ? "Đã bật trợ cấp ca này" : "Đã tắt trợ cấp ca này");
 }
 function taiBangCong() {
-  const thang = thangDangXem(), gvMap = Object.fromEntries(dsGV().map(g => [g.id, g]));
-  const ca = D.ca.filter(c => String(c.ngay).startsWith(thang)).sort((a, b) => String(a.gvTen).localeCompare(String(b.gvTen), "vi") || a.ngay.localeCompare(b.ngay));
-  const rows = [["Giáo viên", "Ngày", "Ca", "Cơ sở", "Vào", "Ra", "Muộn", "Công", "Đơn giá/ca", "Thành tiền"], ...ca.map(c => { const gia = Number((gvMap[c.gv] || {}).luongCa) || 0, cong = congCua(c) ?? "";
-    return [c.gvTen || c.gv, ngayVN(c.ngay), tenCa(c.ca), c.coSo, c.vao ? gioPhut(c.vao) : "", c.ra ? gioPhut(c.ra) : "", laMuon(c) ? "muộn" : "", cong === "" ? "chưa chấm" : cong, gia, cong === "" ? "" : cong * gia]; })];
-  tongCong(thang).forEach(k => { const gia = Number((gvMap[k.gv] || {}).luongCa) || 0, cong = Object.values(k.cs).reduce((a, b) => a + b, 0); const kp = kpiCua(k, gvMap[k.gv] || {}); rows.push([k.ten + " — TỔNG", k.ngay.size + " ngày đi", "", "Bình Phú " + (k.cs.BPhú || 0) + " / Kim Quan " + (k.cs.KQuan || 0), "", "", k.muon + " lần", cong, gia, cong * gia, kp.du ? "Đủ KPI" : kp.chiTieu ? "Thiếu KPI" : ""]); });
+  const thang = thangDangXem(), rows = [["Giáo viên", "Ngày", "Ca", "Cơ sở", "Vào", "Ra", "Muộn (phút)", "Về sớm (phút)", "Thiếu chấm", "Công", "Vị trí", "Lương ca", "Trợ cấp", "Loại trợ cấp"]];
+  bangThang(thang).forEach(L => L.dong.forEach(r => rows.push([L.ten, ngayVN(r.ngay), tenCa(r.ca), r.coSo, r.vao ? gioPhut(r.vao) : "", r.ra ? gioPhut(r.ra) : "", r.muon || "", r.som || "", r.thieu ? TEN_THIEU[r.thieu] : "", r.trung ? "trùng ca" : r.chua ? "chưa chấm" : r.cong, r.cv, r.luong, r.tc, r.tcLoai])));
   C.taiCSV("bang-cong-" + thang + ".csv", rows);
+}
+function taiBangLuong() {
+  const thang = thangDangXem(), bang = C.isAdmin ? bangThang(thang) : [tinhLuong(C.mail, thang)];
+  const rows = [["Giáo viên", "Vị trí", "Đơn giá/buổi", "Công", "Lương ca", "Trợ cấp", "Thưởng", "Khấu trừ", "Thực nhận", "Bình Phú", "Kim Quan", "Trạng thái"]];
+  bang.forEach(L => rows.push([L.ten, L.cv, L.gia, L.cong, L.luong, L.tc, L.thuong, L.tru, L.tong, L.theoCS.BPhú || 0, L.theoCS.KQuan || 0, L.daChot ? "Đã chốt" : "Tạm tính"]));
+  rows.push([]); rows.push(["Thưởng / khấu trừ", "Khoản", "Số tiền", "Lý do"]);
+  bang.forEach(L => L.dc.forEach(x => rows.push([L.ten, (x.loai === "thuong" ? "Thưởng: " : "Khấu trừ: ") + x.muc, x.loai === "thuong" ? x.tien : -x.tien, x.lyDo])));
+  if (!C.isAdmin) { rows.push([]); rows.push(["Ngày", "Ca", "Cơ sở", "Công", "Lương ca", "Trợ cấp"]); bang[0].dong.forEach(r => rows.push([ngayVN(r.ngay), tenCa(r.ca), r.coSo, r.cong, r.luong, r.tc])); }
+  C.taiCSV((C.isAdmin ? "bang-luong-" : "phieu-luong-") + thang + ".csv", rows);
 }
 function moDoiCa(ca) {
   if (!ca) return;
