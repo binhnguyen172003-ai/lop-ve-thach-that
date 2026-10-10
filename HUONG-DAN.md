@@ -38,6 +38,19 @@ Luật này đảm bảo:
 - Chỉ Gmail của anh mới sửa được giáo trình, giao bài, duyệt học viên.
 - Học viên chỉ gửi được yêu cầu duyệt cho chính Gmail của mình.
 
+### Tự đưa luật bảo mật lên Firebase (làm 1 lần, sau đó khỏi dán tay)
+
+Kho GitHub có quy trình **Đưa luật bảo mật lên Firebase**: mỗi khi `firestore.rules` hoặc `storage.rules` thay đổi trên nhánh main, GitHub tự đưa luật lên Firebase.
+
+1. Firebase Console → bánh răng **Project settings** → tab **Service accounts** → bấm **Generate new private key** → **Generate key**. Máy tải về 1 file `.json`.
+2. GitHub → kho `lop-ve-thach-that` → **Settings** → **Secrets and variables** → **Actions** → **New repository secret**.
+   - Name: `FIREBASE_SERVICE_ACCOUNT`
+   - Secret: mở file `.json` bằng Notepad, chép **toàn bộ** chữ trong file, dán vào → **Add secret**.
+3. GitHub → tab **Actions** → **Đưa luật bảo mật lên Firebase** → **Run workflow** → đợi dấu ✓ xanh (khoảng 1 phút).
+4. Xoá file `.json` trong máy (khoá này mở được toàn bộ Firebase, không gửi cho ai, không đăng lên đâu).
+
+Nếu bước 3 báo lỗi quyền (`permission`/`403`): Google Cloud Console → **IAM** → tìm tài khoản `firebase-adminsdk-…` → thêm vai trò **Firebase Rules Admin** → chạy lại bước 3. Bước luật Storage có thể báo lỗi nếu Storage chưa bật; không ảnh hưởng luật Firestore.
+
 ## Bước 5. Lấy mã kết nối và dán vào web
 
 1. Bấm bánh răng cạnh **Project Overview** → **Project settings**.
