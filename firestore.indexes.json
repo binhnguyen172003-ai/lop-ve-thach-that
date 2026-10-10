@@ -1,0 +1,165 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "tv_video_public",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "hienThi",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "phamViKieu",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "lichXuatBan",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "tv_video_public",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "hienThi",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "phamViKieu",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "phamViMail",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "lichXuatBan",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "tv_video_public",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "hienThi",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "phamViKieu",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "phamViKhoa",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "lichXuatBan",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "tv_video",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "coSo",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "danhMuc",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "tv_ebook_public",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "hienThi",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "phamViKieu",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "lichXuatBan",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "tv_ebook_public",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "hienThi",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "phamViKieu",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "phamViMail",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "lichXuatBan",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "tv_ebook_public",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "hienThi",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "phamViKieu",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "phamViKhoa",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "lichXuatBan",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "tv_ebook",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "coSo",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "danhMuc",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "ASCENDING"
+        }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}

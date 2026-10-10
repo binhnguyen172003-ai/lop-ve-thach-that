@@ -43,14 +43,14 @@ export const SAN_PHAM = [
   {
     ten: "Khoá học nâng cao",
     moTa: "Video chân dung tham khảo cho học viên đã có nền",
-    link: "#nang-cao",                 // mục Khoá học nâng cao trong trang Giáo trình
+    link: "#video",                    // thư viện Video (17 video chân dung tham khảo)
     gia: "",
     thongTin: "Đối tượng, số buổi, lịch học, học phí, cách đăng ký",
   },
   {
     ten: "Ebook",
-    moTa: "Tài liệu bài tập và bài giảng dạng PDF",
-    link: "",
+    moTa: "Tài liệu bài tập và bài giảng (Canva)",
+    link: "#ebook",                    // thư viện Ebook
     gia: "",
     thongTin: "Tên sách, số trang, nội dung chính, giá",
   },

@@ -5,7 +5,7 @@ name: Đưa luật bảo mật lên Firebase
 on:
   push:
     branches: [main]
-    paths: [firestore.rules, storage.rules, firebase.json]
+    paths: [firestore.rules, firestore.indexes.json, storage.rules, firebase.json]
   workflow_dispatch:
 
 permissions:
@@ -33,7 +33,7 @@ jobs:
         if: env.SA != ''
         env:
           GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/sa.json
-        run: npx --yes firebase-tools@13.29.1 deploy --only firestore:rules --project lop-ve-thach-that --non-interactive
+        run: npx --yes firebase-tools@13.29.1 deploy --only firestore:rules,firestore:indexes --project lop-ve-thach-that --non-interactive
       # Storage chỉ chạy được khi bucket đã bật; lỗi ở đây không chặn luật Firestore ở trên.
       - name: Luật Storage (tải tệp, ảnh)
         if: env.SA != ''

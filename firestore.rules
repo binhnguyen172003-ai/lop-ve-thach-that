@@ -22,8 +22,9 @@ service cloud.firestore {
         exists(/databases/$(database)/documents/admins/$(myEmail()))
       );
     }
+    // Giáo viên bị khoá trong Phân quyền hệ thống (phanquyen.khoa) mất toàn bộ quyền nội bộ
     function isTeacher() {
-      return signedIn() && exists(/databases/$(database)/documents/giaovien/$(myEmail()));
+      return signedIn() && exists(/databases/$(database)/documents/giaovien/$(myEmail())) && khongKhoa();
     }
     function isStaff() {
       return isAdmin() || isTeacher();
@@ -447,6 +448,451 @@ service cloud.firestore {
         && (isAdmin() || request.resource.data.loai == 'sua'
             || !(request.resource.data.col in ['hocvien', 'giaovien', 'caday', 'kho', 'xephang', 'giaotrinh', 'lichnhac', 'tiendo', 'luongdc', 'bangluong']));
       allow update, delete: if false;
+    }
+
+    // ===== PHÂN QUYỀN NỘI DUNG: Video YouTube · Ebook Canva · Giáo trình · Khoá học =====
+    // Tách 4 vai: người tạo / người phê duyệt (APPROVE) / người xuất bản (PUBLISH) / người quản lý quyền xem (MANAGE_ACCESS).
+    // Thứ tự xét quyền (dừng ngay ở mức đầu tiên bị từ chối):
+    //   1. Bảo mật: chưa đăng nhập, tài khoản bị khoá (phanquyen.khoa), quyền bị cấm rõ ràng (cam), quyền hết hạn (het), tự duyệt.
+    //   2. Vai trò: Quản lý (toàn quyền trừ tự duyệt) · Quản lý cơ sở (qlcs: kế thừa VIEW/CREATE/EDIT) · Giáo viên (gv: không kế thừa gì).
+    //   3. Cơ sở: phanquyen.coSo; tài liệu "chung" cần cả hai cơ sở. Quyền tài liệu chỉ vượt cơ sở khi có cờ vuot (uỷ quyền đặc biệt).
+    //   4–6. Khoá quyền: "<loại>|<danh mục>|<cơ sở>" (danh mục / cơ sở được ghi * = tất cả) và "doc:<mã tài liệu>".
+    //   7. Hành động: VIEW CREATE EDIT SOURCE(thay link nguồn) APPROVE REVOKE(thu hồi duyệt) PUBLISH MANAGE_ACCESS ARCHIVE RESTORE DELETE.
+    //   8. Trạng thái: nhap → cho → duyet / sua / tuchoi; chỉ bản đã duyệt mới được xuất bản sang thuvien.
+    // Cấm (cam) luôn thắng cho phép (a). Quyền có hạn (het, mili giây) tự hết hiệu lực theo giờ máy chủ.
+    function pqCua(mail) {
+      return get(/databases/$(database)/documents/phanquyen/$(mail)).data;
+    }
+    function khongKhoa() {
+      return !exists(/databases/$(database)/documents/phanquyen/$(myEmail())) || pqCua(myEmail()).get('khoa', false) != true;
+    }
+    // Quyền còn hạn ở một mục cấp quyền g
+    function aK(g) {
+      return g.get('het', 0) == 0 || request.time.toMillis() < g.get('het', 0) ? g.get('a', []) : [];
+    }
+    function trongCs(p, cs) {
+      return cs == 'chung' ? p.coSo.hasAll(['Bình Phú', 'Kim Quan']) : p.coSo.hasAny([cs]);
+    }
+    // Danh sách hành động thực sự được phép = (kế thừa vai trò + cấp riêng còn hạn, trong cơ sở) − mọi quyền bị cấm.
+    // gd = mục cấp riêng của tài liệu ({} khi xét danh sách theo phạm vi)
+    function dsQ(p, l, dm, cs, gd) {
+      let c = p.cap;
+      let g1 = c.get(l + '|' + dm + '|' + cs, {});
+      let g2 = c.get(l + '|' + dm + '|*', {});
+      let g3 = c.get(l + '|*|' + cs, {});
+      let g4 = c.get(l + '|*|*', {});
+      let tc = trongCs(p, cs);
+      let cho = (tc ? aK(g1).concat(aK(g2)).concat(aK(g3)).concat(aK(g4)).concat(p.get('vaiTro', 'gv') == 'qlcs' ? ['VIEW', 'CREATE', 'EDIT'] : []) : [])
+        .concat(tc || gd.get('vuot', false) == true ? aK(gd) : []);
+      return p.get('khoa', false) == true ? []
+        : cho.removeAll(g1.get('cam', []).concat(g2.get('cam', [])).concat(g3.get('cam', [])).concat(g4.get('cam', [])).concat(gd.get('cam', [])));
+    }
+    function laQL(mail) {
+      return mail == 'binhnguyen172003@gmail.com' || exists(/databases/$(database)/documents/admins/$(mail));
+    }
+    // Quyền của một Gmail bất kỳ (dùng cả để kiểm tra lại người đã lên lịch xuất bản tại thời điểm xuất bản)
+    function quyenCua(mail, l, dm, cs, id) {
+      return laQL(mail) ? ['VIEW', 'CREATE', 'EDIT', 'SOURCE', 'APPROVE', 'REVOKE', 'PUBLISH', 'MANAGE_ACCESS', 'ARCHIVE', 'RESTORE', 'DELETE']
+        : exists(/databases/$(database)/documents/giaovien/$(mail)) && exists(/databases/$(database)/documents/phanquyen/$(mail))
+          ? dsCua(pqCua(mail), l, dm, cs, id) : [];
+    }
+    function dsCua(p, l, dm, cs, id) {
+      return dsQ(p, l, dm, cs, p.cap.get('doc:' + id, {}));
+    }
+    function quyenToi(l, dm, cs, id) {
+      return signedIn() ? quyenCua(myEmail(), l, dm, cs, id) : [];
+    }
+
+    // Bảng quyền từng tài khoản nhân sự: chỉ quản lý cấp / sửa / thu hồi; mỗi lần đổi bắt buộc kèm một dòng lịch sử.
+    match /phanquyen/{mail} {
+      allow read: if isAdmin() || isMe(mail);
+      allow create, update: if isAdmin()
+        && request.resource.data.keys().hasOnly(['khoa', 'vaiTro', 'coSo', 'cap', 'camXem', 'capNhat', 'capNhatBoi', 'hdMa', 'ghiChu'])
+        && request.resource.data.khoa is bool && request.resource.data.vaiTro in ['gv', 'qlcs']
+        && request.resource.data.coSo is list && request.resource.data.coSo.hasOnly(['Bình Phú', 'Kim Quan'])
+        && request.resource.data.cap is map && request.resource.data.cap.size() <= 80
+        && request.resource.data.get('camXem', []) is list && request.resource.data.get('camXem', []).size() <= 10
+        && request.resource.data.capNhatBoi == myEmail() && request.resource.data.capNhat is int
+        && (resource == null || request.resource.data.hdMa != resource.data.hdMa)
+        && existsAfter(/databases/$(database)/documents/phanquyen/$(mail)/ls/$(request.resource.data.hdMa));
+      allow delete: if false;
+      match /ls/{lid} {
+        allow read: if isAdmin();
+        allow create: if isAdmin() && request.resource.data.ai == myEmail() && request.resource.data.luc is int
+          && request.resource.data.hd in ['cap', 'sua', 'thuhoi', 'khoa', 'mokhoa']
+          && request.resource.data.noi is string && request.resource.data.noi.size() <= 6000
+          && getAfter(/databases/$(database)/documents/phanquyen/$(mail)).data.hdMa == lid;
+        allow update, delete: if false;
+      }
+    }
+
+    function nguonHopLe(l, u) {
+      return u is string && u.size() <= 500 && (
+        (l == 'video' && u.matches('^https://(www[.]|m[.])?(youtube[.]com/(watch[?]v=|embed/|shorts/|live/)|youtu[.]be/)[A-Za-z0-9_-]{6,}[^ "<>]*$'))
+        || (l == 'ebook' && u.matches('^https://(www[.])?canva[.](com|link)/[^ "<>]+$'))
+        || (l in ['giaotrinh', 'khoahoc'] && (u == '' || u.matches('^https://[^ "<>]+$'))));
+    }
+    function ndHopLe(d, id) {
+      return d.keys().hasOnly(['ma', 'loai', 'dm', 'cs', 'tacGia', 'tieuDe', 'moTa', 'nguon', 'ban', 'nguoi', 'lq', 'tt', 'duyet', 'luuTru',
+          'nx', 'nxBoi', 'nxLuc', 'suaLuc', 'guiLuc', 'taoLuc', 'hd', 'hdBoi', 'hdLuc', 'hdMa'])
+        && d.ma == id && d.loai in ['video', 'ebook', 'giaotrinh', 'khoahoc'] && d.cs in ['Bình Phú', 'Kim Quan', 'chung']
+        && d.dm in ['Hình hoạ cơ bản', 'Hình hoạ người', 'Hình hoạ tượng', 'Màu & bố cục màu', 'Mỹ thuật 2', 'Ôn thi cấp tốc', 'Chung']
+        && d.tieuDe is string && d.tieuDe.size() > 0 && d.tieuDe.size() <= 150
+        && d.moTa is string && d.moTa.size() <= 2000 && nguonHopLe(d.loai, d.nguon)
+        && d.ban is int && d.nguoi is list && d.nguoi.size() <= 20 && d.lq is list && d.lq.size() <= 40
+        && d.tt in ['nhap', 'cho', 'duyet', 'sua', 'tuchoi'] && d.luuTru is bool && shortText(d, 'nx', 500)
+        && d.hdBoi == myEmail() && d.hdLuc is int && d.hdMa is string && d.hdMa.size() <= 60
+        && existsAfter(/databases/$(database)/documents/noidung/$(id)/ls/$(d.hdMa));
+    }
+    function tvAn(id) {
+      return !existsAfter(/databases/$(database)/documents/thuvien/$(id))
+        || getAfter(/databases/$(database)/documents/thuvien/$(id)).data.hien == false;
+    }
+    function chiDoi(ks) {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(ks.concat(['hd', 'hdBoi', 'hdLuc', 'hdMa']));
+    }
+    // Toàn bộ điều kiện cập nhật kho nội dung; q = danh sách quyền thực tế của người ghi trên tài liệu này (tính một lần)
+    function capNhatND(o, n, id, q) {
+      let me = myEmail();
+      let goc = o.tt == 'duyet' ? [] : o.nguoi;
+      return ndHopLe(n, id) && n.hdMa != o.hdMa && n.loai == o.loai && n.dm == o.dm && n.cs == o.cs && n.tacGia == o.tacGia && (
+        // Sửa nội dung: luôn quay về bản nháp, không đụng tới bản đã duyệt / đang xuất bản. Sửa sau khi đã gửi duyệt → phiên bản mới.
+        (n.hd == 'sua' && o.luuTru == false && n.tt == 'nhap'
+          && chiDoi(['tieuDe', 'moTa', 'nguon', 'ban', 'nguoi', 'lq', 'tt', 'suaLuc'])
+          && ('EDIT' in q || (o.tacGia == me && 'CREATE' in q))
+          // Thay link YouTube / Canva cần quyền SOURCE riêng (tác giả được đổi link khi bài chưa từng được duyệt)
+          && (n.nguon == o.nguon || 'SOURCE' in q || (o.tacGia == me && o.duyet == null && 'CREATE' in q))
+          && n.ban == (o.tt == 'nhap' ? o.ban : o.ban + 1)
+          && n.nguoi.hasAny([me]) && n.nguoi.hasAll(goc) && n.nguoi.hasOnly(goc.concat([me]))
+          && n.lq.hasAll(o.lq) && n.lq.hasOnly(o.lq.concat([me])))
+        // Gửi duyệt
+        || (n.hd == 'gui' && o.luuTru == false && o.tt in ['nhap', 'sua', 'tuchoi'] && n.tt == 'cho' && chiDoi(['tt', 'guiLuc'])
+          && ('EDIT' in q || (o.nguoi.hasAny([me]) && 'CREATE' in q)))
+        // Phê duyệt: không được duyệt phiên bản mình tạo / sửa; bản duyệt phải trùng đúng nội dung đang chờ
+        || (n.hd == 'duyet' && o.luuTru == false && o.tt == 'cho' && !o.nguoi.hasAny([me]) && 'APPROVE' in q
+          && n.tt == 'duyet' && chiDoi(['tt', 'duyet', 'nx', 'nxBoi', 'nxLuc'])
+          && n.duyet == {'ban': o.ban, 'tieuDe': o.tieuDe, 'moTa': o.moTa, 'nguon': o.nguon, 'boi': me, 'luc': n.hdLuc})
+        // Yêu cầu sửa / từ chối: bắt buộc ghi lý do
+        || (n.hd in ['yeucausua', 'tuchoi'] && o.luuTru == false && o.tt == 'cho' && !o.nguoi.hasAny([me]) && 'APPROVE' in q
+          && n.tt == (n.hd == 'tuchoi' ? 'tuchoi' : 'sua') && chiDoi(['tt', 'nx', 'nxBoi', 'nxLuc']) && n.get('nx', '').size() > 0)
+        // Thu hồi phê duyệt: bản xuất bản liên quan phải bị ẩn trong cùng một lần ghi
+        || (n.hd == 'thuhoi' && o.duyet != null && 'REVOKE' in q && n.duyet == null && n.tt == (o.tt == 'duyet' ? 'sua' : o.tt)
+          && chiDoi(['duyet', 'tt', 'nx', 'nxBoi', 'nxLuc']) && n.get('nx', '').size() > 0 && tvAn(id))
+        // Lưu trữ (phải ẩn khỏi thư viện) / khôi phục
+        || (n.hd == 'luutru' && o.luuTru == false && n.luuTru == true && 'ARCHIVE' in q && chiDoi(['luuTru']) && tvAn(id))
+        || (n.hd == 'khoiphuc' && o.luuTru == true && n.luuTru == false && 'RESTORE' in q && chiDoi(['luuTru']))
+        );
+    }
+    // Thao tác xuất bản: tài liệu chỉ ghi dấu lịch sử; quyền được xét ở thuvien (ghi cùng mã hdMa trong cùng lần ghi)
+    function dauXB(o, n, id) {
+      return ndHopLe(n, id) && n.hdMa != o.hdMa && chiDoi([])
+        && existsAfter(/databases/$(database)/documents/thuvien/$(id))
+        && getAfter(/databases/$(database)/documents/thuvien/$(id)).data.hdMa == n.hdMa;
+    }
+    function taoND(n, id, q) {
+      return 'CREATE' in q && ndHopLe(n, id) && n.hd == 'tao' && n.tacGia == myEmail() && n.nguoi == [myEmail()] && n.lq == [myEmail()]
+        && n.ban == 1 && n.tt == 'nhap' && n.duyet == null && n.luuTru == false;
+    }
+    function xemND(d, id, q) {
+      return isAdmin() || 'VIEW' in q || (isTeacher() && d.lq.hasAny([myEmail()]));
+    }
+
+    // Kho nội dung (bản nháp → chờ duyệt → đã duyệt). Học viên không đọc được; học viên chỉ đọc bản đã xuất bản trong thuvien.
+    match /noidung/{id} {
+      // Đọc lẻ: xét đủ 8 mức. Đọc danh sách: không xét được khoá "doc:<mã>" nên tài liệu bị cấm xem riêng
+      // phải được loại khỏi truy vấn bằng where('ma', 'not-in', phanquyen.camXem) (tối đa 10 tài liệu).
+      allow get: if xemND(resource.data, id, quyenToi(resource.data.loai, resource.data.dm, resource.data.cs, id));
+      allow list: if isAdmin();
+      allow list: if isTeacher() && resource.data.lq.hasAny([myEmail()]);
+      allow list: if isTeacher() && exists(/databases/$(database)/documents/phanquyen/$(myEmail()))
+        && 'VIEW' in dsQ(pqCua(myEmail()), resource.data.loai, resource.data.dm, resource.data.cs, {})
+        && (pqCua(myEmail()).get('camXem', []).size() == 0 || !(resource.data.ma in pqCua(myEmail()).get('camXem', [])));
+      allow create: if taoND(request.resource.data, id,
+        quyenToi(request.resource.data.loai, request.resource.data.dm, request.resource.data.cs, id));
+      allow update: if request.resource.data.hd in ['xuatban', 'lichxb', 'an', 'phamvi', 'kichhoat'] ? dauXB(resource.data, request.resource.data, id)
+        : capNhatND(resource.data, request.resource.data, id, quyenToi(resource.data.loai, resource.data.dm, resource.data.cs, id));
+      allow delete: if 'DELETE' in quyenToi(resource.data.loai, resource.data.dm, resource.data.cs, id) && resource.data.luuTru == true
+        && (!exists(/databases/$(database)/documents/thuvien/$(id)) || get(/databases/$(database)/documents/thuvien/$(id)).data.hien == false);
+      // Lịch sử từng tài liệu: ai làm gì, lúc nào, phiên bản nào. Chỉ ghi thêm, gắn đúng với lần ghi tài liệu.
+      match /ls/{lid} {
+        allow read: if lsXem(get(/databases/$(database)/documents/noidung/$(id)).data, id);
+        allow create: if lsHopLe(request.resource.data, getAfter(/databases/$(database)/documents/noidung/$(id)).data, lid);
+        allow update, delete: if false;
+      }
+    }
+    function lsXem(d, id) {
+      return xemND(d, id, quyenToi(d.loai, d.dm, d.cs, id));
+    }
+    function lsHopLe(n, nd, lid) {
+      return signedIn() && n.keys().hasOnly(['ai', 'luc', 'hd', 'ban', 'nx', 'tieuDe'])
+        && n.ai == myEmail() && n.luc is int && shortText(n, 'nx', 500) && shortText(n, 'tieuDe', 150)
+        && nd.hdMa == lid && nd.hd == n.hd && nd.hdBoi == myEmail() && n.ban == nd.ban;
+    }
+
+    function phamViMacDinh(cs) {
+      return cs == 'chung' ? 'tatca' : cs;
+    }
+    function phamViHopLe(pv, cs) {
+      return cs == 'chung' ? pv in ['tatca', 'Bình Phú', 'Kim Quan'] : pv == cs;
+    }
+    // Xuất bản ngay / lên lịch: cần PUBLISH; phạm vi khác mặc định cần thêm MANAGE_ACCESS.
+    // Bản đưa cho học viên phải sao y bản đã duyệt hiện hành (không lấy bản nháp mới đang chờ duyệt).
+    function xuatBanTV(o, n, nd, q) {
+      return n.hd in ['xuatban', 'lichxb'] && (o == null || n.hdMa != o.hdMa) && 'PUBLISH' in q
+        && (n.phamVi == phamViMacDinh(nd.cs) || 'MANAGE_ACCESS' in q)
+        && nd.duyet != null && nd.luuTru == false
+        && n.keys().hasOnly(['loai', 'dm', 'cs', 'ban', 'tieuDe', 'moTa', 'nguon', 'duyetBoi', 'phamVi', 'hien', 'tu', 'xbBoi', 'xbLuc', 'lyDo', 'hd', 'hdBoi', 'hdLuc', 'hdMa'])
+        && n.ban == nd.duyet.ban && n.tieuDe == nd.duyet.tieuDe && n.moTa == nd.duyet.moTa && n.nguon == nd.duyet.nguon
+        && n.duyetBoi == nd.duyet.boi && n.loai == nd.loai && n.dm == nd.dm && n.cs == nd.cs
+        && phamViHopLe(n.phamVi, nd.cs) && n.tu is int && n.xbBoi == myEmail() && n.xbLuc is int
+        && n.hdBoi == myEmail() && n.hdMa == nd.hdMa && n.hd == nd.hd
+        && ((n.hd == 'xuatban' && n.hien == true && n.tu <= request.time.toMillis() + 300000)
+          || (n.hd == 'lichxb' && n.hien == false && n.tu > request.time.toMillis()));
+    }
+    function doiTV(o, n, nd, q, id) {
+      return n.hdMa != o.hdMa && n.hdBoi == myEmail() && n.hdLuc is int && nd.hdMa == n.hdMa && (
+        // Ẩn / huỷ lịch: người xuất bản, hoặc người thu hồi duyệt / lưu trữ trong cùng lần ghi
+        (n.hd == 'an' && n.hien == false && chiDoi(['hien', 'lyDo']) && shortText(n, 'lyDo', 300)
+          && ((nd.hd == 'an' && 'PUBLISH' in q) || (nd.hd == 'thuhoi' && 'REVOKE' in q) || (nd.hd == 'luutru' && 'ARCHIVE' in q)))
+        // Đổi phạm vi người xem
+        || (n.hd == 'phamvi' && nd.hd == 'phamvi' && chiDoi(['phamVi']) && phamViHopLe(n.phamVi, o.cs) && 'MANAGE_ACCESS' in q)
+        );
+    }
+    // Tới giờ đã hẹn: nhân sự bất kỳ mở web sẽ kích hoạt, nhưng chỉ khi tại đúng lúc này bản vẫn còn được duyệt,
+    // chưa lưu trữ và người lên lịch vẫn còn quyền PUBLISH (và MANAGE_ACCESS nếu phạm vi khác mặc định).
+    function kichHoat(o, n, nd, id) {
+      return n.hdMa != o.hdMa && n.hdBoi == myEmail() && n.hdLuc is int && nd.hdMa == n.hdMa
+        && nd.hd == 'kichhoat' && isStaff() && o.hd == 'lichxb' && o.hien == false && n.hien == true
+        && request.time.toMillis() >= o.tu && chiDoi(['hien'])
+        && nd.duyet != null && nd.duyet.ban == o.ban && nd.luuTru == false
+        && kichHoatDuoc(o, quyenCua(o.xbBoi, o.loai, o.dm, o.cs, id));
+    }
+    function kichHoatDuoc(o, qx) {
+      return 'PUBLISH' in qx && (o.phamVi == phamViMacDinh(o.cs) || 'MANAGE_ACCESS' in qx);
+    }
+
+    // Thư viện học viên: bản đã xuất bản. Học viên chỉ thấy bản đang hiện, đúng phạm vi cơ sở của mình.
+    match /thuvien/{id} {
+      allow read: if isAdmin() || isTeacher()
+        || (isStudent() && resource.data.hien == true && (resource.data.phamVi == 'tatca'
+          || resource.data.phamVi == get(/databases/$(database)/documents/hocvien/$(myEmail())).data.get('coso', '')));
+      allow create: if xbTao(request.resource.data, getAfter(/databases/$(database)/documents/noidung/$(id)).data, id);
+      allow update: if xbDoi(resource.data, request.resource.data, getAfter(/databases/$(database)/documents/noidung/$(id)).data, id);
+      allow delete: if false;
+    }
+    function xbTao(n, nd, id) {
+      return xuatBanTV(null, n, nd, quyenToi(nd.loai, nd.dm, nd.cs, id));
+    }
+    function xbDoi(o, n, nd, id) {
+      return n.hd == 'kichhoat' ? kichHoat(o, n, nd, id) : xbDoiQ(o, n, nd, id, quyenToi(o.loai, o.dm, o.cs, id));
+    }
+    function xbDoiQ(o, n, nd, id, q) {
+      return xuatBanTV(o, n, nd, q) || doiTV(o, n, nd, q, id);
+    }
+
+    // ================= THƯ VIỆN VIDEO (tv_video) & EBOOK (tv_ebook) =================
+    // Ba yếu tố tách riêng: duyet (phê duyệt) · hienThi (hiển thị) · phamViKieu/phamViKhoa/phamViMail (ai xem).
+    // Giáo viên chỉ làm được việc quản lý cấp trong giaovien/<gmail>.quyenTV.<video|ebook>; KHÔNG BAO GIỜ tự duyệt.
+    // Đã xuất bản bắt buộc đã duyệt ít nhất một lần (phienDuyet > 0). Sửa bản đã duyệt đi vào banSua, bản cũ giữ nguyên.
+    // Mỗi lần ghi tăng v đúng 1: hai quản lý cùng bấm thì người sau bị từ chối, không ghi đè.
+    function tvQuyen(loai, k) {
+      return isTeacher() && !exists(/databases/$(database)/documents/phanquyen/$(myEmail()))
+        && get(/databases/$(database)/documents/giaovien/$(myEmail())).data.get('quyenTV', {}).get(loai, {}).get(k, false) == true;
+    }
+    function tvQ(loai, act, d, id) {
+      return act in quyenToi(loai, d.get('danhMuc','Chung'), d.get('coSo','chung'), id);
+    }
+    function tvNoiDung() { return ['coSo', 'tieuDe', 'moTa', 'danhMuc', 'link', 'anh', 'thoiLuong', 'pdf', 'ytId']; }
+    function tvLinkDung(loai, link) {
+      return link is string && link.size() <= 500 && (loai == 'video'
+        ? link.matches('^https://(www[.])?(youtube[.]com/watch[?]v=|youtu[.]be/)[A-Za-z0-9_-]{11}$')
+        : link.matches('^https://www[.]canva[.]com/design/[A-Za-z0-9_-]+/[A-Za-z0-9_-]+/view$'));
+    }
+    function tvNdHopLe(loai, d) {
+      return d.tieuDe is string && d.tieuDe.size() > 0 && d.tieuDe.size() <= 150
+        && shortText(d, 'moTa', 1000) && shortText(d, 'danhMuc', 80) && shortText(d, 'thoiLuong', 20)
+        && tvLinkDung(loai, d.link)
+        && (!('anh' in d) || d.anh == '' || (d.anh is string && d.anh.size() <= 500 && d.anh.matches('^https://[^ "<>]+$')))
+        && (!('pdf' in d) || d.pdf == '' || (d.pdf is string && d.pdf.size() <= 500 && d.pdf.matches('^https://[^ "<>]+$')))
+        && (loai == 'ebook' || (d.ytId is string && d.link.matches('.*' + d.ytId + '$')));
+    }
+    function tvHopLe(loai, d) {
+      return d.keys().hasOnly(tvNoiDung().concat(['thuTu', 'duyet', 'hienThi', 'phamViKieu', 'phamViKhoa', 'phamViMail', 'phienDuyet', 'banSua', 'lyDo',
+          'xbPhien', 'nguoiTao', 'nguoiSoan', 'tenNguoiTao', 'tao', 'guiLuc', 'xuLyBoi', 'xuLyLuc', 'lichXuatBan', 'capNhat', 'v']))
+        && tvNdHopLe(loai, d)
+        && (d.banSua == null || (d.banSua is map && d.banSua.keys().hasOnly(tvNoiDung()) && tvNdHopLe(loai, d.banSua)))
+        && d.duyet in ['nhap', 'cho', 'sua', 'daduyet', 'tuchoi']
+        && d.hienThi in ['chua', 'xuatban', 'an', 'luutru']
+        && d.phamViKieu in ['congkhai', 'hocvien', 'khoa', 'taikhoan']
+        && d.phamViKhoa is list && d.phamViKhoa.size() <= 50 && d.phamViMail is list && d.phamViMail.size() <= 50
+        && d.phienDuyet is int && d.v is int && d.thuTu is number
+        && shortText(d, 'lyDo', 500)
+        && (d.hienThi != 'xuatban' || d.phienDuyet > 0);
+    }
+    function tvDoc(loai,id) {
+      return isAdmin() || (isTeacher() && (tvQ(loai,'VIEW',resource.data,id) || resource.data.nguoiTao == myEmail()
+        || (!exists(/databases/$(database)/documents/phanquyen/$(myEmail())) && resource.data.hienThi == 'xuatban')));
+    }
+    function tvList(loai,id) {
+      return isTeacher()
+        && (exists(/databases/$(database)/documents/phanquyen/$(myEmail()))
+          && 'VIEW' in dsQ(pqCua(myEmail()),loai,resource.data.danhMuc,resource.data.coSo,{})
+          && (pqCua(myEmail()).get('camXem',[]).size() == 0 || !(id in pqCua(myEmail()).get('camXem',[]))));
+    }
+    function tvNhapMau(d,id) {
+      let mau = {"vZdFuUTUeJw":"Chân dung tham khảo 01","kcsVYarOj3Q":"Chân dung tham khảo 02","0ugijncV044":"Chân dung tham khảo 03","F0gvbmmmBks":"Chân dung tham khảo 04","wAzToQzLvsI":"Chân dung tham khảo 05","zawPgE4fVyw":"Chân dung tham khảo 06","1n_FuJRkL5E":"Chân dung tham khảo 07","E1liPpUFsNE":"Chân dung tham khảo 08","dtsrRKw5mVI":"Chân dung tham khảo 09","MyBXfdEDKXw":"Chân dung tham khảo 10","bzmE8cv2mGY":"Chân dung tham khảo 11","jvsmtqpkUtA":"Chân dung tham khảo 12","mn4sFkA0Z40":"Chân dung tham khảo 13","g4bWjq8EGlk":"Chân dung tham khảo 14","VJYjfK-1_uA":"Chân dung tham khảo 15","E7_4OQaNIUI":"Chân dung tham khảo 16","rmx5PwAQvMw":"Chân dung tham khảo 17"};
+      return isAdmin() && id == 'yt-' + d.ytId && d.ytId in mau && d.tieuDe == mau[d.ytId]
+        && d.link == 'https://youtu.be/' + d.ytId && d.duyet == 'daduyet' && d.hienThi == 'xuatban'
+        && d.phienDuyet == 1 && d.banSua == null && d.get('xbPhien',0) == 1;
+    }
+    function tvTao(loai, id) {
+      let d = request.resource.data;
+      return tvHopLe(loai, d) && d.v == 1 && d.nguoiTao == myEmail()
+        && d.get('nguoiSoan',[myEmail()]) == [myEmail()]
+        && (tvQ(loai,'CREATE',d,id) || tvQuyen(loai,'them'))
+        && ((d.duyet in ['nhap','cho'] && d.hienThi == 'chua' && d.phienDuyet == 0 && d.banSua == null
+          && d.phamViKieu == 'hocvien' && d.phamViKhoa.size() == 0 && d.phamViMail.size() == 0 && d.xuLyBoi == '' && d.lyDo == '')
+          || (loai == 'video' && tvNhapMau(d,id)));
+    }
+    function tvEdit(loai,q,d,cu,doi) {
+      let owner = cu.nguoiTao == myEmail();
+      let editors = cu.get('nguoiSoan',[cu.nguoiTao]);
+      let changed = doi.hasAny(tvNoiDung().concat(['banSua']));
+      let people = d.get('nguoiSoan',[d.nguoiTao]);
+      let legacy = isTeacher() && !exists(/databases/$(database)/documents/phanquyen/$(myEmail())) ? get(/databases/$(database)/documents/giaovien/$(myEmail())).data.get('quyenTV',{}).get(loai,{}) : {};
+      return ('EDIT' in q || (owner && 'CREATE' in q) || legacy.get('sua',false) || (owner && legacy.get('them',false)))
+        && cu.hienThi != 'luutru'
+        && doi.hasOnly(tvNoiDung().concat(['duyet','banSua','guiLuc','lyDo','nguoiSoan','capNhat','v']))
+        && d.duyet in ['nhap','cho','sua','tuchoi'] && (!doi.hasAny(['lyDo']) || d.lyDo == '')
+        && (cu.phienDuyet == 0 || !doi.hasAny(tvNoiDung()))
+        && (changed ? people.hasAny([myEmail()]) && people.hasAll(cu.duyet == 'daduyet' ? [] : editors)
+             && people.hasOnly((cu.duyet == 'daduyet' ? [] : editors).concat([myEmail()])) : people == editors)
+        && ('SOURCE' in q || (cu.phienDuyet == 0 && owner && 'CREATE' in q) || legacy.get('them',false) ||
+            (d.link == cu.link && (d.banSua == null || d.banSua.link == (cu.banSua == null ? cu.link : cu.banSua.link))));
+    }
+    function tvApprove(q,d,cu,doi) {
+      let metadata = ['xuLyBoi','xuLyLuc','capNhat','v'];
+      return 'APPROVE' in q && cu.duyet == 'cho' && cu.hienThi != 'luutru' && !(myEmail() in cu.get('nguoiSoan',[cu.nguoiTao]))
+        && d.xuLyBoi == myEmail() && (d.duyet == 'daduyet'
+          ? d.phienDuyet == cu.phienDuyet + 1 && d.banSua == null && d.lyDo == ''
+            && doi.hasOnly(tvNoiDung().concat(['duyet','phienDuyet','banSua','lyDo']).concat(metadata))
+            && (cu.banSua == null ? !doi.hasAny(tvNoiDung()) :
+              d.tieuDe == cu.banSua.tieuDe && d.moTa == cu.banSua.get('moTa','') && d.link == cu.banSua.link
+              && d.danhMuc == cu.banSua.get('danhMuc','') && d.get('anh','') == cu.banSua.get('anh','')
+              && d.get('pdf','') == cu.banSua.get('pdf','') && d.get('thoiLuong','') == cu.banSua.get('thoiLuong','') && d.get('ytId','') == cu.banSua.get('ytId',''))
+          : d.duyet in ['sua','tuchoi'] && d.lyDo.size() > 0 && doi.hasOnly(['duyet','lyDo'].concat(metadata)));
+    }
+    function tvPubHidden(loai,id) {
+      return loai == 'video' ? !existsAfter(/databases/$(database)/documents/tv_video_public/$(id))
+        : !existsAfter(/databases/$(database)/documents/tv_ebook_public/$(id));
+    }
+    function tvScopeSync(loai,id,d) {
+      let pub = loai == 'video' ? getAfter(/databases/$(database)/documents/tv_video_public/$(id)).data
+        : getAfter(/databases/$(database)/documents/tv_ebook_public/$(id)).data;
+      return pub.phamViKieu == d.phamViKieu && pub.phamViKhoa == d.phamViKhoa && pub.phamViMail == d.phamViMail;
+    }
+    function tvVisibility(loai,id,q,d,cu,doi) {
+      let metadata=['xuLyBoi','xuLyLuc','capNhat','v'];
+      return d.xuLyBoi == myEmail() && (d.hienThi == 'xuatban'
+        ? 'PUBLISH' in q && cu.phienDuyet > 0 && cu.duyet == 'daduyet' && cu.hienThi in ['chua','an','xuatban']
+          && doi.hasOnly(['hienThi','lichXuatBan','xbPhien'].concat(metadata))
+          && d.get('xbPhien',0) == cu.phienDuyet && !tvPubHidden(loai,id)
+        : tvPubHidden(loai,id) && (d.hienThi == 'an'
+          ? ('PUBLISH' in q || tvQuyen(loai,'an')) && cu.hienThi == 'xuatban' && doi.hasOnly(['hienThi'].concat(metadata))
+          : d.hienThi == 'luutru'
+            ? 'ARCHIVE' in q && cu.hienThi != 'luutru' && doi.hasOnly(['hienThi'].concat(metadata))
+            : (cu.hienThi == 'luutru' ? 'RESTORE' in q && d.hienThi == 'chua' && doi.hasOnly(['hienThi'].concat(metadata))
+              : 'REVOKE' in q && cu.phienDuyet > 0 && d.duyet == 'cho' && d.hienThi == 'chua' && doi.hasOnly(['duyet','hienThi'].concat(metadata)))));
+    }
+    function tvSua(loai,id) {
+      let d=request.resource.data;
+      let cu=resource.data;
+      let doi=d.diff(cu).affectedKeys();
+      let q=quyenToi(loai,cu.get('danhMuc','Chung'),cu.get('coSo','chung'),id);
+      return tvHopLe(loai,d) && d.v == cu.v + 1 && d.nguoiTao == cu.nguoiTao && d.tao == cu.tao
+        && d.get('coSo','chung') == cu.get('coSo','chung')
+        && (doi.hasAny(['hienThi','lichXuatBan','xbPhien']) ? tvVisibility(loai,id,q,d,cu,doi)
+          : doi.hasAny(['phienDuyet']) || (doi.hasAny(['duyet']) && d.duyet in ['sua','tuchoi']) ? tvApprove(q,d,cu,doi)
+          : doi.hasAny(['phamViKieu','phamViKhoa','phamViMail']) ? 'MANAGE_ACCESS' in q && d.xuLyBoi == myEmail()
+            && (cu.hienThi != 'xuatban' || tvScopeSync(loai,id,d))
+            && doi.hasOnly(['phamViKieu','phamViKhoa','phamViMail','xuLyBoi','xuLyLuc','capNhat','v'])
+          : doi.hasAny(['thuTu']) ? ('EDIT' in q || tvQuyen(loai,'sapXep')) && doi.hasOnly(['thuTu','capNhat','v'])
+          : tvEdit(loai,q,d,cu,doi));
+    }
+    match /tv_video/{id} {
+      allow get: if tvDoc('video', id);
+      allow list: if tvList('video', id);
+      allow list: if isAdmin();
+      allow list: if isTeacher() && resource.data.nguoiTao == myEmail();
+      allow list: if isTeacher() && !exists(/databases/$(database)/documents/phanquyen/$(myEmail())) && resource.data.hienThi == 'xuatban';
+      allow create: if tvTao('video', id);
+      allow update: if tvSua('video', id);
+      allow delete: if tvQ('video','DELETE',resource.data,id) && resource.data.hienThi == 'luutru';
+    }
+    match /tv_ebook/{id} {
+      allow get: if tvDoc('ebook', id);
+      allow list: if tvList('ebook', id);
+      allow list: if isAdmin();
+      allow list: if isTeacher() && resource.data.nguoiTao == myEmail();
+      allow list: if isTeacher() && !exists(/databases/$(database)/documents/phanquyen/$(myEmail())) && resource.data.hienThi == 'xuatban';
+      allow create: if tvTao('ebook', id);
+      allow update: if tvSua('ebook', id);
+      allow delete: if tvQ('ebook','DELETE',resource.data,id) && resource.data.hienThi == 'luutru';
+    }
+    // Học viên chỉ đọc bản sao đã xuất bản; không thể tải bản sửa chưa được duyệt.
+    function tvPublicRead() {
+      let d = resource.data;
+      return isStaff() || (d.hienThi == 'xuatban' && d.lichXuatBan <= request.time.toMillis() && (
+        d.phamViKieu == 'congkhai'
+        || (d.phamViKieu == 'hocvien' && isStudent())
+        || (d.phamViKieu == 'khoa' && isStudent() && d.phamViKhoa.hasAny(get(/databases/$(database)/documents/hocvien/$(myEmail())).data.get('khoaHoc',[])))
+        || (d.phamViKieu == 'taikhoan' && signedIn() && myEmail() in d.phamViMail)));
+    }
+    function tvPublicWrite(loai,id,col) {
+      let d = getAfter(/databases/$(database)/documents/$(col)/$(id)).data;
+      return request.resource.data == {'coSo': d.get('coSo','chung'),'tieuDe': d.get('tieuDe',''),'moTa': d.get('moTa',''),'danhMuc': d.get('danhMuc',''),'link': d.get('link',''),'anh': d.get('anh',''),'thoiLuong': d.get('thoiLuong',''),'pdf': d.get('pdf',''),'ytId': d.get('ytId',''),'thuTu': d.get('thuTu',''),'hienThi': d.get('hienThi',''),'phienDuyet': d.get('phienDuyet',''),'phamViKieu': d.get('phamViKieu',''),'phamViKhoa': d.get('phamViKhoa',''),'phamViMail': d.get('phamViMail',''),'lichXuatBan': d.get('lichXuatBan',0)} && d.hienThi == 'xuatban' && d.phienDuyet > 0
+        && ((tvQ(loai,'PUBLISH',d,id) && d.duyet == 'daduyet' && d.get('xbPhien',0) == d.phienDuyet)
+            || (loai == 'video' && tvNhapMau(d,id)));
+    }
+    function tvPublicScope(loai,id,col) {
+      let d = getAfter(/databases/$(database)/documents/$(col)/$(id)).data;
+      return tvQ(loai,'MANAGE_ACCESS',d,id) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['phamViKieu','phamViKhoa','phamViMail'])
+        && request.resource.data.phamViKieu == d.phamViKieu && request.resource.data.phamViKhoa == d.phamViKhoa && request.resource.data.phamViMail == d.phamViMail;
+    }
+    function tvPublicDelete(loai,id,col) {
+      let d = getAfter(/databases/$(database)/documents/$(col)/$(id)).data;
+      return d.hienThi != 'xuatban' && (tvQ(loai,'PUBLISH',d,id) || tvQ(loai,'ARCHIVE',d,id) || tvQ(loai,'REVOKE',d,id) || tvQuyen(loai,'an'));
+    }
+    match /tv_video_public/{id} {
+      allow read: if tvPublicRead();
+      allow create: if tvPublicWrite('video',id,'tv_video');
+      allow update: if tvPublicWrite('video',id,'tv_video') || tvPublicScope('video',id,'tv_video');
+      allow delete: if tvPublicDelete('video',id,'tv_video');
+    }
+    match /tv_ebook_public/{id} {
+      allow read: if tvPublicRead();
+      allow create: if tvPublicWrite('ebook',id,'tv_ebook');
+      allow update: if tvPublicWrite('ebook',id,'tv_ebook') || tvPublicScope('ebook',id,'tv_ebook');
+      allow delete: if tvPublicDelete('ebook',id,'tv_ebook');
+    }
+    // Danh mục + cờ "đã nạp 17 video có sẵn": ai cũng đọc; quản lý hoặc giáo viên có quyền danh mục sửa.
+    match /tv_meta/{loai} {
+      allow read: if true;
+      allow write: if loai in ['video', 'ebook'] && (isAdmin() || (tvQuyen(loai, 'danhMuc') && request.resource.data.diff(resource == null ? {} : resource.data).affectedKeys().hasOnly(['danhMuc'])))
+        && (!('danhMuc' in request.resource.data) || (request.resource.data.danhMuc is list && request.resource.data.danhMuc.size() <= 60));
+    }
+    // Lịch sử thao tác: ghi đúng tên mình, không sửa / xoá được. Quản lý đọc tất cả, giáo viên đọc thao tác của mình.
+    match /tv_lichsu/{id} {
+      allow read: if isAdmin() || (isTeacher() && resource.data.ai == myEmail());
+      allow create: if isStaff() && request.resource.data.ai == myEmail() && request.resource.data.thuVien in ['video', 'ebook']
+        && request.resource.data.keys().hasOnly(['thuVien', 'ma', 'hanhDong', 'tu', 'den', 'tieuDe', 'lyDo', 'ai', 'luc'])
+        && shortText(request.resource.data, 'lyDo', 500) && shortText(request.resource.data, 'tieuDe', 150);
+      allow update, delete: if false;
+    }
+    // Tiến độ xem video / đọc ebook: học viên ghi của mình; giáo viên, quản lý xem để thống kê.
+    match /tv_tiendo/{mail} {
+      allow read: if isStaff() || isMe(mail);
+      allow write: if isStudent() && isMe(mail) && request.resource.data.keys().hasOnly(['video', 'ebook', 'capNhat']);
     }
 
     match /admins/{mail} {
