@@ -413,7 +413,11 @@ function keoDuoc(el, { batDau, di, tha }) {
 function datCum(cum) {
   const v = store.get("lvtt-tl-cum", null); if (!v) { cum.classList.remove("trai", "tren"); return; }
   const r = cum.getBoundingClientRect(), W = innerWidth, H = innerHeight;
-  const x = v.ben === "L" ? 12 : W - r.width - 12, y = kep(v.y * H, 12, H - r.height - 12);
+  // Không bao giờ đè lên thanh "Học thử · Vào lớp · Gọi · Zalo" ở đáy điện thoại
+  // (thanh trượt lên khi cuộn, nên luôn chừa chỗ theo vị trí lúc thanh đã hiện)
+  const dock = document.getElementById("dock"), ds = dock && getComputedStyle(dock);
+  const day = ds && ds.display !== "none" && dock.offsetHeight ? H - (parseFloat(ds.bottom) || 0) - dock.offsetHeight - 10 : H - 12;
+  const x = v.ben === "L" ? 12 : W - r.width - 12, y = kep(v.y * H, 12, day - r.height);
   Object.assign(cum.style, { left: x + "px", top: y + "px", right: "auto", bottom: "auto" });
   cum.classList.toggle("trai", v.ben === "L"); cum.classList.toggle("tren", y < H * .35);
 }
