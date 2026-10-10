@@ -3091,3 +3091,30 @@ button.cc-chip{cursor:pointer;min-height:24px}
   .ql-bang td .btn.small{min-height:34px;padding:4px 12px}
   .ql-bang tr>td[colspan]{grid-column:1/-1}
 }
+/* Bảng giáo viên: ô chọn đủ rộng để đọc được chữ; điện thoại thành thẻ gọn, không cuộn ngang */
+#teachers select{min-width:150px;width:100%;min-height:40px;padding:6px 30px 6px 10px;font-size:.88rem}
+@media (max-width:760px){
+  #teachers thead{display:none}
+  #teachers,#teachers tbody{display:block;width:100%;min-width:0}
+  #teachers tr.gv-dong{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+  #teachers tr.gv-dong{display:grid;grid-template-columns:1fr 1fr;grid-template-areas:"ten ten" "cv mon" "cs ngay" "nut nut";gap:8px 10px;padding:12px;border-bottom:1px solid var(--rule)}
+  #teachers tr.gv-dong td{display:block;padding:0;border:0;min-width:0}
+  #teachers tr.gv-dong td[data-l]::before{content:attr(data-l);display:block;font-size:.66rem;letter-spacing:.04em;text-transform:uppercase;color:var(--graphite);margin-bottom:3px}
+  #teachers td.hv-o{grid-area:ten;min-width:0}
+  #teachers td:nth-child(2){grid-area:cv}#teachers td:nth-child(3){grid-area:mon}#teachers td:nth-child(4){grid-area:cs}#teachers td:nth-child(5){grid-area:ngay}
+  #teachers td:nth-child(6){grid-area:nut}#teachers td:nth-child(6) .btn{width:100%}
+  #teachers select{min-width:0}
+}
+/* Điện thoại: bảng Học viên đã duyệt thành thẻ gọn, đủ thông tin, không cuộn ngang */
+@media (max-width:760px){
+  #roster thead{display:none}
+  #roster,#roster tbody{display:block;width:100%;min-width:0}
+  #roster tr.hv-dong{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-areas:"ten ten" "ct ct" "cs dt" "hoc ngay" "nut nut";gap:8px 10px;padding:12px;border-bottom:1px solid var(--rule)}
+  #roster tr.hv-dong td{display:block;padding:0;border:0;min-width:0}
+  #roster tr.hv-dong td[data-l]::before{content:attr(data-l);display:block;font-size:.66rem;letter-spacing:.04em;text-transform:uppercase;color:var(--graphite);margin-bottom:2px}
+  #roster td.hv-o{grid-area:ten;min-width:0}
+  #roster td:nth-child(2){grid-area:ct}#roster td:nth-child(3){grid-area:cs}#roster td:nth-child(4){grid-area:dt}#roster td:nth-child(5){grid-area:hoc}#roster td:nth-child(6){grid-area:ngay}
+  #roster td.hv-nut{grid-area:nut;display:flex!important;gap:8px;flex-wrap:wrap}
+  #roster td.hv-nut>*{flex:1 1 0;margin:0;justify-content:center;text-align:center}
+  #roster .kc-gon{max-width:none}
+}

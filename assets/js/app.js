@@ -2632,10 +2632,10 @@ function renderRoster() {
     roster.map(r => {
       const p = progressAll[r.id]; const n = p && p.bai ? lessons.filter(l => p.bai[l.id]).length : 0;
       // Tên ở trên, Gmail + năm sinh ở dưới (một cột, tên không bị xuống dòng từng chữ)
-      return `<tr><td class="hv-o"><b>${esc(r.ten || "(chưa có tên)")}</b><small>${esc(r.gmail || r.id)}</small>${r.namSinh ? `<small class="num">Sinh năm ${esc(r.namSinh)}</small>` : ""}</td><td>${esc(r.chuongTrinh || r.lop)}${(() => { const k = khoaCuaHv(r); return `<details class="kc-gon"><summary><b class="num">${k.length}/${KHOA_GOC.length}</b> khoá${k.length ? ": " + esc(k.join(", ")) : ""} <span class="linkish">Sửa</span></summary>${oChonKhoa(r.id, k)}</details>`; })()}</td><td>${esc(r.coso)}</td>
-        <td class="num">${r.sdt ? "HV: " + esc(r.sdt) : ""}${r.sdtPh ? "<br>PH: " + esc(r.sdtPh) : ""}</td>
-        <td class="num">${n}/${total}</td><td class="num">${fmtDate(r.duyetLuc)}</td>
-        <td><button class="btn small" data-rm="${esc(r.id)}">Thu hồi</button>${teachers.some(t => t.id === r.id) ? `<span class="chip ok">Đang là GV</span>` : `<button class="btn small" data-lengv="${esc(r.id)}">Trao quyền GV</button>`}</td></tr>`;
+      return `<tr class="hv-dong"><td class="hv-o"><b>${esc(r.ten || "(chưa có tên)")}</b><small>${esc(r.gmail || r.id)}</small>${r.namSinh ? `<small class="num">Sinh năm ${esc(r.namSinh)}</small>` : ""}</td><td data-l="Chương trình">${esc(r.chuongTrinh || r.lop)}${(() => { const k = khoaCuaHv(r); return `<details class="kc-gon"><summary><b class="num">${k.length}/${KHOA_GOC.length}</b> khoá${k.length ? ": " + esc(k.join(", ")) : ""} <span class="linkish">Sửa</span></summary>${oChonKhoa(r.id, k)}</details>`; })()}</td><td data-l="Cơ sở">${esc(r.coso)}</td>
+        <td data-l="Điện thoại" class="num">${r.sdt ? "HV: " + esc(r.sdt) : ""}${r.sdtPh ? "<br>PH: " + esc(r.sdtPh) : ""}</td>
+        <td data-l="Đã học" class="num">${n}/${total}</td><td data-l="Ngày duyệt" class="num">${fmtDate(r.duyetLuc)}</td>
+        <td class="hv-nut"><button class="btn small" data-rm="${esc(r.id)}">Thu hồi</button>${teachers.some(t => t.id === r.id) ? `<span class="chip ok">Đang là GV</span>` : `<button class="btn small" data-lengv="${esc(r.id)}">Trao quyền GV</button>`}</td></tr>`;
     }).join("") + `</tbody>`;
   $$("#roster [data-rm]").forEach(b => confirmButton(b, () => deleteDoc(doc(db, "hocvien", b.dataset.rm)), "Bấm lần nữa để thu hồi"));
   // Trao quyền giáo viên cho học viên (vẫn giữ hồ sơ học viên; gỡ quyền thì trở lại học viên)
@@ -2653,9 +2653,11 @@ function renderRoster() {
 function renderTeachers() {
   renderRoster(); // cập nhật nút Trao quyền GV / chữ "Đang là GV" trong bảng học viên
   if (!teachers.length) { $("#teachers").innerHTML = `<tbody><tr><td class="muted">Chưa có giáo viên nào. Quản lý luôn có toàn quyền.</td></tr></tbody>`; return; }
-  $("#teachers").innerHTML = `<thead><tr><th>Họ tên</th><th>Chức vụ</th><th>Môn phụ trách</th><th>Gmail</th><th>Cơ sở</th><th>Điện thoại</th><th>Ngày duyệt</th><th></th></tr></thead><tbody>` +
-    teachers.map(t => `<tr><td>${esc(t.ten)}</td><td>${chonChucVu("gv-cv", t.chucVu, `data-gvcv="${esc(t.id)}"`)}</td><td>${chonMonGV("gv-mon", t.mon, `data-gvmon="${esc(t.id)}"`)}</td><td>${esc(t.gmail)}</td><td>${esc(t.coso)}</td><td class="num">${esc(t.sdt)}</td>
-      <td class="num">${fmtDate(t.duyetLuc)}</td><td><button class="btn small" data-rmgv="${esc(t.id)}">Gỡ quyền giáo viên</button></td></tr>`).join("") + `</tbody>`;
+  // tên trên, Gmail + SĐT dưới; điện thoại: mỗi người một thẻ, 2 ô chọn nằm cạnh nhau
+  $("#teachers").innerHTML = `<thead><tr><th>Giáo viên</th><th>Chức vụ</th><th>Môn phụ trách</th><th>Cơ sở</th><th>Ngày duyệt</th><th></th></tr></thead><tbody>` +
+    teachers.map(t => `<tr class="gv-dong"><td class="hv-o"><b>${esc(t.ten)}</b><small>${esc(t.gmail)}</small>${t.sdt ? `<small class="num">${esc(t.sdt)}</small>` : ""}</td>
+      <td data-l="Chức vụ">${chonChucVu("gv-cv", t.chucVu, `data-gvcv="${esc(t.id)}"`)}</td><td data-l="Môn phụ trách">${chonMonGV("gv-mon", t.mon, `data-gvmon="${esc(t.id)}"`)}</td>
+      <td data-l="Cơ sở">${esc(t.coso) || '<span class="muted">—</span>'}</td><td data-l="Ngày duyệt" class="num">${fmtDate(t.duyetLuc)}</td><td><button class="btn small" data-rmgv="${esc(t.id)}">Gỡ quyền</button></td></tr>`).join("") + `</tbody>`;
   $$("#teachers [data-rmgv]").forEach(b => confirmButton(b, () => deleteDoc(doc(db, "giaovien", b.dataset.rmgv)), "Bấm lần nữa để gỡ quyền"));
   $$("#teachers [data-gvmon]").forEach(sel => sel.onchange = () => { const cu = (teachers.find(t => t.id === sel.dataset.gvmon) || {}).mon || "";
     sel.disabled = true;
