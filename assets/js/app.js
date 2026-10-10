@@ -125,7 +125,7 @@ addEventListener("error", e => {
 });
 /* ---------- Mở tức thì ở lần sau + dùng được khi mạng yếu ---------- */
 if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost") && !/[?&]khongcache/.test(location.search))
-  addEventListener("load", () => navigator.serviceWorker.register("sw.js?v=20261010bu").catch(() => {}));
+  addEventListener("load", () => navigator.serviceWorker.register("sw.js?v=20261010bv").catch(() => {}));
 
 /* ---------- Đo tốc độ: mở web kèm ?chandoan=1 để xem từng bước mất bao lâu ---------- */
 const DIAG = /[?&]chandoan/.test(location.search);
@@ -1506,11 +1506,12 @@ $("#dk-zalo").href = ZALO_LINK;
   // Menu thả xuống (máy tính): rê chuột hoặc bấm để mở, bấm ra ngoài / Esc để đóng
   const dds = $$("nav .dd"), dong = except => dds.forEach(d => { if (d !== except) { d.classList.remove("open"); d.querySelector(".dd-t").setAttribute("aria-expanded", "false"); } });
   dds.forEach(d => {
-    const t = d.querySelector(".dd-t"); let hide;
+    const t = d.querySelector(".dd-t"); let hide, reLuc = 0;
     const mo = v => { clearTimeout(hide); if (v) dong(d); d.classList.toggle("open", v); t.setAttribute("aria-expanded", v); };
-    d.addEventListener("mouseenter", () => { if (matchMedia("(hover:hover)").matches) mo(true); });
+    d.addEventListener("mouseenter", () => { if (matchMedia("(hover:hover)").matches) { reLuc = Date.now(); mo(true); } });
     d.addEventListener("mouseleave", () => { hide = setTimeout(() => mo(false), 160); });
-    t.addEventListener("click", () => mo(!d.classList.contains("open")));
+    // Rê chuột vừa mở menu rồi bấm ngay vào tiêu đề: giữ menu mở (trước đây lần bấm này đảo lại thành đóng)
+    t.addEventListener("click", () => mo(Date.now() - reLuc < 600 || !d.classList.contains("open")));
     d.querySelectorAll("a").forEach(a => a.addEventListener("click", () => mo(false)));
   });
   document.addEventListener("click", e => { if (!e.target.closest("nav .dd")) dong(); });

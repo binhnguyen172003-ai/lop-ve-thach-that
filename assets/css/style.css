@@ -139,7 +139,7 @@ table.sched{border-collapse:collapse;width:100%;min-width:640px;font-size:.92rem
 /* forms */
 form{display:grid;gap:14px}
 .fgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
-label{display:grid;gap:6px;font-size:.88rem;font-weight:600}
+label{display:grid;grid-template-columns:minmax(0,1fr);gap:6px;font-size:.88rem;font-weight:600} /* minmax(0,…): ô ngày/ô chọn không đẩy rộng quá khung nhãn */
 input,select,textarea{font:400 1rem var(--f-body);color:var(--ink);background:var(--paper);border:1px solid var(--rule);border-radius:8px;padding:10px 12px;width:100%;min-height:44px}
 textarea{min-height:90px;resize:vertical}
 .card{background:var(--sheet);border:1px solid var(--rule);border-radius:var(--r);padding:24px;min-width:0}
@@ -3038,9 +3038,10 @@ main.wrap[id^="v-"]:not(#v-home){min-height:calc(100svh - var(--nav-h,57px))}
 .lpc-bang td.thieu{background:color-mix(in srgb,#f5c400 12%,var(--paper));border-color:color-mix(in srgb,#f5c400 50%,var(--rule))}
 .lpc-bang td.lpc-nghi{background:none;border-style:dashed;opacity:.4}
 .lpc-mon{display:block;font-size:.7rem;font-weight:700;color:var(--graphite);margin-bottom:4px}
-.lpc-gv{display:flex;align-items:flex-start;gap:3px;padding:2px 3px 2px 6px;margin-bottom:3px;border-radius:6px;background:color-mix(in srgb,var(--accent) 16%,transparent);font-weight:600;overflow-wrap:anywhere;min-width:0}
-.lpc-gv-ten{flex:1;min-width:0}
-.lpc-gv-nut{display:flex;flex:none;gap:1px}
+.lpc-gv{display:flex;flex-wrap:wrap;align-items:flex-start;gap:0 3px;padding:2px 3px 2px 6px;margin-bottom:3px;border-radius:6px;background:color-mix(in srgb,var(--accent) 16%,transparent);font-weight:600;min-width:0}
+/* Ô hẹp (điện thoại): tên giữ nguyên chữ trên một dòng riêng, nút sửa/gỡ xuống dòng dưới thay vì ép tên vỡ từng ký tự */
+.lpc-gv-ten{flex:1 1 4.5em;min-width:0;overflow-wrap:break-word}
+.lpc-gv-nut{display:flex;flex:none;gap:1px;margin-left:auto}
 .lpc-gv-nut button{border:0;border-radius:5px;background:transparent;color:var(--ink);cursor:pointer;min-width:24px;min-height:28px;padding:0;font:inherit;line-height:1}
 .lpc-gv-nut button:hover,.lpc-gv-nut button:focus-visible{background:color-mix(in srgb,var(--accent) 23%,transparent)}
 .lpc-nguoi{max-height:132px;overflow-y:auto;overscroll-behavior:contain}
