@@ -3087,6 +3087,60 @@ const icoTab = {
   dd: '<path d="M4 12l5 5L20 6"/>',
   td: '<path d="M4 5h16v11H8l-4 4z"/>',
 };
+// ---- Bảng điều khiển anh chị: biểu đồ hoạt động (kiểu Dashboard V12) ----
+const ngayVNts = ts => { const vn = new Date(ts + (new Date(ts).getTimezoneOffset() + 420) * 60000); return `${vn.getFullYear()}-${pad2(vn.getMonth() + 1)}-${pad2(vn.getDate())}`; };
+const cacNgay = (soNgay, hom) => Array.from({ length: soNgay }, (_, i) => { const d = new Date(hom + "T12:00:00"); d.setDate(d.getDate() - (soNgay - 1 - i)); return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`; });
+function soLieuDash(hom) {
+  const n14 = cacNgay(14, hom), n7 = n14.slice(7), nop = Object.fromEntries(n14.map(k => [k, 0])), hoc = Object.fromEntries(n7.map(k => [k, 0])), coBuoi = new Set();
+  roster.forEach(r => {
+    Object.values((progressAll[r.id] || {}).baitap || {}).forEach(v => { const t = nopLuc(v); if (t > 1e12) { const k = ngayVNts(t); if (k in nop) nop[k]++; } });
+    Object.entries(diemdanhAll[r.id] || {}).forEach(([k, v]) => { if (!/^\d{4}-\d{2}-\d{2}_/.test(k)) return; const d = k.slice(0, 10); coBuoi.add(d); if (coMat(v) && d in hoc) hoc[d]++; });
+  });
+  return { n14, n7, nop: n14.map(k => nop[k]), hoc: n7.map(k => hoc[k]), coBuoi };
+}
+const THU_DAY = ["Chủ nhật", "Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7"];
+const nhanNgay = k => { const [, m, d] = k.split("-"); return `${+d}/${+m}`; };
+function bieuDoDuong(ngay, so) {
+  const W = innerWidth < 640 ? 360 : 600, H = 170, L = 28, R = 12, T = 26, B = 26, max = Math.max(4, ...so), buoc = (W - L - R) / (so.length - 1); // máy hẹp: khung vẽ hẹp để chữ trục không bị thu nhỏ
+  const x = i => L + i * buoc, y = v => T + (H - T - B) * (1 - v / max);
+  const d = so.map((v, i) => i ? `C${x(i - .5)},${y(so[i - 1])} ${x(i - .5)},${y(v)} ${x(i)},${y(v)}` : `M${x(0)},${y(v)}`).join(" ");
+  const dinh = so.indexOf(Math.max(...so)), luoi = [0, Math.round(max / 2), max];
+  return `<div class="dash-bd-ve" data-w="${W}" data-ngay="${ngay.join(",")}" data-so="${so.join(",")}">
+    <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Số bài học viên nộp mỗi ngày trong 14 ngày qua, nhiều nhất ${so[dinh]} bài ngày ${nhanNgay(ngay[dinh])}">
+      <defs><linearGradient id="dash-gr" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--accent)" stop-opacity=".28"/><stop offset="1" stop-color="var(--accent)" stop-opacity="0"/></linearGradient></defs>
+      ${luoi.map(v => `<line class="dash-luoi-ke" x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}"/><text class="dash-truc" x="${L - 8}" y="${y(v) + 4}" text-anchor="end">${v}</text>`).join("")}
+      <path d="${d} L${x(so.length - 1)},${H - B} L${x(0)},${H - B}Z" fill="url(#dash-gr)"/>
+      <path class="dash-duong" d="${d}"/>
+      ${ngay.map((k, i) => (W < 600 ? (ngay.length - 1 - i) % 3 === 0 : i % 2 === 1 || i === ngay.length - 1) ? `<text class="dash-truc" x="${x(i)}" y="${H - 6}" text-anchor="middle">${nhanNgay(k)}</text>` : "").join("")}
+      ${so[dinh] ? `<g class="dash-dinh"><circle cx="${x(dinh)}" cy="${y(so[dinh])}" r="5"/><rect x="${Math.min(W - R - 60, Math.max(L, x(dinh) - 30))}" y="${y(so[dinh]) - 25}" width="60" height="18" rx="9"/><text x="${Math.min(W - R - 30, Math.max(L + 30, x(dinh)))}" y="${y(so[dinh]) - 12}" text-anchor="middle">${so[dinh]} bài</text></g>` : ""}
+      <line class="dash-tro-doc" x1="0" x2="0" y1="${T - 6}" y2="${H - B}" hidden/><circle class="dash-tro-cham" r="5" hidden/>
+    </svg><div class="dash-goi" hidden></div></div>`;
+}
+function bieuDoCot(ngay, so) {
+  const max = Math.max(1, ...so);
+  return `<div class="dash-cot-ve" role="img" aria-label="Lượt có mặt mỗi ngày trong 7 ngày qua">${so.map((v, i) => `<div class="dash-cot-o" title="${esc(THU_DAY[new Date(ngay[i] + "T12:00:00").getDay()] || "")} ${nhanNgay(ngay[i])}: ${v} lượt có mặt"><b class="num">${v || ""}</b><i style="--h:${Math.round(v / max * 100)}%"></i><small>${["CN", "T2", "T3", "T4", "T5", "T6", "T7"][new Date(ngay[i] + "T12:00:00").getDay()]}</small></div>`).join("")}</div>`;
+}
+function lichThangDash(hom, coBuoi) {
+  const [y, m] = hom.split("-").map(Number), dau = (new Date(y, m - 1, 1).getDay() + 6) % 7, so = new Date(y, m, 0).getDate();
+  const thi = new Set(LICH_THI.map(e => e.ngay).filter(Boolean));
+  const o = Array.from({ length: dau }, () => `<span></span>`);
+  for (let d = 1; d <= so; d++) { const k = `${y}-${pad2(m)}-${pad2(d)}`;
+    o.push(`<span class="${k === hom ? "hom" : thi.has(k) ? "thi" : coBuoi.has(k) ? "hoc" : ""}" title="${thi.has(k) ? "Có kỳ thi" : coBuoi.has(k) ? "Có điểm danh" : ""}">${d}</span>`); }
+  return `<div class="dash-lt-thang"><b>Tháng ${m}, ${y}</b><div class="dash-lt-luoi">${["T2", "T3", "T4", "T5", "T6", "T7", "CN"].map(t => `<em>${t}</em>`).join("")}${o.join("")}</div>
+    <p class="dash-lt-chu"><span class="hoc">Có điểm danh</span><span class="thi">Ngày thi</span><span class="hom">Hôm nay</span></p></div>`;
+}
+function ganBieuDoDash(box) {
+  const ve = box.querySelector(".dash-bd-ve"); if (!ve) return;
+  const svg = ve.querySelector("svg"), doc = svg.querySelector(".dash-tro-doc"), cham = svg.querySelector(".dash-tro-cham"), goi = ve.querySelector(".dash-goi");
+  const ngay = ve.dataset.ngay.split(","), so = ve.dataset.so.split(",").map(Number), W = +ve.dataset.w || 600, H = 170, L = 28, R = 12, T = 26, B = 26, max = Math.max(4, ...so), buoc = (W - L - R) / (so.length - 1);
+  const an = () => { doc.hidden = cham.hidden = goi.hidden = true; };
+  svg.addEventListener("pointermove", e => { const r = svg.getBoundingClientRect(), sx = (e.clientX - r.left) / r.width * W, i = Math.max(0, Math.min(so.length - 1, Math.round((sx - L) / buoc)));
+    const cx = L + i * buoc, cy = T + (H - T - B) * (1 - so[i] / max);
+    doc.setAttribute("x1", cx); doc.setAttribute("x2", cx); cham.setAttribute("cx", cx); cham.setAttribute("cy", cy); doc.hidden = cham.hidden = goi.hidden = false;
+    goi.innerHTML = `<b class="num">${so[i]} bài</b><span>${esc(THU_DAY[new Date(ngay[i] + "T12:00:00").getDay()] || "")} ${nhanNgay(ngay[i])}</span>`;
+    goi.style.left = `${Math.min(Math.max(cx / W * 100, 12), 88)}%`; goi.style.top = `${cy / H * 100}%`; });
+  svg.addEventListener("pointerleave", an);
+}
 function renderDash(show) {
   const box = $("#dash"), tab = $("#tab-duoi"); if (!box || !tab) return;
   const vao = !!user && show;
@@ -3110,7 +3164,12 @@ function renderDash(show) {
     const o = (href, cls, so, chu) => `<a class="dash-so ${cls}" href="${href}"><b class="num">${so}</b><span>${chu}</span></a>`;
     box.innerHTML = `<div class="dash-dau"><div><p class="eyebrow">${isAdmin ? "Quản lý lớp" : esc(myChucVu || "Giáo viên")} · ${esc(TEN_NGAY[todayKey()])}</p><h1>Việc cần xử lý hôm nay</h1></div>
       <div class="dash-nut"><button class="btn primary small" type="button" id="dash-giao">+ Giao bài</button>${isAdmin ? `<button class="btn small" type="button" id="dash-viec">+ Giao việc</button>` : ""}</div></div>
-      <div class="dash-sos">${o("#bai-tap", "vang", canCham, "bài cần chấm")}${o("#bai-tap", "do", chuaNop.size, "bạn chưa nộp (hạn gần)")}${o("#lam-viec", "xanh", viec, isAdmin ? "việc chưa xong" : "việc được giao")}${isAdmin ? o("#duyet", "tim", reqCount, "người chờ duyệt") : ""}</div>`;
+      <div class="dash-sos">${o("#bai-tap", "vang", canCham, "bài cần chấm")}${o("#bai-tap", "do", chuaNop.size, "bạn chưa nộp (hạn gần)")}${o("#lam-viec", "xanh", viec, isAdmin ? "việc chưa xong" : "việc được giao")}${isAdmin ? o("#duyet", "tim", reqCount, "người chờ duyệt") : ""}</div>
+      ${(sl => `<div class="dash-bd">
+        <section class="dash-o dash-bd-duong"><div class="dash-bd-dau"><h2>Bài nộp 14 ngày</h2><span class="muted num">Tổng ${sl.nop.reduce((a, b) => a + b, 0)} bài</span></div>${bieuDoDuong(sl.n14, sl.nop)}</section>
+        <section class="dash-o dash-bd-cot"><div class="dash-bd-dau"><h2>Đi học 7 ngày</h2><span class="muted num">${sl.hoc.reduce((a, b) => a + b, 0)} lượt</span></div>${bieuDoCot(sl.n7, sl.hoc)}</section>
+        <section class="dash-o dash-bd-lich">${lichThangDash(today, sl.coBuoi)}</section></div>`)(soLieuDash(today))}`;
+    ganBieuDoDash(box);
     $("#dash-giao").onclick = () => { location.hash = "#bai-tap"; requestAnimationFrame(() => { const c = $("#hw-composer"); if (c) { c.open = true; c.scrollIntoView({ block: "start", behavior: "smooth" }); setTimeout(() => $("#bt-ten")?.focus(), 300); } }); };
     if ($("#dash-viec")) $("#dash-viec").onclick = () => { location.hash = "#lam-viec"; requestAnimationFrame(() => $('#lv-tabs [data-lv="viec"]')?.click()); };
     tab.innerHTML = nut("#tai-khoan", "tq", "Tổng quan") + nut("#bai-tap", "bt", "Bài tập", canCham) + nut("#diem-danh", "dd", "Điểm danh") + nut("#van-hanh", "cc", isAdmin ? "Theo dõi GV" : "Chấm công").replace("<a ", '<a data-vh-mo="cc" ') + nut("#lam-viec", "td", "Trao đổi", tin + viec);
