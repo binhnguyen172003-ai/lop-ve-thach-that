@@ -193,6 +193,7 @@ export function writeBatch() {
   return b;
 }
 export async function runTransaction(_db, fn) {
+  if (S.beforeTransaction) { const before = S.beforeTransaction; S.beforeTransaction = null; before(); }
   const ops = [];
   const tx = { get: async r => docSnap(r, S.docs.get(r.path)), set(r, d, o) { ops.push(() => ghi(r, d, "set", o)); return tx; },
     update(r, d) { ops.push(() => ghi(r, d, "update")); return tx; }, delete(r) { ops.push(() => ghi(r, null, "delete")); return tx; } };

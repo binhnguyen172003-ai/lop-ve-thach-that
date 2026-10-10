@@ -203,7 +203,7 @@ test("Hai quản lý cùng thao tác: người sau được báo, không ghi đ�
   await moQL(page, "video");
   await expect(the(page, "Video chờ duyệt")).toBeVisible();
   // Quản lý thứ hai vừa từ chối trên máy khác (máy này chưa kịp nhận cập nhật)
-  await page.evaluate(() => { const d = window.__FAKE_FB.docs.get("tv_video/v-2"); window.__FAKE_FB.docs.set("tv_video/v-2", { ...d, duyet: "tuchoi", lyDo: "Trùng nội dung", v: 2 }); });
+  await page.evaluate(() => { window.__FAKE_FB.beforeTransaction = () => { const d = window.__FAKE_FB.docs.get("tv_video/v-2"); window.__FAKE_FB.docs.set("tv_video/v-2", { ...d, duyet: "tuchoi", lyDo: "Trùng nội dung", v: 2 }); }; });
   await thaoTac(page, "Video chờ duyệt", "Phê duyệt");
   await expect(page.locator("#toast")).toContainText("vừa được người khác xử lý");
   const d = await docFB(page, "tv_video/v-2");
