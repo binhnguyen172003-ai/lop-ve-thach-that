@@ -2753,3 +2753,30 @@ button:disabled:not(.btn){opacity:.45}
 .bai-hinh{margin:0;background:var(--sheet);border:1px solid var(--rule);border-radius:14px;padding:10px 12px 12px;color:var(--ink)}
 .bai-hinh svg{display:block;width:100%;height:auto;max-height:360px}
 .bai-hinh figcaption{font-size:.88rem;color:var(--graphite);margin-top:6px}
+
+/* Ảnh tượng trong bài giáo trình: từ cơ bản lên nâng cao */
+.bai-tuong{margin:18px 0 6px;display:grid;gap:10px}
+.bai-tuong h4{margin:0;font-size:1.05rem}
+.bt-the{background:var(--sheet);border:1px solid var(--rule);border-left:4px solid var(--btc,var(--accent));border-radius:14px;padding:12px;display:grid;gap:6px}
+.bt-the.cap-1{--btc:#6fcf97}.bt-the.cap-2{--btc:#f2c94c}.bt-the.cap-3{--btc:#ff7a7a}
+.bt-the p{margin:0;font-size:.9rem}
+.bt-dau{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.bt-so{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;background:var(--btc);color:#111;font-weight:800;font-size:.85rem;flex:none}
+.bt-cap{background:color-mix(in srgb,var(--btc) 22%,transparent);color:var(--ink)}
+.bt-anh{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.bt-anh button{border:0;padding:0;background:none;cursor:zoom-in;border-radius:10px;overflow:hidden}
+.bt-anh img{display:block;width:100%;height:auto;aspect-ratio:3/4;object-fit:cover}
+
+/* Bảng thuật ngữ Trung – Việt trong bài */
+.bai-tn{margin:16px 0;background:var(--sheet);border:1px solid var(--rule);border-radius:14px;padding:10px 14px}
+.bai-tn summary{cursor:pointer;line-height:1.5}
+.bai-tn-cuon{overflow-x:auto;margin-top:10px}
+.bai-tn table{width:100%;border-collapse:collapse;font-size:.9rem;min-width:420px}
+.bai-tn th,.bai-tn td{border-bottom:1px solid var(--rule);padding:7px 8px;text-align:left;vertical-align:top}
+.bai-tn td[lang="zh"]{white-space:nowrap;font-size:1rem}
+.bai-tn tr.tn-x td:first-child{border-left:3px solid #f2994a}.bai-tn tr.tn-c td:first-child{border-left:3px solid #eb5757}.bai-tn tr.tn-k td:first-child{border-left:3px solid var(--rule)}
+@media (max-width:560px){
+  .bai-tn table{min-width:0}.bai-tn thead{display:none}
+  .bai-tn tr{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;padding:8px 0;border-bottom:1px solid var(--rule)}
+  .bai-tn td{border:0;padding:0 4px}.bai-tn td:last-child{grid-column:1 / -1;color:var(--graphite);font-size:.85rem}
+}
