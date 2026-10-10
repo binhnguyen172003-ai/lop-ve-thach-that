@@ -1121,7 +1121,7 @@ const GHI_CHU = {
     const k = [ky, !!user && isTeacher, isAdmin, XP_DONG.length, TT_DONG.length, ...ds.map(b => [b.id || "", b.luc || 0, b.anh ? b.anh.length : 0, b.top, b.hocVien, b.loai, b.ghiChu, b.chucVu, b.biDanh, biDanhCua(b), b.mau, b.hang].join("~"))].join("|");
     if (k === sig) return; sig = k;
     if (!ds.length && !coThem()) { box.innerHTML = `<p class="nb-rong">Chưa có bài nổi bật ${TEN[ky]}. ${ky === "tuan" ? "Anh chị sẽ cập nhật bài đẹp mỗi tuần." : `Bài tuần trước tự chuyển sang đây khi ${ky === "thang" ? "qua 1 tuần" : "qua 1 tháng"}.`}</p>`; return; }
-    box.innerHTML = `<div class="gv-stage nb-stage">${ds.map((b, i) => `<figure class="nb-card${b.nv ? " nb-nv nv-" + nhanVienLop(b) : ""}" data-i="${i}">
+    box.innerHTML = `<div class="gv-stage nb-stage">${ds.map((b, i) => `<figure class="nb-card nb-tran${b.nv ? " nb-nv nv-" + nhanVienLop(b) : ""}" data-i="${i}" style="--anh:url(&quot;${esc((u => { try { return new URL(u, location.href).href; } catch (e) { return ""; } })(String(b.anh || "")).replace(/["\\\n]/g, ""))}&quot;)">
         ${b.nv ? `<span class="nb-nv-tag">${esc(nhanVienTen(b))}</span>` : ""}
         ${isAdmin && b.id ? `<button type="button" class="nb-more" data-mn="${esc(b.id)}" aria-label="Tuỳ chọn: sửa link, xoá bài">⋮</button>` : ""}
         <img src="${esc(b.anh)}" alt="${esc((b.loai || "Bài vẽ") + " · " + (b.hocVien || ""))}" ${i < 2 || b.nv ? 'loading="eager" fetchpriority="high"' : 'loading="lazy"'} decoding="async" draggable="false">
