@@ -2051,6 +2051,8 @@ function renderHomework() {
     const fb = myFeedback[h.id];
     const staffBar = `<span class="chip ok">${submitted}/${students} đã nộp</span><span class="chip">${graded} đã chấm</span>
         <button class="btn small primary" data-grade="${esc(h.id)}">${gradeOpen.has(h.id) ? "Đóng chấm bài" : "Chấm bài"}</button>
+        <button class="btn small" data-sua="${esc(h.id)}">Sửa</button>
+        <button class="btn small" data-nhan-ban="${esc(h.id)}">Nhân bản</button>
         <button class="btn small" data-del="${esc(h.id)}">Xoá</button>`;
     const studentBar = `<button class="btn small ${myProgress.baitap[h.id] ? "" : "primary"}" data-hw="${esc(h.id)}">${myProgress.baitap[h.id] ? "Đã nộp ✓" : "Đánh dấu đã nộp"}</button>`;
     const tt = isTeacher ? null : canLamLai(fb, myProgress.baitap[h.id]) ? ["lamlai", "Cần làm lại"] : fb ? ["cham", "Đã chấm"] : myProgress.baitap[h.id] ? ["nop", "Đã nộp"] : n < 0 ? ["tre", "Quá hạn"] : ["chua", "Chưa nộp"];
@@ -2071,6 +2073,8 @@ function renderHomework() {
   $$("#hw-list [data-nl]").forEach(b => b.onclick = () => nopLai(b.dataset.nl));
   $$("#hw-list .tc-t").forEach(b => b.onclick = () => { const v = b.getAttribute("aria-pressed") !== "true"; b.setAttribute("aria-pressed", v); gradeDraft[b.dataset.key] = v; });
   $$("#hw-list [data-del]").forEach(b => confirmButton(b, () => deleteHomework(b.dataset.del)));
+  $$("#hw-list [data-sua]").forEach(b => b.onclick = () => { const h = homework.find(x => x.id === b.dataset.sua); if (h) moSuaBaiTap(h, false); });
+  $$("#hw-list [data-nhan-ban]").forEach(b => b.onclick = () => { const h = homework.find(x => x.id === b.dataset.nhanBan); if (h) moSuaBaiTap(h, true); });
   $$("#hw-list [data-file]").forEach(b => b.onclick = () => downloadHomeworkFile(b));
   $$("#hw-list [data-grade]").forEach(b => b.onclick = () => {
     const id = b.dataset.grade; gradeOpen.has(id) ? gradeOpen.delete(id) : gradeOpen.add(id); renderHomework();
@@ -2202,6 +2206,42 @@ if (matchMedia("(max-width:900px)").matches) $("#hw-composer").open = false;
 /* ---------- Tệp bài tập: chọn trước, tải khi giao bài, chỉ báo thành công sau khi lưu ---------- */
 let homeworkFiles = [], homeworkBusy = false, homeworkUpload = null, homeworkCanceled = false;
 const homeworkDraftKey = () => mail ? "nhap-bt-" + mail : null;
+
+/* ---------- Sửa / Nhân bản bài đã giao: dùng lại đúng khung giao bài ---------- */
+// editingHomeworkId = id bài đang sửa (null = đang soạn bài mới hoặc bản sao). editingHomeworkKept = tệp cũ còn giữ lại.
+let editingHomeworkId = null, editingHomeworkKept = [];
+function renderKeptFiles() {
+  const box = $("#bt-file-existing"); if (!box) return;   // trang cũ còn nằm trong bộ nhớ đệm chưa có khung này
+  box.hidden = !editingHomeworkKept.length;
+  box.innerHTML = editingHomeworkKept.map((f,i) => `<li><span class="file-kind">${esc(fileExt(f.name).toUpperCase())}</span><span class="file-detail"><b>${esc(f.name)}</b><small>${fileSize(f.size)} · tệp đang có</small></span><button type="button" class="file-remove" data-remove-kept="${i}" aria-label="Bỏ tệp ${esc(f.name)}" ${homeworkBusy ? "disabled" : ""}>×</button></li>`).join("");
+  $$("[data-remove-kept]").forEach(b => b.onclick = () => { if (homeworkBusy) return; editingHomeworkKept.splice(Number(b.dataset.removeKept),1); $("#bt-file-error").textContent = ""; renderKeptFiles(); });
+}
+function datCheDoSoanBai(che) {   // "moi" | "sua" | "saochep"
+  const tieuDe = $("#hw-compose-title"), huy = $("#bt-huy-sua");
+  if (tieuDe) tieuDe.textContent = che === "sua" ? "Sửa bài tập" : che === "saochep" ? "Nhân bản bài tập" : "Giao bài tập mới";
+  $("#bt-submit").firstChild.textContent = che === "sua" ? "Lưu thay đổi " : che === "saochep" ? "Giao bản sao cho học viên " : "Giao bài cho học viên ";
+  if (huy) huy.hidden = che === "moi";
+}
+function moSuaBaiTap(h, nhanBan) {
+  if (homeworkBusy) return;
+  clearHomeworkFiles(); $("#bt-file-error").textContent = ""; $("#bt-status").textContent = ""; $("#bt-status").classList.remove("err");
+  $("#bt-ten").value = nhanBan ? `${h.ten} (bản sao)`.slice(0, 180) : (h.ten || "");
+  if ([...$("#bt-khoa").options].some(o => o.value === h.khoa)) $("#bt-khoa").value = h.khoa;
+  $("#bt-han").value = nhanBan ? "" : (h.han || "");
+  $("#bt-lop").value = h.lop || ""; $("#bt-mota").value = h.mota || "";
+  // Tệp đính kèm gắn với mã bài gốc nên bản sao không mang theo tệp; anh chị đính kèm lại nếu cần.
+  editingHomeworkId = nhanBan ? null : h.id;
+  editingHomeworkKept = nhanBan ? [] : (Array.isArray(h.tepDinhKem) ? h.tepDinhKem.filter(f => validAttachmentPath(f.path,h.id)) : []);
+  renderKeptFiles(); datCheDoSoanBai(nhanBan ? "saochep" : "sua");
+  $("#hw-composer").open = true;
+  $("#hw-composer").scrollIntoView({block:"start", behavior:matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth"});
+  $("#bt-ten").focus({preventScroll:true});
+}
+function thoatSuaBaiTap(xoaForm) {
+  editingHomeworkId = null; editingHomeworkKept = []; renderKeptFiles(); datCheDoSoanBai("moi");
+  if (xoaForm) { $("#f-bt").reset(); clearHomeworkFiles(); dropDraft(homeworkDraftKey()); $("#bt-file-error").textContent = ""; $("#bt-status").textContent = ""; }
+}
+if ($("#bt-huy-sua")) $("#bt-huy-sua").onclick = () => { if (!homeworkBusy) thoatSuaBaiTap(true); };
 function clearHomeworkFiles() {
   homeworkFiles.forEach(x => { if (x.preview) URL.revokeObjectURL(x.preview); });
   homeworkFiles = []; $("#bt-files").value = ""; renderFileQueue();
@@ -2277,13 +2317,20 @@ $("#f-bt").addEventListener("submit", async ev => {
   const files = [...homeworkFiles], error = validateFiles(files.map(x => x.file));
   if (error) { $("#bt-file-error").textContent = error; return; }
   const form = ev.currentTarget, st = $("#bt-status"), owner = user.uid, draftKey = homeworkDraftKey();
-  const data = {ten:$("#bt-ten").value.trim(),khoa:$("#bt-khoa").value,han:$("#bt-han").value,lop:$("#bt-lop").value.trim(),mota:$("#bt-mota").value.trim(),taoLuc:Date.now()};
+  // Đang sửa bài cũ: ghi đè đúng bài đó, giữ ngày giao gốc và các tệp chưa bị bỏ.
+  const goc = editingHomeworkId ? homework.find(h => h.id === editingHomeworkId) : null;
+  if (editingHomeworkId && !goc) { thoatSuaBaiTap(false); st.textContent = "Bài này vừa bị xoá nên không sửa được nữa. Bấm lại để giao thành bài mới."; st.classList.add("err"); return; }
+  const kept = goc ? [...editingHomeworkKept] : [];
+  if (kept.length + files.length > FILE_LIMITS.count) { $("#bt-file-error").textContent = `Mỗi bài tối đa ${FILE_LIMITS.count} tệp (đang có ${kept.length} tệp cũ). Bỏ bớt tệp rồi lưu lại.`; return; }
+  const boDi = goc ? (goc.tepDinhKem || []).filter(f => validAttachmentPath(f.path,goc.id) && !kept.some(k => k.path === f.path)) : [];
+  const data = {ten:$("#bt-ten").value.trim(),khoa:$("#bt-khoa").value,han:$("#bt-han").value,lop:$("#bt-lop").value.trim(),mota:$("#bt-mota").value.trim(),taoLuc:goc ? (goc.taoLuc || Date.now()) : Date.now()};
+  if (goc) data.suaLuc = Date.now();
   if (!data.ten) { st.textContent = "Vui lòng nhập tên bài tập."; st.classList.add("err"); $("#bt-ten").focus(); return; }
   homeworkBusy = true; homeworkCanceled = false;
   $("#bt-fields").disabled = true; $("#bt-cancel").disabled = false; $("#bt-upload-progress").value = 0;
   $("#bt-upload-state").hidden = !files.length;
-  st.classList.remove("err"); st.textContent = files.length ? "Đang gửi tệp. Giữ trang mở cho đến khi hoàn tất." : "Đang giao bài…";
-  const assignment = doc(collection(db,"baitap")), uploaded = [], paths = [];
+  st.classList.remove("err"); st.textContent = files.length ? "Đang gửi tệp. Giữ trang mở cho đến khi hoàn tất." : goc ? "Đang lưu thay đổi…" : "Đang giao bài…";
+  const assignment = goc ? doc(db,"baitap",goc.id) : doc(collection(db,"baitap")), uploaded = [], paths = [];
   let sdk;
   try {
     const assertSession = () => { if (homeworkCanceled || user?.uid !== owner || !isTeacher) throw Object.assign(new Error('canceled'),{code:'storage/canceled'}); };
@@ -2304,10 +2351,12 @@ $("#f-bt").addEventListener("submit", async ev => {
     assertSession(); homeworkUpload = null; $("#bt-cancel").disabled = true;
     $("#bt-upload-label").textContent = "Đang lưu bài tập…"; st.textContent = "Đang lưu bài tập. Chờ xác nhận trước khi đóng trang.";
     // Await the real Firestore result: no optimistic reset or success message.
-    await setDoc(assignment,{...data,tepDinhKem:uploaded});
+    await setDoc(assignment,{...data,tepDinhKem:[...kept,...uploaded]});
+    // Tệp cũ đã bị bỏ khỏi bài: dọn khỏi kho sau khi bài lưu xong (dọn lỗi cũng không ảnh hưởng bài).
+    if (boDi.length) { try { const s = sdk || await attachmentStorage(app); await Promise.allSettled(boDi.map(f => s.deleteObject(s.ref(s.storage,f.path)))); } catch {} }
     if (user?.uid === owner) {
-      form.reset(); clearHomeworkFiles(); dropDraft(draftKey);
-      st.textContent = `Đã giao bài${uploaded.length ? ` cùng ${uploaded.length} tệp đính kèm` : ""}.`; toast(st.textContent);
+      form.reset(); clearHomeworkFiles(); dropDraft(draftKey); thoatSuaBaiTap(false);
+      st.textContent = goc ? "Đã lưu thay đổi của bài tập." : `Đã giao bài${uploaded.length ? ` cùng ${uploaded.length} tệp đính kèm` : ""}.`; toast(st.textContent);
       hwView = "open"; $("#hw-search").value = ""; $("#hw-course").value = "";
       $$("#hw-filter .tab").forEach(x => x.setAttribute("aria-selected",x.dataset.h === "open"));
       renderHomework();
