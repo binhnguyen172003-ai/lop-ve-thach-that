@@ -627,17 +627,18 @@ function vongXoay(box, st, cards, dots, prev, next, onCenter) {
 /* ================= Hạng học viên (F → SSS+): leo hạng nhờ đi học, làm bài, có bài nổi bật ================= */
 // XP thưởng / thành tựu anh chị trao trên web (Firestore: xephang) — gộp với dữ liệu trong file
 let XP_DONG = [], TT_DONG = [];
+// Mốc XP từng hạng — đã tăng độ khó gấp 5 lần (10/10/2026)
 const RANK = [
   { ma: "F", xp: 0, mau: "#9aa3ad", kim: "Sắt", ten: "Người Mới", mo: "Vừa vào lớp, bắt đầu hành trình." },
-  { ma: "E", xp: 100, mau: "#3fcf5b", kim: "Đồng", ten: "Tập Sự", mo: "Đã có bài đầu tiên được chọn hoặc đi học đều." },
-  { ma: "D", xp: 200, mau: "#20c9a6", kim: "Thép", ten: "Học Việc", mo: "Đi học đều, bắt đầu có bài tốt." },
-  { ma: "C", xp: 400, mau: "#3ec6e0", kim: "Bạc", ten: "Chăm Chỉ", mo: "Tiềm năng bắt đầu lộ rõ." },
-  { ma: "B", xp: 700, mau: "#3d6bff", kim: "Vàng", ten: "Dân Chuyên", mo: "Nền tảng chắc, làm bài đầy đủ." },
-  { ma: "A", xp: 1400, mau: "#9b5cff", kim: "Bạch Kim", ten: "Lão Làng", mo: "Trên mức trung bình của lớp." },
-  { ma: "S", xp: 3400, mau: "#ffc400", kim: "Kim Cương", ten: "Cao Thủ", mo: "Được cả lớp công nhận." },
-  { ma: "SS", xp: 5400, mau: "#ff8a1f", kim: "Tinh Anh", ten: "Đại Cao Thủ", mo: "Nhóm học viên giỏi nhất." },
-  { ma: "SSS", xp: 7400, mau: "#ff3b3b", kim: "Huyền Thoại", ten: "Bậc Thầy", mo: "Rất ít người đạt được." },
-  { ma: "SSS+", xp: 9400, mau: "rainbow", kim: "Thách Đấu", ten: "Huyền Thoại Thạch Thất", mo: "Đỉnh cao tuyệt đối — vượt mọi giới hạn." },
+  { ma: "E", xp: 500, mau: "#3fcf5b", kim: "Đồng", ten: "Tập Sự", mo: "Đã có bài đầu tiên được chọn hoặc đi học đều." },
+  { ma: "D", xp: 1000, mau: "#20c9a6", kim: "Thép", ten: "Học Việc", mo: "Đi học đều, bắt đầu có bài tốt." },
+  { ma: "C", xp: 2000, mau: "#3ec6e0", kim: "Bạc", ten: "Chăm Chỉ", mo: "Tiềm năng bắt đầu lộ rõ." },
+  { ma: "B", xp: 3500, mau: "#3d6bff", kim: "Vàng", ten: "Dân Chuyên", mo: "Nền tảng chắc, làm bài đầy đủ." },
+  { ma: "A", xp: 7000, mau: "#9b5cff", kim: "Bạch Kim", ten: "Lão Làng", mo: "Trên mức trung bình của lớp." },
+  { ma: "S", xp: 17000, mau: "#ffc400", kim: "Kim Cương", ten: "Cao Thủ", mo: "Được cả lớp công nhận." },
+  { ma: "SS", xp: 27000, mau: "#ff8a1f", kim: "Tinh Anh", ten: "Đại Cao Thủ", mo: "Nhóm học viên giỏi nhất." },
+  { ma: "SSS", xp: 37000, mau: "#ff3b3b", kim: "Huyền Thoại", ten: "Bậc Thầy", mo: "Rất ít người đạt được." },
+  { ma: "SSS+", xp: 47000, mau: "rainbow", kim: "Thách Đấu", ten: "Huyền Thoại Thạch Thất", mo: "Đỉnh cao tuyệt đối — vượt mọi giới hạn." },
 ];
 // Cách tính điểm kinh nghiệm (XP) — anh chị sửa số ở đây nếu muốn
 const XP = { buoi: 10, baiTap: 15, baiHoc: 5, diemGioi: 10, noiBat: 100, top1: 25 };
@@ -650,10 +651,9 @@ function tinhRank(dd, prog, fb, ten) {
   const baiTap = Object.values((prog || {}).baitap || {}).filter(sau).length;
   const baiHoc = Object.values((prog || {}).bai || {}).filter(sau).length;
   const gioi = Object.values(fb || {}).filter(x => x && sau(x.luc) && soDiem(x.diem) !== null && soDiem(x.diem) >= 8).length;
-  const bo = t => String(t || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
-  const nb = ten ? nbAll().filter(b => !b.tg && b.hocVien && b.ngay > RANK_BAT_DAU && bo(ten).endsWith(bo(b.hocVien))) : [];
+  const nb = ten ? nbAll().filter(b => !b.tg && b.hocVien && b.ngay > RANK_BAT_DAU && cungNguoi(ten, b.hocVien)) : [];
   const top1 = nb.filter(b => b.hang === 1).length;
-  const thuongDs = ten ? [...(XP_THUONG || []), ...XP_DONG].filter(x => x.hocVien && bo(ten).endsWith(bo(x.hocVien))) : [];
+  const thuongDs = ten ? [...(XP_THUONG || []), ...XP_DONG].filter(x => x.hocVien && cungNguoi(ten, x.hocVien)) : [];
   const thuong = thuongDs.reduce((a, x) => a + (Number(x.xp) || 0), 0);
   const xp = buoi * XP.buoi + baiTap * XP.baiTap + baiHoc * XP.baiHoc + gioi * XP.diemGioi + nb.length * XP.noiBat + top1 * XP.top1 + thuong;
   let i = 0; RANK.forEach((r, j) => { if (xp >= r.xp) i = j; });
@@ -826,9 +826,16 @@ const THANH_TUU = [
   { ma: "thithu", ten: "Thủ Khoa Thi Thử", mo: "Điểm cao nhất một đợt thi thử", dv: "lần thủ khoa", moc: [5, 10, 15, 25], mau: "#ff4d5e", trao: true },
 ];
 const CAP = [{ ten: "Chưa mở", mau: "#3a3f4b" }, { ten: "Đồng", mau: "#d08a52" }, { ten: "Bạc", mau: "#dfe6f0" }, { ten: "Vàng", mau: "#ffcf3a" }, { ten: "Kim Cương", mau: "#7ff3ff" }];
+// Cùng một người? Khớp cả tên (không phân biệt dấu, hoa thường). Bản ghi từ 2 chữ trở lên được là phần cuối
+// họ tên đầy đủ ("Văn Bảo" ↔ "Nguyễn Văn Bảo"); tên 1 chữ ("Linh") chỉ khớp đúng "Linh" — không cộng nhầm cho mọi bạn tên …Linh
+function cungNguoi(day, ghi) {
+  const chuan = t => String(t || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").replace(/Đ/g, "d").toLowerCase().replace(/\s+/g, " ").trim();
+  const a = chuan(day), b = chuan(ghi); if (!a || !b) return false;
+  return a === b || (b.includes(" ") && a.endsWith(" " + b));
+}
 function tinhThanhTuu(dd, prog, fb, ten, hw = []) {
   const bo = t => String(t || "").normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/đ/g, "d").toLowerCase().trim();
-  const cua = x => ten && x && bo(ten).endsWith(bo(x));
+  const cua = x => ten && x && cungNguoi(ten, x);
   const loai = t => { t = bo(t); return /bo cuc|my thuat 2|\bmt2\b|sac do/.test(t) ? "bocuc" : /\bmau\b|trang tri/.test(t) ? "mau" : /hinh hoa|tuong|chan dung|tinh vat|ky hoa|dung hinh|khoi|than chi/.test(t) ? "hinhhoa" : ""; };
   const dem = { mau: 0, hinhhoa: 0, bocuc: 0, chuyencan: 0, diemvang: 0, noibat: 0, quanquan: 0, chamchi: 0, thithu: 0 };
   const nop = (prog || {}).baitap || {};
@@ -2619,10 +2626,11 @@ function renderDoiTen() {
 function renderRoster() {
   if (!roster.length) { $("#roster").innerHTML = `<tbody><tr><td class="muted">Chưa có học viên nào được duyệt.</td></tr></tbody>`; return; }
   const total = lessons.length;
-  $("#roster").innerHTML = `<thead><tr><th>Họ tên</th><th>Gmail</th><th>Chương trình</th><th>Cơ sở</th><th>Điện thoại</th><th>Đã học</th><th>Ngày duyệt</th><th></th></tr></thead><tbody>` +
+  $("#roster").innerHTML = `<thead><tr><th>Học viên</th><th>Chương trình</th><th>Cơ sở</th><th>Điện thoại</th><th>Đã học</th><th>Ngày duyệt</th><th></th></tr></thead><tbody>` +
     roster.map(r => {
       const p = progressAll[r.id]; const n = p && p.bai ? lessons.filter(l => p.bai[l.id]).length : 0;
-      return `<tr><td>${esc(r.ten)}${r.namSinh ? `<br><span class="muted num">Sinh năm ${esc(r.namSinh)}</span>` : ""}</td><td>${esc(r.gmail)}</td><td>${esc(r.chuongTrinh || r.lop)}${oChonKhoa(r.id, khoaCuaHv(r))}</td><td>${esc(r.coso)}</td>
+      // Tên ở trên, Gmail + năm sinh ở dưới (một cột, tên không bị xuống dòng từng chữ)
+      return `<tr><td class="hv-o"><b>${esc(r.ten || "(chưa có tên)")}</b><small>${esc(r.gmail || r.id)}</small>${r.namSinh ? `<small class="num">Sinh năm ${esc(r.namSinh)}</small>` : ""}</td><td>${esc(r.chuongTrinh || r.lop)}${(() => { const k = khoaCuaHv(r); return `<details class="kc-gon"><summary><b class="num">${k.length}/${KHOA_GOC.length}</b> khoá${k.length ? ": " + esc(k.join(", ")) : ""} <span class="linkish">Sửa</span></summary>${oChonKhoa(r.id, k)}</details>`; })()}</td><td>${esc(r.coso)}</td>
         <td class="num">${r.sdt ? "HV: " + esc(r.sdt) : ""}${r.sdtPh ? "<br>PH: " + esc(r.sdtPh) : ""}</td>
         <td class="num">${n}/${total}</td><td class="num">${fmtDate(r.duyetLuc)}</td>
         <td><button class="btn small" data-rm="${esc(r.id)}">Thu hồi</button>${teachers.some(t => t.id === r.id) ? `<span class="chip ok">Đang là GV</span>` : `<button class="btn small" data-lengv="${esc(r.id)}">Trao quyền GV</button>`}</td></tr>`;
@@ -3235,8 +3243,10 @@ function renderKho() {
   body.innerHTML = `<div class="kho-tabs" role="tablist">${[["ton", "📦 Tồn kho"], ["gd", "➕ Nhập · Bán"], ["don", "🧾 Đơn chờ tiền"], ["ll", "📈 Lãi lỗ tháng"]].map(([k, t]) => `<button type="button" data-kt="${k}" aria-selected="${khoTab === k}">${t}</button>`).join("")}</div>
     <div class="kho-p" ${khoTab === "ton" ? "" : "hidden"}>
       <div class="kho-so"><div><b>${ds.reduce((a, m) => a + (m.ton || 0), 0)}</b><span>món đang tồn</span></div><div><b>${vnd(tongVon)}</b><span>vốn nằm trong kho</span></div><div><b>${vnd(tongBan)}</b><span>nếu bán hết thu về</span></div><div><b>${khoSapHet().length}</b><span>món sắp hết (≤3)</span></div></div>
-      <div class="kho-bang"><div class="kho-r kho-h"><span>Món</span><span>Vốn</span><span>Giá bán</span><span>Tồn</span><span></span></div>
-      ${ds.map(m => `<div class="kho-r ${(m.ton || 0) <= 3 ? "it" : ""}"><span><b>${esc(m.ten)}</b><small>${esc(m.loai)}</small></span><span>${vnd(m.von)}</span><span>${vnd(m.gia)}</span><span class="num"><b>${m.ton || 0}</b></span>
+      <label class="kho-tim" for="kho-tim">Tìm món<input id="kho-tim" type="search" autocomplete="off" placeholder="Gõ tên món hoặc loại (không dấu cũng được)" value="${esc(khoTim)}"></label>
+      <p class="muted kho-tim-kq" id="kho-tim-kq" aria-live="polite"></p>
+      <div class="kho-bang kho-cuon"><div class="kho-r kho-h"><span>Món</span><span>Vốn</span><span>Giá bán</span><span>Tồn</span><span></span></div>
+      ${ds.map(m => `<div class="kho-r ${(m.ton || 0) <= 3 ? "it" : ""}" data-tim="${esc(timTen(m.ten + " " + (m.loai || "")))}"><span><b>${esc(m.ten)}</b><small>${esc(m.loai)}</small></span><span>${vnd(m.von)}</span><span>${vnd(m.gia)}</span><span class="num"><b>${m.ton || 0}</b></span>
         <span><button type="button" class="linkish" data-ks="${esc(m.ma)}">Sửa</button></span></div>`).join("")}</div>
       <p class="muted kho-note">Bấm "Sửa" để chỉnh giá hoặc số tồn sau khi kiểm kho. <button class="btn small" type="button" id="kho-ve0" title="Mọi món về tồn 0; giữ giá, lịch sử nhập bán và lãi lỗ">Đưa tồn về 0 để kiểm kho</button><button type="button" class="linkish" id="kho-csv-ton">Tải bảng tồn kho (CSV, mở bằng Google Trang tính)</button></p>
     </div>
@@ -3270,6 +3280,12 @@ function renderKho() {
   bindDon();
   body.querySelectorAll("[data-kt]").forEach(b => b.onclick = () => { khoTab = b.dataset.kt; renderKho(); });
   body.querySelectorAll("[data-ks]").forEach(b => b.onclick = () => suaMon(b.dataset.ks));
+  // Tìm món trong kho: lọc ngay khi gõ; dữ liệu cập nhật lúc đang gõ vẫn giữ chữ và con trỏ
+  { const o = $("#kho-tim"); if (o) { const loc = () => { khoTim = o.value; const q = timTen(o.value); let n = 0;
+      body.querySelectorAll(".kho-cuon .kho-r[data-tim]").forEach(r => { const co = !q || r.dataset.tim.includes(q); r.hidden = !co; if (co) n++; });
+      $("#kho-tim-kq").textContent = q ? (n ? `${n} món khớp “${o.value.trim()}”` : `Không có món nào khớp “${o.value.trim()}”`) : ""; };
+    o.oninput = loc; loc(); if (khoTimFocus) { o.focus(); try { o.setSelectionRange(o.value.length, o.value.length); } catch (e) {} }
+    o.onfocus = () => { khoTimFocus = true; }; o.onblur = () => { khoTimFocus = false; }; } }
   body.querySelectorAll("[data-kx]").forEach(b => confirmButton(b, () => xoaGD(b.dataset.kx)));
   const sel = $("#kho-thang"); if (sel) sel.onchange = () => { khoThang = sel.value; renderKho(); };
   $("#kho-csv-ton").onclick = () => taiCSV("ton-kho-" + todayVN() + ".csv", [["Món", "Loại", "Giá vốn", "Giá bán", "Tồn", "Vốn tồn"], ...ds.map(m => [m.ten, m.loai, m.von, m.gia, m.ton || 0, (m.ton || 0) * (m.von || 0)])]);
@@ -3301,6 +3317,7 @@ function renderKho() {
 }
 // Số kiểu Việt Nam: "120.000" / "1,5" / "12" → số; sai thì NaN (không lưu thành 0 âm thầm)
 const soVN = x => { let t = String(x ?? "").trim().replace(/\s|đ|₫/gi, ""); if (/^\d{1,3}([.,]\d{3})+$/.test(t)) t = t.replace(/[.,]/g, ""); else t = t.replace(",", "."); return t === "" ? NaN : Number(t); };
+let khoTim = "", khoTimFocus = false;
 async function suaMon(ma) {
   const m = khoMon[ma]; if (!m) return;
   const ton = prompt(`Số tồn thực tế của "${m.ten}":`, m.ton || 0); if (ton === null) return;
@@ -4374,10 +4391,54 @@ submitTo($("#f-hv"), $("#hv-status"), "Đang duyệt…", "Đã duyệt. Ngườ
   return setDoc(doc(db, "hocvien", g), { ten: $("#hv-ten").value.trim(), gmail: g, lop: $("#hv-lop").value.trim(), chuongTrinh: $("#hv-lop").value.trim(), coso: $("#hv-cs").value, sdt: "", duyetLuc: Date.now() });
 });
 
-submitTo($("#f-gv"), $("#gv-status"), "Đang trao quyền…", "Đã trao quyền giáo viên. Người này đăng nhập Gmail đó là có quyền giáo viên.", () => {
-  const g = $("#gv-mail").value.trim().toLowerCase();
-  return setDoc(doc(db, "giaovien", g), { ten: $("#gv-ten").value.trim(), gmail: g, sdt: "", coso: $("#gv-cs").value, chucVu: $("#gv-cv").value, ghiChu: "", duyetLuc: Date.now() }, { merge: true });
-});
+/* ---------- Quản lý: thanh tìm kiếm đầu phần Duyệt tài khoản (lọc yêu cầu, đổi tên, học viên, giáo viên) ---------- */
+function locQL() {
+  const o = $("#ql-tim"); if (!o) return;
+  const q = timTen(o.value); let hien = 0, tong = 0;
+  $$("#requests .req-item, #doiten-list > *, #roster tbody tr, #teachers tbody tr").forEach(el => {
+    if (el.querySelector("td[colspan]") || el.matches(".muted, p")) return; // dòng "chưa có…"
+    tong++; const co = !q || timTen(el.textContent).includes(q); el.hidden = !co; if (co) hien++;
+  });
+  $("#ql-tim-kq").textContent = q ? (hien ? `Thấy ${hien} kết quả cho “${o.value.trim()}”.` : `Không thấy ai khớp “${o.value.trim()}”. Thử gõ Gmail hoặc số điện thoại.`) : "";
+}
+/* ---------- Trao quyền giáo viên: tìm người trước, chọn chức vụ rồi mới trao ---------- */
+function veTimGV() {
+  const box = $("#gv-kq"), o = $("#ql-tim"), khung = $("#gv-kq-o"); if (!box || !o) return;
+  const raw = o.value.trim().toLowerCase(), q = timTen(raw);
+  if (khung) khung.hidden = q.length < 2; // dùng chung thanh tìm kiếm đầu phần Duyệt tài khoản
+  if (q.length < 2) { box.innerHTML = ""; return; }
+  const nguon = [...roster.map(r => ({ id: r.id, ten: r.ten || "", gmail: r.gmail || r.id, sdt: r.sdt || "", coso: r.coso || "", nhan: "Học viên" })),
+    ...requests.map(r => ({ id: r.id, ten: r.ten || "", gmail: r.gmail || r.id, sdt: r.sdt || "", coso: r.coso || "", nhan: "Đang chờ duyệt", yc: true }))]
+    .filter((x, i, a) => a.findIndex(y => y.id === x.id) === i);
+  const kq = nguon.filter(x => timTen(`${x.ten} ${x.gmail} ${x.sdt}`).includes(q)).slice(0, 8);
+  const laMail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(raw) && !nguon.some(x => x.id === raw);
+  const gv = id => teachers.find(t => t.id === id);
+  box.innerHTML = kq.map(x => `<div class="gv-kq-r"><span><b>${esc(x.ten || x.gmail)}</b><small>${esc(x.gmail)} · ${esc(x.nhan)}${x.coso ? " · " + esc(x.coso) : ""}</small></span>
+      ${gv(x.id) ? `<span class="chip ok">Đã là ${esc(gv(x.id).chucVu || "giáo viên")}</span>` : `${chonChucVu("gv-cvr", "", `data-cvr="${esc(x.id)}" aria-label="Chức vụ cho ${esc(x.ten)}"`)}<button class="btn small primary" type="button" data-trao="${esc(x.id)}">Trao quyền</button>`}</div>`).join("")
+    + (laMail ? `<div class="gv-kq-r gv-moi"><span><b>${esc(raw)}</b><small>Chưa có trong danh sách: điền tên để trao quyền trực tiếp</small></span>
+      <input id="gv-ten-moi" maxlength="80" placeholder="Họ tên" aria-label="Họ tên"><select id="gv-cs-moi" aria-label="Cơ sở"><option>Bình Phú</option><option>Kim Quan</option><option>Online</option></select>
+      ${chonChucVu("gv-cvr", "", `data-cvr="${esc(raw)}"`)}<button class="btn small primary" type="button" data-trao="${esc(raw)}" data-moi="1">Trao quyền</button></div>` : "")
+    || `<p class="muted">Không thấy ai khớp “${esc(o.value.trim())}”. Gõ đủ Gmail để trao quyền trực tiếp.</p>`;
+  box.querySelectorAll("[data-trao]").forEach(b => b.onclick = async () => {
+    if (b.disabled) return;
+    const id = b.dataset.trao, x = nguon.find(y => y.id === id) || {}, cv = (box.querySelector(`[data-cvr="${CSS.escape(id)}"]`) || {}).value || "Trợ giảng";
+    const ten = b.dataset.moi ? $("#gv-ten-moi").value.trim() : x.ten;
+    if (b.dataset.moi && !ten) { toast("Điền họ tên trước khi trao quyền.", "err"); $("#gv-ten-moi").focus(); return; }
+    const batch = writeBatch(db);
+    batch.set(doc(db, "giaovien", id), { ten, gmail: x.gmail || id, sdt: x.sdt || "", coso: b.dataset.moi ? $("#gv-cs-moi").value : (x.coso || ""), chucVu: cv,
+      ghiChu: x.nhan === "Học viên" ? "Trao từ học viên" : "", duyetLuc: Date.now() }, { merge: true });
+    if (x.yc) batch.delete(doc(db, "yeucau", id)); // đang chờ duyệt: trao quyền xong thì bỏ phiếu khỏi hàng chờ
+    const nhan = b.textContent; b.disabled = true; b.textContent = "Đang trao…";
+    const p = timed("Trao quyền giáo viên", batch.commit()), ok = `Đã trao quyền ${cv} cho ${ten || id}.`;
+    try {
+      if (await choXacNhan(p) === "ok") { toast(ok); veTimGV(); return; }
+      toast(CHO_MANG, "err"); p.then(() => { toast(ok); veTimGV(); }, () => { b.disabled = false; b.textContent = nhan; toast("Chưa trao được quyền. Kiểm tra mạng rồi thử lại.", "err"); });
+    } catch (e) { b.disabled = false; b.textContent = nhan; toast("Chưa trao được quyền. Kiểm tra mạng rồi thử lại.", "err"); }
+  });
+}
+{ const theo = new MutationObserver(() => { locQL(); veTimGV(); });
+  ["#requests", "#doiten-list", "#roster", "#teachers"].forEach(sel => { const e = $(sel); if (e) theo.observe(e, { childList: true }); });
+  if ($("#ql-tim")) $("#ql-tim").oninput = () => { locQL(); veTimGV(); }; }
 
 /* ---------- Nạp giáo trình có sẵn ---------- */
 $("#btn-seed").onclick = async () => {
