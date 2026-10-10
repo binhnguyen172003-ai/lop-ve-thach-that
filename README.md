@@ -43,6 +43,8 @@ Nguyên tắc: **mỗi việc chỉ sửa đúng một file**. Nội dung hay đ
 ├── sw.js                   Bộ nhớ đệm: mở tức thì lần sau, xem được khi mất mạng
 ├── manifest.webmanifest    Cho phép "Thêm vào màn hình chính" như một ứng dụng
 ├── robots.txt              Cho phép Google đọc web
+├── sitemap.xml             Danh sách trang gửi Google Search Console
+├── 404.html                Gõ sai địa chỉ → tự đưa về trang chủ
 └── .nojekyll               Giữ GitHub Pages phục vụ file nguyên trạng
 ```
 
