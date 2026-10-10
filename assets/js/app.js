@@ -2431,8 +2431,9 @@ function renderRequests() {
   $("#requests").innerHTML = requests.map(r => {
     const gv = r.vaiTro === "giaovien";
     return `<div class="req-item">
-      <div class="req-head"><b>${v(r.ten)}</b> <span class="chip ${gv ? "" : "ok"}">${gv ? "Giáo viên" : "Học viên"}</span>
+      <div class="req-head"><div class="req-ai"><b>${v(r.ten)}</b> <span class="chip ${gv ? "" : "ok"}">${gv ? "Giáo viên" : "Học viên"}</span>
         <span class="muted num">Gửi ${fmtDate(r.guiLuc)}</span></div>
+        <div class="req-nut"><button class="btn small" data-no="${esc(r.id)}">Từ chối</button><button class="btn small primary" data-ok="${esc(r.id)}">✓ ${gv ? "Duyệt giáo viên" : "Duyệt học viên"}</button></div></div>
       <p class="req-tom">${tomTat(r) || `<span class="muted">Chưa điền thông tin lớp</span>`}</p>
       <div class="req-lh">${soDt(r.sdtPh, "bố mẹ")}${soDt(r.sdt, gv ? "điện thoại" : "của em")}
         <span class="req-mail">${v(r.gmail)}</span></div>
@@ -2444,9 +2445,7 @@ function renderRequests() {
           ${line("Trường", [r.truong, r.lopHoc].filter(Boolean).join(" · "))}${line("Nhà ở", r.khuVuc)}
           ${line("Mục tiêu", [r.khoi, r.namThi, r.mucTieu].filter(Boolean).join(" · "))}${line("Lời nhắn", r.ghiChu)}
         </div></details>
-      ${gv ? "" : `<div class="kc-wrap"><span class="muted">Cấp khoá học (em sẽ thấy nút "Vào học" ở các khoá này):</span>${oChonKhoa(r.id, khoaTuChuongTrinh(r.chuongTrinh))}</div>`}
-      <div class="ctas" style="margin-top:12px"><button class="btn primary" data-ok="${esc(r.id)}">${gv ? "Duyệt giáo viên" : "Duyệt học viên"}</button>
-        <button class="btn" data-no="${esc(r.id)}">Từ chối</button></div></div>`;
+      ${gv ? "" : `<div class="kc-wrap"><span class="muted">Cấp khoá học <small>· chọn trước khi bấm Duyệt, em sẽ thấy nút "Vào học" ở các khoá này</small></span>${oChonKhoa(r.id, khoaTuChuongTrinh(r.chuongTrinh))}</div>`}</div>`;
   }).join("");
   $$("#requests [data-ok]").forEach(b => b.onclick = async () => {
     const r = requests.find(x => x.id === b.dataset.ok); if (!r) return;

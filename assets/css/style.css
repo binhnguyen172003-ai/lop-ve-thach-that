@@ -273,8 +273,10 @@ nav .acct{position:sticky;right:0;background:var(--paper);box-shadow:-14px 0 12p
 /* Thẻ yêu cầu duyệt */
 .req-list{display:grid;gap:12px}
 .req-item{border:1px solid var(--rule);border-radius:var(--r);padding:16px;background:var(--paper)}
-.req-head{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:8px}
-.req-head .muted{margin-left:auto;font-size:.85rem}
+.req-head{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:flex-start;justify-content:space-between;margin-bottom:10px}
+.req-ai{display:flex;flex-wrap:wrap;gap:4px 8px;align-items:center;min-width:0}.req-ai b{font-size:1.05rem}
+.req-ai .muted{flex-basis:100%;font-size:.8rem}
+.req-nut{display:flex;gap:8px;margin-left:auto}.req-nut .btn{min-height:40px;white-space:nowrap}
 .req-body{display:grid;gap:2px;font-size:.93rem;overflow-wrap:anywhere}
 /* Chấm bài dạng thẻ */
 .g-row{padding-block:12px;border-bottom:1px dashed var(--rule);display:grid;gap:8px}
