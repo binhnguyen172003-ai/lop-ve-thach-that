@@ -274,6 +274,7 @@ function route() {
   });
   $("#acc-nav").dataset.page = page;
   $$("#tab-duoi a").forEach(x => { if (x.getAttribute("href") === "#" + page) x.setAttribute("aria-current", "page"); else x.removeAttribute("aria-current"); });
+  viTriTab();
   $$("#acc-nav [data-acc]").forEach(a => { if (a.dataset.acc === page) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current"); });
   // Thanh tài khoản cuộn ngang: luôn kéo mục đang mở vào giữa, không để bị cắt nửa chữ
   { const on = $("#acc-nav [aria-current='page']"), w = $("#acc-nav .wrap"); if (on && w) requestAnimationFrame(() => w.scrollTo({ left: on.offsetLeft - (w.clientWidth - on.offsetWidth) / 2, behavior: "smooth" })); }
@@ -3146,6 +3147,13 @@ function renderDash(show) {
     tab.innerHTML = nut("#tai-khoan", "tq", "Tổng quan") + nut("#bai-tap", "bt", "Bài tập", can.length) + nut("#giao-trinh", "gt", "Giáo trình") + nut("#lam-viec", "td", "Trao đổi", tin);
   }
   const h = location.hash.slice(1); $$("#tab-duoi a").forEach(x => { if (x.getAttribute("href") === "#" + h) x.setAttribute("aria-current", "page"); });
+  viTriTab();
+}
+// Thanh dưới đáy: báo cho CSS biết có bao nhiêu nút và nút nào đang mở, để vòng tròn trượt tới đúng chỗ
+function viTriTab() {
+  const t = $("#tab-duoi"); if (!t) return;
+  const ds = [...t.querySelectorAll("a")], i = ds.findIndex(x => x.hasAttribute("aria-current"));
+  t.style.setProperty("--n", ds.length || 1); if (i >= 0) t.style.setProperty("--i", i); t.classList.toggle("co-chon", i >= 0);
 }
 function renderTiles() {
   const box = $("#acc-tiles"); if (!box) return;

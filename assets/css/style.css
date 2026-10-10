@@ -3513,3 +3513,15 @@ table.roster.cc-cp{min-width:0}
 #pw-box .pw-hint{font-size:.8rem;line-height:1.45;color:var(--graphite);margin:0}
 #pw-box .pw-hint b{color:var(--ink)}
 #f-new{gap:12px}
+
+/* Thanh dưới đáy: vòng tròn vàng TRƯỢT sang nút được chọn (kiểu Navigation Tabs V5 số 2) thay vì từng nút tự bật nền */
+@media(max-width:760px){
+  body.co-tab .tab-duoi:not([hidden]){--n:5;--i:0;--o:52px}
+  body.co-tab .tab-duoi.co-chon::before{content:"";position:absolute;z-index:0;top:-22px;width:var(--o);height:var(--o);border-radius:50%;
+    left:calc(4px + (100% - 8px) / var(--n) * (var(--i) + .5) - var(--o) / 2);
+    background:#f5c400;box-shadow:0 0 0 6px var(--paper),0 10px 22px -6px rgba(245,196,0,.7);
+    transition:left .5s cubic-bezier(.34,1.45,.64,1)}
+  .tab-duoi a{z-index:1}
+  .tab-duoi a[aria-current="page"] svg{background:transparent;box-shadow:none;transform:translateY(-26px);transition:transform .45s cubic-bezier(.34,1.56,.64,1) .05s,color .3s}
+}
+@media(max-width:760px) and (prefers-reduced-motion:reduce){body.co-tab .tab-duoi.co-chon::before{transition:none}}
