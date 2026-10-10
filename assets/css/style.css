@@ -975,6 +975,10 @@ html,body{overflow-x:clip}
 .gv-dots button{width:28px;height:40px;border:0;background:none;padding:0;cursor:pointer;display:grid;place-items:center}
 .gv-dots button::after{content:"";width:8px;height:8px;border-radius:4px;background:var(--rule);transition:width .3s,background .3s}
 .gv-dots button[aria-current="true"]::after{width:20px;background:var(--accent)}
+/* Màn hẹp, nhiều chấm: chấm co lại chứ không ép hai nút mũi tên thành hình bầu dục */
+.gv-nav,.mxh-nav{flex:0 0 auto}
+.gv-dots,.mxh-dots{flex:0 1 auto;min-width:0}
+.gv-dots button,.mxh-dots button{flex:0 1 28px;min-width:10px}
 @media (max-width:640px){
   .gv-stage{height:360px}
   .gv-stage .gv{width:min(70vw,260px);margin-left:calc(min(70vw,260px) / -2);height:340px}
@@ -2806,8 +2810,9 @@ button:disabled:not(.btn){opacity:.45}
 .gt-td-ds li{display:flex;align-items:center;gap:6px}.gt-td-ds b{color:var(--ink)}
 .gt-dot{width:10px;height:10px;border-radius:50%;flex:none}
 .gt-dot.xong{background:#2ec4b6}.gt-dot.dang{background:#f2c94c}.gt-dot.chua{background:transparent;border:1.5px solid var(--graphite)}
-.gt-tiep{display:grid!important;justify-items:start;gap:0;text-align:left;width:100%;min-height:52px;padding:8px 14px!important;white-space:normal}
-.gt-tiep small{font-size:.72rem;opacity:.75;font-weight:600}.gt-tiep span{font-weight:700;line-height:1.3}
+.gt-tiep{display:grid!important;grid-template-columns:minmax(0,1fr) auto;align-items:center;justify-items:start;gap:2px 14px;text-align:left;width:100%;min-height:60px;padding:12px 20px!important;border-radius:18px;white-space:normal}
+.gt-tiep small{grid-column:1;font-size:.8rem;opacity:.75;font-weight:600}.gt-tiep span{grid-column:1;font-weight:700;line-height:1.35}
+.gt-tiep i{grid-column:2;grid-row:1/span 2;font-style:normal;font-size:1.25rem;line-height:1}
 .gt-xong-het{font-weight:700;color:#2ec4b6}
 .gt-loc{margin:0}
 /* Thẻ Lộ trình + thẻ bài */
