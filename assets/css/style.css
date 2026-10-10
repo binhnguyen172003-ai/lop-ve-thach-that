@@ -3078,3 +3078,16 @@ button.cc-chip{cursor:pointer;min-height:24px}
 }
 .cc-hom-nut{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}
 .cc-hom h3 small{font-weight:500;font-size:.8rem;margin-left:6px}.cc-do{color:#e2565e}
+/* Điện thoại: mỗi học viên là một thẻ gọn (~3 dòng) trong khung cuộn dọc, thay vì thẻ dài 7 dòng */
+@media (max-width:760px){
+  .ql-bang tr{display:grid;grid-template-columns:1fr 1fr auto;grid-template-areas:"ten ten do" "di bt cc" "td td nut";gap:6px 10px;padding:10px 12px;margin-bottom:8px}
+  .ql-bang td{display:block;padding:0;min-width:0}
+  .ql-bang td::before{display:block;font-size:.66rem;letter-spacing:.04em;text-transform:uppercase;margin-bottom:1px}
+  .ql-bang td:nth-child(1){grid-area:ten}.ql-bang td:nth-child(2){grid-area:di}.ql-bang td:nth-child(3){grid-area:cc;text-align:right}
+  .ql-bang td:nth-child(4){grid-area:td}.ql-bang td:nth-child(5){grid-area:bt}.ql-bang td:nth-child(6){grid-area:do;align-self:start}
+  .ql-bang td:nth-child(6)::before{display:none}.ql-bang td:nth-child(7){grid-area:nut;align-self:end}
+  .ql-bang td:nth-child(1) span.muted{font-size:.74rem}
+  .ql-bang td span.muted{font-size:.7rem}.ql-bang td .ql-bar{min-width:0;margin:3px 0}
+  .ql-bang td .btn.small{min-height:34px;padding:4px 12px}
+  .ql-bang tr>td[colspan]{grid-column:1/-1}
+}
