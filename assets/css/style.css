@@ -2439,7 +2439,7 @@ body.hop-mo{overflow:hidden}
 .gallery .gal-them b{font-size:.86rem;font-weight:600}
 
 /* ===== Video tham khảo (miễn phí, ghi nguồn tác giả) ===== */
-.vid-tk{margin-top:36px}
+.vid-tk,.nang-cao{margin-top:36px}
 .vid-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px;padding:0;margin:0;list-style:none;counter-reset:none}
 .vid-list li{background:var(--sheet);border:1px solid var(--rule);border-radius:12px;padding:0}
 .vid-list a{display:block;padding:12px 14px;color:inherit;text-decoration:none;font-weight:600}
@@ -2747,3 +2747,9 @@ button:disabled:not(.btn){opacity:.45}
 .tl-bub,.msg,.vh-the,.card,.tt-de,.bg-bang span,.lv-tb,.hop{overflow-wrap:anywhere;word-break:break-word}
 .tl-bub img,.msg img,.hop img,.tt-de img{max-width:100%;height:auto}
 .tl-bub a,.msg a{word-break:break-all}
+
+/* Hình minh hoạ trong bài giáo trình */
+.bai-hinh-ds{display:grid;gap:12px;margin:14px 0 4px;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr))}
+.bai-hinh{margin:0;background:var(--sheet);border:1px solid var(--rule);border-radius:14px;padding:10px 12px 12px;color:var(--ink)}
+.bai-hinh svg{display:block;width:100%;height:auto;max-height:360px}
+.bai-hinh figcaption{font-size:.88rem;color:var(--graphite);margin-top:6px}

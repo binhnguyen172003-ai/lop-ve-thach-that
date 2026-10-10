@@ -209,6 +209,13 @@ function route() {
     const el = document.getElementById(h);
     const trongTrangDangMo = el && el.closest("main[id^='v-']") && !el.closest("main[id^='v-']").hidden;
     if (trongTrangDangMo) { el.scrollIntoView({ block: "start" }); return; }
+    // Mục nằm trong một trang khác (VD #nang-cao trong Giáo trình): mở trang đó rồi cuộn tới mục
+    const trang = el && el.closest("main[id^='v-']");
+    if (trang && trang.id !== "v-home" && PAGES.includes(trang.id.slice(2))) {
+      history.replaceState(null, "", "#" + trang.id.slice(2)); route();
+      requestAnimationFrame(() => setTimeout(() => { if (el.offsetParent) el.scrollIntoView({ block: "start", behavior: "smooth" }); }, 60));
+      return;
+    }
   }
   const page = PAGES.includes(h) ? h : "home";
   $("#v-home").hidden = page !== "home";
@@ -1418,8 +1425,8 @@ $("#dk-zalo").href = ZALO_LINK;
   // Sản phẩm thêm (khoá học nâng cao, ebook): đổ từ SAN_PHAM vào menu trên web và menu ☰ (điện thoại)
   { const box = $("#sp-p");
     if (box) box.innerHTML = SAN_PHAM.map(p => {
-      const ext = !!p.link;
-      return `<a class="link" href="${esc(p.link || "#dang-ky")}"${ext ? ' target="_blank" rel="noopener"' : ""}><b>${esc(p.ten)}</b><small>${esc(ext ? p.moTa : "Sắp ra mắt · hỏi anh chị")}</small></a>`;
+      const coLink = !!p.link, ngoai = coLink && !p.link.startsWith("#");
+      return `<a class="link" href="${esc(p.link || "#dang-ky")}"${ngoai ? ' target="_blank" rel="noopener"' : ""}><b>${esc(p.ten)}</b><small>${esc(coLink ? p.moTa : "Sắp ra mắt · hỏi anh chị")}</small></a>`;
     }).join(""); }
 
   // Menu toàn màn hình trên điện thoại
@@ -1584,6 +1591,7 @@ document.addEventListener("focusout", () => setTimeout(() => { if (needRedraw) r
 let lessons = [], homework = [], roster = [], requests = [], progressAll = {};
 let myProgress = { bai: {}, baitap: {} };
 let course = null, lessonId = null, hwView = "open";
+let hinhBai = null, hinhBaiDang = false;
 let lichNhac = []; // khung giờ nhắc cố định do quản lý đặt
 const lichDaBao = new Set(); // nhắc đã hiện một lần trong phiên, tránh báo lặp mỗi phút
 let myAnhBT = {}, anhBaiTapAll = {};   // ảnh bài học viên đã tải lên: { [hwId]: [đường dẫn kho] }
@@ -1833,6 +1841,9 @@ function renderLessons() {
   });
   const l = list.find(x => x.id === lessonId);
   const items = Array.isArray(l.buoc) ? l.buoc : [];
+  // Hình minh hoạ (assets/js/hinh-bai.js): tải riêng lần đầu mở giáo trình, xong thì vẽ lại bài đang xem
+  if (!hinhBai && !hinhBaiDang) { hinhBaiDang = true; import("./hinh-bai.js?v=20261010bf").then(m => { hinhBai = m; renderLessons(); }).catch(() => { hinhBaiDang = false; }); }
+  const hinh = hinhBai ? (hinhBai.GAN[l.id] || []).filter(x => hinhBai.HINH[x.h]).map(x => `<figure class="bai-hinh">${hinhBai.HINH[x.h]}<figcaption>${esc(x.chu)}</figcaption></figure>`).join("") : "";
   const body = (l.noidung ? `<div class="bai-md">${mdHTML(l.noidung)}</div>` : "") + (!items.length ? "" : l.loai === "noi-dung"
     ? `<ul class="points">${items.map(s => `<li>${esc(s)}</li>`).join("")}</ul>`
     : `<ol class="steps">${items.map(s => `<li>${esc(s)}</li>`).join("")}</ol>`);
@@ -1840,7 +1851,7 @@ function renderLessons() {
   $("#lesson").innerHTML =
     `<div class="bai-chuyen"><button type="button" data-go="-1" aria-label="Bài trước" ${idx <= 0 ? "disabled" : ""}>‹</button><span class="num">Bài ${idx + 1}/${list.length}</span><button type="button" data-go="1" aria-label="Bài sau" ${idx >= list.length - 1 ? "disabled" : ""}>›</button></div>
      <p class="eyebrow">${esc(l.khoa)}</p><h3 style="font-size:1.5rem;margin-top:4px">${esc(l.ten)}</h3>
-     ${body}${l.ghichu ? `<p class="gc"><b>Anh chị dặn:</b> ${esc(l.ghichu)}</p>` : ""}
+     ${hinh ? `<div class="bai-hinh-ds">${hinh}</div>` : ""}${body}${l.ghichu ? `<p class="gc"><b>Anh chị dặn:</b> ${esc(l.ghichu)}</p>` : ""}
      <div class="foot">${isTeacher ? "" : `<button class="btn small" id="mark">${myProgress.bai[l.id] ? "Đã học xong ✓" : "Đánh dấu đã học"}</button>`}
      ${isAdmin ? `<button class="btn small" id="del-l">Xoá bài này</button>` : ""}</div>`;
   if ($("#mark")) $("#mark").onclick = () => toggleProgress("bai", l.id).then(renderLessons);
