@@ -574,11 +574,14 @@ function caHomNay() {
       : `<a class="btn${c.ra ? "" : " primary"}" href="#diem-danh" data-dd-mo="${esc(c.ngay + "|" + c.ca + "|" + c.coSo)}">Điểm danh lớp</a>${c.ra ? '<span class="chip ok">Xong ca ✓</span>' : `<button type="button" class="btn" data-x="cc-ra" data-id="${esc(c.id)}">Kết ca</button>`}`}
       ${c.vao ? `<button type="button" class="linkish" data-x="cc-sua" data-id="${esc(c.id)}">Báo sai giờ</button>` : ""}</div></div>`; }).join("")}</section>`;
 }
+const dangGhiCa = new Set(); // ca đang gửi Vô/Kết ca: trang có thể vẽ lại nút mới giữa hai lần bấm, nên khoá theo ca chứ không theo nút
 async function vaoRaCa(id, truong, btn) {
-  const c = D.ca.find(x => x.id === id); if (!c || c.gv !== C.mail || c[truong]) return;
+  const c = D.ca.find(x => x.id === id); if (!c || c.gv !== C.mail || c[truong] || dangGhiCa.has(id + truong)) return;
   if (truong === "vao" && c.ngay !== C.homNay()) return C.toast("Chỉ vô ca được trong ngày của ca.", "err");
   const { db, fs: { doc, setDoc } } = C;
-  const ok = await guiNut(btn, () => setDoc(doc(db, "caday", id), { [truong]: Date.now() }, { merge: true }), truong === "vao" ? "Đã vô ca ✓ Mở Điểm danh lớp để điểm danh học viên." : "Đã kết ca ✓ Cảm ơn anh/chị!");
+  dangGhiCa.add(id + truong); const luc = Date.now();
+  const ok = await guiNut(btn, () => setDoc(doc(db, "caday", id), { [truong]: luc }, { merge: true }), truong === "vao" ? "Đã vô ca ✓ Mở Điểm danh lớp để điểm danh học viên." : "Đã kết ca ✓ Cảm ơn anh/chị!").finally(() => dangGhiCa.delete(id + truong));
+  if (ok) c[truong] ||= luc; // giữ ngay trên máy tới khi dữ liệu mới về, bấm thêm cũng không gửi lại
   // kết ca vẫn ghi giờ thật; chỉ nhắc nếu còn học viên chưa điểm danh
   if (ok && truong === "ra" && !c.ddXong) C.toast(`Đã ghi giờ ra. Lưu ý: ca này chưa xong điểm danh học viên ${c.coSo} — vào Điểm danh lớp để hoàn thành.`, "err");
 }
