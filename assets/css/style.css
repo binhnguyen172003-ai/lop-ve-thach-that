@@ -277,6 +277,12 @@ nav .acct{position:sticky;right:0;background:var(--paper);box-shadow:-14px 0 12p
 .req-ai{display:flex;flex-wrap:wrap;gap:4px 8px;align-items:center;min-width:0}.req-ai b{font-size:1.05rem}
 .req-ai .muted{flex-basis:100%;font-size:.8rem}
 .req-nut{display:flex;gap:8px;margin-left:auto}.req-nut .btn{min-height:40px;white-space:nowrap}
+/* Điện thoại: nút duyệt xuống cuối thẻ, căn giữa */
+@media(max-width:640px){.req-item{display:flex;flex-direction:column;text-align:center}
+  .req-head{display:contents}.req-ai{justify-content:center;margin-bottom:10px}.req-ai .muted{text-align:center}
+  .req-nut{order:9;margin:14px 0 0;justify-content:center}.req-nut .btn{flex:1;max-width:200px}
+  .req-tom,.req-lh{justify-content:center}.req-mail{flex-basis:100%}.req-them .req-body{text-align:left}
+  .kc-wrap .khoa-cap{justify-content:center}}
 .req-body{display:grid;gap:2px;font-size:.93rem;overflow-wrap:anywhere}
 /* Chấm bài dạng thẻ */
 .g-row{padding-block:12px;border-bottom:1px dashed var(--rule);display:grid;gap:8px}
