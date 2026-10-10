@@ -437,7 +437,7 @@ function lichPhanCong() {
   const tkb = THOI_GIAN_BIEU["Cơ sở " + csLich] || {}, hom = C.homNay();
   const o = (n, ca) => {
     const mon = (tkb[ca.ma] || {})[thuCua(n)], ds = D.ca.filter(c => c.ngay === n && c.ca === ca.ma && c.coSo === csLich);
-    if (!mon && !ds.length) return `<td class="lpc-nghi"></td>`;
+    if (!mon && !ds.length) return C.isAdmin ? `<td class="lpc-nghi lpc-trong"><button type="button" class="lpc-xep lpc-them-ngoai" data-x="lich-xep" data-id="${esc(n + "|" + ca.ma + "|")}" aria-label="Thêm ca dạy ${tenCa(ca.ma).toLowerCase()} ${ngayVN(n)}" title="Thêm ca ngoài lịch (dạy bù, lớp thêm)">+</button></td>` : `<td class="lpc-nghi"></td>`;
     return `<td class="${n === hom ? "hom" : ""}${mon && !ds.length ? " thieu" : ""}">${mon ? `<span class="lpc-mon">${esc(mon)}</span>` : ""}
       <div class="lpc-nguoi">${ds.map(c => `<span class="lpc-gv${c.gv === C.mail ? " toi" : ""}"><span class="lpc-gv-ten">${esc(c.gvTen || c.gv)}</span>${C.isAdmin ? `<span class="lpc-gv-nut"><button type="button" data-x="lich-sua" data-id="${esc(c.id)}" aria-label="Sửa ca của ${esc(c.gvTen || c.gv)}" title="Sửa phân công">✎</button><button type="button" data-x="lich-xoa" data-id="${esc(c.id)}" aria-label="Gỡ ${esc(c.gvTen || c.gv)} khỏi ca" title="Gỡ khỏi ca">×</button></span>` : ""}</span>`).join("")}</div>
       ${C.isAdmin ? `<button type="button" class="lpc-xep" data-x="lich-xep" data-id="${esc(n + "|" + ca.ma + "|" + (mon || ""))}">${ds.length ? "+ Thêm" : "+ Xếp"}</button>` : !ds.length && mon ? `<small class="muted">Chưa xếp</small>` : ""}</td>`;
