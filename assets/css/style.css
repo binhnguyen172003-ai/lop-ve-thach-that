@@ -3664,3 +3664,18 @@ body.vt-khoa > *:not(.vt-ov){visibility:hidden}
 .dash-cot-ve{flex:1;height:auto;min-height:150px}
 .dash-bd-lich .dash-lt-thang{flex:1;align-content:space-between}
 @media (min-width:1024px){.dash-bd-ve svg{max-height:100%}}
+
+/* ===== Bài vẽ nổi bật: thẻ ảnh tràn khung (kiểu Cards Design UI) — nền là chính bức ảnh làm nhoè, bài vẽ hiện đủ không bị cắt,
+   thông tin nằm trên tấm kính mờ ở chân thẻ ===== */
+.nb-stage .nb-card.nb-tran{border-radius:24px;background:#0b0d12;border:1px solid rgba(255,255,255,.14);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 24px 48px -22px rgba(0,0,0,.85)}
+.nb-stage .nb-card.nb-tran::before{content:"";position:absolute;inset:-24px;z-index:0;background:var(--anh) center/cover no-repeat;filter:blur(22px) saturate(1.2) brightness(.55);transform:scale(1.05)}
+.nb-stage .nb-card.nb-tran::after{display:block;z-index:1;background:linear-gradient(180deg,rgba(5,6,10,0) 55%,rgba(5,6,10,.55))}
+.nb-stage .nb-card.nb-tran img{position:relative;z-index:1;height:calc(100% - 104px);padding:14px 14px 0;box-sizing:border-box;object-fit:contain;background:transparent;
+  filter:drop-shadow(0 14px 24px rgba(0,0,0,.55))}
+.nb-stage .nb-card.nb-tran figcaption{left:10px;right:10px;bottom:10px;min-height:0;padding:12px 14px;border-radius:18px;
+  background:rgba(14,16,22,.55);-webkit-backdrop-filter:blur(16px) saturate(140%);backdrop-filter:blur(16px) saturate(140%);
+  border:1px solid rgba(255,255,255,.14);box-shadow:inset 0 1px 0 rgba(255,255,255,.12)}
+.nb-stage .nb-card.nb-tran.on{border-color:rgba(255,255,255,.3);box-shadow:inset 0 1px 0 rgba(255,255,255,.14),0 30px 60px -20px rgba(0,0,0,.9),0 0 0 1px rgba(255,255,255,.08)}
+.nb-stage .nb-card.nb-tran.nb-nv{border-width:2px}
+@media (hover:hover){.nb-stage .nb-card.nb-tran.on:hover img{transform:scale(1.02);transition:transform .5s cubic-bezier(.22,1,.36,1)}}
