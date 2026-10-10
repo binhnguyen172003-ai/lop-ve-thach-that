@@ -46,6 +46,19 @@ function toast(text, kind = "") {
   t.textContent = text; t.className = kind; t.hidden = false;
   clearTimeout(toast.h); toast.h = setTimeout(() => t.hidden = true, kind === "err" ? 6000 : 2800);
 }
+/* ---------- Nút Quay lại (điện thoại) đóng cửa sổ đang mở thay vì rời trang ---------- */
+// mo(dong): gọi lúc mở một lớp phủ; trả về hàm tha(diLink) để gọi khi lớp được đóng bằng nút ✕, Esc…
+const lopMo = []; let boQuaPop = 0;
+function voiQuayLai(dong) {
+  const id = Date.now() + Math.random(); lopMo.push({ id, dong });
+  try { history.pushState({ lop: id }, ""); } catch (e) {}
+  return diLink => {
+    const i = lopMo.findIndex(x => x.id === id); if (i < 0) return; lopMo.splice(i, 1);
+    // Đóng vì bấm link sang mục khác: giữ lịch sử để không hủy bước chuyển trang
+    if (!diLink && history.state && history.state.lop === id) { boQuaPop++; history.back(); }
+  };
+}
+addEventListener("popstate", () => { if (boQuaPop) { boQuaPop--; return; } const l = lopMo.pop(); if (l) l.dong(); });
 /* ---------- Mất mạng: báo rõ, không để người dùng tưởng web hỏng ---------- */
 function netBar() {
   let b = document.getElementById("net-bar");
@@ -408,12 +421,14 @@ function showLb(i) {
   $("#lb-img").src = b.anh; $("#lb-img").alt = b.moTa || "";
   $("#lb-mota").textContent = b.moTa || ""; $("#lb-mota").hidden = !b.moTa;
   $("#lb-cap").textContent = `${galCur + 1} / ${galList.length} · ${[b.hocVien, biDanhCua(b), b.loai, b.ghiChu, b.gvhd && "GVHD: " + b.gvhd, b.tgiang && "Trợ giảng: " + b.tgiang, b.chucVu && b.chucVu !== "Học viên" && "Người vẽ: " + b.chucVu, b.mau && "Bài mẫu giáo viên"].filter(Boolean).join(" · ")}`;
+  if ($("#lb").hidden) lbTha = voiQuayLai(() => { lbTha = null; dongLb(); });
   $("#lb").hidden = false; document.body.classList.add("lb-mo"); // bong bóng Chì dời lên trên, không đè chữ mô tả
   window.__troLy?.goiYBai(b.hocVien ? `bài của ${b.hocVien}` : (b.loai || "bài vẽ này"));
 }
 $("#lb-prev").onclick = () => showLb(galCur - 1);
 $("#lb-next").onclick = () => showLb(galCur + 1);
-const dongLb = () => { $("#lb").hidden = true; document.body.classList.remove("lb-mo"); window.__troLy?.anGoiYBai(); };
+let lbTha = null;
+const dongLb = () => { $("#lb").hidden = true; document.body.classList.remove("lb-mo"); window.__troLy?.anGoiYBai(); if (lbTha) { const f = lbTha; lbTha = null; f(); } };
 $("#lb-close").onclick = dongLb;
 $("#lb").addEventListener("click", e => { if (e.target === $("#lb")) dongLb(); });
 document.addEventListener("keydown", e => {
@@ -1252,15 +1267,16 @@ $("#dk-zalo").href = ZALO_LINK;
       : `<li class="tk-rong">Không tìm thấy “${esc(q.value)}”. Thử từ khác, hoặc <a href="#dang-ky">nhắn anh chị</a>.</li>`;
     $("#tk-goi").textContent = q.value ? `${kq.length} kết quả · ↑↓ để chọn · Enter để mở` : "Gợi ý: “hình hoạ”, “kiến trúc”, “9,5”, “Kim Quan”, tên học viên…";
   };
-  const mo = () => { ov.hidden = false; document.body.style.overflow = "hidden"; q.value = ""; sel = 0; ve(); setTimeout(() => q.focus(), 20); };
-  const dong = () => { ov.hidden = true; document.body.style.overflow = ""; };
+  let tha = null;
+  const mo = () => { if (ov.hidden) tha = voiQuayLai(() => { tha = null; dong(); }); ov.hidden = false; document.body.style.overflow = "hidden"; q.value = ""; sel = 0; ve(); setTimeout(() => q.focus(), 20); };
+  const dong = diLink => { ov.hidden = true; document.body.style.overflow = ""; if (tha) { const f = tha; tha = null; f(diLink === true); } };
   $("#nav-search").onclick = mo; $("#tk-x").onclick = dong;
-  ov.addEventListener("click", e => { if (e.target === ov) dong(); if (e.target.closest("a")) dong(); });
+  ov.addEventListener("click", e => { if (e.target === ov) dong(); if (e.target.closest("a")) dong(true); });
   q.addEventListener("input", () => { sel = 0; ve(); });
   q.addEventListener("keydown", e => {
     if (e.key === "ArrowDown") { sel = Math.min(kq.length - 1, sel + 1); ve(); e.preventDefault(); }
     if (e.key === "ArrowUp") { sel = Math.max(0, sel - 1); ve(); e.preventDefault(); }
-    if (e.key === "Enter" && kq[sel]) { location.hash = kq[sel].url; dong(); }
+    if (e.key === "Enter" && kq[sel]) { dong(true); location.hash = kq[sel].url; }
   });
   addEventListener("keydown", e => {
     if (e.key === "Escape" && !ov.hidden) dong();
@@ -1316,13 +1332,16 @@ $("#dk-zalo").href = ZALO_LINK;
     $("#menu-links").innerHTML = $$("nav .dd").map(dd => `<div class="mn-g"><h4>${esc(dd.querySelector(".dd-t").textContent.trim())}</h4><div class="mn-ds">${
       [...dd.querySelectorAll("a.link")].map(a => o(a.getAttribute("href"), (a.querySelector("b") || a).textContent.trim(), (a.querySelector("small") || {}).textContent || "")).join("")}</div></div>`).join("")
       + `<div class="mn-g"><h4>Khác</h4><div class="mn-ds">${o("#tai-khoan", "Tài khoản", "Học viên · Giáo viên")}${o("#dang-ky", "Liên hệ", "Gọi · Zalo · chỉ đường")}</div></div>`; }
-  const setMenu = open => {
+  let menuTha = null;
+  const setMenu = (open, diLink) => {
+    if (open && !ov.classList.contains("open")) menuTha = voiQuayLai(() => { menuTha = null; setMenu(false); });
+    if (!open && menuTha) { const f = menuTha; menuTha = null; f(diLink === true); }
     ov.classList.toggle("open", open); ov.setAttribute("aria-hidden", !open); burger.setAttribute("aria-expanded", open);
     document.body.style.overflow = open ? "hidden" : ""; onScroll();
   };
   burger.onclick = () => setMenu(true);
   $("#menu-x").onclick = () => setMenu(false);
-  ov.addEventListener("click", e => { if (e.target.closest("a")) setMenu(false); });
+  ov.addEventListener("click", e => { if (e.target.closest("a")) setMenu(false, true); });
   addEventListener("keydown", e => { if (e.key === "Escape" && ov.classList.contains("open")) setMenu(false); });
 
   // Menu thả xuống (máy tính): rê chuột hoặc bấm để mở, bấm ra ngoài / Esc để đóng
@@ -1427,22 +1446,28 @@ $("#f-dk").addEventListener("submit", ev => {
   if (v("#dk-ghichu")) lines.push("- Câu hỏi: " + v("#dk-ghichu"));
   const text = lines.join("\n");
   $("#dk-text").textContent = text;
-  $("#dk-out").hidden = false; $("#dk-status").textContent = ""; st.textContent = "";
-  $("#dk-ok").textContent = "Đã gửi cho anh chị! Anh chị sẽ gọi lại cho bố mẹ em sớm. Cần gấp thì gọi hoặc nhắn Zalo ngay bên dưới.";
-  $("#dk-out").scrollIntoView({ behavior: "smooth", block: "nearest" });
-  dropDraft("nhap-hocthu");
-  if (dkSent === text) return; // bấm 2 lần không gửi trùng
-  dkSent = text;
-  if (!EMAIL_NHAN_THONG_BAO) return;
+  $("#dk-status").textContent = ""; st.textContent = "";
+  const btn = $("#dk-btn"), xong = (msg, ok) => {
+    btn.disabled = false; btn.textContent = "Gửi đăng ký cho anh chị";
+    $("#dk-ok").textContent = msg; $("#dk-ok").classList.toggle("err", !ok);
+    $("#dk-out").hidden = false; $("#dk-out").scrollIntoView({ behavior: "smooth", block: "nearest" });
+  };
+  if (dkSent === text) { xong("Đăng ký này đã gửi rồi, anh chị sẽ gọi lại sớm. Cần gấp thì gọi hoặc nhắn Zalo bên dưới.", true); return; } // bấm 2 lần không gửi trùng
+  if (!EMAIL_NHAN_THONG_BAO) { xong("Bấm Gọi quản lý hoặc Nhắn Zalo (dán tin nhắn bên dưới) để gửi đăng ký cho anh chị nhé.", true); return; }
+  // Chỉ báo "đã gửi" khi máy chủ nhận xong; quá 15 giây coi như mạng yếu.
+  btn.disabled = true; btn.textContent = "Đang gửi…";
+  const huy = new AbortController(), hen = setTimeout(() => huy.abort(), 15000);
   fetch("https://formsubmit.co/ajax/" + EMAIL_NHAN_THONG_BAO, {
-    method: "POST", headers: { "Content-Type": "application/json", "Accept": "application/json" },
+    method: "POST", signal: huy.signal, headers: { "Content-Type": "application/json", "Accept": "application/json" },
     body: JSON.stringify({ _subject: `Đăng ký học thử: ${v("#dk-ten")} · ${sdt}`, _template: "table", _captcha: "false",
       "Học sinh": v("#dk-ten"), "SĐT phụ huynh": sdt, "Đang học": v("#dk-lop"), "Muốn học": v("#dk-khoi"),
       "Hình thức": v("#dk-hinh"), "Trường muốn thi": v("#dk-truong"), "Câu hỏi": v("#dk-ghichu") })
-  }).then(r => { if (!r.ok) throw 0; }).catch(() => {
-    dkSent = "";
-    $("#dk-ok").textContent = "Mạng yếu nên chưa gửi tự động được. Em bấm Gọi quản lý hoặc Nhắn Zalo (dán tin nhắn bên dưới) nhé.";
-  });
+  }).then(r => { if (!r.ok) throw 0; }).then(() => {
+    dkSent = text; dropDraft("nhap-hocthu");
+    xong("Đã gửi cho anh chị! Anh chị sẽ gọi lại cho bố mẹ em sớm. Cần gấp thì gọi hoặc nhắn Zalo ngay bên dưới.", true);
+  }, () => {
+    xong("Mạng yếu nên chưa gửi được. Thông tin em nhập vẫn giữ nguyên: bấm Gửi lại, hoặc Gọi quản lý / Nhắn Zalo (dán tin nhắn bên dưới).", false);
+  }).finally(() => clearTimeout(hen));
 });
 $("#dk-copy").onclick = () => copyText($("#dk-text").textContent, $("#dk-status"), "Đã sao chép. Dán vào Zalo hoặc Messenger để gửi cho lớp.", $("#dk-text"));
 
@@ -3895,8 +3920,9 @@ function moHop(html, nhan = "Hộp thoại") {
   const ov = document.createElement("div"); ov.className = "hop-ov";
   ov.innerHTML = `<div class="hop" role="dialog" aria-modal="true" aria-label="${esc(nhan)}"><button type="button" class="hop-x" data-dong aria-label="Đóng">✕</button>${html}</div>`;
   document.body.append(ov); document.body.classList.add("hop-mo");
-  const dong = () => { ov.remove(); if (!$(".hop-ov")) document.body.classList.remove("hop-mo"); };
-  ov.addEventListener("click", e => { if (e.target === ov || e.target.closest("[data-dong]")) dong(); });
+  let tha = voiQuayLai(() => { tha = null; dong(); });
+  const dong = diLink => { ov.remove(); if (!$(".hop-ov")) document.body.classList.remove("hop-mo"); if (tha) { const f = tha; tha = null; f(diLink === true); } };
+  ov.addEventListener("click", e => { if (e.target === ov || e.target.closest("[data-dong]")) dong(); else if (e.target.closest("a[href^='#']")) dong(true); });
   const esc2 = e => { if (e.key === "Escape") { dong(); removeEventListener("keydown", esc2); } }; addEventListener("keydown", esc2);
   return { el: ov.querySelector(".hop"), dong };
 }
