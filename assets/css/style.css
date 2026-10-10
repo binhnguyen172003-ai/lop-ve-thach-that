@@ -3494,3 +3494,22 @@ table.roster.cc-cp{min-width:0}
 .cc{min-width:0}.cc > *{min-width:0}
 .cc-dau{min-width:0}
 .cc-loc{flex:1 1 100%;min-width:0;max-width:100%}
+
+/* Khung đăng nhập gọn hơn: bỏ hai nút tab trùng với nút "Tạo tài khoản mới / Đăng nhập" ở cuối form,
+   "Quên mật khẩu?" nằm ngay dưới ô mật khẩu, ẩn dòng trạng thái khi trống, thu nhỏ phần chào */
+#pw-box .pw-tabs{display:none}
+#pw-box .pw-chao{gap:2px;margin-bottom:10px}
+#pw-box .pw-chao img{width:44px;height:44px;margin-bottom:4px}
+#pw-box .pw-chao h3{font-size:1.2rem}
+#pw-box .pw-chao p{font-size:.86rem;line-height:1.4;max-width:30ch}
+#pw-box form{gap:12px;margin-top:4px}
+#pw-box form .status:empty{display:none}
+#f-pw > label:nth-of-type(1){order:1}#f-pw > label:nth-of-type(2){order:2}
+#f-pw #pw-forgot{order:3;justify-self:end;margin-top:-4px;font-size:.84rem}
+#f-pw > div{order:4}#f-pw #pw-status{order:5}#f-pw .pw-hoac{order:6}#f-pw .pw-doi{order:7}
+#pw-box .pw-hoac{margin:2px 0}
+#pw-box .pw-doi{min-height:46px}
+@media (max-width:640px){#pw-box{padding:20px 16px}}
+#pw-box .pw-hint{font-size:.8rem;line-height:1.45;color:var(--graphite);margin:0}
+#pw-box .pw-hint b{color:var(--ink)}
+#f-new{gap:12px}
