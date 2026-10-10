@@ -10,6 +10,8 @@ const D = { thi: [], bai: [], ca: [], doica: [], bg: [], suco: [], truc: {}, kt:
 
 const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+// Ảnh do người dùng gửi: chỉ nhận dữ liệu ảnh thật (chặn chèn mã độc qua thuộc tính src/href)
+const anh = a => /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(String(a || "")) ? a : "";
 const bo = s => String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/đ/g, "d").replace(/Đ/g, "D").toLowerCase().trim();
 const pad = n => String(n).padStart(2, "0");
 const luc = t => { const d = new Date(t); return `${pad(d.getHours())}:${pad(d.getMinutes())} ${d.getDate()}/${d.getMonth() + 1}`; };
@@ -104,7 +106,7 @@ function veThi() {
 }
 function veAnhThi() {
   const el = $("#tt-xem"); if (!el) return;
-  el.innerHTML = anhThi.map((a, i) => `<figure><img src="${a}" alt="Ảnh bài ${i + 1}"><button type="button" class="btn small" data-xa="${i}">Bỏ ảnh</button></figure>`).join("");
+  el.innerHTML = anhThi.map((a, i) => `<figure><img src="${esc(anh(a))}" alt="Ảnh bài ${i + 1}"><button type="button" class="btn small" data-xa="${i}">Bỏ ảnh</button></figure>`).join("");
   el.querySelectorAll("[data-xa]").forEach(b => b.onclick = () => { anhThi.splice(+b.dataset.xa, 1); veAnhThi(); });
   const n = $("#tt-nop"); if (n) n.disabled = !anhThi.length;
   const g = $("#tt-anh-g"); if (g) g.hidden = anhThi.length >= 2;
@@ -118,7 +120,7 @@ function thiHV() {
     h += `<section class="card tt-dang"><p class="eyebrow">Đang làm bài · ${esc(t.mon)}</p><h2>${esc(t.tieuDe)}</h2>
       <div class="tt-dh" id="tt-dh" aria-live="off"></div>
       <p class="muted">Bắt đầu lúc ${luc(dang.batDau)} · thời gian ${t.phut} phút. Hết giờ vẫn nộp được nhưng bài ghi <b>nộp muộn</b>.</p>
-      ${t.anhDe ? `<img class="tt-de-anh" src="${t.anhDe}" alt="Ảnh đề bài">` : ""}
+      ${anh(t.anhDe) ? `<img class="tt-de-anh" src="${esc(anh(t.anhDe))}" alt="Ảnh đề bài">` : ""}
       <div class="tt-de">${esc(t.deBai).replace(/\n/g, "<br>")}</div>
       <h3>Nộp bài</h3><p class="muted">Chụp thẳng, đủ sáng, thấy hết tờ giấy. Tối đa 2 ảnh.</p>
       <label class="btn" id="tt-anh-g">📷 Chọn / chụp ảnh bài<input type="file" id="tt-anh" accept="image/*" multiple hidden></label>
@@ -197,7 +199,7 @@ function moFormThi(t) {
     <div class="hop-nut"><button class="btn" type="button" data-dong>Huỷ</button><button class="btn primary" type="button" id="ft-luu">${t ? "Lưu thay đổi" : "Tạo đề"}</button></div>`, "Đề thi thử");
   const docTC = () => val("ft-tc").split("\n").map(l => l.split(":")).filter(p => p[0].trim() && +p[1] > 0).map(p => ({ ten: p[0].trim().slice(0, 60), toiDa: Math.round(+p[1] * 4) / 4 })).slice(0, 10);
   const tong = () => { $("#ft-tong").textContent = `Tổng thang điểm: ${tongDiem(docTC())}`; };
-  const xem = () => { $("#ft-xem").innerHTML = anhDe ? `<figure><img src="${anhDe}" alt="Ảnh đề"><button type="button" class="btn small" id="ft-boanh">Bỏ ảnh</button></figure>` : ""; if ($("#ft-boanh")) $("#ft-boanh").onclick = () => { anhDe = ""; xem(); }; };
+  const xem = () => { $("#ft-xem").innerHTML = anhDe ? `<figure><img src="${esc(anh(anhDe))}" alt="Ảnh đề"><button type="button" class="btn small" id="ft-boanh">Bỏ ảnh</button></figure>` : ""; if ($("#ft-boanh")) $("#ft-boanh").onclick = () => { anhDe = ""; xem(); }; };
   h.el.querySelector("#ft-tc").oninput = tong; tong(); xem();
   h.el.querySelector("#ft-mon").onchange = e => { if (!t) { $("#ft-tc").value = (TIEU_CHI_THI[e.target.value] || []).map(([a, b]) => `${a}: ${b}`).join("\n"); tong(); } };
   h.el.querySelector("#ft-anh").onchange = async e => { try { anhDe = await C.nenAnh(e.target.files[0], 1600, 450000); xem(); } catch (er) { C.toast(er.message || "Ảnh lỗi", "err"); } };
@@ -226,12 +228,13 @@ function moCham(t, b) {
   const { db, fs: { doc, setDoc } } = C;
   const cu = {}; (b.cham?.ds || []).forEach(x => cu[x.ten] = x.diem);
   const h = C.moHop(`<h3>Chấm bài · ${esc(b.ten || b.mail)}</h3><p class="muted">${esc(t.tieuDe)} · nộp ${luc(b.nop)}</p>
-    <div class="tt-xem lon">${(b.anh || []).map((a, i) => `<a href="${a}" target="_blank" rel="noopener"><img src="${a}" alt="Bài làm ảnh ${i + 1}"></a>`).join("")}</div>
+    <div class="tt-xem lon">${(b.anh || []).map(anh).filter(Boolean).map((a, i) => `<button type="button" class="tt-anh-lon" data-lon="${i}" aria-label="Xem lớn ảnh ${i + 1}"><img src="${esc(a)}" alt="Bài làm ảnh ${i + 1}"></button>`).join("")}</div>
     ${b.ghiChu ? `<p><b>Học viên ghi:</b> ${esc(b.ghiChu)}</p>` : ""}
     <div class="tt-phieu">${t.tieuChi.map((x, i) => `<label><span>${esc(x.ten)} <small class="muted">/ ${x.toiDa}</small></span><input type="number" inputmode="decimal" step="0.25" min="0" max="${x.toiDa}" data-tc="${i}" value="${cu[x.ten] ?? ""}"></label>`).join("")}</div>
     <p><b>Tổng: <span id="ch-tong" class="num">0</span>/${tongDiem(t.tieuChi)}</b></p>
     <label>Nhận xét: bài tốt ở đâu, cần sửa gì<textarea id="ch-nx" maxlength="1500">${esc(b.cham?.nhanXet || "")}</textarea></label>
     <div class="hop-nut"><button class="btn" type="button" data-dong>Huỷ</button><button class="btn primary" type="button" id="ch-luu">Lưu kết quả</button></div>`, "Phiếu chấm");
+  h.el.querySelectorAll("[data-lon]").forEach(x => x.onclick = () => x.classList.toggle("phong")); // bấm ảnh để phóng to / thu lại
   const o = [...h.el.querySelectorAll("[data-tc]")];
   const tinh = () => o.reduce((a, i) => a + (+i.value || 0), 0);
   o.forEach(i => i.oninput = () => { $("#ch-tong").textContent = Math.round(tinh() * 100) / 100; }); $("#ch-tong").textContent = Math.round(tinh() * 100) / 100;
@@ -292,7 +295,7 @@ function hanhDongVH(loai, id, btn) {
   if (loai === "huy-dc") return xacNhan(btn, () => ghi(deleteDoc(doc(db, "doica", id)), "Đã huỷ yêu cầu."));
   if (loai === "sc-buoc") { const tiep = { moi: "danhan", danhan: "dangxuly", dangxuly: "xong" }[sc.trangThai]; if (!tiep) return;
     return guiNut(btn, () => setDoc(doc(db, "suco", id), { trangThai: tiep, capNhat: Date.now(), xuLy: C.mail, phanHoi: val("sc-ph-" + id).slice(0, 500) || sc.phanHoi || "" }, { merge: true }), "Đã cập nhật ✓"); }
-  if (loai === "sc-anh") return C.moHop(`<img src="${sc.anh}" alt="Ảnh sự cố" style="width:100%;border-radius:12px"><div class="hop-nut"><button class="btn" type="button" data-dong>Đóng</button></div>`, "Ảnh sự cố");
+  if (loai === "sc-anh") return C.moHop(`<img src="${esc(anh(sc.anh))}" alt="Ảnh sự cố" style="width:100%;border-radius:12px"><div class="hop-nut"><button class="btn" type="button" data-dong>Đóng</button></div>`, "Ảnh sự cố");
   if (loai === "sua-tn") return moSuaTruc(id);
   if (loai === "nk-khoi") return xacNhan(btn, () => khoiPhuc(nk), "Bấm lần nữa để khôi phục");
 }
@@ -420,7 +423,7 @@ function paneSC() {
     <button class="btn primary" type="button" id="sc-gui">Gửi báo cáo</button></details>`;
 }
 function ganSC() {
-  const xem = () => { $("#sc-xem").innerHTML = anhSC ? `<figure><img src="${anhSC}" alt="Ảnh đính kèm"><button type="button" class="btn small" id="sc-bo">Bỏ ảnh</button></figure>` : ""; if ($("#sc-bo")) $("#sc-bo").onclick = () => { anhSC = ""; xem(); }; };
+  const xem = () => { $("#sc-xem").innerHTML = anhSC ? `<figure><img src="${esc(anh(anhSC))}" alt="Ảnh đính kèm"><button type="button" class="btn small" id="sc-bo">Bỏ ảnh</button></figure>` : ""; if ($("#sc-bo")) $("#sc-bo").onclick = () => { anhSC = ""; xem(); }; };
   xem();
   $("#sc-anh").onchange = async e => { try { anhSC = await C.nenAnh(e.target.files[0], 1200, 350000); xem(); } catch (er) { C.toast(er.message || "Ảnh lỗi", "err"); } };
   $("#sc-gui").onclick = e => {
@@ -436,7 +439,7 @@ function dsSC() {
   return `<div class="tabs nho"><button class="tab" type="button" data-loc="mo" aria-selected="${locSC !== "xong"}">Chưa xong (${nMo})</button><button class="tab" type="button" data-loc="xong" aria-selected="${locSC === "xong"}">Đã xong (${D.suco.length - nMo})</button></div>`
     + (ds.length ? ds.map(s => { const [tt, cls] = TT_SC[s.trangThai] || ["?", ""];
       return `<div class="card vh-the cot"><div class="vh-dong"><b>${esc(s.loai)} · ${esc(s.coSo)}</b><span class="chip ${cls}">${tt}</span></div>
-        <p>${esc(s.moTa)}</p>${s.anh ? `<button class="vh-anh" type="button" data-x="sc-anh" data-id="${esc(s.id)}"><img src="${s.anh}" alt="Ảnh sự cố"></button>` : ""}
+        <p>${esc(s.moTa)}</p>${anh(s.anh) ? `<button class="vh-anh" type="button" data-x="sc-anh" data-id="${esc(s.id)}"><img src="${esc(anh(s.anh))}" alt="Ảnh sự cố"></button>` : ""}
         <small class="muted">${esc(s.ten || s.ai)} gửi lúc ${luc(s.luc)}${s.capNhat && s.capNhat !== s.luc ? " · cập nhật " + luc(s.capNhat) : ""}</small>
         ${s.phanHoi ? `<p class="tt-nx"><b>Quản lý:</b> ${esc(s.phanHoi)}</p>` : ""}
         ${C.isAdmin && NUT_SC[s.trangThai] ? `<div class="vh-nut"><input id="sc-ph-${esc(s.id)}" maxlength="500" placeholder="Phản hồi (VD: đã mua, chiều mai mang tới)" aria-label="Phản hồi"><button class="btn small primary" type="button" data-x="sc-buoc" data-id="${esc(s.id)}">${NUT_SC[s.trangThai]}</button></div>` : ""}</div>`; }).join("")
@@ -507,9 +510,22 @@ function dsNK() {
       : '<p class="muted vh-trong">Chưa có thay đổi nào được ghi. Từ giờ mỗi lần sửa, xoá dữ liệu sẽ hiện ở đây.</p>');
 }
 async function khoiPhuc(n) {
-  const { db, fs: { doc, setDoc, deleteDoc } } = C, ref = doc(db, n.col, n.ma);
-  if (n.loai === "tao") return ghi(deleteDoc(ref), "Đã huỷ thao tác thêm ✓");
-  let truoc = null; try { truoc = n.truoc ? JSON.parse(n.truoc) : null; } catch (e) {}
+  const { db, fs: { doc, getDoc, setDoc, deleteDoc, deleteField } } = C;
+  if (!TEN_BANG[n.col] || !n.ma) return C.toast("Dòng nhật ký này không hợp lệ, không khôi phục.", "err");
+  const ref = doc(db, n.col, n.ma);
+  let truoc = null, sau = null; try { truoc = n.truoc ? JSON.parse(n.truoc) : null; sau = n.sau ? JSON.parse(n.sau) : null; } catch (e) {}
+  let hien; try { const d = await getDoc(ref); hien = d.exists() ? d.data() : null; } catch (e) { return C.toast("Chưa đọc được dữ liệu hiện tại. Kiểm tra mạng rồi thử lại.", "err"); }
+  if (n.loai === "tao") {
+    if (!hien) return C.toast("Mục này đã không còn, không cần huỷ.");
+    // Chỉ huỷ khi mục vẫn đúng như lúc được thêm (tránh xoá nhầm dữ liệu đã có từ trước hoặc đã sửa về sau)
+    if (sau && JSON.stringify(hien) !== JSON.stringify(sau)) return C.toast("Mục này đã thay đổi sau lần thêm, không huỷ tự động được. Hãy sửa trực tiếp.", "err");
+    return ghi(deleteDoc(ref), "Đã huỷ thao tác thêm ✓");
+  }
   if (!truoc) return ghi(deleteDoc(ref), "Đã khôi phục (mục trước đó chưa có) ✓");
-  return ghi(setDoc(ref, truoc), "Đã khôi phục bản trước ✓");
+  if (!hien || n.loai === "xoa") return ghi(setDoc(ref, truoc), "Đã khôi phục bản trước ✓");
+  // Sửa: chỉ trả lại các mục đã đổi trong lần này, giữ nguyên các thay đổi khác về sau
+  const khoa = n.gop ? Object.keys(sau || {}) : [...new Set([...Object.keys(truoc), ...Object.keys(sau || {})])].filter(k => JSON.stringify(truoc[k]) !== JSON.stringify((sau || {})[k]));
+  if (!khoa.length) return C.toast("Lần này không đổi mục nào, không cần khôi phục.");
+  const va = {}; khoa.forEach(k => { va[k] = k in truoc ? truoc[k] : deleteField(); });
+  return ghi(setDoc(ref, va, { merge: true }), "Đã khôi phục bản trước ✓");
 }

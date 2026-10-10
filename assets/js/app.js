@@ -11,7 +11,7 @@ import { LIEN_HE, NAM_THI, LICH_THI, BO_LOC_TRUONG, CA_HOC, THOI_GIAN_BIEU, BAI_
 const FB = "https://www.gstatic.com/firebasejs/10.12.2/";
 let initializeApp, getAuth, onAuthStateChanged, signOut;
 let createUserWithEmailAndPassword, signInWithEmailAndPassword, sendEmailVerification, sendPasswordResetEmail, updateProfile;
-let getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager, collection, doc, getDoc, setDoc, addDoc, deleteDoc, writeBatch, onSnapshot, query, orderBy, where, runTransaction, limit;
+let getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager, collection, doc, getDoc, setDoc, addDoc, deleteDoc, writeBatch, onSnapshot, query, orderBy, where, runTransaction, limit, deleteField, increment;
 // Vai trò: isAdmin = quản lý (toàn quyền); isTeacher = giáo viên hoặc quản lý; approved = học viên đã duyệt.
 // Khai báo ở đầu file để các phần trang chủ (bài vẽ, bản tin) biết ai đang xem ngay từ đầu.
 let user = null, mail = "", isAdmin = false, isTeacher = false, approved = false, needVerify = false;
@@ -26,7 +26,7 @@ async function loadFirebase() {
   ({ initializeApp } = a);
   ({ getAuth, onAuthStateChanged, signOut,
      createUserWithEmailAndPassword, signInWithEmailAndPassword, sendEmailVerification, sendPasswordResetEmail, updateProfile } = au);
-  ({ getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager, collection, doc, getDoc, setDoc, addDoc, deleteDoc, writeBatch, onSnapshot, query, orderBy, where, runTransaction, limit } = fs);
+  ({ getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager, collection, doc, getDoc, setDoc, addDoc, deleteDoc, writeBatch, onSnapshot, query, orderBy, where, runTransaction, limit, deleteField, increment } = fs);
   bocNhatKy();
 }
 
@@ -171,6 +171,8 @@ const timed = (label, p) => { const t = performance.now(); Promise.resolve(p).th
 addEventListener("load", () => mark("Trang tải xong"));
 const $$ = s => Array.from(document.querySelectorAll(s));
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+// Link người dùng nhập: chỉ nhận https:// (chặn javascript:, data:…)
+const linkAnToan = u => /^https:\/\/[^\s"'<>]+$/i.test(String(u || "").trim()) ? String(u).trim() : "";
 const store = {
   get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
   set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
@@ -527,7 +529,7 @@ function renderGallery() {
   $("#gallery").innerHTML = galList.map((b, i) =>
     `<div class="gal-o"><button type="button" class="gal-b" data-gi="${i}" aria-label="Xem lớn bài vẽ ${i + 1}"><img src="${esc(b.anh)}" alt="${esc(b.moTa || b.ghiChu || "Bài vẽ học viên")}" loading="lazy" decoding="async" width="300" height="400">
       <span class="cap">${esc(b.hocVien || "")}${biDanhCua(b) ? `<em class="bd">${esc(biDanhCua(b))}</em>` : ""}${b.loai ? `<small>${esc(b.loai)}</small>` : ""}</span>${b.hang ? `<span class="gal-top">TOP ${Number(b.hang)}</span>` : ""}</button>
-      ${b.link ? `<a class="gal-link" href="${esc(b.link)}" target="_blank" rel="noopener" aria-label="Mở link kèm bài">↗</a>` : ""}
+      ${linkAnToan(b.link) ? `<a class="gal-link" href="${esc(linkAnToan(b.link))}" target="_blank" rel="noopener" aria-label="Mở link kèm bài">↗</a>` : ""}
       ${isAdmin && b.id ? `<button type="button" class="nb-more gal-more" data-mn="${esc(b.id)}" aria-label="Tuỳ chọn: sửa thông tin, xoá bài">⋮</button>` : xoaDuoc(b) ? `<button type="button" class="gal-x" data-xbv="${esc(b.id)}" aria-label="Xoá bài này">Xoá</button>` : ""}</div>`).join("");
   // Ô dấu cộng cuối lưới: giáo viên và quản lý bấm để đăng bài vẽ mới
   if (user && isTeacher) $("#gallery").insertAdjacentHTML("beforeend", `<div class="gal-o"><button type="button" class="gal-b gal-them" data-them aria-label="Thêm bài vẽ mới"><span class="gal-plus" aria-hidden="true">+</span><b>Thêm bài vẽ</b></button></div>`);
@@ -1943,7 +1945,7 @@ function moBai(id) {
   const lb = lessons.find(x => x.id === id); if (lb && !gtMoKhoa(lb)) { toast("Hoàn thành bài trước để mở bài này nhé."); return; }
   const moi = !lessonId; lessonId = id;
   if (!isTeacher && approved && !myProgress.bai[id] && !(myProgress.xem || {})[id]) {
-    myProgress.xem = { ...(myProgress.xem || {}), [id]: Date.now() }; saveData(); try { luuTienDo().catch(() => {}); } catch (e) {}
+    const v = Date.now(); myProgress.xem = { ...(myProgress.xem || {}), [id]: v }; saveData(); try { luuTienDo({ xem: { [id]: v } }).catch(() => {}); } catch (e) {}
   }
   if (moi && !gtTha) gtTha = voiQuayLai(() => { gtTha = null; lessonId = null; renderLessons(); });
   renderLessons();
@@ -2014,8 +2016,8 @@ const canLamLai = (fb, nop) => fb && fb.trangThai === "lamlai" && !(nopLuc(nop) 
 const daNopLai = (fb, nop) => fb && fb.trangThai === "lamlai" && nopLuc(nop) > (fb.luc || 0);
 const chuaDat = fb => TIEU_CHI.filter(([k]) => fb && fb.tieuChi && fb.tieuChi[k] === false).map(([, t]) => t);
 function nopLai(id) {
-  myProgress.baitap[id] = Date.now(); saveData();
-  timed("Nộp lại bài", luuTienDo())
+  const v = Date.now(); myProgress.baitap[id] = v; saveData();
+  timed("Nộp lại bài", luuTienDo({ baitap: { [id]: v } }))
     .then(() => toast("Đã báo anh chị: em đã nộp lại bài. Cố lên!"))
     .catch(() => alertStatus("Chưa gửi được. Kiểm tra mạng rồi bấm lại."));
   renderHomework(); if (typeof capNhatNhac === "function") capNhatNhac();
@@ -2391,11 +2393,12 @@ $("#f-bt").addEventListener("submit", async ev => {
 
 // Đổi trên màn hình ngay, lưu lên máy chủ ở phía sau; lỗi thì trả lại như cũ.
 // Lưu tiến độ của học viên (bài đã hoàn thành, bài đang học, bài tập đã nộp)
-function luuTienDo() { return setDoc(doc(db, "tiendo", mail), { bai: myProgress.bai, baitap: myProgress.baitap, xem: myProgress.xem || {}, anh: myAvatar || "", capNhat: Date.now() }); }
+// Chỉ ghi đúng phần vừa đổi (gộp vào hồ sơ trên máy chủ) — không bao giờ ghi đè cả tiến độ bằng dữ liệu đang có trên máy này
+function luuTienDo(thay) { return setDoc(doc(db, "tiendo", mail), { ...(thay || {}), capNhat: Date.now() }, { merge: true }); }
 function toggleProgress(kind, id) {
-  const cu = myProgress[kind][id]; myProgress[kind][id] = cu ? false : Date.now(); saveData(); // lưu thời điểm để tính hạng
-  timed("Lưu tiến độ", luuTienDo())
-    .catch(() => { myProgress[kind][id] = cu; renderLessons(); renderHomework(); alertStatus("Chưa lưu được tiến độ. Kiểm tra mạng rồi thử lại."); });
+  const cu = myProgress[kind][id], moi = cu ? false : Date.now(); myProgress[kind][id] = moi; saveData(); // lưu thời điểm để tính hạng
+  timed("Lưu tiến độ", luuTienDo({ [kind]: { [id]: moi } }))
+    .catch(() => { if (myProgress[kind][id] === moi) { myProgress[kind][id] = cu; renderLessons(); renderHomework(); } alertStatus("Chưa lưu được tiến độ. Kiểm tra mạng rồi thử lại."); });
   return Promise.resolve();
 }
 function alertStatus(t) { toast(t, "err"); }
@@ -2986,7 +2989,7 @@ function luuAvatar(url) {
   const st = $("#av-st");
   if (!db) { if (st) st.textContent = "Đã đổi trên máy này ✓"; return; }
   const viec = [setDoc(doc(db, "anhdaidien", mail), { anh: myAvatar, luc: Date.now() })];
-  if (!isTeacher && approved) viec.push(luuTienDo());
+  if (!isTeacher && approved) viec.push(luuTienDo({ anh: myAvatar || "" }));
   timed("Lưu ảnh đại diện", Promise.all(viec))
     .then(() => { if (st) st.textContent = url ? "Đã lưu ảnh mới ✓" : "Đã bỏ ảnh ✓"; setTimeout(() => { if (st) st.textContent = ""; }, 3000); })
     .catch(() => { if (st) st.textContent = "Đã đổi trên máy này. Chưa lưu lên lớp được, thử lại sau."; });
@@ -3504,7 +3507,7 @@ function renderChatList() {
   $$("#chat-threads [data-k]").forEach(b => b.onclick = () => moKenh(b.dataset.k, true));
   // Ô "Nhắn tin mới cho…": những người chưa có cuộc trò chuyện
   const co = new Set(lvKenh.map(k => k.id));
-  const nguoi = (vtLoc === "giaovien" ? teachers : roster).filter(x => !co.has(x.id) && x.id !== mail);
+  const nguoi = (vtLoc === "giaovien" ? teachers : roster.filter(x => !teachers.some(t => t.id === x.id))).filter(x => !co.has(x.id) && x.id !== mail); // học viên kiêm giáo viên nhắn ở mục Giáo viên
   const sel = $("#chat-pick"), cur = sel.value;
   sel.innerHTML = `<option value="">+ Nhắn tin mới cho ${vtLoc === "giaovien" ? "giáo viên" : "học viên"}…</option>` + nguoi.map(x => `<option value="${esc(x.id)}">${esc(x.ten || x.id)}</option>`).join("");
   sel.value = nguoi.some(x => x.id === cur) ? cur : "";
@@ -3892,6 +3895,9 @@ async function onUser(u) {
 
   if (!isTeacher) {
     if (tdDoc) { myProgress = { bai: tdDoc.bai || {}, baitap: tdDoc.baitap || {}, xem: tdDoc.xem || {} }; if (tdDoc.anh && !avaTuMay) { myAvatar = tdDoc.anh; try { localStorage.setItem(AVA_KEY(mail), myAvatar); } catch (e) {} } }
+    // Tiến độ đồng bộ trực tiếp: học trên điện thoại thì máy tính cũng thấy ngay, không ghi đè lẫn nhau
+    listen(doc(db, "tiendo", mail), d => { if (!d.exists()) return; const x = d.data();
+      myProgress = { bai: x.bai || {}, baitap: x.baitap || {}, xem: x.xem || {} }; saveData(); renderLessons(); renderHomework(); renderTiles(); });
     listen(doc(db, "nhanxet", mail), d => { troLyDaTai.diem = true; myFeedback = d.exists() ? d.data() : {}; renderHomework(); renderMyProg(); saveData(); });
     listen(doc(db, "anhbaitap", mail), d => { myAnhBT = d.exists() ? d.data() : {}; renderHomework(); });
     // Điểm danh của chính em (lỗi quyền thì im lặng, panel vẫn hiện hướng dẫn)
@@ -3922,7 +3928,7 @@ async function onUser(u) {
   lvStart();
   if (!$("#v-lam-viec").hidden) lvOnShow();
   taiVanHanh().then(m => { if (!m || !user || mail !== (u.email || "").toLowerCase()) return;
-    m.batDau({ db, fs: { collection, doc, getDoc, setDoc, deleteDoc, writeBatch, query, orderBy, where, limit, onSnapshot }, themHuy: f => unsubs.push(f),
+    m.batDau({ db, fs: { collection, doc, getDoc, setDoc, deleteDoc, writeBatch, query, orderBy, where, limit, onSnapshot, deleteField }, themHuy: f => unsubs.push(f),
       mail, ten: (!isTeacher && myHv && myHv.ten) || (user && user.displayName) || mail.split("@")[0], isAdmin, isTeacher,
       toast, moHop, nenAnh, homNay: todayVN, giaoVien: () => teachers, hocVien: () => roster });
   });
@@ -4003,6 +4009,8 @@ async function startFirebase() {
   $("#btn-switch").onclick = async () => {
     const prev = mail;
     await signOut(auth);
+    // Máy dùng chung: xoá bản nháp, phiếu chưa gửi, ghi chú bàn giao, giỏ hàng, ảnh đại diện của người vừa đăng xuất
+    try { Object.keys(localStorage).filter(k => /^(nhap-|phieu-chua-gui-|vh-bg-nhap-|lvtt-gio|lvtt-avatar:|lvkv-dulieu-|lvkv-moc-thi)/.test(k)).forEach(k => localStorage.removeItem(k)); } catch (e) {}
     $("#pw-mail").value = prev; $("#pw-pass").value = ""; $("#pw-status").textContent = ""; showTab("in");
     toast("Đã đăng xuất.");
   };
@@ -4555,7 +4563,7 @@ function renderBanTin() {
       ${isAdmin && x.id ? `<button type="button" class="nb-more" data-mt="${esc(x.id)}" aria-label="Tuỳ chọn: sửa hoặc xoá bản tin">⋮</button>` : ""}
       <div class="tb-the-nd"><span class="tb-chip"><span class="tn-muc m-${esc(x.muc || "tinlop")}">${esc(MUC_TIN[x.muc] || "Tin của lớp")}</span>${x.ghim ? `<span class="tn-ghim">📌 Ghim</span>` : ""}</span>
         <b>${esc(x.tieuDe || "")}</b><small>${esc(String(x.nd || "").split(/\n/)[0].slice(0, 120))}${String(x.nd || "").length > 120 ? "…" : ""}</small>
-        <span class="tb-mo">${x.link && !x.link.startsWith("#") ? "Mở link ↗" : "Xem chi tiết →"} <em class="num">${ngayCua(x)}</em></span></div></figure>`;
+        <span class="tb-mo">${"Xem chi tiết →"} <em class="num">${ngayCua(x)}</em></span></div></figure>`;
   const n = ds.length + (them ? 1 : 0);
   box.innerHTML = n ? `<div class="gv-ring tb-ring" aria-roledescription="vòng xoay" aria-label="Bản tin nổi bật"><div class="gv-stage tb-stage">${ds.map(the).join("")}
       ${them ? `<figure class="nb-card nb-add tb-the" data-i="${ds.length}" data-add="1"><div class="nb-add-in"><span class="nb-plus" aria-hidden="true">+</span><b>Đăng tin mới</b><small>Tin tuyển sinh, thông báo, hoạ cụ…<br>Có thể kèm ảnh và link</small></div></figure>` : ""}</div>
@@ -4573,18 +4581,18 @@ function renderBanTin() {
     moBanTin(ds[Number(c.dataset.i)]);
   });
 }
-// Mở một bản tin: có link ngoài thì mở link, còn lại hiện toàn bộ nội dung trong hộp
+// Mở một bản tin: luôn hiện nội dung trong hộp; link ngoài (chỉ https) thành nút "Mở link" bên trong. Tin chỉ có link nội bộ, không nội dung → đi thẳng tới mục đó
 function moBanTin(x) {
   if (!x) return;
-  if (x.link && !x.link.startsWith("#")) { window.open(x.link, "_blank", "noopener"); return; }
-  if (x.link) { location.hash = x.link; return; }
+  const ngoai = linkAnToan(x.link);
+  if (x.link && x.link.startsWith("#") && !x.nd) { location.hash = x.link; return; }
   const doan = t => esc(t || "").split(/\n+/).filter(Boolean).map(p => `<p>${p}</p>`).join("");
   moHop(`<p class="tn-dau"><span class="tn-muc m-${esc(x.muc || "tinlop")}">${esc(MUC_TIN[x.muc] || "Tin của lớp")}</span></p>
     <h3>${esc(x.tieuDe || "")}</h3>
     ${x.anh ? `<img class="tn-anh" src="${esc(x.anh)}" alt="" loading="lazy" decoding="async">` : ""}
     <div class="tn-text mo">${doan(x.nd)}</div>
     <p class="muted tn-meta">${esc(x.tenTacGia || "Lớp Vẽ Thạch Thất")} · ${x.luc ? fmtDate(x.luc) : x.ngay ? ngayVN(x.ngay) : ""}</p>
-    <div class="hop-nut"><button class="btn" type="button" data-dong>Đóng</button></div>`);
+    <div class="hop-nut">${ngoai ? `<a class="btn primary" href="${esc(ngoai)}" target="_blank" rel="noopener">Mở link ↗</a>` : x.link && x.link.startsWith("#") ? `<a class="btn primary" href="${esc(x.link)}">Xem mục này →</a>` : ""}<button class="btn" type="button" data-dong>Đóng</button></div>`);
 }
 // sua: bản tin đang có (quản lý bấm ⋮ → Sửa); không có thì là đăng tin mới
 function moDangTin(sua) {

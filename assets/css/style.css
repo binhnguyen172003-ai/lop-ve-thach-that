@@ -2970,3 +2970,6 @@ main.wrap[id^="v-"]:not(#v-home){min-height:calc(100svh - var(--nav-h,57px))}
   #tl-cum .tl-nut{width:54px;height:54px}#tl-cum .tl-nhac-nut{width:46px;height:46px}
 }
 @media(max-width:760px) and (prefers-reduced-motion:reduce){#tl-cum{transition:none}}
+
+.tt-anh-lon{border:0;padding:0;background:none;cursor:zoom-in;border-radius:10px;overflow:hidden;display:block}
+.tt-anh-lon.phong{flex-basis:100%;cursor:zoom-out}.tt-anh-lon.phong img{width:100%;max-width:100%;max-height:none;height:auto}
