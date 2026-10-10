@@ -905,6 +905,8 @@
     <section class="ql-sec" id="ql-tong" aria-labelledby="ql-tong-h"></section>
     <section class="ql-sec" id="ql-top5" aria-labelledby="ql-top5-h"></section>
     <h2 class="ql-h2" id="ql-duyet-h">Duyệt tài khoản</h2>
+    <div class="ql-tim"><label for="ql-tim">Tìm trong yêu cầu, học viên, giáo viên<input id="ql-tim" type="search" autocomplete="off" placeholder="Gõ tên, Gmail hoặc số điện thoại (không dấu cũng được)"></label><p class="muted" id="ql-tim-kq" aria-live="polite"></p>
+      <div class="gv-trao" id="gv-kq-o" hidden><p class="ql-nho">Trao quyền giáo viên cho người tìm được <small class="muted">· chọn chức vụ rồi bấm Trao quyền</small></p><div id="gv-kq" class="gv-kq" aria-live="polite"></div></div></div>
     <h3>Yêu cầu chờ duyệt <span class="chip" id="req-count" hidden></span></h3>
     <div class="req-list" id="requests"></div>
 
@@ -915,15 +917,7 @@
     <div class="roster-wrap"><table class="roster" id="roster"></table></div>
 
     <h3 style="margin-top:32px" id="ql-gv-h">Trao / gỡ quyền giáo viên</h3>
-    <p class="muted" style="margin-bottom:12px">Giáo viên được điểm danh, giao và chấm bài, đăng bài vẽ, bản tin, xem Vận hành lớp. Gỡ quyền thì Gmail đó không còn quyền giáo viên (học viên vẫn giữ nguyên hồ sơ học). Có thể trao nhanh cho học viên bằng nút <b>Trao quyền GV</b> trong bảng Học viên ở trên.</p>
-    <form id="f-gv" class="gv-trao">
-      <label for="gv-mail">Gmail<input id="gv-mail" type="email" required autocomplete="off" placeholder="VD: covien@gmail.com"></label>
-      <label for="gv-ten">Họ tên<input id="gv-ten" required maxlength="80" placeholder="VD: Nguyễn Thị Linh"></label>
-      <label for="gv-cv">Chức vụ<select id="gv-cv"><option>Trợ giảng</option><option>Trợ giảng chính</option><option>Giáo viên</option><option>Giáo viên chính</option></select></label>
-      <label for="gv-cs">Cơ sở<select id="gv-cs"><option>Bình Phú</option><option>Kim Quan</option><option>Online</option></select></label>
-      <div><button class="btn primary" type="submit">Trao quyền giáo viên</button></div>
-      <p class="status" id="gv-status"></p>
-    </form>
+    <p class="muted" style="margin-bottom:12px">Giáo viên được điểm danh, giao và chấm bài, đăng bài vẽ, bản tin, xem Vận hành lớp. Gỡ quyền thì Gmail đó không còn quyền giáo viên (học viên vẫn giữ nguyên hồ sơ học). Muốn trao quyền: gõ tên hoặc Gmail vào <a href="#ql-duyet-h">ô tìm kiếm đầu phần Duyệt tài khoản</a>, chọn chức vụ rồi bấm <b>Trao quyền</b>.</p>
     <div class="roster-wrap"><table class="roster" id="teachers"></table></div>
 
     <h3 style="margin-top:32px">Duyệt trực tiếp một Gmail</h3>

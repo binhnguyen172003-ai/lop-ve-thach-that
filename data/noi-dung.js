@@ -289,13 +289,14 @@ export const THANH_TUU_TRAO = [
 // ===== XP THƯỞNG — anh chị cộng tay cho học viên (ghi rõ lý do) =====
 //   VD: { hocVien: "Khang", xp: 50, ghiChu: "Hoàn thành xuất sắc bài màu tuần 2" },
 //   Thêm huyenThoai: true để trao huy hiệu "HUYỀN THOẠI CỦA LỚP".
+// (10/10/2026: mốc hạng tăng gấp 5 → XP thưởng "lên hạng" đã trao cũng nhân 5 để các bạn giữ đúng hạng đã đạt)
 export const XP_THUONG = [
-  { hocVien: "Đặng Huy Hoàn", xp: 7400, ghiChu: "Huyền thoại của lớp Thạch Thất — đạt hạng SSS", huyenThoai: true },
-  { hocVien: "Nguyễn Văn Bảo", xp: 200, ghiChu: "Bài đầu tiên lên Bài vẽ nổi bật (Top 1 & Top 2 tuần) · lên hạng D" },
-  { hocVien: "Khang", xp: 100, ghiChu: "Có bài lên Bài vẽ nổi bật · lên hạng E" },
-  { hocVien: "Linh", xp: 100, ghiChu: "Có bài lên Bài vẽ nổi bật · lên hạng E" },
-  { hocVien: "Thùy", xp: 100, ghiChu: "Có bài lên Bài vẽ nổi bật · lên hạng E" },
-  { hocVien: "Nam", xp: 100, ghiChu: "Có bài lên Bài vẽ nổi bật · lên hạng E" },
+  { hocVien: "Đặng Huy Hoàn", xp: 37000, ghiChu: "Huyền thoại của lớp Thạch Thất — đạt hạng SSS", huyenThoai: true },
+  { hocVien: "Nguyễn Văn Bảo", xp: 1000, ghiChu: "Bài đầu tiên lên Bài vẽ nổi bật (Top 1 & Top 2 tuần) · lên hạng D" },
+  { hocVien: "Khang", xp: 500, ghiChu: "Có bài lên Bài vẽ nổi bật · lên hạng E" },
+  { hocVien: "Linh", xp: 500, ghiChu: "Có bài lên Bài vẽ nổi bật · lên hạng E" },
+  { hocVien: "Thùy", xp: 500, ghiChu: "Có bài lên Bài vẽ nổi bật · lên hạng E" },
+  { hocVien: "Nam", xp: 500, ghiChu: "Có bài lên Bài vẽ nổi bật · lên hạng E" },
 ];
 
 // ===== ẢNH ĐẠI DIỆN HIỆN CÔNG KHAI (Top rank, bảng hạng) =====
