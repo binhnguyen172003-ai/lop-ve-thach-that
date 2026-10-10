@@ -1124,7 +1124,7 @@ const GHI_CHU = {
     box.innerHTML = `<div class="gv-stage nb-stage">${ds.map((b, i) => `<figure class="nb-card nb-tran${b.nv ? " nb-nv nv-" + nhanVienLop(b) : ""}" data-i="${i}" style="--anh:url(&quot;${esc((u => { try { return new URL(u, location.href).href; } catch (e) { return ""; } })(String(b.anh || "")).replace(/["\\\n]/g, ""))}&quot;)">
         ${b.nv ? `<span class="nb-nv-tag">${esc(nhanVienTen(b))}</span>` : ""}
         ${isAdmin && b.id ? `<button type="button" class="nb-more" data-mn="${esc(b.id)}" aria-label="Tuỳ chọn: sửa link, xoá bài">⋮</button>` : ""}
-        <img src="${esc(b.anh)}" alt="${esc((b.loai || "Bài vẽ") + " · " + (b.hocVien || ""))}" ${i < 2 || b.nv ? 'loading="eager" fetchpriority="high"' : 'loading="lazy"'} decoding="async" draggable="false">
+        <img src="${esc(b.anh)}" alt="${esc((b.loai || "Bài vẽ") + " · " + (b.hocVien || ""))}" ${i < 2 || b.nv ? 'loading="eager" fetchpriority="high"' : 'loading="eager" fetchpriority="low"'} decoding="async" draggable="false">
         ${b.top ? `<span class="nb-medal h${b.top}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 2h4l1 5-3 1zM17 2h-4l-1 5 3 1z" class="rb"/><circle cx="12" cy="15" r="6.5" class="md"/><text x="12" y="18.2" text-anchor="middle">${b.top}</text></svg><b>TOP ${b.top}</b><i>${TEN[ky]}</i></span>` : ""}
         ${b.tg ? "" : (m => m.length ? (a => `<span class="nb-tt" data-rk="${esc(b.hocVien)}" role="button" tabindex="0" title="${esc(a.ten)} · ${CAP[a.cap].ten} — ${esc(a.mo)}">${huyHieuTT(a, a.cap, "sm")}<span class="nb-ttx"><b>${esc(a.ten)}</b><small>${a.n} ${esc(a.dv)} · ${CAP[a.cap].ten}</small></span></span>`)(m[0]) : "")(ttNoiNhat(b.hocVien))}
         ${b.tg ? "" : (t => khungThe(t.r, t.i))(tinhRank(null, null, null, b.hocVien))}
@@ -1180,10 +1180,10 @@ function renderGiaoVien() {
     const t = g.truong ? TRUONG[g.truong] : null;
     return `<article class="gv${g.chinh ? " chinh" : ""}" data-i="${i}" aria-roledescription="thẻ" aria-label="${i + 1} / ${n}: ${esc(g.ten)}">
       <button type="button" class="gv-in" data-i="${i}" tabindex="-1">
-        ${g.anh ? `<img class="gv-bai${g.bai ? " gv-art-full" : ""}" src="${esc(g.bai || IMG + g.anh + "-bai.jpg")}" alt="Bài vẽ của ${esc(g.ten)}" loading="lazy" decoding="async" width="348" height="234" draggable="false">`
+        ${g.anh ? `<img class="gv-bai${g.bai ? " gv-art-full" : ""}" src="${esc(g.bai || IMG + g.anh + "-bai.jpg")}" alt="Bài vẽ của ${esc(g.ten)}" loading="eager" decoding="async" width="348" height="234" draggable="false">`
           : g.chinh ? `<span class="gv-bai gv-bai-trong"><b>6</b><small>năm đứng lớp<br>luyện thi năng khiếu</small></span>`
           : `<span class="gv-bai gv-bai-trong alt"><b>${esc(g.khoi.replace("Khối ", ""))}</b><small>${esc(g.vaiTro)} ${esc(g.khoi)}</small></span>`}
-        <span class="gv-ava">${g.anh ? `<img src="${IMG}${esc(g.anh)}.jpg" alt="" loading="lazy" decoding="async" width="96" height="96" draggable="false">` : `<i>${esc(initials(g.ten))}</i>`}</span>
+        <span class="gv-ava">${g.anh ? `<img src="${IMG}${esc(g.anh)}.jpg" alt="" loading="eager" decoding="async" width="96" height="96" draggable="false">` : `<i>${esc(initials(g.ten))}</i>`}</span>
         <span class="gv-txt">
           <span class="gv-vt">${esc(g.vaiTro)} · ${esc(g.khoi)}</span>
           <b class="gv-ten">${esc(g.ten)}</b>
@@ -2179,7 +2179,7 @@ async function taiAnhBaiTap(hid, files) {
     const sdk = await attachmentStorage(app), moi = [];
     for (const [i, f] of list.entries()) {
       try {
-        const data = await nenAnh(f, 1400, 850000);
+        const data = await nenAnh(f, 1280, 450000, true); // kho ảnh nộp bài chỉ nhận JPEG
         const blob = await (await fetch(data)).blob();
         const path = `nopbai/${hid}/${mail}/${Date.now()}-${i}.jpg`;
         await sdk.uploadBytes(sdk.ref(sdk.storage, path), blob, { contentType: "image/jpeg" });
@@ -4772,7 +4772,9 @@ function capNhatVaiTro() {
   setTimeout(() => { renderGallery(); renderBanTin(); dispatchEvent(new Event("vaitro-doi")); }, 0); // chờ cả file tải xong
 }
 // Thu nhỏ ảnh để vừa giới hạn 1 MB của Firestore
-function nenAnh(file, max = 1400, gioiHan = 850000) {
+// Thu nhỏ ảnh trước khi đăng: ưu tiên WebP (nhẹ hơn JPEG ~30%), máy không hỗ trợ thì dùng JPEG; giảm chất lượng rồi kích thước tới khi đủ nhẹ
+const coWebp = (() => { try { const c = document.createElement("canvas"); c.width = c.height = 1; return c.toDataURL("image/webp").startsWith("data:image/webp"); } catch (e) { return false; } })();
+function nenAnh(file, max = 1280, gioiHan = 450000, chiJpeg = false) {
   return new Promise((ok, loi) => {
     if (!file || !/^image\//.test(file.type || "image/")) return loi(new Error("Chọn một tấm ảnh nhé."));
     const img = new Image(), u = URL.createObjectURL(file);
@@ -4783,7 +4785,7 @@ function nenAnh(file, max = 1400, gioiHan = 850000) {
       for (let lan = 0; lan < 10; lan++) {
         cv.width = Math.max(1, Math.round(w * k)); cv.height = Math.max(1, Math.round(h * k));
         const x = cv.getContext("2d"); x.fillStyle = "#fff"; x.fillRect(0, 0, cv.width, cv.height); x.drawImage(img, 0, 0, cv.width, cv.height);
-        out = cv.toDataURL("image/jpeg", q);
+        const webp = coWebp && !chiJpeg; out = cv.toDataURL(webp ? "image/webp" : "image/jpeg", webp ? q - .04 : q);
         if (out.length <= gioiHan) return ok(out);
         if (q > .62) q -= .08; else k *= .82;
       }
