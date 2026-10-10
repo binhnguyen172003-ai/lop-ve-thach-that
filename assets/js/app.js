@@ -998,7 +998,8 @@ const GHI_CHU = {
   const io = "IntersectionObserver" in window ? new IntersectionObserver(es => es.forEach(e => {
     if (!e.isIntersecting) return; const b = e.target.querySelector(".gc-i"), key = e.target.dataset.gcKey;
     if (!b || daXem[key]) return; io.unobserve(e.target); daXem[key] = 1; try { sessionStorage.setItem("lvtt-gc", JSON.stringify(daXem)); } catch (x) {}
-    setTimeout(() => { if (!dang) mo(b, true); }, 350);
+    // Điện thoại: chỉ nhấp nháy dấu ?, không tự bật hộp che nội dung; máy tính mới tự mở gợi ý một lần
+    if (matchMedia("(min-width: 900px)").matches) setTimeout(() => { if (!dang) mo(b, true); }, 350);
   }), { threshold: 0.5, rootMargin: "-15% 0px -25% 0px" }) : null;
   Object.entries(GHI_CHU).forEach(([id, nd]) => {
     const h = document.getElementById(id); if (!h || h.querySelector(".gc")) return;
@@ -1407,7 +1408,7 @@ $("#dk-zalo").href = ZALO_LINK;
     nav.classList.toggle("on-hero", home && y < Math.min(60, h - nav.offsetHeight - 10) && !$("#menu-ov").classList.contains("open"));
     const dk = $("#dang-ky").getBoundingClientRect();
     const dock = $("#dock");
-    dock.hidden = !home;
+    if (dock.hidden !== !home) { dock.hidden = !home; dispatchEvent(new Event("resize")); } // nút Chì tự né thanh dưới
     dock.classList.toggle("show", home && y > h * .6 && !(dk.top < innerHeight && dk.bottom > 0));
   };
   addEventListener("scroll", () => { if (!ticking) { ticking = true; requestAnimationFrame(onScroll); } }, { passive: true });
