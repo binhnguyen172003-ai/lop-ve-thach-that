@@ -3310,6 +3310,21 @@ table.roster.cc-cp{min-width:0}
 /* Lịch phân công trên màn hình cảm ứng: nút sửa / gỡ trong ô đủ lớn để bấm bằng ngón tay */
 @media (pointer:coarse){.lpc-gv-nut button{min-width:34px;min-height:34px}.lpc-gv{align-items:center}}
 
+/* Thanh Đi nhanh: khung 400px theo mẫu navigation, co theo màn hình. */
+@media(max-width:760px){
+  body.co-tab .tab-duoi:not([hidden]){
+    --primary-bg:var(--paper);
+    left:50%;right:auto;bottom:calc(12px + env(safe-area-inset-bottom,0px));
+    transform:translateX(-50%);width:min(400px,calc(100% - 24px));height:70px;
+    box-sizing:border-box;padding:4px;display:flex;justify-content:center;align-items:center;
+    background:var(--primary-bg);border:1px solid var(--rule);border-radius:10px;
+    box-shadow:0 15px 25px rgba(0,0,0,.2);
+  }
+  .tab-duoi a{flex:1;min-width:0;height:100%}
+  .tab-duoi a[aria-current="page"]::before{top:0;border-radius:3px}
+  body.co-tab{padding-bottom:calc(94px + env(safe-area-inset-bottom,0px))}
+  body.co-tab #tl-cum,body.co-tab #toast{bottom:calc(94px + env(safe-area-inset-bottom,0px))}
+}
 /* ===== Căn chỉnh bố cục trên điện thoại (thẻ hạng, form cộng XP, lịch phân công, nút kho, thẻ điểm danh) ===== */
 /* Thẻ hạng: một khung duy nhất ở mọi cỡ màn hình, nội dung căn giữa, dòng XP không chạm viền */
 .rk-stage .rk-card{padding:0;border:0;border-radius:0;background:none;box-shadow:none}
@@ -3347,8 +3362,7 @@ table.roster.cc-cp{min-width:0}
 
 /* ===== Thanh điều hướng dưới đáy kiểu "Liquid": thanh nổi bo góc, nút đang mở nhô lên thành vòng tròn có rãnh khoét ===== */
 @media(max-width:760px){
-  body.co-tab .tab-duoi:not([hidden]){left:10px;right:10px;bottom:calc(8px + env(safe-area-inset-bottom,0px));padding:0 6px;border:1px solid var(--rule);border-radius:20px;
-    background:color-mix(in srgb,var(--sheet) 96%,transparent);box-shadow:0 14px 30px -10px rgba(0,0,0,.6);overflow:visible}
+  body.co-tab .tab-duoi:not([hidden]){overflow:visible}
   .tab-duoi a{min-width:0;min-height:62px;gap:4px;padding:6px 2px 7px;align-content:end;font-size:clamp(.58rem,2.6vw,.68rem);line-height:1.1;-webkit-tap-highlight-color:transparent}
   .tab-duoi a span{max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .tab-duoi a svg{position:relative;z-index:1;box-sizing:content-box;padding:9px;margin:-9px;border-radius:50%;transition:transform .45s cubic-bezier(.34,1.56,.64,1),background-color .3s,color .3s,box-shadow .3s}
@@ -3359,8 +3373,6 @@ table.roster.cc-cp{min-width:0}
   .tab-duoi a[aria-current="page"] span{font-weight:800;transform:translateY(-4px);transition:transform .3s}
   .tab-so{top:3px;left:calc(50% + 5px);z-index:2}
   .tab-duoi a[aria-current="page"] .tab-so{top:-22px;left:calc(50% + 10px)}
-  body.co-tab{padding-bottom:calc(92px + env(safe-area-inset-bottom,0px))}
-  body.co-tab #tl-cum,body.co-tab #toast{bottom:calc(90px + env(safe-area-inset-bottom,0px))}
 }
 @media(max-width:760px) and (prefers-reduced-motion:reduce){.tab-duoi a svg{transition:none}}
 
