@@ -3399,3 +3399,11 @@ table.roster.cc-cp{min-width:0}
   body.co-tab{padding-bottom:calc(94px + env(safe-area-inset-bottom,0px))}
   body.co-tab #tl-cum,body.co-tab #toast{bottom:calc(94px + env(safe-area-inset-bottom,0px))}
 }
+
+/* Giữ nét chữ nghiêng và dấu tiếng Việt bên trong khung tiêu đề */
+h1,h2,h3{line-height:1.3;padding-block:.12em;overflow:visible;overflow-wrap:break-word}
+.sec-head{gap:16px;overflow:visible}.sec-head>div{min-width:0;max-width:100%}
+.sec-head h2,.page-head h1,.workspace-head h1,.mg-title{max-width:100%;padding:.14em .12em;line-height:1.3;overflow:visible;word-break:normal}
+.sec-head h2,.mg-title{transform:none!important;will-change:auto}
+.hero.cine .cine-h1{line-height:1.2;padding:.12em .14em;max-width:min(100%,14ch)}
+.sec-head{contain:none}
