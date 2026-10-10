@@ -717,7 +717,7 @@
     <h3 style="margin-bottom:4px">Gửi thông tin cho anh chị</h3>
     <p class="muted" id="reg-hint" style="margin-bottom:16px">Điền 5 ô có dấu <span class="req">*</span> là đủ. Mất khoảng 1 phút.</p>
     <form id="f-reg">
-      <label for="rg-vt">Em là<select id="rg-vt"><option value="hocvien">Học sinh</option><option value="giaovien">Giáo viên của lớp</option></select></label>
+      <label for="rg-vt">Em là<select id="rg-vt"><option value="hocvien">Học sinh</option><option value="giaovien">Trợ giảng / Giáo viên của lớp</option></select></label>
       <label for="rg-ten"><span>Họ và tên <span class="req">*</span></span><input id="rg-ten" required maxlength="80" autocomplete="name" placeholder="VD: Nguyễn Văn An"></label>
       <label for="rg-nam" class="chi-hv"><span>Năm sinh <span class="req">*</span></span><select id="rg-nam" required><option value="">Chọn năm sinh</option><option>2016</option><option>2015</option><option>2014</option><option>2013</option><option>2012</option><option>2011</option><option>2010</option><option>2009</option><option>2008</option><option>2007</option><option>2006</option><option>2005</option><option>2004</option><option>2003</option></select></label>
       <label for="rg-sdtph" class="chi-hv"><span>Số điện thoại bố hoặc mẹ <span class="req">*</span></span><input id="rg-sdtph" type="tel" inputmode="tel" required maxlength="15" placeholder="VD: 0912 345 678"></label>
@@ -919,6 +919,7 @@
     <form id="f-gv" class="gv-trao">
       <label for="gv-mail">Gmail<input id="gv-mail" type="email" required autocomplete="off" placeholder="VD: covien@gmail.com"></label>
       <label for="gv-ten">Họ tên<input id="gv-ten" required maxlength="80" placeholder="VD: Nguyễn Thị Linh"></label>
+      <label for="gv-cv">Chức vụ<select id="gv-cv"><option>Trợ giảng</option><option>Trợ giảng chính</option><option>Giáo viên</option><option>Giáo viên chính</option></select></label>
       <label for="gv-cs">Cơ sở<select id="gv-cs"><option>Bình Phú</option><option>Kim Quan</option><option>Online</option></select></label>
       <div><button class="btn primary" type="submit">Trao quyền giáo viên</button></div>
       <p class="status" id="gv-status"></p>
