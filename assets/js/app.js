@@ -5,7 +5,7 @@
 import { firebaseConfig, ADMIN_EMAIL, EMAIL_NHAN_THONG_BAO } from "../../config/firebase-config.js?v=20261009b";
 import { FILE_LIMITS, FILE_TYPES, fileExt, fileSize, validateFiles, attachmentStorage, uploadError, validAttachmentPath } from "./attachments.js?v=20261009b";
 import { GIAO_TRINH_MAU as GT_LO_TRINH } from "../../data/giao-trinh-mau.js?v=20261010bf";
-import { LIEN_HE, NAM_THI, LICH_THI, BO_LOC_TRUONG, CA_HOC, THOI_GIAN_BIEU, BAI_VE, BANG_VANG, TRUONG, MUC_TIEU, GIAO_VIEN, VIDEO_BIA, BAI_NOI_BAT, THANH_TUU_TRAO, XP_THUONG, AVATAR, SO_DU_THI, HOA_CU, TON_DAU_KY, BAN_TIN, SAN_PHAM, LICH_THI_CAP_NHAT, DO_MANG, MANG_XA_HOI } from "../../data/noi-dung.js?v=20261010bh";
+import { LIEN_HE, NAM_THI, LICH_THI, BO_LOC_TRUONG, CA_HOC, THOI_GIAN_BIEU, BAI_VE, BANG_VANG, TRUONG, MUC_TIEU, GIAO_VIEN, VIDEO_BIA, BAI_NOI_BAT, THANH_TUU_TRAO, XP_THUONG, AVATAR, SO_DU_THI, HOA_CU, TON_DAU_KY, BAN_TIN, SAN_PHAM, LICH_THI_CAP_NHAT, DO_MANG, MANG_XA_HOI, DIEM_CHUAN, DIEM_CHUAN_NAM } from "../../data/noi-dung.js?v=20261010dc";
 
 // Firebase được tải riêng, để phần giới thiệu vẫn chạy kể cả khi mạng chậm hoặc chưa cấu hình.
 const FB = "https://www.gstatic.com/firebasejs/10.12.2/";
@@ -74,7 +74,7 @@ function bocNhatKy() {
 
 const $ = s => document.querySelector(s);
 // Trợ lý (chat + nhắc việc) tải riêng, không làm chậm trang
-const troLyPromise = import("./tro-ly.js?v=20261010bf").catch(e => console.warn("Chưa tải được trợ lý", e));
+const troLyPromise = import("./tro-ly.js?v=20261010dc").catch(e => console.warn("Chưa tải được trợ lý", e));
 // Thi thử + vận hành lớp: chỉ tải khi đã đăng nhập vào học
 let vanHanhP = null, vanHanhM = null;
 const taiVanHanh = () => vanHanhP ||= import("./van-hanh.js?v=20261010bf").then(m => vanHanhM = m).catch(e => { vanHanhP = null; console.warn("Chưa tải được phần vận hành", e); });
@@ -123,7 +123,7 @@ addEventListener("error", e => {
 });
 /* ---------- Mở tức thì ở lần sau + dùng được khi mạng yếu ---------- */
 if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost") && !/[?&]khongcache/.test(location.search))
-  addEventListener("load", () => navigator.serviceWorker.register("sw.js?v=20261010br").catch(() => {}));
+  addEventListener("load", () => navigator.serviceWorker.register("sw.js?v=20261010dc").catch(() => {}));
 
 /* ---------- Đo tốc độ: mở web kèm ?chandoan=1 để xem từng bước mất bao lâu ---------- */
 const DIAG = /[?&]chandoan/.test(location.search);
@@ -362,6 +362,30 @@ $$("#exam-filters .tab").forEach(b => b.onclick = () => {
 renderExams();
 setInterval(renderExams, 3600000);
 if (LICH_THI_CAP_NHAT) { const [y, m, d] = LICH_THI_CAP_NHAT.split("-"); $("#thi-cap-nhat").textContent = ` Cập nhật ngày ${+d}/${+m}/${y}.`; }
+
+// ---------- Điểm chuẩn các trường ----------
+let dcTruong = (DIEM_CHUAN[0] || {}).truong || "";
+const dcDiem = d => Number(d).toLocaleString("vi-VN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+function renderDiemChuan() {
+  const k = DIEM_CHUAN.find(x => x.truong === dcTruong);
+  if (!k) { $("#dc-list").innerHTML = `<p class="muted">Lớp chưa cập nhật điểm chuẩn.</p>`; return; }
+  const t = TRUONG[k.truong] || { ten: k.truong, mau: "#5b6068" };
+  const cao = Math.max(...k.nganh.map(n => n.diem));
+  $("#dc-list").innerHTML = `<article class="dc-the" style="--c:${esc(t.mau)}">
+      <header><span class="trc">${esc(k.truong)}</span><h3>${esc(t.ten)}</h3>${k.ghiChu ? `<p class="muted">${esc(k.ghiChu)}</p>` : ""}</header>
+      <ul>${[...k.nganh].sort((a, b) => b.diem - a.diem).map(n => `<li${n.diem === cao ? ` class="cao"` : ""}>
+        <span><b>${esc(n.nganh)}</b><em>${esc(n.ma)}${n.ghiChu ? " · " + esc(n.ghiChu) : ""}${n.nv ? " · " + esc(n.nv) : ""}</em></span>
+        <b class="num">${dcDiem(n.diem)}</b></li>`).join("")}</ul>
+    </article>`;
+}
+$("#dc-eyebrow").textContent = `Tuyển sinh ${DIEM_CHUAN_NAM}`;
+$("#dc-filters").innerHTML = DIEM_CHUAN.map(x => `<button class="tab trtab" data-t="${esc(x.truong)}" style="--c:${esc((TRUONG[x.truong] || {}).mau || "#5b6068")}" aria-selected="${x.truong === dcTruong}">${esc(x.truong)}</button>`).join("");
+$$("#dc-filters .tab").forEach(b => b.onclick = () => {
+  dcTruong = b.dataset.t;
+  $$("#dc-filters .tab").forEach(x => x.setAttribute("aria-selected", x === b));
+  renderDiemChuan();
+});
+renderDiemChuan();
 
 /* ================= Thời gian biểu ================= */
 const SLOT = { "Hình hoạ": "hh", "Màu": "mau", "Mỹ thuật 2": "mt2" };
@@ -1396,6 +1420,7 @@ $("#dk-zalo").href = ZALO_LINK;
       hv.set(k, (hv.get(k) || []).concat(`${r.truong}${d ? ": " + d : ""}`)); });
     hv.forEach((v, k) => { const [ten, nam] = k.split("|"); them("Bảng vàng", ten, `Khoá ${nam} · ${v.join(" · ")}`, "#bang-vang"); });
     LICH_THI.forEach(e => them("Lịch thi", e.ten, `${e.dot} · ${e.hienThi}/${e.ngay.slice(0, 4)}`, "#lich-thi", e.truong));
+    DIEM_CHUAN.forEach(k => k.nganh.forEach(n => them("Điểm chuẩn", `${n.nganh} · ${k.truong}`, `${DIEM_CHUAN_NAM}: ${dcDiem(n.diem)} điểm · mã ${n.ma}`, "#diem-chuan", (TRUONG[k.truong] || {}).ten || "")));
     them("Trang", "Đăng ký học thử", "Gửi thông tin, anh chị gọi lại tư vấn · đếm ngược ngày thi", "#dang-ky", "dang ky hoc thu tu van hoc phi lien he so dien thoai zalo");
     them("Trang", "Tài khoản học viên", "Đăng nhập, giáo trình, bài tập, nhắn tin anh chị", "#tai-khoan", "dang nhap dang ky tai khoan giao trinh bai tap");
     them("Liên hệ", "Gọi " + (LIEN_HE.sdt || "") + " · Zalo " + (LIEN_HE.zaloHienThi || LIEN_HE.zalo || ""), "Cơ sở Bình Phú · Kim Quan, Thạch Thất", "#dang-ky", "lien he dien thoai zalo dia chi co so");

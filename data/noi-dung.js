@@ -92,6 +92,66 @@ export const BO_LOC_TRUONG = [
 ];
 
 
+// ---------- 2b. ĐIỂM CHUẨN (điểm trúng tuyển) ----------
+// Mỗi trường một khối; truong dùng mã ở bảng TRUONG bên dưới (HAU, MTCN…) để có đúng màu.
+// ma: mã ngành / mã xét tuyển · nganh: tên ngành · diem: điểm trúng tuyển (thang 30)
+// nv: (không bắt buộc) nguyện vọng trúng tuyển khi bằng điểm chuẩn · ghiChu: (không bắt buộc) chữ nhỏ dưới tên ngành.
+// Mùa sau: đổi DIEM_CHUAN_NAM rồi thay số trong các dòng bên dưới.
+export const DIEM_CHUAN_NAM = 2026;
+
+export const DIEM_CHUAN = [
+  { truong: "MTCN", ghiChu: "Đại học chính quy đợt 1 · phương thức MTC406 (TB số 816, 09/8/2026)", nganh: [
+    { ma: "7210103", nganh: "Hội hoạ", ghiChu: "Hoành tráng · Sơn mài · Nghệ thuật công cộng", diem: 23.58 },
+    { ma: "7210105", nganh: "Điêu khắc", diem: 22.26 },
+    { ma: "7210107", nganh: "Gốm", diem: 22.20 },
+    { ma: "7210402", nganh: "Thiết kế công nghiệp", ghiChu: "Thiết kế công nghiệp · Trang sức · Trang trí dệt", diem: 22.84 },
+    { ma: "7210403", nganh: "Thiết kế đồ hoạ", diem: 24.05 },
+    { ma: "7210404", nganh: "Thiết kế thời trang", diem: 22.26 },
+    { ma: "7580108", nganh: "Thiết kế nội thất", diem: 23.01 },
+  ] },
+  { truong: "HAU", ghiChu: "Đại học chính quy", nganh: [
+    { ma: "KTA01", nganh: "Nhóm ngành 1", diem: 28.27, nv: "NV1" },
+    { ma: "KTA02", nganh: "Nhóm ngành 2", diem: 25.92, nv: "NV2" },
+    { ma: "KTA03", nganh: "Nhóm ngành 3", diem: 22.50, nv: "NV3" },
+    { ma: "KTA04.1", nganh: "Nhóm ngành 4.1", diem: 17.00, nv: "NV1" },
+    { ma: "KTA04.2", nganh: "Nhóm ngành 4.2", diem: 17.45, nv: "NV6" },
+    { ma: "7210403", nganh: "Thiết kế đồ hoạ", diem: 23.47, nv: "NV1" },
+    { ma: "7210403_1", nganh: "Nghệ thuật số", ghiChu: "Chuyên ngành thuộc ngành Thiết kế đồ hoạ", diem: 24.00, nv: "NV1" },
+    { ma: "7210404", nganh: "Thiết kế thời trang", diem: 22.50, nv: "NV2" },
+    { ma: "7580108", nganh: "Thiết kế nội thất", diem: 22.75, nv: "NV2" },
+  ] },
+  { truong: "HUCE", ghiChu: "Cơ sở chính Hà Nội · chỉ ghi các ngành kiến trúc, mỹ thuật", nganh: [
+    { ma: "XDA01", nganh: "Kiến trúc", diem: 21.87 },
+    { ma: "XDA02", nganh: "Kiến trúc công nghệ", diem: 20.00 },
+    { ma: "XDA03", nganh: "Kiến trúc cảnh quan", diem: 19.35 },
+    { ma: "XDA04", nganh: "Kiến trúc nội thất", diem: 20.20 },
+    { ma: "XDA05", nganh: "Quy hoạch vùng và đô thị", diem: 21.60 },
+    { ma: "XDA06", nganh: "Mỹ thuật đô thị", diem: 23.47 },
+  ] },
+  { truong: "SIS", ghiChu: "Điểm chính thức · áp dụng chung cho các phương thức, các tổ hợp", nganh: [
+    { ma: "7340115TA", nganh: "Quản trị thương hiệu (tiếng Anh)", diem: 22.00, nv: "NV1" },
+    { ma: "7340115", nganh: "Quản trị thương hiệu", diem: 23.57, nv: "NV2" },
+    { ma: "7229042", nganh: "Quản lý giải trí và sự kiện", diem: 24.50, nv: "NV2" },
+    { ma: "7229047", nganh: "Quản trị tài nguyên di sản", diem: 22.75, nv: "NV4" },
+    { ma: "7580106", nganh: "Quản trị đô thị thông minh và bền vững", diem: 20.75, nv: "NV2" },
+    { ma: "7320106", nganh: "Công nghệ truyền thông", diem: 22.75, nv: "NV2" },
+    { ma: "7580101", nganh: "Kiến trúc và thiết kế cảnh quan", diem: 20.01, nv: "NV3" },
+    { ma: "7210404", nganh: "Thời trang và sáng tạo", diem: 21.80, nv: "NV3" },
+    { ma: "7210403", nganh: "Đồ hoạ công nghệ số", diem: 23.30, nv: "NV2" },
+    { ma: "7580103", nganh: "Nội thất bền vững", diem: 22.45, nv: "NV3" },
+    { ma: "7210301", nganh: "Nhiếp ảnh mỹ thuật", diem: 20.90, nv: "NV1" },
+    { ma: "7210408", nganh: "Nghệ thuật tạo hình đương đại", diem: 20.90, nv: "NV2" },
+  ] },
+  { truong: "NUAE", ghiChu: "Đại học chính quy · chỉ ghi các ngành mỹ thuật, thiết kế", nganh: [
+    { ma: "7140222", nganh: "Sư phạm Mỹ thuật", diem: 23.0 },
+    { ma: "7210103", nganh: "Hội hoạ", diem: 23.5 },
+    { ma: "7210403", nganh: "Thiết kế đồ hoạ", diem: 22.5 },
+    { ma: "7210404", nganh: "Thiết kế thời trang", diem: 22.25 },
+    { ma: "7540204", nganh: "Công nghệ may", diem: 21.0 },
+  ] },
+];
+
+
 // ---------- 3. THỜI GIAN BIỂU ----------
 // Môn học viết đúng một trong ba chữ: "Hình hoạ", "Màu", "Mỹ thuật 2".
 // Ngày viết: "T2", "T3", "T4", "T5", "T6", "T7", "CN".

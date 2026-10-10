@@ -3181,3 +3181,16 @@ table.roster.cc-cp{min-width:0}
   .cc-bang tfoot th,.cc-bang tfoot td{display:block;padding:0;border:0}
   .cc-bang-o{max-height:70vh}
 }
+
+/* ===== Điểm chuẩn các trường ===== */
+.dc-the{border:1px solid var(--rule);border-top:4px solid var(--c);border-radius:14px;background:var(--sheet);padding:18px 20px;max-width:760px}
+.dc-the header{display:grid;gap:4px;margin-bottom:10px}
+.dc-the header .trc{justify-self:start}
+.dc-the h3{font-size:1.15rem}
+.dc-the ul{list-style:none;margin:0;padding:0}
+.dc-the li{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:10px 0;border-top:1px solid var(--rule)}
+.dc-the li span{display:grid;gap:2px;min-width:0}
+.dc-the li em{font-style:normal;font-size:.82rem;color:var(--graphite)}
+.dc-the li > .num{font-size:1.25rem;flex:none;font-variant-numeric:tabular-nums}
+.dc-the li.cao > .num{color:var(--c)}
+@media (max-width:640px){.dc-the{padding:14px}}

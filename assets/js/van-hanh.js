@@ -3,7 +3,7 @@
 //  app.js gọi batDau(ctx) sau khi đăng nhập, dung() khi đăng xuất.
 //  Dữ liệu nằm trên Firestore; quyền đọc/ghi kiểm tra ở máy chủ (firestore.rules).
 // =====================================================================
-import { CA_HOC, THOI_GIAN_BIEU, VIEC_CUOI_BUOI, TIEU_CHI_THI } from "../../data/noi-dung.js?v=20261010bh";
+import { CA_HOC, THOI_GIAN_BIEU, VIEC_CUOI_BUOI, TIEU_CHI_THI } from "../../data/noi-dung.js?v=20261010dc";
 
 let tuanLich = 0, csLich = "", thangCC = 0, gvCC = "", viewCC = "hom"; // chấm công: tháng đang xem (0 = tháng này), giáo viên đang xem // lịch phân công dạy: tuần đang xem (0 = tuần này), cơ sở đang xem
 let C = null, huy = [], dongHo = 0, anhThi = [], tabVH = "", locSC = "mo", timBG = "", locNK = "", chiCaToi = false;

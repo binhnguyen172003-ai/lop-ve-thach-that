@@ -4,7 +4,7 @@
 //  trợ lý vẫn trả lời bằng bộ câu hỏi có sẵn bên dưới (không cần mạng AI).
 // =====================================================================
 import { firebaseConfig, EMAIL_NHAN_THONG_BAO } from "../../config/firebase-config.js?v=20261009b";
-import { LIEN_HE, LICH_THI, CA_HOC, THOI_GIAN_BIEU, TRUONG, GIAO_VIEN, HOA_CU, NAM_THI } from "../../data/noi-dung.js?v=20261010bh";
+import { LIEN_HE, LICH_THI, CA_HOC, THOI_GIAN_BIEU, TRUONG, GIAO_VIEN, HOA_CU, NAM_THI, DIEM_CHUAN, DIEM_CHUAN_NAM } from "../../data/noi-dung.js?v=20261010dc";
 
 const AI_SDK = "https://www.gstatic.com/firebasejs/12.0.0/";
 const AI_MODEL = ["gemini-2.5-flash", "gemini-2.5-flash-lite", "gemini-2.0-flash"];
@@ -42,6 +42,7 @@ LIÊN HỆ: gọi ${LIEN_HE.sdt}; Zalo tư vấn ${ZALO_HT}. ${LIEN_HE.coSo.map(
 LỊCH HỌC:\n${lichHocText()}
 LỊCH THI DỰ KIẾN ${NAM_THI}:\n${lichThiText()}
 TRƯỜNG: ${Object.entries(TRUONG).map(([k, v]) => `${k} = ${v.ten}`).join("; ")}.
+ĐIỂM CHUẨN ${DIEM_CHUAN_NAM} (thang 30, đã công bố; chỉ dùng số này, năm sau có thể khác): ${DIEM_CHUAN.map(k => `${k.truong}: ` + k.nganh.map(n => `${n.nganh} (${n.ma}) ${n.diem}`).join(", ")).join(" | ")}.
 KHỐI H: thi hình hoạ người + bố cục trang trí màu (ngành đồ hoạ, thời trang, nội thất, mỹ thuật ứng dụng – MTCN, Sư phạm Nghệ thuật, HAU khối H).
 KHỐI V: thi Toán + hình hoạ tượng (+ Mỹ thuật 2/bố cục tuỳ trường) (ngành kiến trúc, quy hoạch, xây dựng – HAU, Xây dựng, ĐHQG).
 KHOÁ HỌC: Hình hoạ cơ bản (bắt đầu từ 0), Hình hoạ người (Khối H), Hình hoạ tượng (Khối V), Màu & bố cục màu (Khối H), Mỹ thuật 2 (Khối V), Ôn thi cấp tốc (tháng 3–5). Học thử miễn phí.

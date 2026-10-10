@@ -45,10 +45,10 @@
 <!-- Phông chữ tải sau, không bắt người xem chờ trắng màn hình -->
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Be+Vietnam+Pro:wght@400;500;600&family=Playfair+Display:ital,wght@1,500;1,600&display=swap" media="print" onload="this.media='all'">
 <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Be+Vietnam+Pro:wght@400;500;600&family=Playfair+Display:ital,wght@1,500;1,600&display=swap"></noscript>
-<link rel="stylesheet" href="assets/css/style.css?v=20261010br">
-<link rel="modulepreload" href="assets/js/app.js?v=20261010br">
+<link rel="stylesheet" href="assets/css/style.css?v=20261010dc">
+<link rel="modulepreload" href="assets/js/app.js?v=20261010dc">
 <link rel="modulepreload" href="config/firebase-config.js?v=20261009b">
-<link rel="modulepreload" href="data/noi-dung.js?v=20261010bh">
+<link rel="modulepreload" href="data/noi-dung.js?v=20261010dc">
 <script nomodule>document.addEventListener("DOMContentLoaded",function(){var d=document.createElement("div");d.className="slow-bar";d.innerHTML="Trình duyệt này đã quá cũ nên web chạy không đủ. Hãy cập nhật Chrome hoặc Safari rồi mở lại.";document.body.insertBefore(d,document.body.firstChild)})</script>
 <script>document.documentElement.classList.add("js-fx");setTimeout(function(){document.querySelectorAll(".fx,.cine-h1").forEach(function(e){e.classList.add("in")})},2600);</script>
 <script>setTimeout(function(){if(window.__appOk)return;var d=document.createElement("div");d.className="slow-bar";d.innerHTML='Mạng đang chậm, trang chưa tải xong. <button type="button" onclick="location.reload()">Tải lại</button>';document.body.insertBefore(d,document.body.firstChild)},12000)</script>
@@ -106,6 +106,7 @@
         <a class="link" href="#lo-trinh" data-nav="home"><b>Lộ trình học</b><small>Tuần nào học gì, từng môn</small></a>
         <a class="link" href="#lich-hoc" data-nav="home"><b>Lịch học</b><small>Bình Phú · Kim Quan</small></a>
         <a class="link" href="#lich-thi" data-nav="home"><b>Lịch thi 2027</b><small>Đếm ngày tới kỳ thi</small></a>
+        <a class="link" href="#diem-chuan" data-nav="home"><b>Điểm chuẩn 2026</b><small>MTCN · HAU · HUCE · SIS · NUAE</small></a>
         <a class="link" href="#ban-tin" data-nav="home"><b>Bản tin</b><small>Hoạ cụ, lý thuyết, tin của lớp</small></a>
       </div>
     </div>
@@ -330,6 +331,15 @@
     <div class="cd-lead" id="cd-lead"></div>
     <div class="filters" id="exam-filters" role="group" aria-label="Lọc theo trường"></div>
     <div class="months" id="months"></div>
+  </section>
+
+  <section id="diem-chuan" aria-labelledby="h-dc">
+    <div class="sec-head">
+      <div><p class="eyebrow" id="dc-eyebrow">Tuyển sinh 2026</p><h2 id="h-dc">Điểm chuẩn các trường</h2></div>
+      <p class="muted">Điểm trúng tuyển do các trường công bố, lớp tổng hợp lại. Điểm thang 30, đã gồm điểm năng khiếu theo cách tính của từng trường.</p>
+    </div>
+    <div class="filters" id="dc-filters" role="group" aria-label="Chọn trường"></div>
+    <div class="dc-list" id="dc-list"></div>
   </section>
 
   <section id="lich-hoc" aria-labelledby="h-lich">
@@ -941,6 +951,6 @@
   <div class="lb-bar"><button type="button" id="lb-prev" aria-label="Bài trước">‹</button><span id="lb-cap" class="num"></span><p id="lb-mota" class="lb-mota" hidden></p><button type="button" id="lb-next" aria-label="Bài sau">›</button><button type="button" id="lb-close">Đóng</button></div>
 </div>
 <footer><div class="wrap">Lớp Vẽ Không Vui · Luyện thi năng khiếu Khối H, V · Thạch Thất, Hà Nội</div></footer>
-<script type="module" src="assets/js/app.js?v=20261010br"></script>
+<script type="module" src="assets/js/app.js?v=20261010dc"></script>
 </body>
 </html>
