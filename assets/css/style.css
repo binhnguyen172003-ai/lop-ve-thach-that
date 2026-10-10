@@ -3375,3 +3375,14 @@ table.roster.cc-cp{min-width:0}
 /* Tiêu đề nghiêng chữ chuyển sắc: chừa mép trái/phải để nét nghiêng (B, G, T…) không bị cắt */
 :root[data-theme="dark"] section h2{padding-inline:.12em;margin-inline-start:-.12em}
 .cd-big,.dk-cd-n b,.lg-t{padding-left:.06em;margin-left:-.06em}
+/* Liquid: nút không chọn chỉ còn biểu tượng (chữ vẫn đọc được bằng trình đọc màn hình), nút đang mở có chữ dưới vòng tròn */
+@media(max-width:760px){
+  .tab-duoi a{align-content:center}
+  .tab-duoi a:not([aria-current="page"]) span{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+  .tab-duoi a svg{width:24px;height:24px}
+  .tab-duoi a[aria-current="page"]{align-content:end}
+  .tab-duoi a[aria-current="page"] svg{transform:translateY(-22px)}
+  .tab-duoi a[aria-current="page"] span{transform:translateY(-2px);animation:td-chu .35s ease-out}
+}
+@keyframes td-chu{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(-2px)}}
+@media(max-width:760px) and (prefers-reduced-motion:reduce){.tab-duoi a[aria-current="page"] span{animation:none}}
