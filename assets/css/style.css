@@ -3554,3 +3554,47 @@ table.roster.cc-cp{min-width:0}
   body.co-tab .tab-duoi a svg{transition:transform .3s cubic-bezier(.34,1.56,.64,1),color .2s}
 }
 @media(max-width:760px){body.co-tab .tab-duoi.luot a[aria-current="page"]:not(.gan){align-content:center}}
+
+/* ===== Bảng điều khiển anh chị kiểu Dashboard V12: khung bo tròn lớn, biểu đồ đường / cột, lịch tháng ===== */
+.dash-o{border-radius:24px;border-color:var(--kinh-vien,var(--rule));box-shadow:inset 0 1px 0 color-mix(in srgb,#fff 7%,transparent),0 16px 34px -24px rgba(0,0,0,.7)}
+.dash-bd{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(0,1fr) minmax(0,1fr);gap:12px;margin-top:12px}
+@media (max-width:1023px){.dash-bd{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.dash-bd-duong{grid-column:1/-1}}
+@media (max-width:560px){.dash-bd{grid-template-columns:minmax(0,1fr)}}
+.dash-bd-dau{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.dash-bd-dau h2{margin:0}.dash-bd-dau .muted{font-size:.8rem}
+/* Đường */
+.dash-bd-ve{position:relative}
+.dash-bd-ve svg{display:block;width:100%;height:auto;overflow:visible;touch-action:pan-y}
+.dash-luoi-ke{stroke:var(--rule);stroke-width:1;stroke-dasharray:3 5}
+.dash-truc{fill:var(--graphite);font:500 11px var(--f-body)}
+.dash-duong{fill:none;stroke:var(--accent);stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+.dash-dinh circle{fill:var(--accent);stroke:var(--sheet);stroke-width:2}
+.dash-dinh rect{fill:var(--sheet);stroke:var(--accent);stroke-width:1.2}
+.dash-dinh text{fill:var(--ink);font:700 11px var(--f-body)}
+.dash-tro-doc{stroke:var(--graphite);stroke-width:1;stroke-dasharray:2 3}
+.dash-tro-cham{fill:var(--accent);stroke:var(--sheet);stroke-width:2.5}
+.dash-goi{position:absolute;transform:translate(-50%,calc(-100% - 12px));padding:6px 10px;border-radius:10px;background:var(--paper);border:1px solid var(--rule);box-shadow:0 8px 20px -8px rgba(0,0,0,.6);pointer-events:none;display:grid;gap:1px;white-space:nowrap}
+.dash-goi[hidden]{display:none}
+.dash-goi b{font-size:.92rem;color:var(--ink)}.dash-goi span{font-size:.72rem;color:var(--graphite)}
+/* Cột */
+.dash-cot-ve{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;align-items:end;height:150px;padding-top:4px}
+.dash-cot-o{display:grid;grid-template-rows:auto 1fr auto;justify-items:center;height:100%;gap:4px;min-width:0}
+.dash-cot-o b{font-size:.72rem;color:var(--graphite);min-height:1em}
+.dash-cot-o i{align-self:end;width:min(100%,18px);height:max(var(--h),4px);border-radius:999px;background:linear-gradient(180deg,#f5c400,color-mix(in srgb,#f5c400 55%,transparent));transition:height .6s cubic-bezier(.22,1,.36,1)}
+.dash-cot-o:last-child i{background:linear-gradient(180deg,#ffe46b,#f5c400);box-shadow:0 0 14px -2px rgba(245,196,0,.6)}
+.dash-cot-o small{font-size:.7rem;color:var(--graphite)}
+/* Lịch tháng */
+.dash-lt-thang{display:grid;gap:8px}
+.dash-lt-thang > b{font-size:1rem}
+.dash-lt-luoi{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;text-align:center}
+.dash-lt-luoi em{font:600 .64rem var(--f-body);font-style:normal;color:var(--graphite);padding-bottom:2px}
+.dash-lt-luoi span{display:grid;place-items:center;aspect-ratio:1;max-width:32px;margin-inline:auto;width:100%;border-radius:50%;font:500 .76rem var(--f-body);color:var(--ink)}
+.dash-lt-luoi span.hoc{background:color-mix(in srgb,#2ec4b6 26%,transparent);color:color-mix(in srgb,#2ec4b6 55%,var(--ink))}
+.dash-lt-luoi span.thi{background:#f08a24;color:#0b0d14;font-weight:700}
+.dash-lt-luoi span.hom{background:#e5484d;color:#fff;font-weight:700}
+.dash-lt-chu{display:flex;flex-wrap:wrap;gap:4px 12px;margin:0;font-size:.7rem;color:var(--graphite)}
+.dash-lt-chu span::before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px;vertical-align:middle}
+.dash-lt-chu .hoc::before{background:#2ec4b6}.dash-lt-chu .thi::before{background:#f08a24}.dash-lt-chu .hom::before{background:#e5484d}
+@media (prefers-reduced-motion:reduce){.dash-cot-o i{transition:none}}
+.dash-bd{align-items:start}
+.dash-bd-duong{justify-content:space-between}
