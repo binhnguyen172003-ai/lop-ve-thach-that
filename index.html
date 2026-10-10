@@ -897,7 +897,7 @@
     <p class="eyebrow">Dành cho quản lý</p>
     <h1>Quản lý lớp</h1>
     <p class="muted">Học viên đi học, tiến độ, % đỗ dự báo, Top 5 bài nổi bật và duyệt tài khoản — tất cả ở một trang.</p>
-    <nav class="ql-nhay" aria-label="Đi nhanh"><a href="#ql-tong-h">Học viên &amp; % đỗ</a><a href="#ql-top5-h">Top 5 tuần</a><a href="#ql-duyet-h">Duyệt tài khoản</a></nav>
+    <nav class="ql-nhay" aria-label="Đi nhanh"><a href="#ql-tong-h">Học viên &amp; % đỗ</a><a href="#ql-top5-h">Top 5 tuần</a><a href="#ql-duyet-h">Duyệt tài khoản</a><a href="#ql-gv-h">Quyền giáo viên</a></nav>
   </div>
   <div class="lock" id="duyet-lock"><h3>Trang dành cho quản lý</h3><p class="muted">Chỉ Gmail quản lý lớp mới mở được trang này.</p><div class="ctas"><a class="btn primary" href="#tai-khoan">Đăng nhập</a></div></div>
   <div class="teacher" data-admin hidden id="duyet-body">
@@ -914,7 +914,15 @@
     <h3 style="margin-top:32px">Học viên đã duyệt</h3>
     <div class="roster-wrap"><table class="roster" id="roster"></table></div>
 
-    <h3 style="margin-top:32px">Giáo viên</h3>
+    <h3 style="margin-top:32px" id="ql-gv-h">Trao / gỡ quyền giáo viên</h3>
+    <p class="muted" style="margin-bottom:12px">Giáo viên được điểm danh, giao và chấm bài, đăng bài vẽ, bản tin, xem Vận hành lớp. Gỡ quyền thì Gmail đó không còn quyền giáo viên (học viên vẫn giữ nguyên hồ sơ học). Có thể trao nhanh cho học viên bằng nút <b>Trao quyền GV</b> trong bảng Học viên ở trên.</p>
+    <form id="f-gv" class="gv-trao">
+      <label for="gv-mail">Gmail<input id="gv-mail" type="email" required autocomplete="off" placeholder="VD: covien@gmail.com"></label>
+      <label for="gv-ten">Họ tên<input id="gv-ten" required maxlength="80" placeholder="VD: Nguyễn Thị Linh"></label>
+      <label for="gv-cs">Cơ sở<select id="gv-cs"><option>Bình Phú</option><option>Kim Quan</option><option>Online</option></select></label>
+      <div><button class="btn primary" type="submit">Trao quyền giáo viên</button></div>
+      <p class="status" id="gv-status"></p>
+    </form>
     <div class="roster-wrap"><table class="roster" id="teachers"></table></div>
 
     <h3 style="margin-top:32px">Duyệt trực tiếp một Gmail</h3>

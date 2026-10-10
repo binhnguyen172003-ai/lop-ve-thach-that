@@ -2576,9 +2576,12 @@ function renderRoster() {
       return `<tr><td>${esc(r.ten)}${r.namSinh ? `<br><span class="muted num">Sinh năm ${esc(r.namSinh)}</span>` : ""}</td><td>${esc(r.gmail)}</td><td>${esc(r.chuongTrinh || r.lop)}${oChonKhoa(r.id, khoaCuaHv(r))}</td><td>${esc(r.coso)}</td>
         <td class="num">${r.sdt ? "HV: " + esc(r.sdt) : ""}${r.sdtPh ? "<br>PH: " + esc(r.sdtPh) : ""}</td>
         <td class="num">${n}/${total}</td><td class="num">${fmtDate(r.duyetLuc)}</td>
-        <td><button class="btn small" data-rm="${esc(r.id)}">Thu hồi</button></td></tr>`;
+        <td><button class="btn small" data-rm="${esc(r.id)}">Thu hồi</button>${teachers.some(t => t.id === r.id) ? `<span class="chip ok">Đang là GV</span>` : `<button class="btn small" data-lengv="${esc(r.id)}">Trao quyền GV</button>`}</td></tr>`;
     }).join("") + `</tbody>`;
   $$("#roster [data-rm]").forEach(b => confirmButton(b, () => deleteDoc(doc(db, "hocvien", b.dataset.rm)), "Bấm lần nữa để thu hồi"));
+  // Trao quyền giáo viên cho học viên (vẫn giữ hồ sơ học viên; gỡ quyền thì trở lại học viên)
+  $$("#roster [data-lengv]").forEach(b => confirmButton(b, () => { const r = roster.find(x => x.id === b.dataset.lengv) || {};
+    return setDoc(doc(db, "giaovien", b.dataset.lengv), { ten: r.ten || "", gmail: r.gmail || b.dataset.lengv, sdt: r.sdt || "", coso: r.coso || "", ghiChu: "Trao từ học viên", duyetLuc: Date.now() }); }, "Bấm lần nữa để trao quyền"));
   $$("#roster .khoa-cap").forEach(box => box.onchange = () => {
     const id = box.dataset.kc, r = roster.find(x => x.id === id), khoaHoc = khoaDaChon(id);
     if (!khoaHoc.length) { toast("Cần chọn ít nhất một khoá.", "err"); renderRoster(); return; }
@@ -2589,11 +2592,12 @@ function renderRoster() {
 }
 
 function renderTeachers() {
+  renderRoster(); // cập nhật nút Trao quyền GV / chữ "Đang là GV" trong bảng học viên
   if (!teachers.length) { $("#teachers").innerHTML = `<tbody><tr><td class="muted">Chưa có giáo viên nào. Quản lý luôn có toàn quyền.</td></tr></tbody>`; return; }
   $("#teachers").innerHTML = `<thead><tr><th>Họ tên</th><th>Gmail</th><th>Cơ sở</th><th>Điện thoại</th><th>Ngày duyệt</th><th></th></tr></thead><tbody>` +
     teachers.map(t => `<tr><td>${esc(t.ten)}</td><td>${esc(t.gmail)}</td><td>${esc(t.coso)}</td><td class="num">${esc(t.sdt)}</td>
-      <td class="num">${fmtDate(t.duyetLuc)}</td><td><button class="btn small" data-rmgv="${esc(t.id)}">Thu hồi</button></td></tr>`).join("") + `</tbody>`;
-  $$("#teachers [data-rmgv]").forEach(b => confirmButton(b, () => deleteDoc(doc(db, "giaovien", b.dataset.rmgv)), "Bấm lần nữa để thu hồi"));
+      <td class="num">${fmtDate(t.duyetLuc)}</td><td><button class="btn small" data-rmgv="${esc(t.id)}">Gỡ quyền giáo viên</button></td></tr>`).join("") + `</tbody>`;
+  $$("#teachers [data-rmgv]").forEach(b => confirmButton(b, () => deleteDoc(doc(db, "giaovien", b.dataset.rmgv)), "Bấm lần nữa để gỡ quyền"));
 }
 
 function confirmButton(btn, act, ask = "Bấm lần nữa để xoá") {
@@ -4275,6 +4279,11 @@ submitTo($("#f-hv"), $("#hv-status"), "Đang duyệt…", "Đã duyệt. Ngườ
   if ($("#hv-vt").value === "giaovien")
     return setDoc(doc(db, "giaovien", g), { ten: $("#hv-ten").value.trim(), gmail: g, sdt: "", coso: $("#hv-cs").value, ghiChu: "", duyetLuc: Date.now() });
   return setDoc(doc(db, "hocvien", g), { ten: $("#hv-ten").value.trim(), gmail: g, lop: $("#hv-lop").value.trim(), chuongTrinh: $("#hv-lop").value.trim(), coso: $("#hv-cs").value, sdt: "", duyetLuc: Date.now() });
+});
+
+submitTo($("#f-gv"), $("#gv-status"), "Đang trao quyền…", "Đã trao quyền giáo viên. Người này đăng nhập Gmail đó là có quyền giáo viên.", () => {
+  const g = $("#gv-mail").value.trim().toLowerCase();
+  return setDoc(doc(db, "giaovien", g), { ten: $("#gv-ten").value.trim(), gmail: g, sdt: "", coso: $("#gv-cs").value, ghiChu: "", duyetLuc: Date.now() }, { merge: true });
 });
 
 /* ---------- Nạp giáo trình có sẵn ---------- */
