@@ -173,6 +173,8 @@ function route() {
   });
   $("#acc-nav").dataset.page = page;
   $$("#acc-nav [data-acc]").forEach(a => { if (a.dataset.acc === page) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current"); });
+  // Thanh tài khoản cuộn ngang: luôn kéo mục đang mở vào giữa, không để bị cắt nửa chữ
+  { const on = $("#acc-nav [aria-current='page']"), w = $("#acc-nav .wrap"); if (on && w) requestAnimationFrame(() => w.scrollTo({ left: on.offsetLeft - (w.clientWidth - on.offsetWidth) / 2, behavior: "smooth" })); }
   if (page === "home") $("#nav-acct").removeAttribute("aria-current"); else $("#nav-acct").setAttribute("aria-current", "page");
   if (window.__lvReady) { renderAccNav(); if (page === "lam-viec") lvOnShow(); }
   if (page !== "home") window.scrollTo(0, 0);
