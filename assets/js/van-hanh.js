@@ -88,7 +88,10 @@ function veThi() {
   clearInterval(dongHo);
   if (!C) { box.innerHTML = ""; return; }
   if (D.loi) { box.innerHTML = hopLoi(); return; }
+  // Học viên đang gõ ghi chú bài thi: giữ nguyên chữ và con trỏ khi dữ liệu cập nhật
+  const gc = $("#tt-gc"), dangGo = gc && document.activeElement === gc, chu = gc ? gc.value : null, vt = dangGo ? [gc.selectionStart, gc.selectionEnd] : null;
   box.innerHTML = C.isTeacher ? thiGV() : thiHV();
+  const gc2 = $("#tt-gc"); if (gc2 && chu) { gc2.value = chu; if (dangGo) { gc2.focus(); try { gc2.setSelectionRange(vt[0], vt[1]); } catch (e) {} } }
   box.querySelectorAll("[data-tt]").forEach(b => b.onclick = () => hanhDongThi(b.dataset.tt, b.dataset.id, b));
   const dang = !C.isTeacher && D.bai.find(b => !b.nop && D.thi.some(t => t.id === b.thi));
   if (dang) {
