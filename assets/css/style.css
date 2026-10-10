@@ -3325,3 +3325,76 @@ table.roster.cc-cp{min-width:0}
   body.co-tab{padding-bottom:calc(94px + env(safe-area-inset-bottom,0px))}
   body.co-tab #tl-cum,body.co-tab #toast{bottom:calc(94px + env(safe-area-inset-bottom,0px))}
 }
+/* ===== Căn chỉnh bố cục trên điện thoại (thẻ hạng, form cộng XP, lịch phân công, nút kho, thẻ điểm danh) ===== */
+/* Thẻ hạng: một khung duy nhất ở mọi cỡ màn hình, nội dung căn giữa, dòng XP không chạm viền */
+.rk-stage .rk-card{padding:0;border:0;border-radius:0;background:none;box-shadow:none}
+.rk-stage .rk-in{justify-content:center;gap:8px;padding:20px 16px 22px;overflow:hidden}
+.rk-stage .rk-card .rk-star,.rk-stage .rk-card .rk-xp{margin-top:0}
+.rk-stage .rk-card .rk-xp{font-size:1.05rem;letter-spacing:.02em}
+@media (max-width:640px){
+  .rk-stage{height:340px}
+  .rk-stage .rk-card{width:min(72vw,250px);margin-left:calc(min(72vw,250px) / -2);height:318px}
+  .rk-stage .rk-in{justify-content:center;padding:18px 14px 20px;gap:7px}
+  .rk-stage .rk-card .rk-mo{font-size:.86rem;line-height:1.4}
+}
+/* Form cộng XP: trên điện thoại xếp một cột, các ô cao bằng nhau, nút chọn loại chia đôi đều */
+.xh-loai{border-radius:12px}
+.xh-loai button{flex:1;min-height:44px;white-space:nowrap}
+@media (max-width:760px){
+  .xh-f{grid-template-columns:minmax(0,1fr);gap:12px}
+  .xh-f > *{grid-column:1/-1}
+  .xh-f input,.xh-f select{min-height:46px}
+  .xh-f .btn{min-height:46px;width:100%}
+}
+/* Lịch phân công: cột đủ rộng để tên không bị bẻ từng chữ; nút sửa / gỡ xuống dòng dưới tên */
+.lpc-bang{min-width:760px}
+.lpc-gv{flex-wrap:wrap;align-items:center;overflow-wrap:normal;word-break:normal;padding:4px 4px 4px 7px;line-height:1.3}
+.lpc-gv-ten{flex:1 1 60px;overflow-wrap:break-word}
+.lpc-gv-nut{margin-left:auto}
+/* Kho: hai nút thẳng hàng, trên điện thoại rộng bằng nhau */
+.kho-nut{display:flex;flex-wrap:wrap;gap:10px;margin-top:10px}
+@media (max-width:640px){.kho-nut .btn{flex:1 1 100%;justify-content:center;text-align:center}}
+/* Thẻ điểm danh: huy hiệu hạng gọn theo nội dung (không kéo dài), nút × căn theo dòng tên */
+.dd-list li.dd-hv > div:first-child{justify-items:start;gap:4px;min-width:0}
+.dd-hv .rk-chip{margin-left:0;justify-self:start;max-width:100%}
+.dd-list li.dd-hv{padding-right:56px}
+.dd-go{top:10px;right:10px;width:36px;height:36px;font-size:1.2rem}
+
+/* ===== Thanh điều hướng dưới đáy kiểu "Liquid": thanh nổi bo góc, nút đang mở nhô lên thành vòng tròn có rãnh khoét ===== */
+@media(max-width:760px){
+  body.co-tab .tab-duoi:not([hidden]){overflow:visible}
+  .tab-duoi a{min-width:0;min-height:62px;gap:4px;padding:6px 2px 7px;align-content:end;font-size:clamp(.58rem,2.6vw,.68rem);line-height:1.1;-webkit-tap-highlight-color:transparent}
+  .tab-duoi a span{max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .tab-duoi a svg{position:relative;z-index:1;box-sizing:content-box;padding:9px;margin:-9px;border-radius:50%;transition:transform .45s cubic-bezier(.34,1.56,.64,1),background-color .3s,color .3s,box-shadow .3s}
+  .tab-duoi a[aria-current="page"]::before{display:none}
+  .tab-duoi a[aria-current="page"]{color:var(--ink)}
+  .tab-duoi a[aria-current="page"] svg{transform:translateY(-24px);background:#f5c400;color:#0b0d14;stroke:#0b0d14;
+    box-shadow:0 0 0 6px var(--paper),0 10px 18px -6px rgba(245,196,0,.65)}
+  .tab-duoi a[aria-current="page"] span{font-weight:800;transform:translateY(-4px);transition:transform .3s}
+  .tab-so{top:3px;left:calc(50% + 5px);z-index:2}
+  .tab-duoi a[aria-current="page"] .tab-so{top:-22px;left:calc(50% + 10px)}
+}
+@media(max-width:760px) and (prefers-reduced-motion:reduce){.tab-duoi a svg{transition:none}}
+
+/* Thẻ hạng: nhãn bậc (Huyền Thoại, Thách Đấu…) luôn một dòng, co chữ trên máy hẹp */
+.rk-card .xh-kim{white-space:nowrap;max-width:100%}
+@media (max-width:400px){.rk-stage .rk-card .xh-kim{font-size:.6rem;padding:5px 12px 6px}.rk-stage .rk-card .rk-ten{font-size:1rem}}
+
+/* Nút "+ Giao bài mới": dấu + và chữ đứng sát nhau ở giữa */
+#hw-new{justify-content:center;gap:8px;text-align:center}
+#hw-new > span{flex:none}
+
+/* Tiêu đề nghiêng chữ chuyển sắc: chừa mép trái/phải để nét nghiêng (B, G, T…) không bị cắt */
+:root[data-theme="dark"] section h2{padding-inline:.12em;margin-inline-start:-.12em}
+.cd-big,.dk-cd-n b,.lg-t{padding-left:.06em;margin-left:-.06em}
+/* Liquid: nút không chọn chỉ còn biểu tượng (chữ vẫn đọc được bằng trình đọc màn hình), nút đang mở có chữ dưới vòng tròn */
+@media(max-width:760px){
+  .tab-duoi a{align-content:center}
+  .tab-duoi a:not([aria-current="page"]) span{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+  .tab-duoi a svg{width:24px;height:24px}
+  .tab-duoi a[aria-current="page"]{align-content:end}
+  .tab-duoi a[aria-current="page"] svg{transform:translateY(-22px)}
+  .tab-duoi a[aria-current="page"] span{transform:translateY(-2px);animation:td-chu .35s ease-out}
+}
+@keyframes td-chu{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(-2px)}}
+@media(max-width:760px) and (prefers-reduced-motion:reduce){.tab-duoi a[aria-current="page"] span{animation:none}}
