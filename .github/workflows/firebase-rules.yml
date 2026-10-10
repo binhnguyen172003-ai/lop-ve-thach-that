@@ -1,0 +1,46 @@
+# Tự đưa luật bảo mật (firestore.rules, storage.rules) lên Firebase, khỏi dán tay trong Console.
+# Cần 1 lần: thêm secret FIREBASE_SERVICE_ACCOUNT (khoá JSON của tài khoản dịch vụ Firebase), xem HUONG-DAN.md.
+name: Đưa luật bảo mật lên Firebase
+
+on:
+  push:
+    branches: [main]
+    paths: [firestore.rules, storage.rules, firebase.json]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: firebase-rules
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+    steps:
+      - name: Chưa có khoá Firebase thì bỏ qua
+        if: env.SA == ''
+        run: echo "::warning::Chưa có secret FIREBASE_SERVICE_ACCOUNT nên chưa đưa luật lên Firebase. Xem HUONG-DAN.md mục Tự đưa luật bảo mật."
+      - uses: actions/checkout@v4
+        if: env.SA != ''
+      - name: Ghi khoá tạm
+        if: env.SA != ''
+        run: printf '%s' "$SA" > "$RUNNER_TEMP/sa.json"
+      - name: Luật Firestore (Thi thử, Vận hành, Trao đổi…)
+        if: env.SA != ''
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/sa.json
+        run: npx --yes firebase-tools@13.29.1 deploy --only firestore:rules --project lop-ve-thach-that --non-interactive
+      # Storage chỉ chạy được khi bucket đã bật; lỗi ở đây không chặn luật Firestore ở trên.
+      - name: Luật Storage (tải tệp, ảnh)
+        if: env.SA != ''
+        continue-on-error: true
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/sa.json
+        run: npx --yes firebase-tools@13.29.1 deploy --only storage --project lop-ve-thach-that --non-interactive
+      - name: Xoá khoá tạm
+        if: always()
+        run: rm -f "$RUNNER_TEMP/sa.json"
