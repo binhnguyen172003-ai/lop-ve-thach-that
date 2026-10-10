@@ -1280,7 +1280,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
 .hw-empty button{margin-top:16px}.hw .grade{margin-top:8px}.hw .g-in{flex-wrap:wrap}.hw .g-in label{min-width:0}.hw .g-in .g-nx-l{flex:1 1 100%}
 @media(min-width:1100px){.hw-compose{position:sticky;top:144px}}
 @media(max-width:900px){.hw-workspace.staff{grid-template-columns:minmax(0,1fr)}.hw-compose{grid-row:1}.hw-compose .fgrid{grid-template-columns:repeat(2,minmax(0,1fr))}.workspace-head{padding-top:32px}}
-@media(max-width:600px){.workspace-head{align-items:flex-start;flex-direction:column;gap:16px}.workspace-head h1{font-size:2.65rem}.workspace-head>.btn{width:100%;justify-content:space-between}.hw-overview article{padding:14px 12px}.hw-overview b{font-size:1.55rem}.hw-overview span{font-size:.67rem}.hw-overview small{font-size:.62rem}.hw-search-row{grid-template-columns:minmax(0,1fr)}.hw{padding:19px}.hw-compose .fgrid{grid-template-columns:minmax(0,1fr)}.hw .acts{gap:8px}.hw .acts .chip{font-size:.68rem}.hw .acts [data-grade]{flex:1}.hw-compose summary{padding:19px}.hw-compose form{padding:0 19px 19px}.compose-note{padding:0 19px 18px}}
+@media(max-width:600px){.workspace-head{align-items:flex-start;flex-direction:column;gap:16px}.workspace-head h1{font-size:2.65rem}.workspace-head>.btn{width:100%;justify-content:center;gap:8px}.hw-overview article{padding:14px 12px}.hw-overview b{font-size:1.55rem}.hw-overview span{font-size:.67rem}.hw-overview small{font-size:.62rem}.hw-search-row{grid-template-columns:minmax(0,1fr)}.hw{padding:19px}.hw-compose .fgrid{grid-template-columns:minmax(0,1fr)}.hw .acts{gap:8px}.hw .acts .chip{font-size:.68rem}.hw .acts [data-grade]{flex:1}.hw-compose summary{padding:19px}.hw-compose form{padding:0 19px 19px}.compose-note{padding:0 19px 18px}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-delay:0s!important;transition-duration:.01ms!important}.js-fx .fx,.js-fx .cine-h1 .w{opacity:1;transform:none;filter:none}}
 
 /* Original B1 mark and uncropped student artwork. */
@@ -2955,3 +2955,18 @@ button:disabled:not(.btn){opacity:.45}
 .gv-trao{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));align-items:end;margin-bottom:14px;padding:14px;border:1px solid var(--rule);border-radius:var(--r);background:var(--sheet)}
 .gv-trao .status{grid-column:1/-1;margin:0}
 #roster td:last-child,#teachers td:last-child{white-space:nowrap}#roster td:last-child .btn+*{margin-left:6px}
+
+/* ===== Ổn định khung khi chuyển trang =====
+   Trang con luôn cao ít nhất một màn hình: nội dung tải sau không kéo chân trang nhảy lên xuống trước mắt người xem */
+main.wrap[id^="v-"]:not(#v-home){min-height:calc(100svh - var(--nav-h,57px))}
+/* Phần nặng nằm dưới màn hình (xếp hạng, thành tựu, kho, các mục dài trang chủ): chỉ dựng khi cuộn tới → bấm chuyển trang nhanh hơn */
+#acc-tiles,#xep-hang,#kho,#bang-vang,#giao-vien,#bai-ve,#lich-thi,#lich-hoc,#khoi,#nang-cao,#khoa-hoc{content-visibility:auto;contain-intrinsic-size:auto 900px}
+
+/* Điện thoại: nút nổi nhỏ gọn hơn, tự né khi cuộn */
+@media(max-width:760px){
+  #tl-cum{transition:transform .25s ease,opacity .25s ease}
+  #tl-cum.tl-an{transform:translateX(150%);opacity:0;pointer-events:none}
+  #tl-cum.trai.tl-an{transform:translateX(-150%)}
+  #tl-cum .tl-nut{width:54px;height:54px}#tl-cum .tl-nhac-nut{width:46px;height:46px}
+}
+@media(max-width:760px) and (prefers-reduced-motion:reduce){#tl-cum{transition:none}}
