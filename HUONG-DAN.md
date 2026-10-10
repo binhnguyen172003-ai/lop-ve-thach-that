@@ -114,7 +114,7 @@ Mọi việc quản lý nằm trong nút **Tài khoản** (góc trên bên phả
 | Thêm giáo viên quản lý | Firestore → tạo collection `admins`, document ID là Gmail giáo viên (chữ thường), thêm 1 trường bất kỳ |
 
 Ai thấy gì trong khu Làm việc:
-- **Học viên:** nhắn riêng với thầy cô (chỉ thầy cô đọc), xem thông báo chung.
+- **Học viên:** nhắn riêng với anh chị (chỉ anh chị đọc), xem thông báo chung.
 - **Giáo viên:** nhắn với mọi học viên, nhắn riêng quản lý, đăng thông báo chung, tick xong việc được giao.
 - **Quản lý:** thấy tất cả, đăng thông báo nội bộ chỉ giáo viên đọc, giao và xoá việc.
 
@@ -185,4 +185,4 @@ Khi xóa bài, hệ thống xóa tài liệu kèm theo. Nếu mạng hoặc quy�
 ## Bài học đầy đủ trong Giáo trình
 - Mỗi khoá có từng bài riêng (Bài 0, Bài 1, … / Chuyên đề 0–11 / Sổ tay), nội dung lấy từ Sách học viên Pro Max: bảng, mẹo, thử thách, tự kiểm tra.
 - Quản lý chỉ cần **mở web bằng tài khoản quản lý một lần**: web tự đưa bài học mới lên (không cần bấm nút). Có bản mới (file `data/bai-hoc.js` đổi mã BAN) thì lần mở sau tự cập nhật.
-- Bài nào thầy xoá trên web sẽ không bị thêm lại.
+- Bài nào quản lý xoá trên web sẽ không bị thêm lại.
