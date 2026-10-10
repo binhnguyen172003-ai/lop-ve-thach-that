@@ -2630,3 +2630,12 @@ button:disabled:not(.btn){opacity:.45}
 .tl-bong{touch-action:none;user-select:none;-webkit-user-select:none;padding-right:38px}
 .tl-bong-x{position:absolute;top:4px;right:4px;width:32px;height:32px;border:0;border-radius:50%;background:transparent;color:#666;font-size:.9rem;cursor:pointer;display:grid;place-items:center}
 .tl-bong-x:active{background:#0000000f}
+/* Khu tài khoản: thanh mục có biểu tượng, tiêu đề trang gọn trên điện thoại để nội dung lên cao */
+.acc-nav a i{font-style:normal;font-size:1rem;line-height:1}
+.acc-nav .wrap{scroll-padding-inline:16px}
+@media (max-width:640px){
+  main[id^="v-"]:not(#v-home) > .page-head{padding-block:14px 10px;gap:4px}
+  main[id^="v-"]:not(#v-home) > .page-head h1{font-size:1.55rem}
+  main[id^="v-"]:not(#v-home) > .page-head .eyebrow{display:none}
+  main[id^="v-"]:not(#v-home) > .page-head p{font-size:.9rem}
+}
