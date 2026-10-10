@@ -10,7 +10,7 @@ test('Phân quyền: cấp Video riêng, không tự thêm quyền xuất bản,
   expect(Object.values(p.cap).flatMap(g=>g.a)).toEqual(['VIEW']);
   expect(await page.evaluate(m=>[...window.__FAKE_FB.docs.keys()].filter(k=>k.startsWith('phanquyen/'+m+'/ls/')).length,TK.giaoVien)).toBe(1);
   expect(await tranNgang(page)).toBeLessThanOrEqual(1);
-  await info.attach('phan-quyen',{body:await page.screenshot({fullPage:true}),contentType:'image/png'});
+  await info.attach('phan-quyen',{body:await page.locator('#pq-goc').screenshot(),contentType:'image/png'});
 });
 test('Chat: hội thoại riêng từng tài khoản, phục hồi an toàn và tải Markdown',async({page,moTrang},info)=>{
   await moTrang({nguoi:TK.hocVien});
@@ -23,6 +23,7 @@ test('Chat: hội thoại riêng từng tài khoản, phục hồi an toàn và 
   await page.locator('#tl-history-toggle').click();
   await page.locator('[data-conversation]').click();
   await expect(page.locator('#tl-tin')).toContainText('Lịch học');
+  await expect(page.locator('#tl-tin')).toContainText('Bình Phú');
   const download=page.waitForEvent('download');await page.locator('#tl-export').click();expect((await download).suggestedFilename()).toMatch(/\.md$/);
   expect(await tranNgang(page)).toBeLessThanOrEqual(1);
   await info.attach('chat',{body:await page.screenshot(),contentType:'image/png'});

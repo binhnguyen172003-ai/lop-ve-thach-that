@@ -556,7 +556,7 @@ async function hoi(q) {
   themTin(false, esc(q));
   lichSu.push({ role: "user", text: q });
   if (hoiDo(q)) { const html = nhanXetHocTap(); themTin(true, html); lichSu.push({ role: 'model', text: html.replace(/<[^>]*>/g, ' ') }); return; }
-  if (hoiLich(q)) { guiLich(q); return; }
+  if (hoiLich(q)) { guiLich(q); lichSu.push({role:'model',text:'Lịch học của lớp:\n'+lichHocText()}); return; }
   const cho = themTin(true, `<span class="tl-cham"><i></i><i></i><i></i></span>`, true);
   const dem = demHomNay();
   const model = dem.n < GIOI_HAN_NGAY ? await moAI() : null;
