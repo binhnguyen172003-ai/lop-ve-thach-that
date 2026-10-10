@@ -907,6 +907,8 @@ section h2{font:italic 600 clamp(1.9rem,5.4vw,2.8rem)/1.05 var(--f-serif);letter
 /* Điện thoại: mỗi phần chỉ còn ý chính, đọc lướt nhanh */
 @media (max-width:640px){
   .dock:not([hidden]){display:flex}
+  /* Thanh "Học thử miễn phí" nổi cố định ở đáy màn hình: chừa khoảng trống để không đè lên chữ cuối trang */
+  body:has(.dock.show){padding-bottom:calc(78px + env(safe-area-inset-bottom,0px))}
   section{padding-block:40px}
   .sec-head{margin-bottom:18px}
   .sec-head > p.muted:not(.keep){display:none}
