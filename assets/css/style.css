@@ -3344,3 +3344,34 @@ table.roster.cc-cp{min-width:0}
 .dd-hv .rk-chip{margin-left:0;justify-self:start;max-width:100%}
 .dd-list li.dd-hv{padding-right:56px}
 .dd-go{top:10px;right:10px;width:36px;height:36px;font-size:1.2rem}
+
+/* ===== Thanh điều hướng dưới đáy kiểu "Liquid": thanh nổi bo góc, nút đang mở nhô lên thành vòng tròn có rãnh khoét ===== */
+@media(max-width:760px){
+  body.co-tab .tab-duoi:not([hidden]){left:10px;right:10px;bottom:calc(8px + env(safe-area-inset-bottom,0px));padding:0 6px;border:1px solid var(--rule);border-radius:20px;
+    background:color-mix(in srgb,var(--sheet) 96%,transparent);box-shadow:0 14px 30px -10px rgba(0,0,0,.6);overflow:visible}
+  .tab-duoi a{min-width:0;min-height:62px;gap:4px;padding:6px 2px 7px;align-content:end;font-size:clamp(.58rem,2.6vw,.68rem);line-height:1.1;-webkit-tap-highlight-color:transparent}
+  .tab-duoi a span{max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .tab-duoi a svg{position:relative;z-index:1;box-sizing:content-box;padding:9px;margin:-9px;border-radius:50%;transition:transform .45s cubic-bezier(.34,1.56,.64,1),background-color .3s,color .3s,box-shadow .3s}
+  .tab-duoi a[aria-current="page"]::before{display:none}
+  .tab-duoi a[aria-current="page"]{color:var(--ink)}
+  .tab-duoi a[aria-current="page"] svg{transform:translateY(-24px);background:#f5c400;color:#0b0d14;stroke:#0b0d14;
+    box-shadow:0 0 0 6px var(--paper),0 10px 18px -6px rgba(245,196,0,.65)}
+  .tab-duoi a[aria-current="page"] span{font-weight:800;transform:translateY(-4px);transition:transform .3s}
+  .tab-so{top:3px;left:calc(50% + 5px);z-index:2}
+  .tab-duoi a[aria-current="page"] .tab-so{top:-22px;left:calc(50% + 10px)}
+  body.co-tab{padding-bottom:calc(92px + env(safe-area-inset-bottom,0px))}
+  body.co-tab #tl-cum,body.co-tab #toast{bottom:calc(90px + env(safe-area-inset-bottom,0px))}
+}
+@media(max-width:760px) and (prefers-reduced-motion:reduce){.tab-duoi a svg{transition:none}}
+
+/* Thẻ hạng: nhãn bậc (Huyền Thoại, Thách Đấu…) luôn một dòng, co chữ trên máy hẹp */
+.rk-card .xh-kim{white-space:nowrap;max-width:100%}
+@media (max-width:400px){.rk-stage .rk-card .xh-kim{font-size:.6rem;padding:5px 12px 6px}.rk-stage .rk-card .rk-ten{font-size:1rem}}
+
+/* Nút "+ Giao bài mới": dấu + và chữ đứng sát nhau ở giữa */
+#hw-new{justify-content:center;gap:8px;text-align:center}
+#hw-new > span{flex:none}
+
+/* Tiêu đề nghiêng chữ chuyển sắc: chừa mép trái/phải để nét nghiêng (B, G, T…) không bị cắt */
+:root[data-theme="dark"] section h2{padding-inline:.12em;margin-inline-start:-.12em}
+.cd-big,.dk-cd-n b,.lg-t{padding-left:.06em;margin-left:-.06em}
