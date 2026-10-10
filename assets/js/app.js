@@ -3208,7 +3208,7 @@ function renderKho() {
       <div class="kho-bang"><div class="kho-r kho-h"><span>Món</span><span>Vốn</span><span>Giá bán</span><span>Tồn</span><span></span></div>
       ${ds.map(m => `<div class="kho-r ${(m.ton || 0) <= 3 ? "it" : ""}"><span><b>${esc(m.ten)}</b><small>${esc(m.loai)}</small></span><span>${vnd(m.von)}</span><span>${vnd(m.gia)}</span><span class="num"><b>${m.ton || 0}</b></span>
         <span><button type="button" class="linkish" data-ks="${esc(m.ma)}">Sửa</button></span></div>`).join("")}</div>
-      <p class="muted kho-note">Bấm "Sửa" để chỉnh giá hoặc số tồn sau khi kiểm kho. <button type="button" class="linkish" id="kho-csv-ton">Tải bảng tồn kho (CSV, mở bằng Google Trang tính)</button></p>
+      <p class="muted kho-note">Bấm "Sửa" để chỉnh giá hoặc số tồn sau khi kiểm kho. <button class="btn small" type="button" id="kho-ve0" title="Mọi món về tồn 0; giữ giá, lịch sử nhập bán và lãi lỗ">Đưa tồn về 0 để kiểm kho</button><button type="button" class="linkish" id="kho-csv-ton">Tải bảng tồn kho (CSV, mở bằng Google Trang tính)</button></p>
     </div>
     <div class="kho-p" ${khoTab === "gd" ? "" : "hidden"}>
       <form id="f-kho" class="kho-f">
@@ -3245,31 +3245,40 @@ function renderKho() {
   $("#kho-csv-ton").onclick = () => taiCSV("ton-kho-" + todayVN() + ".csv", [["Món", "Loại", "Giá vốn", "Giá bán", "Tồn", "Vốn tồn"], ...ds.map(m => [m.ten, m.loai, m.von, m.gia, m.ton || 0, (m.ton || 0) * (m.von || 0)])]);
   $("#kho-csv-thang").onclick = () => taiCSV("giao-dich-" + khoThang + ".csv", [["Ngày", "Loại", "Món", "SL", "Đơn giá", "Thành tiền", "Giá vốn/món", "Lãi", "Người"], ...ll.gd.map(g => [g.ngay, g.loai === "ban" ? "Bán" : "Nhập", g.ten, g.sl, g.gia, g.sl * g.gia, g.von || "", g.loai === "ban" ? g.sl * (g.gia - (g.von || 0)) : "", g.ai || ""])]);
   $("#kho-gui").onclick = () => { guiBaoCao(khoThang, true); };
+  // Kiểm kho lại từ đầu: đưa tồn mọi món về 0 (giữ giá, lịch sử, lãi lỗ; có nhật ký để khôi phục)
+  confirmButton($("#kho-ve0"), () => { const b = writeBatch(db); ds.forEach(m => b.set(doc(db, "kho", m.ma), { ton: 0 }, { merge: true })); return b.commit(); }, "Bấm lần nữa: mọi món về tồn 0");
   let loai = "ban";
   const giaMacDinh = () => { const m = khoMon[$("#kho-mon").value]; $("#kho-gia").value = m ? (loai === "ban" ? m.gia : m.von) : ""; };
   body.querySelectorAll("[data-kl]").forEach(b => b.onclick = () => { loai = b.dataset.kl; body.querySelectorAll("[data-kl]").forEach(x => x.setAttribute("aria-pressed", x === b)); giaMacDinh(); });
   $("#kho-mon").onchange = giaMacDinh; giaMacDinh();
   $("#f-kho").onsubmit = async e => {
     e.preventDefault();
-    const m = khoMon[$("#kho-mon").value], sl = Math.max(1, Math.round(Number($("#kho-sl").value) || 0)), gia = Math.max(0, Number($("#kho-gia").value) || 0);
+    const m = khoMon[$("#kho-mon").value], sl = Math.max(1, Math.round(Number($("#kho-sl").value) || 0)), gia = Math.max(0, soVN($("#kho-gia").value) || 0);
     if (!m) return;
+    const nut = e.submitter || $("#f-kho [type=submit]"); if (nut && nut.disabled) return; // chống bấm 2 lần ghi 2 giao dịch
     if (loai === "ban" && sl > (m.ton || 0) && !confirm(`Kho chỉ còn ${m.ton || 0} ${m.ten}. Vẫn lưu?`)) return;
     const ton = (m.ton || 0) + (loai === "nhap" ? sl : -sl);
     const von = loai === "nhap" && ton > 0 ? Math.round(((m.ton > 0 ? m.ton : 0) * (m.von || 0) + sl * gia) / ((m.ton > 0 ? m.ton : 0) + sl)) : (m.von || 0);
     const b = writeBatch(db);
     b.set(doc(db, "khogd", Date.now().toString(36) + Math.random().toString(36).slice(2, 7)), { loai, ma: m.ma, ten: m.ten, sl, gia, von: m.von || 0, ai: $("#kho-ai").value.trim(), ngay: $("#kho-ngay").value || todayVN(), luc: Date.now(), nguoi: mail });
-    b.set(doc(db, "kho", m.ma), { ton, von, ...(loai === "ban" ? { daBan: (m.daBan || 0) + sl } : {}) }, { merge: true });
-    $("#kho-st").textContent = "Đang lưu…";
-    try { await timed("Lưu kho", b.commit()); toast(`Đã ${loai === "ban" ? "bán" : "nhập"} ${sl} ${m.ten}. Tồn còn ${ton}.`); }
-    catch (err) { $("#kho-st").textContent = "Chưa lưu được: " + (err.code || "lỗi mạng"); }
+    // Cộng/trừ ngay trên máy chủ (increment): 2 máy cùng lưu hay bấm nhanh cũng không lệch số tồn
+    b.set(doc(db, "kho", m.ma), { ton: increment(loai === "nhap" ? sl : -sl), von, ...(loai === "ban" ? { daBan: increment(sl) } : {}) }, { merge: true });
+    $("#kho-st").textContent = "Đang lưu…"; if (nut) nut.disabled = true;
+    try { await timed("Lưu kho", b.commit()); $("#kho-st").textContent = ""; toast(`Đã ${loai === "ban" ? "bán" : "nhập"} ${sl} ${m.ten}. Tồn còn khoảng ${ton}.`); }
+    catch (err) { $("#kho-st").textContent = "Chưa lưu được: " + (err.code || "lỗi mạng") + ". Bấm Lưu lại."; }
+    finally { if (nut) nut.disabled = false; }
   };
 }
+// Số kiểu Việt Nam: "120.000" / "1,5" / "12" → số; sai thì NaN (không lưu thành 0 âm thầm)
+const soVN = x => { let t = String(x ?? "").trim().replace(/\s|đ|₫/gi, ""); if (/^\d{1,3}([.,]\d{3})+$/.test(t)) t = t.replace(/[.,]/g, ""); else t = t.replace(",", "."); return t === "" ? NaN : Number(t); };
 async function suaMon(ma) {
   const m = khoMon[ma]; if (!m) return;
   const ton = prompt(`Số tồn thực tế của "${m.ten}":`, m.ton || 0); if (ton === null) return;
   const gia = prompt(`Giá bán "${m.ten}" (đ):`, m.gia || 0); if (gia === null) return;
   const von = prompt(`Giá nhập (vốn) "${m.ten}" (đ):`, m.von || 0); if (von === null) return;
-  try { await timed("Sửa kho", setDoc(doc(db, "kho", ma), { ton: Math.max(0, Math.round(Number(ton) || 0)), gia: Number(gia) || 0, von: Number(von) || 0 }, { merge: true })); toast("Đã cập nhật " + m.ten); }
+  const t = soVN(ton), g = soVN(gia), v = soVN(von);
+  if ([t, g, v].some(x => !(x >= 0))) return toast("Số chưa đúng. Chỉ gõ số, VD 12 hoặc 120.000.", "err");
+  try { await timed("Sửa kho", setDoc(doc(db, "kho", ma), { ton: Math.round(t), gia: g, von: v }, { merge: true })); toast("Đã cập nhật " + m.ten); }
   catch (e) { toast("Chưa lưu được.", "err"); }
 }
 async function xoaGD(id) {
