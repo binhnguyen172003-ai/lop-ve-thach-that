@@ -1823,7 +1823,7 @@ function renderLessons() {
     return;
   }
   if (!cs.includes(course)) course = cs[0];
-  // Hình minh hoạ + ảnh tượng (assets/js/hinh-bai.js): tải riêng lần đầu mở giáo trình, xong thì vẽ lại
+  // Bảng thuật ngữ Trung – Việt (assets/js/hinh-bai.js): tải riêng lần đầu mở giáo trình, xong thì vẽ lại
   if (!hinhBai && !hinhBaiDang) { hinhBaiDang = true; import("./hinh-bai.js?v=20261010bf").then(m => { hinhBai = m; renderLessons(); }).catch(() => { hinhBaiDang = false; }); }
   const tenMon = c => goc(c).replace("Màu & bố cục màu", "Màu & Bố cục màu");
   $("#course-tabs").innerHTML = cs.map(c => { const ds = lessons.filter(l => l.khoa === c && !laLoTrinh(l)), xong = ds.filter(l => myProgress.bai[l.id]).length;
@@ -1875,13 +1875,10 @@ function renderLessons() {
   $("#lesson").hidden = !dangMo;
   if (!dangMo) return;
   const l = dangMo, k = baiSo.indexOf(l), tt = trangThai(l);
-  const hinh = hinhBai ? (hinhBai.GAN[l.id] || []).filter(x => hinhBai.HINH[x.h]).map(x => `<figure class="bai-hinh">${hinhBai.HINH[x.h]}<figcaption>${esc(x.chu)}</figcaption></figure>`).join("") : "";
-  const tuongDs = hinhBai && hinhBai.TUONG_BAI && (hinhBai.TUONG_BAI[l.id] || []).map(m => hinhBai.TUONG.find(t => t.ma === m)).filter(Boolean) || [];
   const tnHTML = hinhBai && hinhBai.THUAT_NGU && hinhBai.THUAT_NGU_BAI.includes(l.id) ? `<details class="bai-tn"><summary><b>Bảng dịch thuật ngữ giải phẫu Trung – Việt</b> <small class="muted">· dùng khi đọc sách vẽ tiếng Trung</small></summary>
     <div class="bai-tn-cuon"><table><thead><tr><th>Chữ Trung</th><th>Tiếng Việt</th><th>Khi vẽ, nhìn ở đâu</th></tr></thead><tbody>${hinhBai.THUAT_NGU.map(x => `<tr class="tn-${x.nhom === "Xương" ? "x" : x.nhom === "Cơ" ? "c" : "k"}"><td lang="zh">${esc(x.trung)}</td><td><b>${esc(x.viet)}</b></td><td>${esc(x.ve)}</td></tr>`).join("")}</tbody></table></div></details>` : "";
-  const tuong = tuongDs.length ? `<section class="bai-tuong"><h4>Ảnh tượng của lớp <small class="muted">· xếp từ dễ đến khó · bấm ảnh để xem lớn</small></h4>${tuongDs.map((t, j) =>
-    `<div class="bt-the cap-${t.cap}"><div class="bt-dau"><span class="bt-so num">${j + 1}</span><b>${esc(t.ten)}</b><span class="chip bt-cap">${esc(t.capTen)}</span></div>
-     <p class="muted">${esc(t.meo)}</p><div class="bt-anh">${t.anh.map((a, q) => `<button type="button" data-tuong="${esc(t.ma)}" data-j="${q}" aria-label="Xem lớn ${esc(t.ten)} góc ${q + 1}"><img src="${esc(a)}" alt="${esc(t.ten)} – góc ${q + 1}" loading="lazy" decoding="async" width="387" height="516"></button>`).join("")}</div></div>`).join("")}</section>` : "";
+  const coAnh = l.anh && /^(https:|data:image\/|assets\/)/.test(l.anh);
+  const anhMH = coAnh ? `<img class="gtb-anh" src="${esc(l.anh)}" alt="${esc(l.ten)}" loading="lazy" decoding="async">` : isAdmin ? `<p class="muted">Bài này chưa có ảnh. Bấm <b>Sửa tên, mô tả, ảnh</b> ở cuối bài để tải lên.</p>` : "";
   // Sắp các đoạn có sẵn của bài vào đúng phần (không đổi chữ)
   const P = chiaPhanBai(l.noidung || "");
   const items = Array.isArray(l.buoc) ? l.buoc : [];
@@ -1895,7 +1892,7 @@ function renderLessons() {
       ${isTeacher ? `<span class="chip">${hvXong(l)} học viên đã hoàn thành</span>` : `<span class="gt-chip ${tt}"><i aria-hidden="true">${TT[tt][1]}</i>${TT[tt][0]}</span>`}</header>
     ${phan("🎯", "Mục tiêu cần đạt", md(P.muctieu))}
     ${phan("📘", "Kiến thức cần nắm", md(P.kienthuc) + tnHTML)}
-    ${phan("🖼️", "Hình ảnh minh hoạ", (hinh ? `<div class="bai-hinh-ds">${hinh}</div>` : "") + tuong)}
+    ${phan("🖼️", "Hình ảnh minh hoạ", anhMH)}
     ${phan("🪜", "Quy trình thực hiện", md(P.quytrinh))}
     ${phan("⚠️", "Lỗi thường gặp & cách sửa", md(P.loi))}
     ${phan("✅", "Yêu cầu hoàn thành", md(P.yeucau) + (l.ghichu ? `<p class="gc"><b>Anh chị dặn:</b> ${esc(l.ghichu)}</p>` : "") + (nutXong ? `<p class="muted gtb-ghichu">Làm xong bài và tự kiểm theo các ý trên rồi mới bấm hoàn thành. Mở bài chỉ được tính là “Đang học”.</p>${nutXong}` : ""))}
@@ -1904,10 +1901,6 @@ function renderLessons() {
   $("#gtb-ve").onclick = () => dongBai();
   $$("#lesson [data-mo]").forEach(b => b.onclick = () => b.dataset.truoc ? toast(`Hoàn thành bài “${b.dataset.truoc}” trước để mở bài tiếp theo nhé.`) : moBai(b.dataset.mo));
   if ($("#mark")) $("#mark").onclick = () => toggleProgress("bai", l.id).then(renderLessons);
-  $$("#lesson [data-tuong]").forEach(b => b.onclick = () => {
-    const t = hinhBai.TUONG.find(x => x.ma === b.dataset.tuong); if (!t) return;
-    galList = t.anh.map((a, j) => ({ anh: a, moTa: `${t.ten} · góc ${j + 1}/${t.anh.length} · ${t.capTen}` })); showLb(+b.dataset.j);
-  });
   if (isAdmin) {
     confirmButton($("#del-l"), () => { ghiDaXoa(l.id); dongBai(true); return deleteDoc(doc(db, "giaotrinh", l.id)); });
     const doi = d => { const o = baiSo[k + d]; if (!o) return; const a = l.thutu, b = o.thutu; const bt = writeBatch(db);
@@ -1935,17 +1928,9 @@ function dongBai(khongVe) {
   if (!khongVe) { renderLessons(); requestAnimationFrame(() => $("#gt-wrap")?.scrollIntoView({ block: "start" })); }
 }
 const pad2b = n => String(n).padStart(2, "0");
-// Ảnh minh hoạ của thẻ: ảnh quản lý tự đặt → ảnh tượng của lớp → hình minh hoạ của bài → bài vẽ học viên theo môn
+// Ảnh của thẻ: chỉ ảnh quản lý tải lên (nút Sửa), chưa có thì để ô trống
 function anhBai(l) {
-  const img = (src, alt) => `<img src="${esc(src)}" alt="${esc(alt)}" loading="lazy" decoding="async">`;
-  if (l.anh && /^(https:|data:image\/|assets\/)/.test(l.anh)) return img(l.anh, l.ten);
-  if (hinhBai) {
-    const t = (hinhBai.TUONG_BAI[l.id] || [])[0], tu = t && hinhBai.TUONG.find(x => x.ma === t);
-    if (tu) return img(tu.anh[0], tu.ten);
-    const g = (hinhBai.GAN[l.id] || [])[0]; if (g && hinhBai.HINH[g.h]) return `<span class="gt-svg">${hinhBai.HINH[g.h].replace(/id="hb-/g, 'id="t-hb-').replace(/url\(#hb-/g, "url(#t-hb-")}</span>`;
-  }
-  const k = goc(l.khoa), mau = /màu/i.test(k) ? "khang-mau" : /mỹ thuật 2/i.test(k) ? "bao-sac-do" : /người/i.test(k) ? "thuy-chan-dung" : /tượng/i.test(k) ? "bao-tuong" : "nam-sac-do";
-  return img(`assets/img/bai-ve/${mau}.webp`, "Bài vẽ học viên – " + k);
+  return l.anh && /^(https:|data:image\/|assets\/)/.test(l.anh) ? `<img src="${esc(l.anh)}" alt="${esc(l.ten)}" loading="lazy" decoding="async">` : `<span class="gt-ph" aria-hidden="true">🖼️</span>`;
 }
 // Mô tả ngắn: câu đầu tiên của bài (bỏ bảng, tiêu đề, định dạng)
 function moTaBai(l) {
@@ -1983,7 +1968,7 @@ function suaBai(l) {
     <label>Hoặc dán link ảnh (https://…)<input id="sb-link" value="${esc(/^https:/.test(anh) ? anh : "")}"></label>
     <div class="tt-xem" id="sb-xem"></div>
     <div class="hop-nut"><button class="btn" type="button" data-dong>Huỷ</button><button class="btn primary" type="button" id="sb-luu">Lưu</button></div>`, "Sửa bài");
-  const xem = () => { $("#sb-xem").innerHTML = anh ? `<figure><img src="${esc(anh)}" alt="Ảnh minh hoạ"><button type="button" class="btn small" id="sb-bo">Bỏ ảnh (dùng ảnh mặc định)</button></figure>` : ""; if ($("#sb-bo")) $("#sb-bo").onclick = () => { anh = ""; $("#sb-link").value = ""; xem(); }; };
+  const xem = () => { $("#sb-xem").innerHTML = anh ? `<figure><img src="${esc(anh)}" alt="Ảnh minh hoạ"><button type="button" class="btn small" id="sb-bo">Bỏ ảnh</button></figure>` : ""; if ($("#sb-bo")) $("#sb-bo").onclick = () => { anh = ""; $("#sb-link").value = ""; xem(); }; };
   xem();
   $("#sb-anh").onchange = async e => { try { anh = await nenAnh(e.target.files[0], 900, 300000); xem(); } catch (er) { toast(er.message || "Ảnh lỗi", "err"); } };
   $("#sb-link").oninput = e => { const v = e.target.value.trim(); if (!v || /^https:\/\/\S+$/.test(v)) { anh = v; xem(); } };
