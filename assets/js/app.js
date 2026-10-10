@@ -1844,6 +1844,13 @@ function renderLessons() {
   // Hình minh hoạ (assets/js/hinh-bai.js): tải riêng lần đầu mở giáo trình, xong thì vẽ lại bài đang xem
   if (!hinhBai && !hinhBaiDang) { hinhBaiDang = true; import("./hinh-bai.js?v=20261010bf").then(m => { hinhBai = m; renderLessons(); }).catch(() => { hinhBaiDang = false; }); }
   const hinh = hinhBai ? (hinhBai.GAN[l.id] || []).filter(x => hinhBai.HINH[x.h]).map(x => `<figure class="bai-hinh">${hinhBai.HINH[x.h]}<figcaption>${esc(x.chu)}</figcaption></figure>`).join("") : "";
+  // Ảnh tượng lớp tự chụp, xếp từ cơ bản lên nâng cao; bấm ảnh để xem lớn
+  const tuongDs = hinhBai && hinhBai.TUONG_BAI && (hinhBai.TUONG_BAI[l.id] || []).map(m => hinhBai.TUONG.find(t => t.ma === m)).filter(Boolean) || [];
+  const tnHTML = hinhBai && hinhBai.THUAT_NGU && hinhBai.THUAT_NGU_BAI.includes(l.id) ? `<details class="bai-tn"><summary><b>Bảng dịch thuật ngữ giải phẫu Trung – Việt</b> <small class="muted">· dùng khi đọc sách vẽ tiếng Trung</small></summary>
+    <div class="bai-tn-cuon"><table><thead><tr><th>Chữ Trung</th><th>Tiếng Việt</th><th>Khi vẽ, nhìn ở đâu</th></tr></thead><tbody>${hinhBai.THUAT_NGU.map(x => `<tr class="tn-${x.nhom === "Xương" ? "x" : x.nhom === "Cơ" ? "c" : "k"}"><td lang="zh">${esc(x.trung)}</td><td><b>${esc(x.viet)}</b></td><td>${esc(x.ve)}</td></tr>`).join("")}</tbody></table></div></details>` : "";
+  const tuong = tuongDs.length ? `<section class="bai-tuong"><h4>Ảnh tượng của lớp <small class="muted">· xếp từ dễ đến khó · bấm ảnh để xem lớn</small></h4>${tuongDs.map((t, k) =>
+    `<div class="bt-the cap-${t.cap}"><div class="bt-dau"><span class="bt-so num">${k + 1}</span><b>${esc(t.ten)}</b><span class="chip bt-cap">${esc(t.capTen)}</span></div>
+     <p class="muted">${esc(t.meo)}</p><div class="bt-anh">${t.anh.map((a, j) => `<button type="button" data-tuong="${esc(t.ma)}" data-j="${j}" aria-label="Xem lớn ${esc(t.ten)} góc ${j + 1}"><img src="${esc(a)}" alt="${esc(t.ten)} – góc ${j + 1}" loading="lazy" decoding="async" width="387" height="516"></button>`).join("")}</div></div>`).join("")}</section>` : "";
   const body = (l.noidung ? `<div class="bai-md">${mdHTML(l.noidung)}</div>` : "") + (!items.length ? "" : l.loai === "noi-dung"
     ? `<ul class="points">${items.map(s => `<li>${esc(s)}</li>`).join("")}</ul>`
     : `<ol class="steps">${items.map(s => `<li>${esc(s)}</li>`).join("")}</ol>`);
@@ -1851,10 +1858,14 @@ function renderLessons() {
   $("#lesson").innerHTML =
     `<div class="bai-chuyen"><button type="button" data-go="-1" aria-label="Bài trước" ${idx <= 0 ? "disabled" : ""}>‹</button><span class="num">Bài ${idx + 1}/${list.length}</span><button type="button" data-go="1" aria-label="Bài sau" ${idx >= list.length - 1 ? "disabled" : ""}>›</button></div>
      <p class="eyebrow">${esc(l.khoa)}</p><h3 style="font-size:1.5rem;margin-top:4px">${esc(l.ten)}</h3>
-     ${hinh ? `<div class="bai-hinh-ds">${hinh}</div>` : ""}${body}${l.ghichu ? `<p class="gc"><b>Anh chị dặn:</b> ${esc(l.ghichu)}</p>` : ""}
+     ${hinh ? `<div class="bai-hinh-ds">${hinh}</div>` : ""}${body}${tuong}${tnHTML}${l.ghichu ? `<p class="gc"><b>Anh chị dặn:</b> ${esc(l.ghichu)}</p>` : ""}
      <div class="foot">${isTeacher ? "" : `<button class="btn small" id="mark">${myProgress.bai[l.id] ? "Đã học xong ✓" : "Đánh dấu đã học"}</button>`}
      ${isAdmin ? `<button class="btn small" id="del-l">Xoá bài này</button>` : ""}</div>`;
   if ($("#mark")) $("#mark").onclick = () => toggleProgress("bai", l.id).then(renderLessons);
+  $$("#lesson [data-tuong]").forEach(b => b.onclick = () => {
+    const t = hinhBai.TUONG.find(x => x.ma === b.dataset.tuong); if (!t) return;
+    galList = t.anh.map((a, j) => ({ anh: a, moTa: `${t.ten} · góc ${j + 1}/${t.anh.length} · ${t.capTen}` })); showLb(+b.dataset.j);
+  });
   $$("#lesson [data-go]").forEach(b => b.onclick = () => {
     const k = idx + Number(b.dataset.go); if (k < 0 || k >= list.length) return;
     lessonId = list[k].id; renderLessons(); $("#lesson").scrollIntoView({ behavior: "smooth", block: "start" });
