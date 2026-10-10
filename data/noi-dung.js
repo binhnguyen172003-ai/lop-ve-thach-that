@@ -25,6 +25,17 @@ export const LIEN_HE = {
   pinterest: { link: "https://pin.it/YkmIUW1tr" },
 };
 
+// ---------- MẠNG XÃ HỘI (băng thẻ tự xoay ở mục Bài vẽ học viên + dòng liên hệ cuối trang) ----------
+// loai: tiktok | facebook | instagram | pinterest | youtube (để chọn biểu tượng). Để trống link = ẩn thẻ đó.
+// Thêm fanpage: bỏ // ở dòng "Fanpage Facebook" rồi dán link fanpage (dạng https://www.facebook.com/ten-trang).
+export const MANG_XA_HOI = [
+  { loai: "tiktok",    ten: "TikTok",        tk: "@vekhongvui17",        moTa: "Video vẽ, mẹo luyện thi mỗi tuần", nut: "Xem video",       link: "https://www.tiktok.com/@vekhongvui17" },
+  { loai: "facebook",  ten: "Nhóm Facebook", tk: "Cộng đồng lớp vẽ",     moTa: "Hỏi đáp, đăng bài, nhận nhận xét", nut: "Vào nhóm",        link: "https://www.facebook.com/groups/2675650145948124" },
+  { loai: "instagram", ten: "Instagram",     tk: "@lop_ve_thach_that",   moTa: "Bài vẽ học viên mới nhất",         nut: "Xem bài vẽ",      link: "https://www.instagram.com/lop_ve_thach_that/" },
+  { loai: "pinterest", ten: "Pinterest",     tk: "Lớp Vẽ Thạch Thất",    moTa: "Bộ sưu tập bài mẫu theo chủ đề",   nut: "Xem bộ sưu tập",  link: "https://pin.it/YkmIUW1tr" },
+  // { loai: "facebook", ten: "Fanpage Facebook", tk: "Dreamers", moTa: "Tin tuyển sinh, lịch khai giảng", nut: "Theo dõi", link: "" },
+];
+
 // ---------- SẢN PHẨM THÊM (hiện trong menu ☰ trên điện thoại) ----------
 // link: dán link Google Drive (chia sẻ "Bất kỳ ai có link") vào đây. Để trống = hiện "Sắp ra mắt".
 // thongTin: ghi chú nội bộ cho anh chị, không hiện trên web.
