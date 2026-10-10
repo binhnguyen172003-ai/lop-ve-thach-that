@@ -560,7 +560,7 @@
       </section>
       <aside class="hw-compose" data-teacher hidden>
         <details id="hw-composer" open>
-          <summary><span><span class="eyebrow">Dành cho giáo viên</span><strong>Giao bài tập mới</strong></span><span class="compose-toggle" aria-hidden="true">+</span></summary>
+          <summary><span><span class="eyebrow">Dành cho giáo viên</span><strong id="hw-compose-title">Giao bài tập mới</strong></span><span class="compose-toggle" aria-hidden="true">+</span></summary>
           <p class="muted compose-note">Một đề bài rõ ràng giúp học viên bắt đầu đúng hướng.</p>
           <form id="f-bt">
             <fieldset id="bt-fields">
@@ -572,6 +572,7 @@
               <label for="bt-lop">Lớp / nhóm<input id="bt-lop" maxlength="120" placeholder="VD: 2k9 khối H · Kim Quan"></label>
               <label for="bt-mota">Yêu cầu bài tập<textarea id="bt-mota" rows="5" maxlength="5000" placeholder="Khổ giấy, chất liệu, nội dung cần làm và tiêu chí hoàn thành…"></textarea></label>
               <div class="attachment-label"><b>Tài liệu đính kèm</b><span>Không bắt buộc</span></div>
+              <ul class="file-queue" id="bt-file-existing" aria-label="Tệp đang có của bài" hidden></ul>
               <label class="file-drop" id="bt-drop" for="bt-files">
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4m-4 4 4-4 4 4M4 15v5h16v-5"/></svg>
                 <strong>Chọn tệp hoặc kéo thả vào đây</strong><span>PDF, ảnh, Word, PowerPoint, Excel, TXT, MD</span>
@@ -581,6 +582,7 @@
               <ul class="file-queue" id="bt-file-list" aria-label="Tệp đã chọn"></ul>
               <p class="status err" id="bt-file-error" role="alert"></p>
               <button class="btn primary compose-submit" id="bt-submit" type="submit">Giao bài cho học viên <span aria-hidden="true">↗</span></button>
+              <button class="btn small compose-cancel" id="bt-huy-sua" type="button" hidden>Huỷ, quay lại giao bài mới</button>
             </fieldset>
             <div class="upload-state" id="bt-upload-state" hidden><div><span id="bt-upload-label">Đang tải tệp…</span><button type="button" class="btn small" id="bt-cancel">Hủy tải</button></div><progress id="bt-upload-progress" max="100" value="0" aria-label="Tiến độ tải tệp"></progress></div>
             <p class="status" id="bt-status" role="status" aria-live="polite"></p>
