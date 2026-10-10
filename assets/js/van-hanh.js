@@ -29,7 +29,7 @@ const val = id => ($("#" + id)?.value || "").trim();
 export function batDau(ctx) {
   dung(); C = ctx;
   const { db, fs: { collection, query, orderBy, where, limit, onSnapshot } } = C;
-  const nghe = (q, fn) => { const u = onSnapshot(q, s => { fn(s.docs.map(d => ({ id: d.id, ...d.data() }))); D.loi = ""; ve(); }, e => { D.loi = (e && e.code) || "loi"; ve(); }); huy.push(u); C.themHuy(u); };
+  const nghe = (q, fn) => { const u = onSnapshot(q, s => { fn(s.docs.filter(d => d.id[0] !== "_").map(d => ({ id: d.id, ...d.data() }))); D.loi = ""; ve(); }, e => { D.loi = (e && e.code) || "loi"; ve(); }); huy.push(u); C.themHuy(u); };
   nghe(query(collection(db, "thithu"), orderBy("tao", "desc")), r => D.thi = r);
   nghe(C.isTeacher ? collection(db, "thithubai") : query(collection(db, "thithubai"), where("mail", "==", C.mail)), r => D.bai = r);
   nghe(collection(db, "trucnhat"), r => { D.truc = {}; r.forEach(x => D.truc[x.id] = x); });

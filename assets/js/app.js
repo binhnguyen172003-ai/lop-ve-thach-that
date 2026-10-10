@@ -2408,18 +2408,23 @@ async function checkRules() {
   const ref = doc(db, "yeucau", mail);
   const mau = { vaiTro: "hocvien", gmail: mail, ten: "Phiếu thử", namSinh: 2010, sdt: "", sdtPh: "0900000000", truong: "", lopHoc: "",
     khuVuc: "", coso: "Bình Phú", chuongTrinh: "Vẽ cơ bản", khoi: "", namThi: "", mucTieu: "", ghiChu: "", guiLuc: Date.now() };
+  let buoc = "Phiếu đăng ký";
   try {
     await setDoc(ref, mau); await deleteDoc(ref);
+    buoc = "Điểm danh";
     const ddRef = doc(db, "diemdanh", "_kiem-tra"); await setDoc(ddRef, { thu: "co" }); await deleteDoc(ddRef);
+    buoc = "Việc cần làm";
     const cvRef = doc(db, "congviec", "_kiem-tra"); await setDoc(cvRef, { viec: "thử", cho: "tatca", xong: false, luc: Date.now() }); await deleteDoc(cvRef);
-    const scRef = doc(db, "suco", "_kiem-tra"); await setDoc(scRef, { coSo: "thử", loai: "Khác", moTa: "thử", ai: mail, ten: "", luc: Date.now(), capNhat: Date.now(), trangThai: "moi" }); await deleteDoc(scRef);
+    buoc = "Báo sự cố";
+    // Phiếu thử của lần kiểm tra trước có thể còn sót (đóng trang giữa chừng): dọn trước, nếu không lần ghi này bị tính là "sửa" và bị chặn oan
+    const scRef = doc(db, "suco", "_kiem-tra"); await deleteDoc(scRef).catch(() => {}); await setDoc(scRef, { coSo: "thử", loai: "Khác", moTa: "thử", ai: mail, ten: "", luc: Date.now(), capNhat: Date.now(), trangThai: "moi" }); await deleteDoc(scRef);
     box.className = "sv-status ok"; box.textContent = "✓ Máy chủ hoạt động tốt: học viên gửi phiếu sẽ hiện ngay ở đây.";
   } catch (e) {
     const code = (e && e.code) || "";
     box.className = "sv-status bad";
     box.innerHTML = code === "permission-denied"
       ? `<b>⚠ Luật bảo mật trên Firebase đang là bản CŨ</b>, nên phiếu học viên gửi bị máy chủ chặn (anh chị vẫn nhận email nhưng danh sách trống).
-         <ol><li>Bấm <b>Sao chép luật mới</b>.</li><li>Bấm <b>Mở trang dán luật</b> → xoá hết chữ cũ trong khung → dán vào → bấm <b>Publish</b>.</li><li>Quay lại đây, bấm <b>Kiểm tra lại</b>.</li></ol>
+         <ol><li>Bấm <b>Sao chép luật mới</b>.</li><li>Bấm <b>Mở trang dán luật</b> → xoá hết chữ cũ trong khung → dán vào → bấm <b>Publish</b>.</li><li>Quay lại đây, bấm <b>Kiểm tra lại</b>.</li></ol><small>Bước bị chặn: ${esc(buoc)}.</small>
          <div class="ctas" style="margin-top:8px"><button class="btn primary small" type="button" id="sv-copy">Sao chép luật mới</button>
          <a class="btn small" target="_blank" rel="noopener" href="https://console.firebase.google.com/project/${esc(firebaseConfig.projectId)}/firestore/databases/-default-/rules">Mở trang dán luật</a>
          <button class="btn small" type="button" id="sv-retry">Kiểm tra lại</button></div><span class="status" id="sv-copy-st"></span>`
@@ -3429,7 +3434,7 @@ function lvStart() {
   listenLV(collection(db, "lichnhac"), snap => { lichNhac = snap.docs.map(d => ({ id: d.id, ...d.data() })); renderLichNhac(); capNhatNhac(); });
   if (isTeacher) listenLV(collection(db, "thongbao"), snap => { lvTB = snap.docs.map(d => ({ id: d.id, ...d.data() })); renderLV(); });
   else listenLV(query(collection(db, "thongbao"), where("gui", "==", "tatca")), snap => { lvTB = snap.docs.map(d => ({ id: d.id, ...d.data() })); renderLV(); });
-  if (isTeacher) listenLV(collection(db, "congviec"), snap => { lvCV = snap.docs.map(d => ({ id: d.id, ...d.data() })); renderLV(); });
+  if (isTeacher) listenLV(collection(db, "congviec"), snap => { lvCV = snap.docs.filter(d => d.id[0] !== "_").map(d => ({ id: d.id, ...d.data() })); renderLV(); });
   if (isAdmin) listenLV(collection(db, "traodoi"), snap => { lvKenh = snap.docs.map(d => ({ id: d.id, ...d.data() })); renderLV(); });
   else if (isTeacher) listenLV(query(collection(db, "traodoi"), where("vaiTro", "==", "hocvien")), snap => { lvKenh = snap.docs.map(d => ({ id: d.id, ...d.data() })); renderLV(); });
   if (!isAdmin) listenLV(doc(db, "traodoi", mail), d => { lvMine = d.exists() ? { id: d.id, ...d.data() } : null; renderLV(); });
