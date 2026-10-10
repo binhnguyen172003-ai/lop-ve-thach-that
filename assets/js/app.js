@@ -201,7 +201,25 @@ function copyText(text, statusEl, okMsg, selectEl) {
 
 /* ================= Điều hướng ================= */
 const PAGES = ["giao-trinh", "bai-tap", "tai-khoan", "duyet", "diem-danh", "lam-viec", "thi-thu", "van-hanh"];
+// Nhớ vị trí cuộn theo từng bước lịch sử: mở mục mới → lên đầu; bấm quay lại / tiến tới → về đúng chỗ đang xem
+try { history.scrollRestoration = "manual"; } catch (e) {}
+const viTriCuon = {}; let khoaCuon = null;
+function khoaLichSu() {
+  let k = history.state && history.state.k;
+  if (!k) { k = Math.random().toString(36).slice(2, 10); try { history.replaceState({ ...(history.state || {}), k }, ""); } catch (e) {} }
+  return k;
+}
+addEventListener("scroll", () => { if (khoaCuon) viTriCuon[khoaCuon] = scrollY; }, { passive: true });
+// Điện thoại: nút Chì + chuông tự trượt ra mép khi cuộn xuống đọc, cuộn lên thì hiện lại (không che nội dung đang xem)
+{ let yTruoc = scrollY;
+  addEventListener("scroll", () => {
+    const c = document.getElementById("tl-cum"), y = scrollY; if (!c) return;
+    if (innerWidth > 760 || c.querySelector(".tl-khung:not([hidden])")) { c.classList.remove("tl-an"); yTruoc = y; return; }
+    if (Math.abs(y - yTruoc) < 10) return;
+    c.classList.toggle("tl-an", y > yTruoc && y > 160); yTruoc = y;
+  }, { passive: true }); }
 function route() {
+  const kCu = khoaCuon, k = khoaLichSu(), yCu = kCu !== k ? viTriCuon[k] : undefined; khoaCuon = k;
   const h = location.hash.replace("#", "");
   if (h && !PAGES.includes(h)) {
     // Hash không phải trang cấp cao nhất: có thể là link "đi nhanh" tới một mục trong trang đang mở
@@ -231,7 +249,8 @@ function route() {
   { const on = $("#acc-nav [aria-current='page']"), w = $("#acc-nav .wrap"); if (on && w) requestAnimationFrame(() => w.scrollTo({ left: on.offsetLeft - (w.clientWidth - on.offsetWidth) / 2, behavior: "smooth" })); }
   if (page === "home") $("#nav-acct").removeAttribute("aria-current"); else $("#nav-acct").setAttribute("aria-current", "page");
   if (window.__lvReady) { renderAccNav(); if (page === "lam-viec") lvOnShow(); }
-  if (page !== "home") window.scrollTo(0, 0);
+  if (yCu !== undefined) requestAnimationFrame(() => window.scrollTo(0, yCu));
+  else if (page !== "home") window.scrollTo(0, 0);
   else if (h) { const el = document.getElementById(h); if (el) el.scrollIntoView(); }
 }
 addEventListener("hashchange", route);
