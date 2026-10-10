@@ -79,6 +79,8 @@ const $ = s => document.querySelector(s);
 const troLyPromise = import("./tro-ly.js?v=20261010bt").catch(e => console.warn("Chưa tải được trợ lý", e));
 // Thi thử + vận hành lớp: chỉ tải khi đã đăng nhập vào học
 let vanHanhP = null, vanHanhM = null;
+let tacVuP = null, tacVuM = null;
+const taiTacVu = () => tacVuP ||= import("./tac-vu.js?v=20261010bv").then(m => tacVuM = m).catch(e => { tacVuP = null; console.warn("Chưa tải được phần tác vụ", e); });
 const taiVanHanh = () => vanHanhP ||= import("./van-hanh.js?v=20261010bg").then(m => vanHanhM = m).catch(e => { vanHanhP = null; console.warn("Chưa tải được phần vận hành", e); });
 window.__appOk = true;
 document.querySelectorAll(".slow-bar").forEach(el => el.remove());
@@ -232,10 +234,15 @@ function cuonToi(el, block = "start") {
     if ((st === "sticky" || st === "fixed") && b.bottom > 0 && b.top < innerHeight / 4 && b.height < innerHeight / 3) h = Math.max(h, b.bottom); }); return h + 12; };
   const dich = () => { const b = el.getBoundingClientRect(); return block === "center" ? b.top + b.height / 2 - (innerHeight + lech()) / 2 : b.top - lech(); };
   const ac = new AbortController(); ["touchstart", "wheel", "keydown"].forEach(t => addEventListener(t, () => ac.abort(), { passive: true, signal: ac.signal }));
-  // Một lần sau khi bố cục đã vẽ xong. Không tự căn lại nhiều lần khi dữ liệu tải tiếp.
+  // Cuộn sau khi bố cục vẽ xong; ảnh / bảng phía trên tải xong làm trang dài ra thì canh lại khi trang đã đứng yên
+  // (tối đa 3 lần, chỉ khi lệch > 24px, dừng ngay khi người dùng chạm hoặc cuộn) — không giật liên tục.
   requestAnimationFrame(() => requestAnimationFrame(() => {
-    if (!ac.signal.aborted) scrollBy({ top: dich(), behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
-    setTimeout(() => ac.abort(), 500);
+    if (ac.signal.aborted) return;
+    scrollBy({ top: dich(), behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+    let lan = 0, sua = 0, yTruoc = -1;
+    const kiem = () => { if (ac.signal.aborted) return; if (++lan > 14 || sua >= 3) return ac.abort();
+      const y = scrollY, d = dich(); if (y === yTruoc && Math.abs(d) > 24) { scrollBy({ top: d, behavior: "auto" }); sua++; } yTruoc = y; setTimeout(kiem, 180); };
+    setTimeout(kiem, 300);
   }));
 }
 window.__cuonToi = cuonToi;
@@ -1645,6 +1652,8 @@ let needRedraw = false;
 // Khi giáo viên gõ xong (rời ô nhập), vẽ lại nếu trong lúc gõ có dữ liệu mới.
 document.addEventListener("focusout", () => setTimeout(() => { if (needRedraw) renderHomework(); }, 0));
 let lessons = [], homework = [], roster = [], requests = [], progressAll = {};
+// Bài giao cho cả lớp (choHv trống) hoặc cho từng học viên; có thể giới hạn theo cơ sở
+const giaoCho = (h, r) => (!Array.isArray(h.choHv) || !h.choHv.length || h.choHv.includes(r.id)) && (!h.coSo || String(r.coso || "").includes(h.coSo));
 let myProgress = { bai: {}, baitap: {} };
 let course = null, lessonId = null, hwView = "open";
 let hinhBai = null, hinhBaiDang = false;
@@ -2060,7 +2069,7 @@ function renderHomework() {
   $("#hw-intro").textContent = isTeacher ? "Giao đề, chia sẻ tài liệu và theo dõi bài nộp của học viên trong một không gian." : "Đọc đề, tải tài liệu và theo dõi hạn nộp tại đây. Bài vẽ nộp trên lớp hoặc qua nhóm lớp.";
   const open = homework.filter(h => !h.han || daysUntil(h.han) >= 0);
   const soon = open.filter(h => h.han && daysUntil(h.han) <= 3);
-  const done = isTeacher ? homework.filter(h => roster.some(r => (progressAll[r.id]?.baitap?.[h.id] && !feedbackAll[r.id]?.[h.id]) || daNopLai(feedbackAll[r.id]?.[h.id], progressAll[r.id]?.baitap?.[h.id]))).length : homework.filter(h => myProgress.baitap[h.id]).length;
+  const done = isTeacher ? homework.filter(h => roster.some(r => giaoCho(h, r) && (progressAll[r.id]?.baitap?.[h.id] && !feedbackAll[r.id]?.[h.id]) || daNopLai(feedbackAll[r.id]?.[h.id], progressAll[r.id]?.baitap?.[h.id]))).length : homework.filter(h => myProgress.baitap[h.id]).length;
   // Đã nộp / Đã chấm chỉ có nghĩa với học viên
   if (isTeacher && (hwView === "nop" || hwView === "cham")) { hwView = "open"; $$("#hw-filter .tab").forEach(x => x.setAttribute("aria-selected", x.dataset.h === "open")); }
   $$("#hw-filter [data-hv]").forEach(b => b.hidden = isTeacher);
@@ -2197,20 +2206,21 @@ function tongHopBaiTap() {
   if (!box) { box = document.createElement("div"); box.id = "bt-tong"; $("#hw-overview").after(box); }
   if (!homework.length || !roster.length) { box.innerHTML = ""; return; }
   const dong = homework.map(h => {
-    const fbs = roster.map(r => (feedbackAll[r.id] || {})[h.id]).filter(Boolean);
-    const nop = roster.filter(r => (progressAll[r.id] || {}).baitap && progressAll[r.id].baitap[h.id]).length;
+    const ds = roster.filter(r => giaoCho(h, r));
+    const fbs = ds.map(r => (feedbackAll[r.id] || {})[h.id]).filter(Boolean);
+    const nop = ds.filter(r => (progressAll[r.id] || {}).baitap && progressAll[r.id].baitap[h.id]).length;
     const diems = fbs.map(f => soDiem(f.diem)).filter(x => x !== null);
     const dat = fbs.filter(f => f.trangThai === "dat").length, lamLai = fbs.filter(f => f.trangThai === "lamlai").length;
-    const anh = roster.filter(r => ((anhBaiTapAll[r.id] || {})[h.id] || []).length).length;
+    const anh = ds.filter(r => ((anhBaiTapAll[r.id] || {})[h.id] || []).length).length;
     const tb = diems.length ? (diems.reduce((a, b) => a + b, 0) / diems.length).toFixed(1).replace(".", ",") : "–";
-    return `<tr><td><b>${esc(h.ten)}</b><small>${esc(h.khoa || "")}</small></td><td class="num">${nop}/${roster.length}</td><td class="num">${fbs.length}</td><td class="num">${anh}</td><td class="num">${tb}</td><td class="num">${fbs.length ? Math.round(dat / fbs.length * 100) + "%" : "–"}</td><td class="num">${lamLai}</td></tr>`;
+    return `<tr><td><b>${esc(h.ten)}</b><small>${esc(h.khoa || "")}</small></td><td class="num">${nop}/${ds.length}</td><td class="num">${fbs.length}</td><td class="num">${anh}</td><td class="num">${tb}</td><td class="num">${fbs.length ? Math.round(dat / fbs.length * 100) + "%" : "–"}</td><td class="num">${lamLai}</td></tr>`;
   }).join("");
   box.innerHTML = `<section class="bt-tong"><p class="eyebrow">Đánh giá bài tập</p><div class="bt-tong-bang"><table><thead><tr><th>Bài</th><th>Đã nộp</th><th>Đã chấm</th><th>Có ảnh</th><th>Điểm TB</th><th>Đạt 3 tiêu chí</th><th>Làm lại</th></tr></thead><tbody>${dong}</tbody></table></div></section>`;
   hienAnhTuKho();
 }
 function gradeTable(h) {
   if (!roster.length) return `<div class="grade"><p class="muted">Chưa có học viên nào được duyệt.</p></div>`;
-  const items = roster.map(r => {
+  const items = roster.filter(r => giaoCho(h, r)).map(r => {
     const done = (progressAll[r.id] || {}).baitap && progressAll[r.id].baitap[h.id];
     const fb = (feedbackAll[r.id] || {})[h.id] || {};
     const k1 = `${h.id}|${r.id}|diem`, k2 = `${h.id}|${r.id}|nx`;
@@ -2279,7 +2289,7 @@ function moSuaBaiTap(h, nhanBan) {
   $("#bt-ten").value = nhanBan ? `${h.ten} (bản sao)`.slice(0, 180) : (h.ten || "");
   if ([...$("#bt-khoa").options].some(o => o.value === h.khoa)) $("#bt-khoa").value = h.khoa;
   $("#bt-han").value = nhanBan ? "" : (h.han || "");
-  $("#bt-lop").value = h.lop || ""; $("#bt-mota").value = h.mota || "";
+  $("#bt-lop").value = h.lop || ""; $("#bt-mota").value = h.mota || ""; datGiaoChoForm(h);
   // Tệp đính kèm gắn với mã bài gốc nên bản sao không mang theo tệp; anh chị đính kèm lại nếu cần.
   editingHomeworkId = nhanBan ? null : h.id;
   editingHomeworkKept = nhanBan ? [] : (Array.isArray(h.tepDinhKem) ? h.tepDinhKem.filter(f => validAttachmentPath(f.path,h.id)) : []);
@@ -2288,6 +2298,18 @@ function moSuaBaiTap(h, nhanBan) {
   $("#hw-composer").scrollIntoView({block:"start", behavior:matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth"});
   $("#bt-ten").focus({preventScroll:true});
 }
+/* ----- Ô "Giao cho": cả lớp / theo cơ sở / chọn học viên cụ thể ----- */
+let btChon = new Set();
+function giaoChoForm() { const k = $("#bt-cho").value; return { choHv: k === "chon" ? [...btChon] : [], coSo: k === "Bình Phú" || k === "Kim Quan" ? k : "" }; }
+function datGiaoChoForm(h) { btChon = new Set(h && Array.isArray(h.choHv) ? h.choHv : []); $("#bt-cho").value = btChon.size ? "chon" : (h && h.coSo) || "tatca"; veChonHv(); }
+function veChonHv() {
+  const o = $("#bt-chon"), mo = $("#bt-cho").value === "chon"; o.hidden = !mo; if (!mo) return;
+  const q = timTen($("#bt-chon-tim").value), ds = roster.filter(r => r.vaiTro !== "giaovien" && (!q || timTen(r.ten).includes(q) || String(r.gmail || r.id).includes(q)));
+  $("#bt-chon-ds").innerHTML = ds.slice(0, 200).map(r => `<label class="tv-chk"><input type="checkbox" value="${esc(r.id)}"${btChon.has(r.id) ? " checked" : ""}> <span>${esc(r.ten || r.id)}${r.coso ? ` <small class="muted">${esc(r.coso)}</small>` : ""}</span></label>`).join("") || '<p class="muted">Không tìm thấy học viên.</p>';
+  $("#bt-chon-so").textContent = btChon.size ? `Đã chọn ${btChon.size} học viên` : "Chưa chọn ai";
+}
+$("#bt-cho").onchange = veChonHv; $("#bt-chon-tim").oninput = veChonHv;
+$("#bt-chon-ds").onchange = e => { const c = e.target.closest("input[type=checkbox]"); if (!c) return; if (c.checked) btChon.add(c.value); else btChon.delete(c.value); $("#bt-chon-so").textContent = btChon.size ? `Đã chọn ${btChon.size} học viên` : "Chưa chọn ai"; };
 function thoatSuaBaiTap(xoaForm) {
   editingHomeworkId = null; editingHomeworkKept = []; renderKeptFiles(); datCheDoSoanBai("moi");
   if (xoaForm) { $("#f-bt").reset(); clearHomeworkFiles(); dropDraft(homeworkDraftKey()); $("#bt-file-error").textContent = ""; $("#bt-status").textContent = ""; }
@@ -2374,9 +2396,10 @@ $("#f-bt").addEventListener("submit", async ev => {
   const kept = goc ? [...editingHomeworkKept] : [];
   if (kept.length + files.length > FILE_LIMITS.count) { $("#bt-file-error").textContent = `Mỗi bài tối đa ${FILE_LIMITS.count} tệp (đang có ${kept.length} tệp cũ). Bỏ bớt tệp rồi lưu lại.`; return; }
   const boDi = goc ? (goc.tepDinhKem || []).filter(f => validAttachmentPath(f.path,goc.id) && !kept.some(k => k.path === f.path)) : [];
-  const data = {ten:$("#bt-ten").value.trim(),khoa:$("#bt-khoa").value,han:$("#bt-han").value,lop:$("#bt-lop").value.trim(),mota:$("#bt-mota").value.trim(),taoLuc:goc ? (goc.taoLuc || Date.now()) : Date.now()};
+  const data = {ten:$("#bt-ten").value.trim(),khoa:$("#bt-khoa").value,han:$("#bt-han").value,lop:$("#bt-lop").value.trim(),mota:$("#bt-mota").value.trim(),...giaoChoForm(),taoLuc:goc ? (goc.taoLuc || Date.now()) : Date.now()};
   if (goc) data.suaLuc = Date.now();
   if (!data.ten) { st.textContent = "Vui lòng nhập tên bài tập."; st.classList.add("err"); $("#bt-ten").focus(); return; }
+  if ($("#bt-cho").value === "chon" && !data.choHv.length) { st.textContent = "Chọn ít nhất một học viên, hoặc đổi “Giao cho” thành Cả lớp."; st.classList.add("err"); return; }
   homeworkBusy = true; homeworkCanceled = false;
   $("#bt-fields").disabled = true; $("#bt-cancel").disabled = false; $("#bt-upload-progress").value = 0;
   $("#bt-upload-state").hidden = !files.length;
@@ -2406,7 +2429,7 @@ $("#f-bt").addEventListener("submit", async ev => {
     // Tệp cũ đã bị bỏ khỏi bài: dọn khỏi kho sau khi bài lưu xong (dọn lỗi cũng không ảnh hưởng bài).
     if (boDi.length) { try { const s = sdk || await attachmentStorage(app); await Promise.allSettled(boDi.map(f => s.deleteObject(s.ref(s.storage,f.path)))); } catch {} }
     if (user?.uid === owner) {
-      form.reset(); clearHomeworkFiles(); dropDraft(draftKey); thoatSuaBaiTap(false);
+      form.reset(); clearHomeworkFiles(); dropDraft(draftKey); thoatSuaBaiTap(false); datGiaoChoForm(null);
       st.textContent = goc ? "Đã lưu thay đổi của bài tập." : `Đã giao bài${uploaded.length ? ` cùng ${uploaded.length} tệp đính kèm` : ""}.`; toast(st.textContent);
       hwView = "open"; $("#hw-search").value = ""; $("#hw-course").value = "";
       $$("#hw-filter .tab").forEach(x => x.setAttribute("aria-selected",x.dataset.h === "open"));
@@ -3064,11 +3087,11 @@ function renderDash(show) {
     let canCham = 0; const chuaNop = new Set();
     homework.forEach(h => {
       const n = h.han ? daysUntil(h.han) : null;
-      hv.forEach(r => { const nop = progressAll[r.id]?.baitap?.[h.id], fb = feedbackAll[r.id]?.[h.id];
+      hv.forEach(r => { if (!giaoCho(h, r)) return; const nop = progressAll[r.id]?.baitap?.[h.id], fb = feedbackAll[r.id]?.[h.id];
         if ((nop && !fb) || daNopLai(fb, nop)) canCham++;
         if (!nop && n !== null && n >= -7 && n <= 2) chuaNop.add(r.id); });
     });
-    const viec = isAdmin ? lvCV.filter(c => !c.xong).length : lvMyOpenTasks();
+    const viec = tacVuM ? tacVuM.dem().mo : 0;
     const o = (href, cls, so, chu) => `<a class="dash-so ${cls}" href="${href}"><b class="num">${so}</b><span>${chu}</span></a>`;
     box.innerHTML = `<div class="dash-dau"><div><p class="eyebrow">${isAdmin ? "Quản lý lớp" : esc(myChucVu || "Giáo viên")} · ${esc(TEN_NGAY[todayKey()])}</p><h1>Việc cần xử lý hôm nay</h1></div>
       <div class="dash-nut"><button class="btn primary small" type="button" id="dash-giao">+ Giao bài</button>${isAdmin ? `<button class="btn small" type="button" id="dash-viec">+ Giao việc</button>` : ""}</div></div>
@@ -3560,8 +3583,9 @@ function capNhatNhac() {
           else if (n < 0 && n >= -7) ds.push({ id: "tre-" + h.id, icon: "🐢", muc: "gap", tieuDe: `Quá hạn: ${h.ten}`, nd: "Nộp muộn còn hơn không nộp. Nộp xong nhắn anh chị một câu nhé.", link: "#bai-tap", hw: "past", dich }); }
       });
     } else {
-      const choCham = homework.reduce((a, h) => a + roster.filter(r => { const fb = feedbackAll[r.id]?.[h.id], nop = progressAll[r.id]?.baitap?.[h.id]; return (nop && !fb) || daNopLai(fb, nop); }).length, 0);
+      const choCham = homework.reduce((a, h) => a + roster.filter(r => { if (!giaoCho(h, r)) return false; const fb = feedbackAll[r.id]?.[h.id], nop = progressAll[r.id]?.baitap?.[h.id]; return (nop && !fb) || daNopLai(fb, nop); }).length, 0);
       if (choCham) ds.push({ id: "cham-" + choCham, icon: "📝", muc: "gap", tieuDe: `${choCham} bài đang chờ chấm`, nd: "Có cả bài học viên đã nộp lại.", link: "#bai-tap", dich: "#hw-list" });
+      if (tacVuM) ds.push(...tacVuM.nhac());
       if (isAdmin && reqCount) ds.push({ id: "duyet-" + reqCount, icon: "🙋", muc: "gap", tieuDe: `${reqCount} yêu cầu chờ duyệt`, link: "#duyet", dich: "#ql-duyet-h" });
       if (typeof khoSapHet === "function") { const het = khoSapHet(); if (het.length) ds.push({ id: "kho-" + het.join(), icon: "📦", muc: "", tieuDe: `Kho sắp hết ${het.length} món`, nd: het.slice(0, 4).join(", "), link: "#kho", dich: "#kho" }); }
     }
@@ -3615,7 +3639,8 @@ function lvUnreadTB() {
   const seen = store.get(tbSeenKey(), 0);
   return lvTB.filter(t => t.luc > seen && t.tacGia !== mail).length;
 }
-function lvMyOpenTasks() { return isTeacher && !isAdmin ? lvCV.filter(c => !c.xong && (c.cho === mail || c.cho === "tatca")).length : 0; }
+// huy hiệu Tác vụ: giáo viên = việc mình cần làm; quản lý = việc đang chờ mình kiểm tra
+function lvMyOpenTasks() { if (!isTeacher || !tacVuM) return 0; const d = tacVuM.dem(); return isAdmin ? d.cho : d.mo; }
 // Kênh của người khác mà phía lớp (giáo viên/quản lý) chưa đọc; kênh của chính mình mà mình chưa đọc.
 const kenhChuaDocLop = k => k.cuoiTu === k.id && (k.capNhat || 0) > (k.xemLop || 0);
 const kenhChuaDocChu = k => !!k && k.cuoiTu && k.cuoiTu !== mail && (k.capNhat || 0) > (k.xemHV || 0);
@@ -3642,7 +3667,6 @@ function lvStart() {
   listenLV(collection(db, "lichnhac"), snap => { lichNhac = snap.docs.map(d => ({ id: d.id, ...d.data() })); renderLichNhac(); capNhatNhac(); });
   if (isTeacher) listenLV(collection(db, "thongbao"), snap => { lvTB = snap.docs.map(d => ({ id: d.id, ...d.data() })); renderLV(); });
   else listenLV(query(collection(db, "thongbao"), where("gui", "==", "tatca")), snap => { lvTB = snap.docs.map(d => ({ id: d.id, ...d.data() })); renderLV(); });
-  if (isTeacher) listenLV(collection(db, "congviec"), snap => { lvCV = snap.docs.filter(d => d.id[0] !== "_").map(d => ({ id: d.id, ...d.data() })); renderLV(); });
   if (isAdmin) listenLV(collection(db, "traodoi"), snap => { lvKenh = snap.docs.map(d => ({ id: d.id, ...d.data() })); renderLV(); });
   else if (isTeacher) listenLV(query(collection(db, "traodoi"), where("vaiTro", "==", "hocvien")), snap => { lvKenh = snap.docs.map(d => ({ id: d.id, ...d.data() })); renderLV(); });
   if (!isAdmin) listenLV(doc(db, "traodoi", mail), d => { lvMine = d.exists() ? { id: d.id, ...d.data() } : null; renderLV(); });
@@ -3665,7 +3689,6 @@ function setLvTab(t) {
 $$("#lv-tabs [data-lv]").forEach(b => b.onclick = () => setLvTab(b.dataset.lv));
 window.__lvTab = setLvTab;   // cho khung Nhắc việc mở đúng tab khi bấm nhắc
 $$("#chat-filter [data-cf]").forEach(b => b.onclick = () => { chatFilter = b.dataset.cf; $$("#chat-filter [data-cf]").forEach(x => x.setAttribute("aria-selected", x === b)); renderChatList(); });
-$$("#cv-filter [data-cv]").forEach(b => b.onclick = () => { cvView = b.dataset.cv; $$("#cv-filter [data-cv]").forEach(x => x.setAttribute("aria-selected", x === b)); renderViec(); });
 
 function renderLV() {
   if (!$("#lv-body")) return;
@@ -3685,7 +3708,7 @@ function renderLV() {
   updBadges();
   if ($("#v-lam-viec").hidden) return;
   if (lvTab === "tb" && mail) store.set(tbSeenKey(), Date.now());
-  renderChatList(); renderChat(); renderTB(); renderViec();
+  renderChatList(); renderChat(); renderTB(); if (tacVuM) tacVuM.ve();
 }
 
 /* ----- Tin nhắn ----- */
@@ -3897,47 +3920,10 @@ motLan($("#f-lich"), async e => {
 // Kiểm tra giờ mỗi phút để nhắc đúng lúc đã hẹn khi học viên đang mở web
 setInterval(() => { try { if (user) capNhatNhac(); } catch (e) {} }, 60000);
 
-/* ----- Việc cần làm ----- */
-function renderViec() {
-  const sel = $("#cv-cho"), cur = sel.value;
-  sel.innerHTML = `<option value="tatca">Tất cả giáo viên</option>` + teachers.map(t => `<option value="${esc(t.id)}">${esc(t.ten || t.id)}</option>`).join("");
-  sel.value = [...sel.options].some(o => o.value === cur) ? cur : "tatca";
-  const today = todayVN();
-  const mine = c => isAdmin || c.cho === mail || c.cho === "tatca";
-  const list = lvCV.filter(c => mine(c) && (cvView === "xong" ? c.xong : !c.xong))
-    .sort((a, b) => cvView === "xong" ? (b.xongLuc || 0) - (a.xongLuc || 0) : String(a.han || "9999").localeCompare(String(b.han || "9999")));
-  $("#cv-list").innerHTML = list.length ? list.map(c => {
-    const tre = !c.xong && c.han && c.han < today;
-    return `<li class="cv${c.xong ? " xong" : ""}${tre ? " tre" : ""}">
-      <label class="cv-chk"><input type="checkbox" data-cv="${esc(c.id)}" ${c.xong ? "checked" : ""}><span>${esc(c.viec)}</span></label>
-      <span class="cv-meta muted">${c.cho === "tatca" ? "Tất cả giáo viên" : esc((teachers.find(t => t.id === c.cho) || {}).ten || (c.cho === mail ? "Anh/chị" : c.cho))}
-        ${c.han ? ` · ${tre ? "<b>Quá hạn</b> " : "Hạn "}${esc(new Date(c.han + "T00:00").toLocaleDateString("vi-VN"))}` : ""}
-        ${c.xong ? ` · Xong bởi ${esc(c.xongBoi || "")}` : ""}</span>
-      ${isAdmin ? `<button type="button" class="btn small" data-xcv="${esc(c.id)}">Xoá</button>` : ""}</li>`;
-  }).join("") : `<li class="muted empty">${cvView === "xong" ? "Chưa có việc nào xong." : "Không còn việc nào, tốt lắm!"}</li>`;
-  $$("#cv-list [data-cv]").forEach(cb => cb.onchange = () => {
-    const c = lvCV.find(x => x.id === cb.dataset.cv); if (!c) return;
-    const xong = cb.checked, old = { xong: c.xong, xongLuc: c.xongLuc, xongBoi: c.xongBoi };
-    Object.assign(c, { xong, xongLuc: xong ? Date.now() : 0, xongBoi: xong ? tenToi() : "" }); renderViec(); updBadges();
-    setDoc(doc(db, "congviec", c.id), { xong, xongLuc: c.xongLuc, xongBoi: c.xongBoi }, { merge: true })
-      .then(() => toast(xong ? "Đã đánh dấu xong." : "Đã mở lại việc này."))
-      .catch(() => { Object.assign(c, old); renderViec(); updBadges(); toast("Chưa lưu được, thử lại.", "warn"); });
-  });
-  $$("#cv-list [data-xcv]").forEach(b => confirmButton(b, () => deleteDoc(doc(db, "congviec", b.dataset.xcv))));
-}
-motLan($("#f-viec"), async e => {
-  e.preventDefault();
-  const viec = $("#cv-viec").value.trim(); if (!viec) return;
-  const st = $("#cv-status"); st.textContent = "Đang giao…";
-  const cho = $("#cv-cho").value;
-  try {
-    await addDoc(collection(db, "congviec"), { viec, cho, choTen: cho === "tatca" ? "" : ((teachers.find(t => t.id === cho) || {}).ten || ""), han: $("#cv-han").value || "", xong: false, xongLuc: 0, xongBoi: "", tacGia: mail, luc: Date.now() });
-    $("#f-viec").reset(); st.textContent = ""; toast("Đã giao việc.");
-  } catch (err) { st.textContent = err && err.code === "permission-denied" ? "Máy chủ chưa cho phép (cần dán luật bảo mật mới)." : "Chưa giao được, kiểm tra mạng."; }
-});
+/* ----- Tác vụ: xem assets/js/tac-vu.js (giao việc, trạng thái, bình luận, Kanban) ----- */
 
 /* ---------- Đăng nhập ---------- */
-function stopListeners() { unsubs.forEach(u => u()); unsubs = []; if (vanHanhM) vanHanhM.dung(); }
+function stopListeners() { unsubs.forEach(u => u()); unsubs = []; if (vanHanhM) vanHanhM.dung(); if (tacVuM) tacVuM.dung(); }
 function listen(q, fn) {
   const t = performance.now(); let first = true;
   const name = q.path || (q._query && q._query.path && q._query.path.segments && q._query.path.segments.join("/")) || "dữ liệu";
@@ -4115,7 +4101,7 @@ async function onUser(u) {
     lessons = snap.docs.filter(d => !d.id.startsWith("_")).map(d => ({ id: d.id, ...d.data() })); renderLessons(); if (isAdmin) { renderRoster(); dongBoBaiHoc(); } saveData(); renderTiles();
   });
   listen(query(collection(db, "baitap"), orderBy("han")), snap => {
-    troLyDaTai.bai = true; homework = snap.docs.map(d => ({ id: d.id, ...d.data() })); renderHomework(); saveData(); renderTiles(); if (isAdmin) renderQL();
+    troLyDaTai.bai = true; homework = snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(h => isTeacher || giaoCho(h, { id: mail, coso: (myHv && myHv.coso) || "" })); renderHomework(); saveData(); renderTiles(); if (isAdmin) renderQL();
   });
   if (isTeacher) {
     window.__rosterReady = false;
@@ -4135,6 +4121,9 @@ async function onUser(u) {
   }
   lvStart();
   if (!$("#v-lam-viec").hidden) lvOnShow();
+  if (isTeacher) taiTacVu().then(m => { if (!m || !user || mail !== (u.email || "").toLowerCase()) return;
+    m.batDau({ db, fs: { collection, doc, getDoc, setDoc, deleteDoc, writeBatch, query, orderBy, where, onSnapshot }, themHuy: f => unsubs.push(f),
+      mail, ten: (user && user.displayName) || mail.split("@")[0], isAdmin, isTeacher, toast, moHop, nenAnh, homNay: todayVN, giaoVien: () => teachers, doiSo: () => { updBadges(); try { if ($("#dash") && !$("#dash").hidden) renderDash(true); } catch (e) {} } }); });
   taiVanHanh().then(m => { if (!m || !user || mail !== (u.email || "").toLowerCase()) return;
     m.batDau({ db, fs: { collection, doc, getDoc, setDoc, deleteDoc, writeBatch, query, orderBy, where, limit, onSnapshot, deleteField }, themHuy: f => unsubs.push(f),
       mail, ten: (!isTeacher && myHv && myHv.ten) || (user && user.displayName) || mail.split("@")[0], isAdmin, isTeacher,
@@ -4643,16 +4632,26 @@ function nenAnh(file, max = 1400, gioiHan = 850000) {
 }
 // Hộp thoại dùng chung (bottom sheet trên điện thoại)
 let hopCuoi = null;
+// Bấm đúp nút Lưu trong hộp thoại: hộp tự đóng sau khi lưu, cú bấm thứ hai rơi xuống trang phía sau → bỏ qua trong 0,35 giây
+let chanBamXuyen = 0;
+addEventListener("click", e => { if (Date.now() < chanBamXuyen && !e.target.closest(".hop-ov")) { e.preventDefault(); e.stopPropagation(); } }, true);
 function moHop(html, nhan = "Hộp thoại") {
   // Chạm đúp vào nút mở: không mở 2 hộp chồng nhau (tránh đọc nhầm ô của hộp phía dưới)
   if (hopCuoi && hopCuoi.nhan === nhan && Date.now() - hopCuoi.luc < 700 && hopCuoi.h.el.isConnected) return hopCuoi.h;
   const ov = document.createElement("div"); ov.className = "hop-ov";
   ov.innerHTML = `<div class="hop" role="dialog" aria-modal="true" aria-label="${esc(nhan)}"><button type="button" class="hop-x" data-dong aria-label="Đóng">✕</button>${html}</div>`;
   document.body.append(ov); document.body.classList.add("hop-mo");
-  let tha = voiQuayLai(() => { tha = null; dong(); });
-  const dong = diLink => { ov.remove(); if (!$(".hop-ov")) document.body.classList.remove("hop-mo"); if (tha) { const f = tha; tha = null; f(diLink === true); } };
+  // h.chanDong(): trả về lý do nếu còn nội dung chưa lưu → hỏi lại trước khi đóng; h.khiDong(): dọn dẹp sau khi đóng
+  let tha = null; const giu = () => { tha = voiQuayLai(() => { tha = null; if (dong() === false) giu(); }); }; giu();
+  const hoi = ly => { if (h.el.querySelector(".hop-hoi")) return; const b = document.createElement("div"); b.className = "hop-hoi"; b.setAttribute("role", "alert");
+    b.innerHTML = `<span>${esc(ly)} Đóng thì nội dung sẽ mất.</span><button type="button" class="btn small" data-bo>Bỏ nội dung</button><button type="button" class="btn small primary" data-tiep>Tiếp tục sửa</button>`;
+    b.querySelector("[data-bo]").onclick = () => dong(false, true); b.querySelector("[data-tiep]").onclick = () => b.remove(); h.el.prepend(b); b.querySelector("[data-tiep]").focus(); };
+  const dong = (diLink, ep) => {
+    if (!ep && diLink !== true && h.chanDong) { const ly = h.chanDong(); if (ly) { hoi(ly); return false; } }
+    ov.remove(); if (ep) chanBamXuyen = Date.now() + 350; removeEventListener("keydown", esc2); if (!$(".hop-ov")) document.body.classList.remove("hop-mo"); if (tha) { const f = tha; tha = null; f(diLink === true); }
+    if (h.khiDong) { try { h.khiDong(); } catch (e) {} } return true; };
   ov.addEventListener("click", e => { if (e.target === ov || e.target.closest("[data-dong]")) dong(); else if (e.target.closest("a[href^='#']")) dong(true); });
-  const esc2 = e => { if (e.key === "Escape") { dong(); removeEventListener("keydown", esc2); } }; addEventListener("keydown", esc2);
+  function esc2(e) { if (e.key === "Escape" && ov.isConnected && ov === [...document.querySelectorAll(".hop-ov")].pop()) dong(); } addEventListener("keydown", esc2);
   const h = { el: ov.querySelector(".hop"), dong }; hopCuoi = { nhan, luc: Date.now(), h };
   return h;
 }
@@ -4952,7 +4951,7 @@ function renderQL() {
       <td data-l="Đi học" class="num"><div><b>${tuan}</b> buổi tuần này<span class="muted">${t.records28 ? t.co28 + " buổi / 4 tuần" : "chưa điểm danh"}${t.streak >= 2 ? ` · vắng liền ${t.streak}` : ""}</span></div></td>
       <td data-l="Chuyên cần" class="num"><div>${t.att === null ? "–" : Math.round(t.att * 100) + "%"}</div></td>
       <td data-l="Tiến độ"><div><div class="ql-bar"><i style="width:${tong ? Math.round(daHoc / tong * 100) : 0}%"></i></div><span class="muted num">${daHoc}/${tong} bài · giờ ${t.gio}/${t.gioCan}</span></div></td>
-      <td data-l="Bài tập" class="num"><div>${nop}/${homework.length} nộp<span class="muted">${t.avg === null ? "chưa có điểm" : "TB " + nf1(t.avg)}</span></div></td>
+      <td data-l="Bài tập" class="num"><div>${nop}/${homework.filter(h => giaoCho(h, r)).length} nộp<span class="muted">${t.avg === null ? "chưa có điểm" : "TB " + nf1(t.avg)}</span></div></td>
       <td data-l="Dự báo đỗ"><div><span class="pill ${t.keys.length ? t.muc : ""}">${t.pass === null ? "Chưa có" : t.pass + "%"}</span></div></td>
       <td><button type="button" class="btn small" data-qlmsg="${esc(r.id)}">Tin PH</button></td></tr>`).join("")
     : `<tr><td colspan="7" class="muted">${roster.length ? "Không có học viên phù hợp bộ lọc." : "Chưa có học viên nào được duyệt."}</td></tr>`;

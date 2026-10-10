@@ -180,12 +180,43 @@ service cloud.firestore {
       allow delete: if isAdmin() || (isStaff() && resource.data.tacGia == myEmail());
     }
 
-    // Việc giao cho giáo viên: quản lý giao và xoá; giáo viên chỉ được đánh dấu xong.
+    // ===== TÁC VỤ giao cho giáo viên =====
+    // Quản lý tạo, sửa, duyệt, huỷ, xoá. Giáo viên chỉ đọc việc giao cho mình hoặc cho "tatca" (tất cả giáo viên),
+    // chỉ cập nhật tiến độ: Chưa bắt đầu / Đang làm / Chờ kiểm tra (Hoàn thành chỉ khi việc không cần quản lý duyệt),
+    // tick các bước nhỏ, đánh dấu chú ý. Không sửa được tên, người nhận, hạn hay việc đã xong / đã huỷ.
+    function giaoChoToi(d) {
+      return d.get('nguoi', []).hasAny(['tatca', myEmail()]);
+    }
+    function tacVuHopLe(d) {
+      return d.ten is string && d.ten.size() > 0 && d.ten.size() <= 200
+        && d.nguoi is list && d.nguoi.size() > 0 && d.nguoi.size() <= 40
+        && d.get('trangThai', 'chua') in ['chua', 'dang', 'cho', 'sua', 'xong', 'huy']
+        && d.get('uuTien', 'tb') in ['thap', 'tb', 'cao', 'gap']
+        && shortText(d, 'moTa', 3000) && shortText(d, 'coSo', 20) && shortText(d, 'han', 10) && shortText(d, 'ngayGiao', 10)
+        && (!('buoc' in d) || (d.buoc is list && d.buoc.size() <= 20))
+        && (!('anh' in d) || (d.anh is list && d.anh.size() <= 3))
+        && linkHopLe(d);
+    }
     match /congviec/{id} {
-      allow read: if isStaff();
-      allow create, delete: if isAdmin();
-      allow update: if isAdmin() || (isTeacher()
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['xong', 'xongLuc', 'xongBoi']));
+      allow read: if isAdmin() || (isTeacher() && giaoChoToi(resource.data));
+      allow create: if isAdmin() && tacVuHopLe(request.resource.data);
+      allow delete: if isAdmin();
+      allow update: if (isAdmin() && tacVuHopLe(request.resource.data))
+        || (isTeacher() && giaoChoToi(resource.data)
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['trangThai', 'buoc', 'chuY', 'soBl', 'capNhat', 'capNhatBoi', 'batDau', 'nopLuc', 'xong', 'xongLuc', 'xongBoi'])
+          && resource.data.get('trangThai', 'chua') in ['chua', 'dang', 'sua', 'cho']
+          && (request.resource.data.get('trangThai', 'chua') in ['chua', 'dang', 'cho']
+            || (request.resource.data.trangThai == 'xong' && resource.data.get('canDuyet', false) == false))
+          && request.resource.data.get('xong', false) == (request.resource.data.get('trangThai', 'chua') == 'xong')
+          && request.resource.data.get('buoc', []).size() == resource.data.get('buoc', []).size());
+      // Trao đổi + lịch sử đổi trạng thái của từng việc: chỉ ghi thêm, không sửa
+      match /bl/{bid} {
+        allow read: if isAdmin() || (isTeacher() && giaoChoToi(get(/databases/$(database)/documents/congviec/$(id)).data));
+        allow create: if (isAdmin() || (isTeacher() && giaoChoToi(get(/databases/$(database)/documents/congviec/$(id)).data)))
+          && request.resource.data.tu == myEmail() && request.resource.data.loai in ['bl', 'tt']
+          && request.resource.data.luc is int && shortText(request.resource.data, 'nd', 1000);
+        allow delete: if isAdmin();
+      }
     }
 
     // Trao đổi riêng: mỗi học viên / giáo viên có một kênh mang Gmail của mình.
