@@ -546,7 +546,10 @@
       <section class="hw-main" aria-label="Danh sách bài tập">
         <div class="hw-toolbar">
           <div class="tabs" id="hw-filter" aria-label="Trạng thái bài tập">
+            <button class="tab" type="button" data-h="tat" aria-selected="false">Tất cả <span id="hw-count-tat">0</span></button>
             <button class="tab" type="button" data-h="open" aria-selected="true">Đang làm <span id="hw-count-open">0</span></button>
+            <button class="tab" type="button" data-h="nop" aria-selected="false" data-hv hidden>Đã nộp <span id="hw-count-nop">0</span></button>
+            <button class="tab" type="button" data-h="cham" aria-selected="false" data-hv hidden>Đã chấm <span id="hw-count-cham">0</span></button>
             <button class="tab" type="button" data-h="past" aria-selected="false">Đã hết hạn <span id="hw-count-past">0</span></button>
           </div>
           <div class="hw-search-row"><label for="hw-search">Tìm bài tập<input id="hw-search" type="search" placeholder="Tên bài, yêu cầu, lớp / nhóm…" autocomplete="off"></label>
@@ -629,6 +632,7 @@
     </div>
     <p class="status" id="login-status"></p>
     <div class="pw-box" id="pw-box" hidden>
+      <div class="pw-chao"><img src="assets/img/brand-b1.png?v=20261009b" alt="" width="52" height="52"><h3 id="pw-chao-h">Chào mừng trở lại!</h3><p class="muted" id="pw-chao-p">Đăng nhập để tiếp tục hành trình học vẽ cùng nhau.</p></div>
       <div class="pw-tabs" role="tablist">
         <button class="tab" type="button" role="tab" id="tab-new" aria-selected="true">Lần đầu: Tạo tài khoản</button>
         <button class="tab" type="button" role="tab" id="tab-in" aria-selected="false">Đã có tài khoản: Đăng nhập</button>
@@ -639,22 +643,26 @@
         <p class="muted pw-hint">Chỉ làm <b>1 lần</b>. Dùng Gmail thật của em (hoặc của bố mẹ) vì anh chị sẽ gửi thư xác nhận vào đó.</p>
         <label for="nw-ten">Họ và tên học sinh<input id="nw-ten" maxlength="80" autocomplete="name" placeholder="VD: Nguyễn Văn An"></label>
         <label for="nw-mail">Gmail<input id="nw-mail" type="email" inputmode="email" autocomplete="email" autocapitalize="off" spellcheck="false" maxlength="100" placeholder="VD: tenem@gmail.com"></label>
-        <label for="nw-pass">Tự đặt mật khẩu (ít nhất 6 ký tự)<span class="pw-row"><input id="nw-pass" type="password" autocomplete="new-password" maxlength="60"><button type="button" class="btn small" id="nw-show">Hiện</button></span></label>
+        <label for="nw-pass">Tự đặt mật khẩu (ít nhất 6 ký tự)<span class="pw-row"><input id="nw-pass" type="password" autocomplete="new-password" maxlength="60"><button type="button" class="pw-mat" id="nw-show" aria-label="Hiện mật khẩu" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></button></span></label>
         <label for="nw-pass2">Nhập lại mật khẩu<input id="nw-pass2" type="password" autocomplete="new-password" maxlength="60"></label>
         <p class="muted pw-hint">Khi điện thoại hỏi “Lưu mật khẩu?”, bấm <b>Lưu</b> để lần sau tự điền. Quên thì bấm “Quên mật khẩu?”, web gửi thư đặt lại vào Gmail.</p>
         <div><button class="btn primary big" type="submit" id="nw-btn">Tạo tài khoản</button></div>
         <p class="status" id="nw-status"></p>
         <button class="btn small" type="button" id="nw-setpass" hidden>Gửi thư đặt mật khẩu cho Gmail này</button>
         <p class="muted pw-hint"><b>Sau khi bấm Tạo tài khoản:</b> mở Gmail → bấm link xác nhận trong thư → quay lại đây điền thông tin gửi anh chị.</p>
+        <p class="pw-hoac"><span>hoặc</span></p>
+        <button type="button" class="btn big pw-doi" data-tab="in">Đã có tài khoản? Đăng nhập</button>
       </form>
 
       <!-- ĐĂNG NHẬP -->
       <form id="f-pw" novalidate hidden>
         <label for="pw-mail">Gmail<input id="pw-mail" type="email" inputmode="email" autocomplete="username" autocapitalize="off" spellcheck="false" maxlength="100" placeholder="VD: tenem@gmail.com"></label>
-        <label for="pw-pass">Mật khẩu<span class="pw-row"><input id="pw-pass" type="password" autocomplete="current-password" maxlength="60"><button type="button" class="btn small" id="pw-show">Hiện</button></span></label>
+        <label for="pw-pass">Mật khẩu<span class="pw-row"><input id="pw-pass" type="password" autocomplete="current-password" maxlength="60"><button type="button" class="pw-mat" id="pw-show" aria-label="Hiện mật khẩu" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></button></span></label>
         <div><button class="btn primary big" type="submit" id="pw-in">Đăng nhập</button></div>
         <p class="status" id="pw-status"></p>
         <button class="linkish" type="button" id="pw-forgot">Quên mật khẩu?</button>
+        <p class="pw-hoac"><span>hoặc</span></p>
+        <button type="button" class="btn big pw-doi" data-tab="new">Tạo tài khoản mới</button>
       </form>
     </div>
   </div>

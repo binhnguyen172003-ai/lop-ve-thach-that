@@ -2020,20 +2020,25 @@ function renderHomework() {
   const open = homework.filter(h => !h.han || daysUntil(h.han) >= 0);
   const soon = open.filter(h => h.han && daysUntil(h.han) <= 3);
   const done = isTeacher ? homework.filter(h => roster.some(r => (progressAll[r.id]?.baitap?.[h.id] && !feedbackAll[r.id]?.[h.id]) || daNopLai(feedbackAll[r.id]?.[h.id], progressAll[r.id]?.baitap?.[h.id]))).length : homework.filter(h => myProgress.baitap[h.id]).length;
-  $("#hw-count-open").textContent = open.length;
-  $("#hw-count-past").textContent = homework.length - open.length;
+  // Đã nộp / Đã chấm chỉ có nghĩa với học viên
+  if (isTeacher && (hwView === "nop" || hwView === "cham")) { hwView = "open"; $$("#hw-filter .tab").forEach(x => x.setAttribute("aria-selected", x.dataset.h === "open")); }
+  $$("#hw-filter [data-hv]").forEach(b => b.hidden = isTeacher);
+  const hop = h => hwView === "tat" ? true : hwView === "open" ? !h.han || daysUntil(h.han) >= 0 : hwView === "past" ? !!h.han && daysUntil(h.han) < 0
+    : hwView === "nop" ? !!myProgress.baitap[h.id] && !myFeedback[h.id] : !!myFeedback[h.id];
+  const dem = v => { const cu = hwView; hwView = v; const n = homework.filter(hop).length; hwView = cu; return n; };
+  ["tat", "open", "nop", "cham", "past"].forEach(v => $("#hw-count-" + v).textContent = dem(v));
   $("#hw-overview").innerHTML = `<article><span>Đang làm</span><b class="num">${open.length}</b><small>Bài còn thời gian</small></article><article><span>Sắp đến hạn</span><b class="num">${soon.length}</b><small>Trong 3 ngày tới</small></article><article><span>${isTeacher ? "Cần chấm" : "Đã nộp"}</span><b class="num">${done}</b><small>${isTeacher ? "Bài có học viên chờ chấm" : "Bài đã đánh dấu nộp"}</small></article>`;
   const courseSelect = $("#hw-course"), selected = courseSelect.value;
   const courses = [...new Set(homework.map(h => h.khoa).filter(Boolean))].sort((a,b) => a.localeCompare(b, "vi"));
   courseSelect.innerHTML = '<option value="">Tất cả khóa học</option>' + courses.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join("");
   courseSelect.value = courses.includes(selected) ? selected : "";
   const q = timTen($("#hw-search").value), khoa = courseSelect.value;
-  const list = homework.filter(h => (hwView === "open" ? !h.han || daysUntil(h.han) >= 0 : h.han && daysUntil(h.han) < 0)
+  const list = homework.filter(h => hop(h)
     && (!khoa || h.khoa === khoa) && (!q || timTen(`${h.ten} ${h.mota || ""} ${h.lop || ""}`).includes(q)))
-    .sort((a,b) => hwView === "open" ? String(a.han || "9999").localeCompare(String(b.han || "9999")) : String(b.han).localeCompare(String(a.han)));
-  $("#hw-results").textContent = `${list.length} bài tập · ${hwView === "open" ? "Hạn gần nhất trước" : "Hết hạn gần nhất trước"}`;
+    .sort((a,b) => hwView !== "past" ? String(a.han || "9999").localeCompare(String(b.han || "9999")) : String(b.han).localeCompare(String(a.han)));
+  $("#hw-results").textContent = `${list.length} bài tập · ${hwView !== "past" ? "Hạn gần nhất trước" : "Hết hạn gần nhất trước"}`;
   if (!list.length) {
-    $("#hw-list").innerHTML = `<div class="hw-empty"><b>${q || khoa ? "Không tìm thấy bài phù hợp" : hwView === "open" ? "Chưa có bài tập đang làm" : "Chưa có bài hết hạn"}</b><p>${q || khoa ? "Thử đổi từ khóa hoặc chọn lại khóa học." : isTeacher ? "Bắt đầu bằng một đề bài và tài liệu hướng dẫn." : "Bài anh chị giao sẽ xuất hiện tại đây."}</p>${q || khoa ? '<button class="btn small" type="button" id="hw-clear">Xóa bộ lọc</button>' : ""}</div>`;
+    $("#hw-list").innerHTML = `<div class="hw-empty"><b>${q || khoa ? "Không tìm thấy bài phù hợp" : ({ tat: "Chưa có bài tập nào", open: "Chưa có bài tập đang làm", nop: "Chưa có bài chờ chấm", cham: "Chưa có bài được chấm", past: "Chưa có bài hết hạn" })[hwView]}</b><p>${q || khoa ? "Thử đổi từ khóa hoặc chọn lại khóa học." : isTeacher ? "Bắt đầu bằng một đề bài và tài liệu hướng dẫn." : "Bài anh chị giao sẽ xuất hiện tại đây."}</p>${q || khoa ? '<button class="btn small" type="button" id="hw-clear">Xóa bộ lọc</button>' : ""}</div>`;
     if ($("#hw-clear")) $("#hw-clear").onclick = () => { $("#hw-search").value = ""; courseSelect.value = ""; renderHomework(); };
     return;
   }
@@ -2047,9 +2052,13 @@ function renderHomework() {
     const staffBar = `<span class="chip ok">${submitted}/${students} đã nộp</span><span class="chip">${graded} đã chấm</span>
         <button class="btn small primary" data-grade="${esc(h.id)}">${gradeOpen.has(h.id) ? "Đóng chấm bài" : "Chấm bài"}</button>
         <button class="btn small" data-del="${esc(h.id)}">Xoá</button>`;
-    const studentBar = `<button class="btn small" data-hw="${esc(h.id)}">${myProgress.baitap[h.id] ? "Đã nộp ✓" : "Đánh dấu đã nộp"}</button>`;
-    return `<div class="hw" data-nhac-id="${esc("bt-" + h.id)}"><div><p class="eyebrow">${esc(h.khoa)}${h.lop ? " · " + esc(h.lop) : ""}</p><h3>${esc(h.ten)}</h3></div>
-      <p class="due ${n <= 1 ? "late" : ""}">${due}</p>${h.mota ? `<p class="desc">${esc(h.mota)}</p>` : ""}
+    const studentBar = `<button class="btn small ${myProgress.baitap[h.id] ? "" : "primary"}" data-hw="${esc(h.id)}">${myProgress.baitap[h.id] ? "Đã nộp ✓" : "Đánh dấu đã nộp"}</button>`;
+    const tt = isTeacher ? null : canLamLai(fb, myProgress.baitap[h.id]) ? ["lamlai", "Cần làm lại"] : fb ? ["cham", "Đã chấm"] : myProgress.baitap[h.id] ? ["nop", "Đã nộp"] : n < 0 ? ["tre", "Quá hạn"] : ["chua", "Chưa nộp"];
+    // Yêu cầu nhiều dòng → gạch đầu dòng cho dễ đọc
+    const dong = String(h.mota || "").split("\n").map(x => x.replace(/^\s*[-•*+]\s*/, "").trim()).filter(Boolean);
+    const moTa = dong.length > 1 ? `<ul class="desc">${dong.map(x => `<li>${esc(x)}</li>`).join("")}</ul>` : h.mota ? `<p class="desc">${esc(h.mota)}</p>` : "";
+    return `<div class="hw" data-nhac-id="${esc("bt-" + h.id)}"><div>${tt ? `<span class="hw-tt tt-${tt[0]}">${tt[1]}</span>` : ""}<p class="eyebrow">${esc(h.khoa)}${h.lop ? " · " + esc(h.lop) : ""}</p><h3>${esc(h.ten)}</h3></div>
+      <p class="due ${n <= 1 ? "late" : ""}">${due}</p>${moTa}
       ${homeworkFilesHTML(h)}
       ${!isTeacher && fb ? `<p class="fb ${fb.trangThai === "lamlai" ? "lamlai" : fb.trangThai === "dat" ? "dat" : ""}"><b>Anh chị nhận xét${fb.diem ? ` · Điểm ${esc(fb.diem)}` : ""}:</b> ${esc(fb.nhanXet || "")}${fb.tieuChi ? `<span class="tc-ket">${TIEU_CHI.map(([k, t]) => `<i class="${fb.tieuChi[k] === false ? "chua" : "ok"}">${fb.tieuChi[k] === false ? "✗" : "✓"} ${t}</i>`).join("")}</span>` : ""}<br><span class="muted">${esc(fb.nguoiCham || "")} · ${fmtDate(fb.luc)}</span></p>` : ""}
       ${!isTeacher && canLamLai(fb, myProgress.baitap[h.id]) ? `<div class="lamlai-box"><b>⚠ Bài này cần làm lại</b><span>Chưa đạt: ${esc(chuaDat(fb).join(", ") || "theo nhận xét của anh chị")}.${fb.hanLamLai ? ` Hạn nộp lại: <b>${ngayVN(fb.hanLamLai)}</b>` : ""} Làm lại sớm để không bị chậm tiến độ cả lớp nhé.</span><button class="btn small primary" data-nl="${esc(h.id)}">Em đã làm lại · Nộp lại</button></div>` : ""}
@@ -3866,7 +3875,7 @@ async function sendVerify(u) {
 }
 $("#pw-show").onclick = () => {
   const i = $("#pw-pass"), show = i.type === "password";
-  i.type = show ? "text" : "password"; $("#pw-show").textContent = show ? "Ẩn" : "Hiện";
+  i.type = show ? "text" : "password"; matNut($("#pw-show"), show);
 };
 $("#f-pw").addEventListener("submit", ev => {
   ev.preventDefault(); const v = pwCheck(true); if (!v) return;
@@ -3879,7 +3888,11 @@ function showTab(which) {
   const isNew = which === "new";
   $("#tab-new").setAttribute("aria-selected", isNew); $("#tab-in").setAttribute("aria-selected", !isNew);
   $("#f-new").hidden = !isNew; $("#f-pw").hidden = isNew;
+  $("#pw-chao-h").textContent = isNew ? "Tạo tài khoản mới" : "Chào mừng trở lại!";
+  $("#pw-chao-p").textContent = isNew ? "Tham gia cộng đồng học vẽ cùng Thạch Thất." : "Đăng nhập để tiếp tục hành trình học vẽ cùng nhau.";
 }
+const matNut = (b, hien) => { b.setAttribute("aria-pressed", hien); b.setAttribute("aria-label", hien ? "Ẩn mật khẩu" : "Hiện mật khẩu"); };
+$$(".pw-doi").forEach(b => b.onclick = () => { $("#tab-" + b.dataset.tab).click(); $("#pw-box").scrollIntoView({ block: "start", behavior: "smooth" }); });
 $("#tab-new").onclick = () => showTab("new");
 $("#tab-in").onclick = () => { showTab("in"); if (!$("#pw-mail").value && $("#nw-mail").value) $("#pw-mail").value = $("#nw-mail").value.trim(); };
 // Máy này từng đăng nhập: mở sẵn mục Đăng nhập và điền sẵn Gmail.
@@ -3891,7 +3904,7 @@ function nwSay(t, err) { const st = $("#nw-status"); st.textContent = t; st.clas
 $("#nw-show").onclick = () => {
   const show = $("#nw-pass").type === "password";
   ["#nw-pass", "#nw-pass2"].forEach(id => $(id).type = show ? "text" : "password");
-  $("#nw-show").textContent = show ? "Ẩn" : "Hiện";
+  matNut($("#nw-show"), show);
 };
 $("#f-new").addEventListener("submit", ev => {
   ev.preventDefault();
