@@ -1356,7 +1356,7 @@ body.lb-mo #tl-bong{position:fixed!important;top:12px!important;left:12px!import
 #hero-pill{color:#fff;text-decoration:none}#hero-pill:hover{background:rgba(255,255,255,.14)}
 
 /* ===== Bảng xếp hạng & cách leo hạng ===== */
-.xh-grid{display:grid;grid-template-columns:1.6fr 1fr;gap:18px;align-items:start}
+.xh-grid{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:18px;align-items:start}
 .xh-bang{border:1px solid var(--rule);border-radius:16px;overflow:hidden;background:var(--sheet)}
 .xh-row{display:grid;grid-template-columns:110px 60px 1fr 80px;gap:12px;align-items:center;padding:8px 14px;border-top:1px solid var(--rule);
   background:linear-gradient(90deg,color-mix(in srgb,var(--rc,#000) 14%,transparent),transparent 55%)}
@@ -1376,7 +1376,7 @@ body.lb-mo #tl-bong{position:fixed!important;top:12px!important;left:12px!import
 .xh-hv > div{display:grid;grid-template-columns:auto 1fr;grid-template-rows:auto auto;column-gap:10px;align-items:center;padding:8px 14px 8px 8px;border-radius:14px;border:1px solid color-mix(in srgb,var(--rc) 40%,var(--rule));background:var(--sheet)}
 .xh-hv .rk-badge{grid-row:span 2}.xh-hv b{font-weight:700}.xh-hv span{font-size:.76rem;color:var(--graphite)}
 .xh-note{font-size:.78rem;margin-top:8px}
-@media (max-width:860px){.xh-grid{grid-template-columns:1fr}}
+@media (max-width:860px){.xh-grid{grid-template-columns:minmax(0,1fr)}}
 @media (max-width:520px){.xh-row{grid-template-columns:62px 46px 1fr;padding:8px 10px}.xh-xp{grid-column:3;text-align:left;font-size:.78rem}.xh-th span:last-child{display:none}.xh-ma{font-size:1.1rem}.xh-ma small{display:none}}
 
 /* Chip hạng nhỏ (cạnh tên học viên) — nổi bật để học viên muốn leo hạng */
@@ -2882,3 +2882,70 @@ button:disabled:not(.btn){opacity:.45}
 .hw ul.desc{grid-column:1/-1;margin:0;padding-left:20px;color:var(--graphite);font-size:.87rem;line-height:1.7;overflow-wrap:anywhere}
 .hw .fb{border-left:3px solid var(--ok)}.hw .fb.lamlai{border-left-color:var(--warn)}
 #f-new>div>.btn.big,#f-pw>div>.btn.big{width:100%}
+
+/* ===== Tổng quan đã vào lớp: việc hôm nay ===== */
+.dash{margin:8px 0 34px}
+.dash-dau{display:flex;flex-wrap:wrap;gap:12px 16px;align-items:flex-end;justify-content:space-between;margin-bottom:18px}
+.dash-dau h1{font-size:clamp(1.8rem,5vw,2.6rem);margin-top:4px}.dash-dau .muted{margin-top:6px;max-width:560px}
+.dash-nut{display:flex;gap:8px;flex-wrap:wrap}
+.dash-luoi{display:grid;gap:14px;grid-template-columns:minmax(0,1fr)}
+.dash-o{background:var(--sheet);border:1px solid var(--rule);border-radius:16px;padding:16px 18px;min-width:0;display:flex;flex-direction:column;gap:10px}
+.dash-o h2{font-size:1.02rem;font-family:var(--f-body);font-weight:700;display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.dash-o h2 .muted{font-size:.8rem;font-weight:500}
+.dash-them{margin-top:auto;font-size:.88rem;font-weight:600;text-decoration:none}
+.dash-td{align-items:center;text-align:center}
+.dash-vong{--pt:0;width:118px;aspect-ratio:1;border-radius:50%;display:grid;place-items:center;background:conic-gradient(#2ec4b6 calc(var(--pt)*1%),color-mix(in srgb,var(--ink) 10%,transparent) 0)}
+.dash-vong b{width:88px;aspect-ratio:1;border-radius:50%;background:var(--sheet);display:grid;place-items:center;font-size:1.5rem;font-weight:800}
+.dash-ds{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.dash-ds li{display:flex;gap:10px;align-items:center;justify-content:space-between;padding:10px 12px;border:1px solid var(--rule);border-radius:12px;background:var(--paper)}
+.dash-ds li>div{display:grid;gap:5px;min-width:0}.dash-ds b{overflow-wrap:anywhere;line-height:1.35}
+.dash-ds .btn{flex:none}
+.dash-meta{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:.78rem;color:var(--graphite)}
+.dash-meta .chip{font-style:normal;font-size:.72rem}
+.dash-gap{color:#e5484d;border-color:currentColor}.dash-ll{color:var(--warn);border-color:currentColor}
+.dash-trong{padding:8px 0}
+.dash-mon .slot{font-size:.85rem}
+.dash-tt{list-style:none;margin:0;padding:0;display:grid;gap:6px;font-size:.92rem}
+.dash-mang{font-size:.82rem}
+.dash-nx-bai{font-weight:600;font-size:.92rem}
+.dash-nx blockquote{margin:0;padding:8px 12px;border-left:3px solid #2ec4b6;background:var(--paper);border-radius:0 10px 10px 0;font-size:.9rem;color:var(--graphite)}
+.dash-mons{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+.dash-monb{flex:none;display:grid;gap:2px;text-align:left;padding:8px 14px;border-radius:12px;border:1px solid var(--rule);background:var(--paper);color:var(--ink);font:inherit;cursor:pointer;min-height:48px}
+.dash-monb b{font-size:.88rem;white-space:nowrap}.dash-monb small{font-size:.74rem;color:var(--graphite)}
+.dash-monb.on{background:#f5c400;border-color:#f5c400;color:#1b1b1b}.dash-monb.on small{color:#3b3200}
+.dash-nhanh{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:14px}
+.dash-nhanh a{display:grid;justify-items:center;gap:4px;padding:12px 6px;border:1px solid var(--rule);border-radius:14px;background:var(--sheet);color:var(--ink);text-decoration:none;font-size:.82rem;font-weight:600}
+.dash-nhanh a i{font-style:normal;font-size:1.4rem}
+.dash-nhanh a:hover,.dash-monb:hover{border-color:color-mix(in srgb,#2ec4b6 60%,var(--rule))}
+.dash-sos{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px}
+.dash-so{display:flex;gap:10px;align-items:baseline;padding:16px 18px;border-radius:16px;text-decoration:none;color:var(--ink);border:1px solid var(--rule)}
+.dash-so b{font-size:1.8rem;font-weight:800}.dash-so span{font-size:.88rem;color:var(--graphite)}
+.dash-so.vang{background:color-mix(in srgb,#f5c400 12%,var(--sheet))}.dash-so.do{background:color-mix(in srgb,#e5484d 12%,var(--sheet))}
+.dash-so.xanh{background:color-mix(in srgb,#2ec4b6 12%,var(--sheet))}.dash-so.tim{background:color-mix(in srgb,var(--accent) 12%,var(--sheet))}
+.hw.dash-sang{outline:2px solid #f5c400;outline-offset:3px;transition:outline-color .4s}
+@media(min-width:760px){.dash-luoi{grid-template-columns:repeat(3,minmax(0,1fr))}.dash-lt{grid-column:1/-1}.dash-nhanh{grid-template-columns:repeat(6,minmax(0,1fr))}}
+@media(min-width:760px) and (max-width:1023px){.dash-bai{grid-column:span 2}.dash-nx{grid-column:span 2}}
+@media(min-width:1024px){.dash-luoi{grid-template-columns:minmax(0,.9fr) minmax(0,1.5fr) minmax(0,1fr)}.dash-nx{grid-column:span 2}.dash-lt{grid-column:auto}}
+
+/* ===== Điện thoại đã vào lớp: menu 4 nút dưới đáy ===== */
+.tab-duoi{display:none}
+@media(max-width:760px){
+  body.co-tab .tab-duoi:not([hidden]){position:fixed;left:0;right:0;bottom:0;z-index:35;display:grid;grid-template-columns:repeat(4,1fr);padding:4px 4px calc(4px + env(safe-area-inset-bottom,0px));
+    background:color-mix(in srgb,var(--paper) 94%,transparent);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border-top:1px solid var(--rule)}
+  .tab-duoi a{position:relative;display:grid;justify-items:center;align-content:center;gap:2px;min-height:54px;color:var(--graphite);text-decoration:none;font-size:.7rem;font-weight:600}
+  .tab-duoi a svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linejoin:round;stroke-linecap:round}
+  .tab-duoi a[aria-current="page"]{color:var(--ink)}
+  .tab-duoi a[aria-current="page"]::before{content:"";position:absolute;top:-4px;left:28%;right:28%;height:3px;border-radius:0 0 3px 3px;background:#f5c400}
+  .tab-so{position:absolute;top:4px;left:calc(50% + 4px);min-width:18px;height:18px;padding:0 5px;border-radius:999px;background:#e5484d;color:#fff;font-size:.66rem;display:grid;place-items:center}
+  body.co-tab{padding-bottom:calc(66px + env(safe-area-inset-bottom,0px))}
+  body.co-tab #tl-cum{bottom:calc(74px + env(safe-area-inset-bottom,0px))}
+  body.co-tab #toast{bottom:calc(74px + env(safe-area-inset-bottom,0px))}
+}
+.dash-o h2{font-style:normal;letter-spacing:0}
+.dash:not([hidden])~.page-head h1{font-size:clamp(1.4rem,3.5vw,1.9rem)}
+.dash:not([hidden])~.page-head{padding-top:12px;margin-top:0;border-top:1px solid var(--rule)}
+
+/* Trao quyền giáo viên */
+.gv-trao{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));align-items:end;margin-bottom:14px;padding:14px;border:1px solid var(--rule);border-radius:var(--r);background:var(--sheet)}
+.gv-trao .status{grid-column:1/-1;margin:0}
+#roster td:last-child,#teachers td:last-child{white-space:nowrap}#roster td:last-child .btn+*{margin-left:6px}
