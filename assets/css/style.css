@@ -3118,3 +3118,66 @@ button.cc-chip{cursor:pointer;min-height:24px}
   #roster td.hv-nut>*{flex:1 1 0;margin:0;justify-content:center;text-align:center}
   #roster .kc-gon{max-width:none}
 }
+/* Chấm công: thanh chuyển Hôm nay / tháng / lương, phiếu lương, học viên theo cơ sở */
+.cc-view{margin:4px 0 12px}
+.cc-hv-luoi{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.cc-hv{display:grid;gap:2px;padding:10px 12px;border:1px solid var(--rule);border-radius:12px}
+.cc-hv span{font-size:.85rem;color:var(--graphite)}.cc-hv span b{color:var(--ink);font-size:1.05rem}
+.cc-cp th,.cc-cp td{white-space:nowrap}
+table.roster.cc-cp{min-width:0}
+.cc-phieu-dau{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:10px}
+.cc-phieu-dau small{display:block;color:var(--graphite)}
+.cc-bang tr.cc-mo td{opacity:.55}
+.cc-dc{list-style:none;margin:10px 0;padding:0;display:grid;gap:6px}
+.cc-dc li{display:flex;align-items:center;gap:10px;justify-content:space-between;padding:8px 10px;border-radius:10px;background:color-mix(in srgb,var(--ink) 6%,transparent)}
+.cc-dc li span{flex:1;min-width:0}.cc-dc li small{display:block;color:var(--graphite);font-size:.78rem}
+.cc-dc li.thuong b{color:var(--ok)}.cc-dc li.tru b{color:#e2565e}
+.cc-tong{margin:12px 0 0;display:grid;gap:4px}
+.cc-tong div{display:flex;justify-content:space-between;gap:10px;font-size:.9rem}
+.cc-tong dt{color:var(--graphite)}.cc-tong dd{margin:0;font-variant-numeric:tabular-nums}
+.cc-tong .cc-thuc{border-top:1px solid var(--rule);padding-top:8px;margin-top:4px;font-size:1.05rem;font-weight:700}
+.cc-tong .cc-thuc dt{color:var(--ink)}
+.cc-chinh{margin:12px 0;padding:10px 12px;border:1px solid var(--rule);border-radius:12px}
+.cc-chinh summary{cursor:pointer}
+.cc-gio{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin:10px 0}
+.cc-tick{display:flex;align-items:center;gap:8px;margin:8px 0;font-weight:500}
+.cc-tick input{width:20px;height:20px}
+.cc-goiy .cc-hom-ca small{display:block}
+/* Điểm danh 5 trạng thái, ghi chú, học bù, xong điểm danh */
+.dd-nut{display:grid;gap:4px;justify-items:end}
+.seg.seg5 button{min-width:0;padding:0 10px;font-size:.84rem}
+.seg button.muon[aria-pressed="true"]{background:#c98a00;color:#fff}
+.seg button.bu[aria-pressed="true"]{background:#2b6fd6;color:#fff}
+.dd-gc{font-size:.8rem;color:var(--graphite);margin-top:2px}
+.dd-phan{display:grid;gap:8px;margin:8px 0}
+.dd-bao{margin:0;padding:10px 12px;border-radius:12px;font-size:.9rem;display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.dd-bao.ok{background:var(--ok-soft);color:var(--ok)}
+.dd-bao.warn{background:rgba(255,196,0,.14)}
+.dd-bao.bad{background:rgba(226,86,94,.14)}
+.dd-bu summary{cursor:pointer;font-weight:600;font-size:.9rem}
+.dd-bu-o{display:flex;gap:8px;margin-top:8px}.dd-bu-o input{flex:1;min-width:0}
+.mp-dots i.muon,.mp-dots i.bu{background:#1f9d4a}
+@media (max-width:640px){
+  .dd-list li{display:grid}
+  .dd-nut{justify-items:stretch}
+  .seg.seg5{display:grid;grid-template-columns:repeat(5,1fr)}
+  .seg.seg5 button{padding:0 2px;font-size:.78rem}
+  .seg.seg5 button + button{border-left:1.5px solid var(--rule)}
+}
+/* Điện thoại: bảng công / lương thành thẻ 2 cột, không bóp méo chữ */
+@media (max-width:640px){
+  table.roster.cc-bang{min-width:0}
+  .cc-bang thead{display:none}
+  .cc-bang,.cc-bang tbody,.cc-bang tfoot{display:block;width:100%}
+  .cc-bang tbody tr{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:6px 12px;padding:10px 12px;border-bottom:1px solid var(--rule)}
+  .cc-bang tbody td{display:block;padding:0;border:0;min-width:0;text-align:left!important}
+  .cc-bang tbody td[data-l]::before{content:attr(data-l);display:block;font-size:.64rem;letter-spacing:.04em;text-transform:uppercase;color:var(--graphite);margin-bottom:1px}
+  .cc-bang tbody td:first-child{grid-column:1/-1}
+  .cc-bang tbody td:first-child::before{display:none}
+  .cc-bang tbody td:last-child:has(.btn){grid-column:1/-1}
+  .cc-bang tbody td:last-child .btn{width:100%}
+  .cc-bang tbody td:empty{display:none}
+  .cc-bang tfoot tr{display:grid;gap:4px;padding:10px 12px}
+  .cc-bang tfoot th,.cc-bang tfoot td{display:block;padding:0;border:0}
+  .cc-bang-o{max-height:70vh}
+}

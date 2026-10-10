@@ -326,9 +326,39 @@ service cloud.firestore {
       allow read: if isStaff();
       allow write: if isAdmin();
       // giáo viên tự vô ca / kết ca cho ca của mình: mỗi mốc ghi một lần, giờ phải sát giờ máy chủ (±5 phút) để không khai khống
+      // "ddXong": anh chị dạy ca xác nhận đã xong điểm danh học viên (một lần)
       allow update: if isStaff() && resource.data.gv == myEmail()
         && (vaoRaHopLe('vao') && !('vao' in resource.data)
-          || vaoRaHopLe('ra') && ('vao' in resource.data) && !('ra' in resource.data));
+          || vaoRaHopLe('ra') && ('vao' in resource.data) && !('ra' in resource.data)
+          || vaoRaHopLe('ddXong') && !('ddXong' in resource.data));
+    }
+    // Báo sai giờ chấm công: giáo viên gửi cho ca của mình; chỉ quản lý duyệt (duyệt mới sửa giờ trong caday)
+    match /suacong/{id} {
+      allow read: if isAdmin() || (isStaff() && resource.data.tu == myEmail());
+      allow create: if isStaff() && request.resource.data.tu == myEmail() && request.resource.data.trangThai == 'cho'
+        && request.resource.data.ca is string
+        && get(/databases/$(database)/documents/caday/$(request.resource.data.ca)).data.gv == myEmail()
+        && request.resource.data.lyDo is string && request.resource.data.lyDo.size() > 0 && request.resource.data.lyDo.size() <= 300
+        && shortText(request.resource.data, 'vao', 5) && shortText(request.resource.data, 'ra', 5);
+      allow update: if isAdmin() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['trangThai', 'xuLy', 'xuLyLuc'])
+        && request.resource.data.trangThai in ['dongy', 'tuchoi'];
+      allow delete: if isAdmin() || (isStaff() && resource.data.tu == myEmail() && resource.data.trangThai == 'cho');
+    }
+    // Thưởng / khấu trừ lương: chỉ quản lý tạo (có lý do); giáo viên chỉ xem khoản của mình
+    match /luongdc/{id} {
+      allow read: if isAdmin() || (isStaff() && resource.data.gv == myEmail());
+      allow create: if isAdmin() && request.resource.data.loai in ['thuong', 'tru']
+        && request.resource.data.gv is string && request.resource.data.thang is string && request.resource.data.thang.matches('^[0-9]{4}-[0-9]{2}$')
+        && request.resource.data.tien is int && request.resource.data.tien > 0 && request.resource.data.tien <= 100000000
+        && request.resource.data.lyDo is string && request.resource.data.lyDo.size() > 0 && request.resource.data.lyDo.size() <= 300
+        && shortText(request.resource.data, 'muc', 60);
+      allow update: if false;
+      allow delete: if isAdmin();
+    }
+    // Bảng lương đã chốt theo tháng: quản lý chốt / mở lại; giáo viên chỉ xem bảng của mình
+    match /bangluong/{id} {
+      allow read: if isAdmin() || (isStaff() && resource.data.gv == myEmail());
+      allow write: if isAdmin();
     }
     function vaoRaHopLe(k) {
       return request.resource.data.diff(resource.data).affectedKeys().hasOnly([k])
@@ -379,11 +409,12 @@ service cloud.firestore {
       allow read: if isAdmin();
       allow create: if isStaff() && request.resource.data.ai == myEmail() && request.resource.data.luc is int
         && request.resource.data.col in ['hocvien', 'giaovien', 'nhanxet', 'diemdanh', 'baitap', 'giaotrinh', 'lichnhac', 'tiendo', 'xephang', 'baive', 'bantin', 'kho',
-             'thongbao', 'congviec', 'doiten', 'caday', 'trucnhat', 'thithu', 'thithubai', 'suco', 'bangiao', 'kiemtra', 'doica']
+             'thongbao', 'congviec', 'doiten', 'caday', 'trucnhat', 'thithu', 'thithubai', 'suco', 'bangiao', 'kiemtra', 'doica',
+             'luongdc', 'bangluong', 'suacong']
         && request.resource.data.loai in ['tao', 'sua', 'xoa'] && request.resource.data.ma is string
         // Giáo viên không được tạo / xoá hồ sơ ở các bảng chỉ quản lý thao tác → nhật ký kiểu đó chắc chắn là giả
         && (isAdmin() || request.resource.data.loai == 'sua'
-            || !(request.resource.data.col in ['hocvien', 'giaovien', 'caday', 'kho', 'xephang', 'giaotrinh', 'lichnhac', 'tiendo']));
+            || !(request.resource.data.col in ['hocvien', 'giaovien', 'caday', 'kho', 'xephang', 'giaotrinh', 'lichnhac', 'tiendo', 'luongdc', 'bangluong']));
       allow update, delete: if false;
     }
 

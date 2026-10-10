@@ -33,7 +33,7 @@ async function loadFirebase() {
 /* ---------- Nhật ký sửa: ghi lại ai thêm/sửa/xoá dữ liệu quan trọng, kèm bản trước và sau ----------
    Chỉ ghi thao tác của giáo viên/quản lý. Quản lý xem và khôi phục ở Vận hành → Nhật ký sửa. */
 const NK_BANG = new Set(["hocvien", "giaovien", "nhanxet", "diemdanh", "baitap", "giaotrinh", "lichnhac", "tiendo", "xephang", "baive", "bantin", "kho", "thongbao",
-  "congviec", "doiten", "caday", "trucnhat", "thithu", "thithubai", "suco", "bangiao", "kiemtra", "doica"]);
+  "congviec", "doiten", "caday", "trucnhat", "thithu", "thithubai", "suco", "bangiao", "kiemtra", "doica", "luongdc", "bangluong", "suacong"]);
 const nkGoc = {};
 const nkCan = ref => isTeacher && ref && ref.parent && !ref.parent.parent && NK_BANG.has(ref.parent.id) && !String(ref.id).startsWith("_");
 const nkJson = d => { try { const t = JSON.stringify(d); return t.length > 600000 ? "(quá lớn)" : t; } catch (e) { return "(quá lớn)"; } };
@@ -662,7 +662,7 @@ const RANK_BAT_DAU = "2026-10-09";
 function tinhRank(dd, prog, fb, ten) {
   const moc = new Date(RANK_BAT_DAU + "T23:59:59+07:00").getTime();
   const sau = v => typeof v === "number" && v > moc;
-  const buoi = Object.entries(dd || {}).filter(([k, v]) => /^\d{4}-\d{2}-\d{2}_/.test(k) && v === "co" && k.slice(0, 10) > RANK_BAT_DAU).length;
+  const buoi = Object.entries(dd || {}).filter(([k, v]) => /^\d{4}-\d{2}-\d{2}_/.test(k) && coMat(v) && k.slice(0, 10) > RANK_BAT_DAU).length;
   const baiTap = Object.values((prog || {}).baitap || {}).filter(sau).length;
   const baiHoc = Object.values((prog || {}).bai || {}).filter(sau).length;
   const gioi = Object.values(fb || {}).filter(x => x && sau(x.luc) && soDiem(x.diem) !== null && soDiem(x.diem) >= 8).length;
@@ -858,7 +858,7 @@ function tinhThanhTuu(dd, prog, fb, ten, hw = []) {
   const nb = nbAll().filter(b => !b.tg && cua(b.hocVien));
   nb.forEach(b => { const l = loai(b.loai + " " + (b.ghiChu || "")); if (l) dem[l]++; });
   dem.noibat = nb.length; dem.quanquan = nb.filter(b => b.hang === 1).length;
-  dem.chuyencan = Object.entries(dd || {}).filter(([k, v]) => /^\d{4}-\d{2}-\d{2}_/.test(k) && v === "co").length;
+  dem.chuyencan = Object.entries(dd || {}).filter(([k, v]) => /^\d{4}-\d{2}-\d{2}_/.test(k) && coMat(v)).length;
   dem.diemvang = Object.values(fb || {}).filter(x => x && soDiem(x.diem) !== null && soDiem(x.diem) >= 8).length;
   const trao = [...(THANH_TUU_TRAO || []), ...TT_DONG].filter(x => cua(x.hocVien));
   trao.forEach(x => { if (x.ma in dem) dem[x.ma] += Number(x.so) || 1; });
@@ -2721,7 +2721,7 @@ const nf1 = n => Number(n).toLocaleString("vi-VN", { maximumFractionDigits: 1 })
 function thongKe(dd, hv, fb) {
   const today = todayVN(), cach = (a, b) => (Date.parse(b) - Date.parse(a)) / 864e5;
   const keys = Object.keys(dd || {}).filter(k => /^\d{4}-\d{2}-\d{2}_/.test(k) && cach(k.slice(0, 10), today) >= 0).sort();
-  const dem = (arr, v) => arr.filter(k => dd[k] === v).length;
+  const dem = (arr, v) => arr.filter(k => v === "co" ? coMat(dd[k]) : dd[k] === v).length;
   const co = dem(keys, "co"), vang = dem(keys, "vang"), phep = dem(keys, "phep");
   const k28 = keys.filter(k => cach(k.slice(0, 10), today) < 28), k30 = keys.filter(k => cach(k.slice(0, 10), today) < 30);
   const trackedDays = keys.length ? Math.min(28, cach(keys[0].slice(0, 10), today) + 1) : 0;
@@ -2765,9 +2765,16 @@ function lichHocDeXuat(t) {
   return `Đề xuất: ${t.suggested} buổi/tuần`;
 }
 const timTen = s => String(s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/gi, "d").toLowerCase().trim().replace(/\s+/g, " ");
-function hocVienDiemDanh(cs, search, sort) {
+// Điểm danh: có mặt = Có mặt / Đi muộn / Học bù. Mỗi học viên một trạng thái cho mỗi (ngày, ca) nên không thể điểm danh trùng;
+// "cs:<ngày_ca>" ghi cơ sở thực tế học (học bù / chuyển cơ sở), "gc:<ngày_ca>" là ghi chú của anh chị.
+const DD_TT = [["co", "Có mặt"], ["muon", "Muộn"], ["phep", "Phép"], ["vang", "Vắng KP"], ["bu", "Học bù"]];
+const coMat = v => v === "co" || v === "muon" || v === "bu";
+const csHoc = (r, key) => (diemdanhAll[r.id] || {})["cs:" + key] || r.coso || "";
+// học viên thuộc danh sách cơ sở cs của ca key: đã điểm danh ở cs, hoặc chưa điểm danh nơi khác và cơ sở gốc là cs
+const thuocCS = (r, cs, key) => !cs || (diemdanhAll[r.id] || {})["cs:" + key] === cs || String(r.coso || "").includes(cs);
+function hocVienDiemDanh(cs, search, sort, key) {
   const words = timTen(search).split(" ").filter(Boolean);
-  return roster.filter(r => (!cs || String(r.coso || "").includes(cs)) && words.every(w => timTen(r.ten).includes(w)))
+  return roster.filter(r => thuocCS(r, cs, key) && words.every(w => timTen(r.ten).includes(w)))
     .map(r => ({ r, t: thongKe(diemdanhAll[r.id], r, feedbackAll[r.id]) }))
     .sort((a, b) => {
       const name = String(a.r.ten || "").localeCompare(String(b.r.ten || ""), "vi");
@@ -2802,7 +2809,7 @@ function renderMyProg() {
   const today = todayVN();
   const dots = tuan.map(w => {
     const ks = t.keys.filter(k => { const d = (Date.parse(today) - Date.parse(k.slice(0, 10))) / 864e5; return d >= w * 7 && d < (w + 1) * 7; });
-    return `<div class="wk"><div>${ks.map(k => `<i class="${myDiemdanh[k]}" title="${ngayVN(k.slice(0, 10))}"></i>`).join("") || "<i class='none'></i>"}</div><span>${w === 0 ? "Tuần này" : w + "t trước"}</span></div>`;
+    return `<div class="wk"><div>${ks.map(k => `<i class="${coMat(myDiemdanh[k]) ? "co" : esc(myDiemdanh[k])}" title="${ngayVN(k.slice(0, 10))}"></i>`).join("") || "<i class='none'></i>"}</div><span>${w === 0 ? "Tuần này" : w + "t trước"}</span></div>`;
   }).join("");
   box.innerHTML = theRank(tinhRank(myDiemdanh, myProgress, myFeedback, (myHv && myHv.ten) || (user && user.displayName))) + theThanhTuu(tinhThanhTuu(myDiemdanh, myProgress, myFeedback, (myHv && myHv.ten) || (user && user.displayName), homework)) + `
     <div class="mp-head">
@@ -2823,21 +2830,30 @@ function renderMyProg() {
 function renderAttend() {
   try { renderQL(); } catch (e) { console.warn(e); }
   if (!isTeacher || !$("#dd-list")) return;
-  const ngay = $("#dd-ngay").value || todayVN(), ca = $("#dd-ca").value || caMacDinh(), cs = $("#dd-cs").value;
+  const ngay = $("#dd-ngay").value || todayVN(), ca = $("#dd-ca").value || caMacDinh();
+  const khoa = khoaDD(ngay, ca), cs = $("#dd-cs").value; // anh chị không được phân công ca này: không hiện danh sách
   const key = `${ngay}_${ca}`;
   const search = $("#dd-search").value;
-  const rows = hocVienDiemDanh(cs, search, $("#dd-sort").value);
+  const rows = khoa ? [] : hocVienDiemDanh(cs, search, $("#dd-sort").value, key);
   const ds = rows.map(x => x.r);
   const val = r => (diemdanhAll[r.id] || {})[key];
-  const n = v => ds.filter(r => val(r) === v).length;
+  const n = v => ds.filter(r => val(r) === v && (!cs || csHoc(r, key).includes(cs))).length;
+  // nơi khác đã điểm danh em này trong ca này → khoá ở đây (không điểm danh trùng giữa hai cơ sở)
+  const noiKhac = r => cs && val(r) && !csHoc(r, key).includes(cs) ? csHoc(r, key) : "";
+  const daDD = ds.filter(r => val(r) && !noiKhac(r)).length;
+  $("#dd-phan").innerHTML = phanCongDD(ngay, ca, cs, daDD);
   // Tổng kết ca đang chọn: chia ô rõ ràng thay vì một dòng chữ dài
-  $("#dd-sum").innerHTML = `<span class="dds-t">Đang hiển thị <b>${ds.length}</b>/${roster.length} học viên</span>` + (ds.length ? `<span class="dds co"><b class="num">${n("co")}</b>Có mặt</span><span class="dds vang"><b class="num">${n("vang")}</b>Vắng</span><span class="dds phep"><b class="num">${n("phep")}</b>Phép</span><span class="dds chua"><b class="num">${ds.length - n("co") - n("vang") - n("phep")}</b>Chưa điểm danh</span>` : "");
-  const empty = roster.length ? "Không tìm thấy học viên phù hợp. Thử đổi tên tìm kiếm hoặc cơ sở." : "Chưa có học viên nào được duyệt.";
-  $("#dd-list").innerHTML = rows.length ? rows.map(({ r, t }) => `<li><div><b>${esc(r.ten)}</b> ${(t2 => huyHieu(t2.r, t2.i, "xs", r.ten))(tinhRank(diemdanhAll[r.id], progressAll[r.id], feedbackAll[r.id], r.ten))}<span class="muted">${esc(r.chuongTrinh || r.lop || "")}${r.coso ? " · " + esc(r.coso) : ""}</span><span class="dd-history">${t.records28 ? `Đã đi ${t.co28} buổi trong 4 tuần` : "Chưa có điểm danh trong 4 tuần"}</span></div>
-    <div class="seg" role="group" aria-label="Điểm danh ${esc(r.ten)}">${[["co", "Có mặt"], ["vang", "Vắng"], ["phep", "Phép"]].map(([v, t]) =>
-      `<button type="button" class="${v}" data-dd="${esc(r.id)}" data-v="${v}" aria-pressed="${val(r) === v}">${t}</button>`).join("")}</div></li>`).join("")
+  $("#dd-sum").innerHTML = `<span class="dds-t">Đang hiển thị <b>${ds.length}</b>/${roster.length} học viên</span>` + (ds.length ? `<span class="dds co"><b class="num">${n("co") + n("muon") + n("bu")}</b>Có mặt${n("muon") ? ` · ${n("muon")} muộn` : ""}${n("bu") ? ` · ${n("bu")} bù` : ""}</span><span class="dds vang"><b class="num">${n("vang")}</b>Vắng KP</span><span class="dds phep"><b class="num">${n("phep")}</b>Phép</span><span class="dds chua"><b class="num">${ds.length - daDD - ds.filter(noiKhac).length}</b>Chưa điểm danh</span>` : "");
+  const empty = khoa ? "Ca này anh/chị không được phân công dạy." : roster.length ? "Không tìm thấy học viên phù hợp. Thử đổi tên tìm kiếm hoặc cơ sở." : "Chưa có học viên nào được duyệt.";
+  $("#dd-list").innerHTML = rows.length ? rows.map(({ r, t }) => `<li><div><b>${esc(r.ten)}</b> ${(t2 => huyHieu(t2.r, t2.i, "xs", r.ten))(tinhRank(diemdanhAll[r.id], progressAll[r.id], feedbackAll[r.id], r.ten))}<span class="muted">${esc(r.chuongTrinh || r.lop || "")}${r.coso ? " · " + esc(r.coso) : ""}</span><span class="dd-history">${t.records28 ? `Đã đi ${t.co28} buổi trong 4 tuần` : "Chưa có điểm danh trong 4 tuần"}</span>${(diemdanhAll[r.id] || {})["gc:" + key] ? `<span class="dd-gc">📝 ${esc(diemdanhAll[r.id]["gc:" + key])}</span>` : ""}</div>
+    ${noiKhac(r) ? `<span class="chip">Đã điểm danh tại ${esc(noiKhac(r))}</span>` : `<div class="dd-nut"><div class="seg seg5" role="group" aria-label="Điểm danh ${esc(r.ten)}">${DD_TT.map(([v, t]) =>
+      `<button type="button" class="${v}" data-dd="${esc(r.id)}" data-v="${v}" aria-pressed="${val(r) === v}">${t}</button>`).join("")}</div><button type="button" class="linkish" data-gc="${esc(r.id)}">${(diemdanhAll[r.id] || {})["gc:" + key] ? "Sửa ghi chú" : "Ghi chú"}</button></div>`}</li>`).join("")
     : `<li class="muted">${empty}</li>`;
-  $$("#dd-list [data-dd]").forEach(b => b.onclick = () => ghiDiemDanh([b.dataset.dd], key, b.dataset.v));
+  $$("#dd-list [data-dd]").forEach(b => b.onclick = () => ghiDiemDanh([b.dataset.dd], key, b.dataset.v, cs));
+  $$("#dd-list [data-gc]").forEach(b => b.onclick = () => ghiChuDD(b.dataset.gc, key));
+  const bu = $("#dd-bu-them"); if (bu) bu.onclick = () => { const t = $("#dd-bu-tim").value.trim(), hv = roster.find(x => `${x.ten} · ${x.gmail || x.id}` === t);
+    if (!hv) return toast("Chọn học viên trong danh sách gợi ý.", "err"); $("#dd-bu-tim").value = ""; ghiDiemDanh([hv.id], key, "bu", cs); };
+  const xong = $("#dd-xong"); if (xong) xong.onclick = () => xongDiemDanh(xong.dataset.id, xong);
   // Bảng theo dõi chuyên cần
   $("#dd-watch").innerHTML = rows.length ? `<div class="dw-wrap"><table class="dw" aria-describedby="dd-watch-note"><thead><tr><th>Học viên</th><th>Số buổi &amp; lịch đề xuất</th><th>Vắng liền</th><th>Giờ học</th><th>Dự báo đỗ</th><th></th></tr></thead><tbody>${rows.map(({ r, t }) => `
       <tr class="${t.muc}"><td><b>${esc(r.ten)}</b><br><span class="muted">${esc(t.khoi)} · thi ${ngayVN(t.ngayThi)}</span></td>
@@ -2864,19 +2880,67 @@ function renderAttend() {
     try { navigator.clipboard.writeText(msg).then(() => toast("Đã chép tin nhắn. Dán vào Zalo gửi phụ huynh."), hien); } catch (e) { hien(); }
   });
 }
-function ghiDiemDanh(ids, key, v) {
+function ghiDiemDanh(ids, key, v, cs) {
   const cu = ids.map(id => [id, (diemdanhAll[id] || {})[key]]);
-  ids.forEach(id => { diemdanhAll[id] = { ...(diemdanhAll[id] || {}), [key]: v }; });
+  // ghi kèm cơ sở thực tế học để danh sách hai cơ sở không trộn, không điểm danh trùng
+  const ghi = id => ({ [key]: v, ["cs:" + key]: cs || (roster.find(x => x.id === id) || {}).coso || "" });
+  ids.forEach(id => { diemdanhAll[id] = { ...(diemdanhAll[id] || {}), ...ghi(id) }; });
   renderAttend();
   const batch = writeBatch(db);
-  ids.forEach(id => batch.set(doc(db, "diemdanh", id), { [key]: v }, { merge: true }));
+  ids.forEach(id => batch.set(doc(db, "diemdanh", id), ghi(id), { merge: true }));
   timed("Điểm danh", batch.commit()).catch(() => {
     // Chỉ trả lại giá trị cũ nếu chưa có lựa chọn mới hơn (bấm Có mặt rồi Vắng nhanh: lệnh cũ lỗi không được đè lựa chọn mới)
     cu.forEach(([id, old]) => { if ((diemdanhAll[id] || {})[key] !== v) return; const o = { ...(diemdanhAll[id] || {}) }; if (old) o[key] = old; else delete o[key]; diemdanhAll[id] = o; });
     renderAttend(); toast("Chưa lưu được điểm danh. Kiểm tra mạng rồi bấm lại.", "err");
   });
 }
+// Ghi chú tình hình học tập / bài tập / tiến độ của học viên trong ca
+function ghiChuDD(id, key) {
+  const r = roster.find(x => x.id === id); if (!r) return;
+  const h = moHop(`<h3>Ghi chú · ${esc(r.ten)}</h3><p class="muted">${ngayVN(key.slice(0, 10))} · ca ${esc((CA_HOC.find(c => c.ma === key.slice(11)) || {}).ten || "")}</p>
+    <label>Tình hình học tập, bài tập, tiến độ<textarea id="dd-gc-o" maxlength="500" rows="4">${esc((diemdanhAll[id] || {})["gc:" + key] || "")}</textarea></label>
+    <div class="hop-nut"><button class="btn" type="button" data-dong>Huỷ</button><button class="btn primary" type="button" id="dd-gc-luu">Lưu</button></div>`, "Ghi chú");
+  h.el.querySelector("#dd-gc-luu").onclick = async e => { const t = h.el.querySelector("#dd-gc-o").value.trim(); e.target.disabled = true;
+    try { await timed("Ghi chú", setDoc(doc(db, "diemdanh", id), { ["gc:" + key]: t }, { merge: true })); diemdanhAll[id] = { ...(diemdanhAll[id] || {}), ["gc:" + key]: t }; toast("Đã lưu ghi chú ✓"); h.dong(); renderAttend(); }
+    catch (er) { e.target.disabled = false; toast("Chưa lưu được. Kiểm tra mạng rồi thử lại.", "err"); } };
+}
+// Phân công: anh chị chỉ điểm danh cơ sở mình được xếp dạy trong ca; quản lý xem được tất cả
+function caPhanCong(ngay, ca) { return vanHanhM && vanHanhM.caNgay ? vanHanhM.caNgay(ngay).filter(c => c.ca === ca) : null; }
+// quản lý chưa xếp ca nào cho ca này (chưa dùng phân công) thì anh chị điểm danh tự do như trước
+function khoaDD(ngay, ca) {
+  const tatCa = caPhanCong(ngay, ca), sel = $("#dd-cs");
+  if (isAdmin || !tatCa || !tatCa.length) { [...sel.options].forEach(o => { o.hidden = o.disabled = false; }); return false; }
+  const ds = [...new Set(tatCa.filter(c => c.gv === mail).map(c => c.coSo))];
+  [...sel.options].forEach(o => { o.hidden = o.disabled = !ds.includes(o.value); });
+  if (ds.length && !ds.includes(sel.value)) sel.value = ds[0];
+  return !ds.length;
+}
+function phanCongDD(ngay, ca, cs, daDD) {
+  const cua = (caPhanCong(ngay, ca) || []).filter(c => c.gv === mail);
+  if (khoaDD(ngay, ca)) return `<p class="dd-bao bad">Ca này anh/chị không được phân công dạy. Chỉ điểm danh được ca và cơ sở mình được xếp.</p>`;
+  const toi = cua.find(c => c.coSo === cs);
+  const bu = cs ? `<details class="dd-bu"><summary>＋ Học viên học bù / chuyển sang ${esc(cs)} ca này</summary><div class="dd-bu-o"><input id="dd-bu-tim" list="dd-bu-ds" placeholder="Gõ tên học viên" autocomplete="off"><datalist id="dd-bu-ds">${roster.filter(x => !thuocCS(x, cs, `${ngay}_${ca}`)).map(x => `<option value="${esc(`${x.ten} · ${x.gmail || x.id}`)}">`).join("")}</datalist><button type="button" class="btn small" id="dd-bu-them">Thêm · Học bù</button></div></details>` : "";
+  const xong = toi ? (toi.ddXong ? `<p class="dd-bao ok">✓ Đã xong điểm danh ca này (${daDD} em) lúc ${new Date(toi.ddXong).toTimeString().slice(0, 5)}.</p>`
+    : `<p class="dd-bao warn">Đã điểm danh <b>${daDD}</b> em. Điểm danh xong các em có mặt / vắng thì bấm <button type="button" class="btn small primary" id="dd-xong" data-id="${esc(toi.id)}">Xong điểm danh</button></p>`) : "";
+  return xong + bu;
+}
+async function xongDiemDanh(id, btn) {
+  btn.disabled = true;
+  try { await timed("Xong điểm danh", setDoc(doc(db, "caday", id), { ddXong: Date.now() }, { merge: true })); toast("Đã xong điểm danh ✓ Nhớ bấm Kết ca khi về."); }
+  catch (e) { btn.disabled = false; toast("Chưa lưu được. Kiểm tra mạng rồi bấm lại.", "err"); }
+}
+// số học viên đã điểm danh của một ca ở một cơ sở; tổng hợp có mặt / vắng theo cơ sở trong ngày (cho trang Chấm công)
+function ddCa(ngay, ca, cs) { const key = `${ngay}_${ca}`; return { da: roster.filter(r => (diemdanhAll[r.id] || {})[key] && csHoc(r, key).includes(cs)).length }; }
+function ddNgay(ngay) {
+  const o = {};
+  roster.forEach(r => { const dd = diemdanhAll[r.id] || {}; Object.keys(dd).filter(k => k.startsWith(ngay + "_")).forEach(k => {
+    const c = csHoc(r, k), ten = /kim/i.test(c) ? "Kim Quan" : /bình/i.test(c) ? "Bình Phú" : c || "Khác"; (o[ten] ||= {}); o[ten][dd[k]] = (o[ten][dd[k]] || 0) + 1; }); });
+  return o;
+}
 (function setupDiemDanh() {
+  // "Điểm danh lớp" ở thẻ Ca hôm nay: mở đúng ngày, ca, cơ sở của ca đó
+  document.addEventListener("click", e => { const a = e.target.closest && e.target.closest("[data-dd-mo]"); if (!a) return;
+    const [n, c, cs] = a.dataset.ddMo.split("|"); $("#dd-ngay").value = n; $("#dd-ca").value = c; $("#dd-cs").value = cs; renderAttend(); });
   $("#dd-ngay").value = todayVN();
   $("#dd-ca").innerHTML = CA_HOC.map(c => `<option value="${esc(c.ma)}">${esc(c.ten)} ${esc(c.gio)}</option>`).join("");
   $("#dd-ca").value = caMacDinh();
@@ -3999,7 +4063,7 @@ async function onUser(u) {
       roster = snap.docs.map(d => ({ id: d.id, ...d.data() })); renderHomework(); if (isAdmin) renderRoster(); renderAttend(); renderLV();
     });
     listen(collection(db, "diemdanh"), snap => {
-      diemdanhAll = {}; snap.docs.forEach(d => diemdanhAll[d.id] = d.data()); renderAttend();
+      diemdanhAll = {}; snap.docs.forEach(d => diemdanhAll[d.id] = d.data()); renderAttend(); if (vanHanhM) vanHanhM.veLai();
     });
     listen(collection(db, "tiendo"), snap => {
       progressAll = {}; snap.docs.forEach(d => progressAll[d.id] = d.data()); renderHomework(); if (isAdmin) { renderRoster(); renderQL(); }
@@ -4014,7 +4078,7 @@ async function onUser(u) {
   taiVanHanh().then(m => { if (!m || !user || mail !== (u.email || "").toLowerCase()) return;
     m.batDau({ db, fs: { collection, doc, getDoc, setDoc, deleteDoc, writeBatch, query, orderBy, where, limit, onSnapshot, deleteField }, themHuy: f => unsubs.push(f),
       mail, ten: (!isTeacher && myHv && myHv.ten) || (user && user.displayName) || mail.split("@")[0], isAdmin, isTeacher,
-      toast, moHop, nenAnh, homNay: todayVN, giaoVien: () => teachers, hocVien: () => roster, gvToi: () => myGvDoc, taiCSV });
+      toast, moHop, nenAnh, homNay: todayVN, giaoVien: () => teachers, hocVien: () => roster, gvToi: () => myGvDoc, taiCSV, ddCa, ddNgay, doiCa: renderAttend });
   });
   if (!isAdmin && !isTeacher) listen(query(collection(db, "dondh"), where("mail", "==", mail)), snap => { donCuaToi = snap.docs.map(d => ({ id: d.id, ...d.data() })); renderHvInfo(); });
   if (isAdmin) {
@@ -4806,7 +4870,7 @@ function renderQL() {
   const all = roster.map(r => {
     const dd = diemdanhAll[r.id] || {}, t = thongKe(dd, r, feedbackAll[r.id]), p = progressAll[r.id] || {};
     const daHoc = lessons.filter(l => (p.bai || {})[l.id]).length, nop = Object.values(p.baitap || {}).filter(Boolean).length;
-    const tuan = Object.keys(dd).filter(k => k.slice(0, 10) >= thu2 && k.slice(0, 10) <= hom && dd[k] === "co").length;
+    const tuan = Object.keys(dd).filter(k => k.slice(0, 10) >= thu2 && k.slice(0, 10) <= hom && coMat(dd[k])).length;
     return { r, t, daHoc, nop, tuan };
   });
   const coDL = all.filter(x => x.t.pass !== null), tb = a => a.length ? a.reduce((s, v) => s + v, 0) / a.length : null;
