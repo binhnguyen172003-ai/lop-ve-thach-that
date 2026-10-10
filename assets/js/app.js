@@ -248,7 +248,9 @@ function route() {
     const trang = el && el.closest("main[id^='v-']");
     if (trang && trang.id !== "v-home" && PAGES.includes(trang.id.slice(2))) {
       history.replaceState(null, "", "#" + trang.id.slice(2)); route();
-      requestAnimationFrame(() => setTimeout(() => { if (el.offsetParent) cuonToi(el); }, 60));
+      // mục có thể còn ẩn tới khi dữ liệu / quyền tải xong: chờ tối đa 4 giây rồi mới cuộn
+      let lan = 0; const cho = () => { if (location.hash !== "#" + trang.id.slice(2)) return; if (el.offsetParent) cuonToi(el); else if (++lan < 20) setTimeout(cho, 200); };
+      requestAnimationFrame(() => setTimeout(cho, 60));
       return;
     }
   }
