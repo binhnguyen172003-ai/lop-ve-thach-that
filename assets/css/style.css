@@ -3384,3 +3384,18 @@ table.roster.cc-cp{min-width:0}
 .lpc-bang{min-width:1280px}.lpc-gv{gap:6px;padding:6px}.lpc-gv-ten{flex:1 0 100%;width:100%;overflow-wrap:normal;word-break:normal;white-space:normal}.lpc-gv-nut{margin-left:auto}.lpc-nguoi{max-height:180px;overflow-x:hidden}.lpc-bang tbody th small{white-space:nowrap}
 @media(min-width:760px){.xh-f{grid-template-areas:"student type" "amount reason" "save save" "status status"}}
 @media(max-width:640px){.kho-report-actions .btn{width:100%}.xh-f>.xh-loai{width:100%;justify-self:stretch}.xh-f>.btn{width:100%;justify-self:stretch}.rk-stage{height:398px}.rk-stage .rk-card{width:min(76vw,260px);margin-left:calc(min(76vw,260px) / -2);height:368px}.rk-stage .rk-in{padding:22px 18px;gap:10px}.rk-stage .rk-card .rk-ten{font-size:1.05rem}}
+/* Thanh Đi nhanh: khung 400px theo mẫu navigation, co theo màn hình. */
+@media(max-width:760px){
+  body.co-tab .tab-duoi:not([hidden]){
+    --primary-bg:var(--paper);
+    left:50%;right:auto;bottom:calc(12px + env(safe-area-inset-bottom,0px));
+    transform:translateX(-50%);width:min(400px,calc(100% - 24px));height:70px;
+    box-sizing:border-box;padding:4px;display:flex;justify-content:center;align-items:center;
+    background:var(--primary-bg);border:1px solid var(--rule);border-radius:10px;
+    box-shadow:0 15px 25px rgba(0,0,0,.2);
+  }
+  .tab-duoi a{flex:1;min-width:0;height:100%}
+  .tab-duoi a[aria-current="page"]::before{top:0;border-radius:3px}
+  body.co-tab{padding-bottom:calc(94px + env(safe-area-inset-bottom,0px))}
+  body.co-tab #tl-cum,body.co-tab #toast{bottom:calc(94px + env(safe-area-inset-bottom,0px))}
+}
