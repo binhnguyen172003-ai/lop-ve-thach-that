@@ -1403,7 +1403,7 @@ $("#dk-zalo").href = ZALO_LINK;
     $$("#hero-schools a").forEach(a => a.addEventListener("click", () => { bvYear = 0; bvSchool = a.dataset.t; bvMore = false; renderHonor(); }));
   }
   const sap = LICH_THI.map(e => ({ ...e, n: daysUntil(e.ngay) })).filter(e => e.n >= 0).sort((a, b) => a.n - b.n)[0];
-  if (sap) $("#hero-badge").textContent = `Còn ${sap.n} ngày đến kỳ thi đầu tiên`;
+  if (sap) datBadgeThi(sap, "đầu tiên");
 
   // Menu trong suốt khi nằm trên hero, có nền khi cuộn xuống
   const setNavH = () => root.style.setProperty("--nav-h", nav.offsetHeight + "px");
@@ -2479,9 +2479,14 @@ function mocThiCuaToi() {
 function capNhatBadgeThi() {
   const el = $("#hero-badge"); if (!el) return;
   const m = mocThiCuaToi();
-  if (m) { el.textContent = `Còn ${m.n} ngày đến kỳ thi ${m.truong}`; return; }
+  if (m) { datBadgeThi(m, m.truong); return; }
   const sap = LICH_THI.map(e => ({ ...e, n: daysUntil(e.ngay) })).filter(e => e.n >= 0).sort((a, b) => a.n - b.n)[0];
-  if (sap) el.textContent = `Còn ${sap.n} ngày đến kỳ thi đầu tiên`;
+  if (sap) datBadgeThi(sap, "đầu tiên");
+}
+// Nhớ mốc thi để lần sau đoạn script trong index.html hiện số ngày ngay, không chờ tải xong web
+function datBadgeThi(e, ten) {
+  const el = $("#hero-badge"); if (el) el.textContent = `Còn ${e.n} ngày đến kỳ thi ${ten}`;
+  store.set("lvkv-moc-thi", { ngay: e.ngay, ten });
 }
 function renderHvInfo() {
   capNhatBadgeThi();
