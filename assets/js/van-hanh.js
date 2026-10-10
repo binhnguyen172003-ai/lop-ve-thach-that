@@ -298,6 +298,7 @@ function ganDanhSach() {
   const box = $("#vh-body .vh-ds-ngoai"); if (!box) return;
   nhanCot(box);
   $$("#vh-body [data-x]").forEach(b => b.onclick = () => hanhDongVH(b.dataset.x, b.dataset.id, b));
+  $$("#vh-body [data-tkb]").forEach(sel => sel.onchange = () => luuTKBO(sel));
   const tim = box.querySelector("#bg-tim"); if (tim) tim.oninput = () => { timBG = tim.value; const l = box.querySelector("#bg-kq"); if (l) { l.innerHTML = dsBGKetQua(); l.querySelectorAll("[data-x]").forEach(b => b.onclick = () => hanhDongVH(b.dataset.x, b.dataset.id, b)); } };
   box.querySelectorAll("[data-loc]").forEach(b => b.onclick = () => { locSC = b.dataset.loc; veVH(); });
   const nk = box.querySelector("#nk-loc"); if (nk) nk.onchange = () => { locNK = nk.value; veVH(); };
@@ -430,6 +431,26 @@ function dsCa() {
 // Lịch tuần phân công dạy: mỗi ô = một ca trong ngày ở cơ sở đang xem, hiện môn của ca (theo thời gian biểu) và ai dạy
 const monGV = id => { const g = (C.giaoVien() || []).find(x => x.id === id); return (g && g.mon) || ""; };
 const hopMon = (monGv, monCa) => !monGv || monGv === "Tất cả" || monGv.includes(monCa) || (monCa === "Hình hoạ" && /hình hoạ/i.test(monGv));
+// Sửa thẳng trên bảng: ô chọn môn ở mỗi ô = lịch học cố định (thời gian biểu) của thứ đó, ca đó, áp dụng mọi tuần.
+// "Trống" = xoá buổi cố định. Lưu cả bảng lên cauhinh/thoigianbieu, web tự đổi lịch học cho cả lớp.
+const MON_MAC_DINH = ["Hình hoạ", "Màu", "Mỹ thuật 2", "Bố cục"];
+const dsMon = () => [...new Set([...MON_MAC_DINH, ...Object.values(THOI_GIAN_BIEU).flatMap(x => CA_HOC.flatMap(c => Object.values(x[c.ma] || {})))])].filter(Boolean);
+const chonMon = (d, ca, mon) => `<select class="lpc-mon-sua${mon ? "" : " trong"}" data-tkb="${d}|${ca}" aria-label="Lịch học cố định ${esc(TEN_THU[d] || d)} ca ${esc(tenCa(ca).toLowerCase())}" title="Đổi môn / xoá buổi học cố định (áp dụng mọi tuần)">
+  <option value="">${mon ? "Trống (bỏ buổi này)" : "+ Môn"}</option>${dsMon().map(m => `<option${m === mon ? " selected" : ""}>${esc(m)}</option>`).join("")}<option value="__moi">+ Môn khác…</option></select>`;
+async function luuTKBO(sel) {
+  const [d, ca] = sel.dataset.tkb.split("|"), cs = "Cơ sở " + csLich;
+  let v = sel.value;
+  if (v === "__moi") { v = (prompt("Tên môn mới:") || "").trim().slice(0, 30); if (!v) return ve(); }
+  const cu = ((THOI_GIAN_BIEU[cs] || {})[ca] || {})[d] || "";
+  if (v === cu) return;
+  const tatCa = Object.fromEntries(Object.entries(THOI_GIAN_BIEU).map(([k, x]) => [k, Object.fromEntries(CA_HOC.map(c => [c.ma, { ...(x[c.ma] || {}) }]))]));
+  if (v) tatCa[cs][ca][d] = v; else delete tatCa[cs][ca][d];
+  const { db, fs: { doc, setDoc } } = C; sel.disabled = true;
+  try { await setDoc(doc(db, "cauhinh", "thoigianbieu"), { tkb: tatCa, luc: Date.now(), nguoi: C.mail });
+    C.toast(`${TEN_THU[d]} · ca ${tenCa(ca).toLowerCase()} · ${csLich}: ${v ? (cu ? cu + " → " : "thêm ") + v : "đã bỏ " + cu} (áp dụng mọi tuần).`); }
+  catch (e) { C.toast(e && e.code === "permission-denied" ? "Máy chủ chưa cho lưu: cần đưa luật bảo mật mới (firestore.rules) lên Firebase." : "Chưa lưu được, kiểm tra mạng rồi thử lại.", "err"); ve(); }
+  finally { sel.disabled = false; }
+}
 function lichPhanCong() {
   if (!csLich || !CO_SO.includes(csLich)) csLich = CO_SO[0];
   const goc = new Date(C.homNay() + "T12:00:00"); goc.setDate(goc.getDate() - ((goc.getDay() + 6) % 7) + 7 * tuanLich); // thứ 2 của tuần
@@ -437,8 +458,8 @@ function lichPhanCong() {
   const tkb = THOI_GIAN_BIEU["Cơ sở " + csLich] || {}, hom = C.homNay();
   const o = (n, ca) => {
     const mon = (tkb[ca.ma] || {})[thuCua(n)], ds = D.ca.filter(c => c.ngay === n && c.ca === ca.ma && c.coSo === csLich);
-    if (!mon && !ds.length) return C.isAdmin ? `<td class="lpc-nghi lpc-trong"><button type="button" class="lpc-xep lpc-them-ngoai" data-x="lich-xep" data-id="${esc(n + "|" + ca.ma + "|")}" aria-label="Thêm ca dạy ${tenCa(ca.ma).toLowerCase()} ${ngayVN(n)}" title="Thêm ca ngoài lịch (dạy bù, lớp thêm)">+</button></td>` : `<td class="lpc-nghi"></td>`;
-    return `<td class="${n === hom ? "hom" : ""}${mon && !ds.length ? " thieu" : ""}">${mon ? `<span class="lpc-mon">${esc(mon)}</span>` : ""}
+    if (!mon && !ds.length) return C.isAdmin ? `<td class="lpc-nghi lpc-trong">${chonMon(thuCua(n), ca.ma, "")}<button type="button" class="lpc-xep lpc-them-ngoai" data-x="lich-xep" data-id="${esc(n + "|" + ca.ma + "|")}" aria-label="Thêm ca dạy ${tenCa(ca.ma).toLowerCase()} ${ngayVN(n)}" title="Thêm ca ngoài lịch (dạy bù, lớp thêm)">+</button></td>` : `<td class="lpc-nghi"></td>`;
+    return `<td class="${n === hom ? "hom" : ""}${mon && !ds.length ? " thieu" : ""}">${C.isAdmin ? chonMon(thuCua(n), ca.ma, mon) : mon ? `<span class="lpc-mon">${esc(mon)}</span>` : ""}
       <div class="lpc-nguoi">${ds.map(c => `<span class="lpc-gv${c.gv === C.mail ? " toi" : ""}"><span class="lpc-gv-ten">${esc(c.gvTen || c.gv)}</span>${C.isAdmin ? `<span class="lpc-gv-nut"><button type="button" data-x="lich-sua" data-id="${esc(c.id)}" aria-label="Sửa ca của ${esc(c.gvTen || c.gv)}" title="Sửa phân công">✎</button><button type="button" data-x="lich-xoa" data-id="${esc(c.id)}" aria-label="Gỡ ${esc(c.gvTen || c.gv)} khỏi ca" title="Gỡ khỏi ca">×</button></span>` : ""}</span>`).join("")}</div>
       ${C.isAdmin ? `<button type="button" class="lpc-xep" data-x="lich-xep" data-id="${esc(n + "|" + ca.ma + "|" + (mon || ""))}">${ds.length ? "+ Thêm" : "+ Xếp"}</button>` : !ds.length && mon ? `<small class="muted">Chưa xếp</small>` : ""}</td>`;
   };
