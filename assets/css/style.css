@@ -2959,7 +2959,10 @@ button:disabled:not(.btn){opacity:.45}
 /* Trao quyền giáo viên */
 .gv-trao{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));align-items:end;margin-bottom:14px;padding:14px;border:1px solid var(--rule);border-radius:var(--r);background:var(--sheet)}
 .gv-trao .status{grid-column:1/-1;margin:0}
-#roster td:last-child,#teachers td:last-child{white-space:nowrap}#roster td:last-child .btn+*{margin-left:6px}
+/* Ô thao tác cuối bảng: các nút xếp chồng gọn trong ô, cách mép khung, không bị cắt */
+#roster td:last-child,#teachers td:last-child{min-width:150px;padding-right:14px;vertical-align:middle}
+#roster td:last-child>.btn,#roster td:last-child>.chip,#teachers td:last-child>.btn{display:flex;width:100%;justify-content:center;white-space:nowrap;margin:0}
+#roster td:last-child>*+*{margin-top:6px!important}
 
 /* ===== Ổn định khung khi chuyển trang =====
    Trang con luôn cao ít nhất một màn hình: nội dung tải sau không kéo chân trang nhảy lên xuống trước mắt người xem */

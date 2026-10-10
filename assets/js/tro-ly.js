@@ -440,16 +440,20 @@ function datKhung(el) {
   const THU = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 11h-6V5M13 11l7-7M5 13h6v6M11 13l-7 7"/></svg>';
   el.querySelectorAll("[data-to]").forEach(b => { b.innerHTML = to ? THU : MO; b.setAttribute("aria-label", to ? "Thu nhỏ" : "Phóng to"); });
   if (to) { Object.assign(el.style, { left: v.x + 8 + "px", top: v.y + 8 + "px", width: v.w - 16 + "px", height: v.h - 16 + "px" }); return; }
-  const dt = v.w <= 640;
+  const dt = v.w <= 640, laNhac = el.id === "tl-nhac";
+  // Khung Nhắc việc: cao vừa đủ nội dung (ít việc thì khung gọn, không để một khoảng trống lớn)
+  const vuaNoi = () => { const hd = el.querySelector("header"), ds = el.querySelector(".tl-nhac-ds"); return (hd ? hd.offsetHeight : 56) + (ds ? ds.scrollHeight : 120) + 6; };
   if (dt) { // điện thoại: khung chiếm phần màn hình nhìn thấy (trừ bàn phím), luôn sát mép dưới vùng nhìn thấy
     const banPhim = window.visualViewport && innerHeight - v.h > 120;
-    const h = banPhim ? v.h - 12 : Math.min(v.h - 16, Math.round(v.h * .82));
+    let h = banPhim ? v.h - 12 : Math.min(v.h - 16, Math.round(v.h * .82));
+    if (laNhac) h = Math.min(h, Math.max(180, vuaNoi()));
     Object.assign(el.style, { left: v.x + 8 + "px", width: v.w - 16 + "px", height: h + "px", top: v.y + v.h - h - 6 + "px" }); return;
   }
-  const w = Math.min(v.w - 16, 440), h = Math.min(v.h - 16, 680);
+  const w = Math.min(v.w - 16, 440), h = laNhac ? Math.min(v.h - 16, 560, Math.max(180, vuaNoi())) : Math.min(v.h - 16, 680);
   const luu = store.get("lvtt-tl-khung", null), r = $("#tl-cum").getBoundingClientRect();
   let x, y;
-  if (luu) { x = luu.x * v.w; y = luu.y * v.h; }
+  if (laNhac && !luu) { x = (v.w - w) / 2; y = Math.max(8, (v.h - h) / 2 - v.h * .08); } // bấm chuông: khung hiện giữa màn hình, hơi cao hơn tâm
+  else if (luu) { x = luu.x * v.w; y = luu.y * v.h; }
   else { x = r.left + r.width / 2 > v.w / 2 ? r.right - w : r.left; y = r.top - h - 10; if (y < 8) y = r.bottom + 10; }
   x = kep(x, 8, v.w - w - 8) + v.x; y = kep(y, 8, v.h - h - 8) + v.y;
   Object.assign(el.style, { left: x + "px", top: y + "px", width: w + "px", height: h + "px" });
@@ -595,6 +599,7 @@ function veNhac() {
   const ds = $("#tl-nhac-ds"); if (!ds) return;
   ds.innerHTML = nhac.length ? nhac.map((n, i) => `<a class="tl-nh ${n.muc || ""}" href="${esc(n.link || "#tai-khoan")}" data-i="${i}"><span>${n.icon || "•"}</span><div><b>${esc(n.tieuDe)}</b>${n.nd ? `<small>${esc(n.nd)}</small>` : ""}</div></a>`).join("")
     : `<p class="tl-rong">Không có việc gì cần nhắc. Rảnh thế thì… vẽ thêm một bài đi 😏</p>`;
+  { const k = $("#tl-nhac"); if (k && !k.hidden) requestAnimationFrame(() => datKhung(k)); } // số việc đổi → khung co giãn theo
   ds.onclick = e => {
     const a = e.target.closest("a.tl-nh"); if (!a) return;
     e.preventDefault();
