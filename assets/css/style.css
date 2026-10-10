@@ -29,7 +29,7 @@ a{color:var(--accent)}
 .ico{width:14px;height:14px;vertical-align:-2px;fill:none;stroke:currentColor;stroke-width:2}
 
 /* nav */
-nav{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--paper);border-bottom:1px solid var(--rule);margin-inline:-16px;padding-inline:16px}
+nav{position:sticky;top:env(safe-area-inset-top,0px);z-index:15;background:var(--paper);border-bottom:1px solid var(--rule);margin-inline:-16px;padding-inline:16px}
 nav .wrap{display:flex;align-items:center;gap:18px;overflow-x:auto;scrollbar-width:none;padding-block:10px}
 nav .brand{font-family:var(--f-display);font-weight:800;white-space:nowrap;margin-right:auto;text-decoration:none;color:var(--ink);font-size:1.05rem}
 nav a.link{white-space:nowrap;text-decoration:none;color:var(--graphite);font-weight:500;font-size:.92rem;padding-block:6px}
@@ -2612,3 +2612,17 @@ button:not(:disabled):active,.btn:active,a.link:active,.menu-links a:active,.gal
 /* Nút đang khoá: nhìn rõ là chưa bấm được */
 button:disabled{cursor:not-allowed}
 button:disabled:not(.btn){opacity:.45}
+
+/* Thẻ "Hôm nay học gì?" ở mục Lịch học */
+.hom-nay{background:var(--sheet);border:1px solid var(--rule);border-left:4px solid var(--accent);border-radius:14px;padding:14px 16px;margin:0 0 16px}
+.hom-nay .eyebrow{margin:0 0 6px}
+.hom-nay ul{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.hom-nay li{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.hn-mang{margin:8px 0 0;font-size:.9rem}
+.dock-lop{width:auto;padding:0 12px;white-space:nowrap}
+.hom-nay li .num{white-space:nowrap}
+.dock-main{white-space:nowrap}
+@media (max-width:360px){.dock-mp{display:none}}
+/* Chữ to (phóng cỡ chữ): tên và mô tả trong thẻ bài nổi bật tự xuống dòng, không tràn khung */
+.nb-card figcaption{grid-template-columns:minmax(0,1fr)}
+.nb-card figcaption > *{min-width:0;overflow-wrap:anywhere}

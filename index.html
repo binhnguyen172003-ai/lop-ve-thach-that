@@ -124,7 +124,7 @@
     <a class="link solo" href="#dang-ky" data-nav="home">Học thử</a>
     <button type="button" class="nav-search" id="nav-search" aria-label="Tìm kiếm trên web" title="Tìm kiếm (Ctrl + K)"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><span>Tìm kiếm</span><kbd>Ctrl K</kbd></button>
     <button type="button" class="burger" id="nav-burger" aria-label="Mở menu" aria-expanded="false" aria-controls="menu-ov"><i></i><i></i><i></i></button>
-    <a class="btn small acct" href="#tai-khoan" id="nav-acct" aria-label="Tài khoản"><svg class="acct-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M5 21v-3a7 7 0 0 1 14 0v3"/></svg><span id="nav-acct-t">Đăng nhập / Đăng ký</span><span class="nbadge num" id="nav-req" hidden></span></a>
+    <a class="btn small acct" href="#tai-khoan" id="nav-acct" aria-label="Tài khoản"><svg class="acct-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M5 21v-3a7 7 0 0 1 14 0v3"/></svg><span id="nav-acct-t">Vào lớp học</span><span class="nbadge num" id="nav-req" hidden></span></a>
   </div>
 </nav>
 
@@ -147,7 +147,8 @@
 
 <!-- Thanh gọi nhanh trên điện thoại -->
 <div class="dock glass" id="dock" hidden>
-  <a class="dock-main" href="#dang-ky">Học thử miễn phí</a>
+  <a class="dock-main" href="#dang-ky">Học thử<span class="dock-mp">&nbsp;miễn phí</span></a>
+  <a class="dock-ico dock-lop" href="#tai-khoan" aria-label="Vào lớp học (học viên đăng nhập)"><b>Vào lớp</b></a>
   <a class="dock-ico" id="dock-call" href="#" aria-label="Gọi quản lý"><svg viewBox="0 0 24 24"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"/></svg></a>
   <a class="dock-ico" id="dock-zalo" href="#" target="_blank" rel="noopener" aria-label="Nhắn Zalo"><b>Zalo</b></a>
 </div>
@@ -326,7 +327,7 @@
   <section id="lich-thi" aria-labelledby="h-thi">
     <div class="sec-head">
       <div><p class="eyebrow">Mùa thi 2027</p><h2 id="h-thi">Lịch thi năng khiếu dự kiến</h2></div>
-      <p class="muted">Lịch dự kiến do lớp tổng hợp. Lớp sẽ cập nhật khi các trường công bố chính thức.</p>
+      <p class="muted">Lịch do lớp tổng hợp; mỗi kỳ ghi rõ Dự kiến hay Chính thức.<span id="thi-cap-nhat"></span></p>
     </div>
     <div class="cd-lead" id="cd-lead"></div>
     <div class="filters" id="exam-filters" role="group" aria-label="Lọc theo trường"></div>
@@ -338,6 +339,7 @@
       <div><p class="eyebrow">Thời gian biểu</p><h2 id="h-lich">Lịch học tại hai cơ sở</h2></div>
       <p class="muted keep"><span id="ca-hoc-text"></span> Lịch có thể thay đổi theo từng khoá, anh chị sẽ báo khi xếp lớp.</p>
     </div>
+    <div class="hom-nay" id="hom-nay" aria-live="polite"></div>
     <div class="sched-tabs" id="sched-tabs" role="tablist"></div>
     <div class="sched-wrap"><table class="sched" id="sched"></table></div>
     <div class="sched-days" id="sched-days"></div>

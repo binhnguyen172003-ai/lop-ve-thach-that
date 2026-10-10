@@ -5,7 +5,7 @@
 import { firebaseConfig, ADMIN_EMAIL, EMAIL_NHAN_THONG_BAO } from "../../config/firebase-config.js?v=20261009b";
 import { FILE_LIMITS, FILE_TYPES, fileExt, fileSize, validateFiles, attachmentStorage, uploadError, validAttachmentPath } from "./attachments.js?v=20261009b";
 import { GIAO_TRINH_MAU as GT_LO_TRINH } from "../../data/giao-trinh-mau.js?v=20261010bf";
-import { LIEN_HE, NAM_THI, LICH_THI, BO_LOC_TRUONG, CA_HOC, THOI_GIAN_BIEU, BAI_VE, BANG_VANG, TRUONG, MUC_TIEU, GIAO_VIEN, VIDEO_BIA, BAI_NOI_BAT, THANH_TUU_TRAO, XP_THUONG, AVATAR, SO_DU_THI, HOA_CU, TON_DAU_KY, BAN_TIN, SAN_PHAM } from "../../data/noi-dung.js?v=20261010bh";
+import { LIEN_HE, NAM_THI, LICH_THI, BO_LOC_TRUONG, CA_HOC, THOI_GIAN_BIEU, BAI_VE, BANG_VANG, TRUONG, MUC_TIEU, GIAO_VIEN, VIDEO_BIA, BAI_NOI_BAT, THANH_TUU_TRAO, XP_THUONG, AVATAR, SO_DU_THI, HOA_CU, TON_DAU_KY, BAN_TIN, SAN_PHAM, LICH_THI_CAP_NHAT, DO_MANG } from "../../data/noi-dung.js?v=20261010bh";
 
 // Firebase được tải riêng, để phần giới thiệu vẫn chạy kể cả khi mạng chậm hoặc chưa cấu hình.
 const FB = "https://www.gstatic.com/firebasejs/10.12.2/";
@@ -194,7 +194,7 @@ function daysUntil(iso) {
 let examFilter = "all";
 let lichGon = true;
 function renderExams() {
-  const list = LICH_THI.map(e => ({ t: e.truong, truong: e.ten, dot: e.dot, ngay: e.ngay, hien: e.hienThi, n: daysUntil(e.ngay) }));
+  const list = LICH_THI.map(e => ({ t: e.truong, truong: e.ten, dot: e.dot, ngay: e.ngay, hien: e.hienThi, n: daysUntil(e.ngay), ct: !!e.chinhThuc, nguon: e.nguon || "" }));
   const shown = list.filter(e => examFilter === "all" || e.t === examFilter || e.t === "THPT");
   const next = shown.filter(e => e.n >= 0 && e.t !== "THPT").sort((a, b) => a.n - b.n)[0];
   if (next) {
@@ -203,7 +203,7 @@ function renderExams() {
       `<div class="cd-big">${next.n}<small>ngày</small></div>
        <div><p class="eyebrow">${examFilter === "all" ? "Kỳ thi năng khiếu gần nhất" : "Kỳ thi gần nhất của trường này"}</p>
        <h3>${esc(next.truong)} <span class="chip">${esc(next.dot)}</span></h3>
-       <p class="muted">Ngày thi dự kiến ${esc(next.hien)}/${NAM_THI}</p>
+       <p class="muted">Ngày thi ${next.ct ? "chính thức" : "dự kiến"} ${esc(next.hien)}/${NAM_THI}</p>
        <p style="margin-top:8px">Còn khoảng <b class="num">${w}</b> tuần. Nếu học 4 buổi mỗi tuần, em còn khoảng <b class="num">${w * 4}</b> buổi để luyện.</p></div>`;
   } else {
     $("#cd-lead").innerHTML = `<p>Mùa thi này đã kết thúc. Lớp sẽ cập nhật lịch năm sau.</p>`;
@@ -219,7 +219,7 @@ function renderExams() {
   // Điện thoại: chỉ hiện 3 kỳ gần nhất, bấm nút mới xem cả lịch
   const gan = new Set(shown.filter(e => e.n >= 0).sort((a, b) => a.n - b.n).slice(0, 3));
   const dong = (e0, g, qua) => `<div class="lth-d"><b class="num">${esc(e0.hien)}</b><span class="num">${qua ? "Đã thi" : "Còn " + e0.n + " ngày"}</span></div>
-      <ul>${g.map(e => `<li style="--c:${mau(e.t)}"><i>${esc(e.t === "THPT" ? "THPT" : MA[e.t] || e.t)}</i><span>${esc(tenGon(e.truong))}<em>${esc(e.dot)}</em></span></li>`).join("")}</ul>`;
+      <ul>${g.map(e => `<li style="--c:${mau(e.t)}"><i>${esc(e.t === "THPT" ? "THPT" : MA[e.t] || e.t)}</i><span>${esc(tenGon(e.truong))}<em>${esc(e.dot)} · ${e.ct ? "✓ Chính thức" : "Dự kiến"}${e.nguon && /^https?:\/\//.test(e.nguon) ? ` · <a href="${esc(e.nguon)}" target="_blank" rel="noopener">Nguồn</a>` : ""}</em></span></li>`).join("")}</ul>`;
 
   // ---- Điện thoại: sơ đồ cây DỌC, thân ở giữa (hoặc bên trái khi màn hẹp) ----
   let side = 0;
@@ -269,6 +269,7 @@ $$("#exam-filters .tab").forEach(b => b.onclick = () => {
 });
 renderExams();
 setInterval(renderExams, 3600000);
+if (LICH_THI_CAP_NHAT) { const [y, m, d] = LICH_THI_CAP_NHAT.split("-"); $("#thi-cap-nhat").textContent = ` Cập nhật ngày ${+d}/${+m}/${y}.`; }
 
 /* ================= Thời gian biểu ================= */
 const SLOT = { "Hình hoạ": "hh", "Màu": "mau", "Mỹ thuật 2": "mt2" };
@@ -294,6 +295,18 @@ function renderSched(k) {
       <div>${ca.length ? ca.map(c => `<span class="sd-ca">${chip(tkb[c.ma][d])} ${esc(c.ten)} <span class="muted num">${esc(c.gio)}</span></span>`).join("") : '<span class="muted">Nghỉ</span>'}</div></div>`;
   }).join("");
 }
+// Thẻ "Hôm nay học gì?": gom cả hai cơ sở; hôm nay nghỉ thì báo buổi gần nhất
+function renderHomNay() {
+  const box = $("#hom-nay"); if (!box) return;
+  const buoi = d => CO_SO.flatMap(k => CA_HOC.filter(c => ((THOI_GIAN_BIEU[k] || {})[c.ma] || {})[d]).map(c => ({ cs: k, ca: c, mon: THOI_GIAN_BIEU[k][c.ma][d] })));
+  const hom = todayKey(); let d = hom, ds = buoi(d), i = DAYS.indexOf(hom);
+  for (let n = 1; !ds.length && n < 7; n++) { d = DAYS[(i + n) % 7]; ds = buoi(d); }
+  const mon = [...new Set(ds.map(x => x.mon))];
+  box.innerHTML = `<p class="eyebrow">${d === hom ? "Hôm nay · " + TEN_NGAY[d] : "Hôm nay nghỉ · buổi gần nhất " + TEN_NGAY[d]}</p>
+    <ul>${ds.map(x => `<li><span class="slot ${SLOT[x.mon] || "mt2"}">${esc(x.mon)}</span> <b>${esc(x.cs.replace("Cơ sở ", ""))}</b> · ca ${esc(x.ca.ten.toLowerCase())} <span class="num muted">${esc(x.ca.gio)}</span></li>`).join("")}</ul>
+    ${mon.some(m => DO_MANG[m]) ? `<p class="muted hn-mang"><b>Mang theo:</b> ${mon.filter(m => DO_MANG[m]).map(m => esc(DO_MANG[m])).join(" · ")}</p>` : ""}`;
+}
+renderHomNay();
 $("#sched-tabs").innerHTML = CO_SO.map((k, i) => `<button class="tab" role="tab" data-s="${esc(k)}" aria-selected="${i === 0}">${esc(k)}</button>`).join("");
 $$("#sched-tabs .tab").forEach(b => b.onclick = () => {
   $$("#sched-tabs .tab").forEach(x => x.setAttribute("aria-selected", x === b));
@@ -1551,7 +1564,7 @@ function renderAccount(pending) {
     $("#who-name").textContent = "Bước 1: Tạo tài khoản hoặc đăng nhập";
     $("#who-mail").textContent = "Dùng Gmail của em (hoặc của bố mẹ). Chưa có tài khoản thì chọn “Lần đầu: Tạo tài khoản”.";
     $("#who-status").innerHTML = ""; $("#who-avatar").hidden = true; $("#who-ava").hidden = true; $("#btn-ql").hidden = true;
-    $("#nav-acct-t").textContent = "Đăng nhập";
+    $("#nav-acct-t").textContent = "Vào lớp học";
     { const k = $("#nav-ka"); if (k) { k.remove(); $("#nav-acct").classList.remove("has-ka"); } }
     baoTroLy(false);
     setStep(1); return;
