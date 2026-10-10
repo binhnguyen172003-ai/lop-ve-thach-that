@@ -48,6 +48,11 @@ service cloud.firestore {
     function anhHopLe(v) {
       return v is string && v.matches('^data:image/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$');
     }
+    // Ngày sinh dạng YYYY-MM-DD (từ 1940); cờ đồng ý đăng lời chúc là true/false
+    function ngaySinhHopLe(d) {
+      return (!('ngaySinh' in d) || (d.ngaySinh is string && d.ngaySinh.matches('^(19[4-9][0-9]|20[0-9][0-9])-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$')))
+        && (!('snCongKhai' in d) || d.snCongKhai is bool);
+    }
     // Link kèm bài/tin: chỉ https:// hoặc mục trong web (#...)
     function linkHopLe(d) {
       return !('link' in d) || d.link == '' || (d.link is string && d.link.size() <= 300
@@ -76,8 +81,9 @@ service cloud.firestore {
       allow create, delete: if isAdmin();
       // Học viên tự sửa SĐT và trường thi của mình; quản lý sửa mọi thứ; giáo viên chỉ đổi tên khi quản lý/giáo viên duyệt yêu cầu
       allow update: if isAdmin()
-        || (isMe(mail) && isStudent() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['sdt', 'truongThi', 'khoi'])
+        || (isMe(mail) && isStudent() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['sdt', 'truongThi', 'khoi', 'ngaySinh', 'snCongKhai', 'namSinh'])
             && shortText(request.resource.data, 'sdt', 15) && shortText(request.resource.data, 'truongThi', 20)
+            && ngaySinhHopLe(request.resource.data) && (!('namSinh' in request.resource.data) || request.resource.data.namSinh is int)
             && (!('khoi' in request.resource.data) || request.resource.data.khoi in ['Khối H', 'Khối V', 'Cơ bản']))
         || (isStaff() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['ten'])
             && request.resource.data.ten is string && request.resource.data.ten.size() > 0 && request.resource.data.ten.size() <= 80);
@@ -113,6 +119,10 @@ service cloud.firestore {
     match /giaovien/{mail} {
       allow read: if isAdmin() || isMe(mail);
       allow write: if isAdmin();
+      // Giáo viên tự cập nhật ngày sinh và cờ đồng ý đăng lời chúc của mình
+      allow update: if isMe(mail) && isTeacher()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['ngaySinh', 'snCongKhai'])
+        && ngaySinhHopLe(request.resource.data);
     }
 
     // Yêu cầu duyệt: ai đăng nhập Google cũng gửi được, chỉ cho Gmail của chính mình.
@@ -122,7 +132,8 @@ service cloud.firestore {
         && request.resource.data.gmail == mail
         && request.resource.data.vaiTro in ['hocvien', 'giaovien']
         && request.resource.data.keys().hasOnly(['vaiTro', 'gmail', 'ten', 'namSinh', 'sdt', 'sdtPh', 'truong', 'lopHoc',
-             'khuVuc', 'coso', 'chuongTrinh', 'khoi', 'namThi', 'mucTieu', 'ghiChu', 'guiLuc'])
+             'khuVuc', 'coso', 'chuongTrinh', 'khoi', 'namThi', 'mucTieu', 'ghiChu', 'guiLuc', 'ngaySinh', 'snCongKhai'])
+        && ngaySinhHopLe(request.resource.data)
         && request.resource.data.ten is string && request.resource.data.ten.size() > 0 && request.resource.data.ten.size() <= 80
         && shortText(request.resource.data, 'sdt', 15)
         && shortText(request.resource.data, 'sdtPh', 15)
@@ -170,15 +181,44 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    // Thông báo lớp: 6 loại (quan trọng, lịch học, bài tập, thành tích, sinh nhật, cá nhân).
+    //   gui = 'tatca' (mọi người) | 'giaovien' (nội bộ) | 'canhan' (chỉ người nhận "cho", người viết và quản lý đọc được).
+    //   Chỉ tạo mới, không sửa: lời chúc sinh nhật có mã cố định theo năm nên không bao giờ bị tạo trùng.
     match /thongbao/{id} {
-      allow read: if isStaff() || (isStudent() && resource.data.gui == 'tatca');
+      allow read: if isAdmin()
+        || (isStaff() && resource.data.gui in ['tatca', 'giaovien'])
+        || (isStudent() && resource.data.gui == 'tatca')
+        || (signedIn() && ('cho' in resource.data) && resource.data.cho == myEmail())
+        || (isStaff() && resource.data.tacGia == myEmail());
       allow create: if isStaff()
         && request.resource.data.tacGia == myEmail()
-        && request.resource.data.gui in ['tatca', 'giaovien']
+        && request.resource.data.gui in ['tatca', 'giaovien', 'canhan']
+        && (request.resource.data.gui != 'canhan' || (request.resource.data.cho is string && request.resource.data.cho.size() > 3 && request.resource.data.cho.size() <= 100))
+        && (!('loai' in request.resource.data) || request.resource.data.loai in ['quantrong', 'lichhoc', 'baitap', 'thanhtich', 'sinhnhat', 'canhan'])
         && request.resource.data.nd is string && request.resource.data.nd.size() > 0 && request.resource.data.nd.size() <= 2000
         && shortText(request.resource.data, 'tieuDe', 120);
       allow delete: if isAdmin() || (isStaff() && resource.data.tacGia == myEmail());
     }
+
+    // ===== SINH NHẬT: bản ghi công khai cho lời chúc — chỉ tên, ngày-tháng (MM-DD), cơ sở, vai trò, cờ đồng ý; KHÔNG có năm sinh =====
+    // Anh chị đọc tất cả; học viên chỉ đọc người đã đồng ý công khai. Chủ tài khoản hoặc quản lý ghi.
+    match /sinhnhat/{mail} {
+      allow read: if isStaff() || isMe(mail) || (signedIn() && resource.data.congKhai == true);
+      allow write: if (isAdmin() || (isMe(mail) && (isStudent() || isTeacher())))
+        && request.resource.data.keys().hasOnly(['ten', 'ngay', 'coSo', 'vaiTro', 'congKhai', 'capNhat'])
+        && request.resource.data.ten is string && request.resource.data.ten.size() > 0 && request.resource.data.ten.size() <= 80
+        && request.resource.data.ngay is string && request.resource.data.ngay.matches('^(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$')
+        && request.resource.data.vaiTro in ['hv', 'gv'] && request.resource.data.congKhai is bool
+        && shortText(request.resource.data, 'coSo', 40);
+      allow delete: if isAdmin() || isMe(mail);
+    }
+
+    // ===== CÀI ĐẶT CHUNG: lời chúc sinh nhật (sinhnhat), công thức xét tuyển. Ai đăng nhập cũng đọc; chỉ quản lý sửa =====
+    match /cauhinh/{id} {
+      allow read: if signedIn();
+      allow write: if isAdmin();
+    }
+
 
     // Việc giao cho giáo viên: quản lý giao và xoá; giáo viên chỉ được đánh dấu xong.
     match /congviec/{id} {
@@ -410,11 +450,11 @@ service cloud.firestore {
       allow create: if isStaff() && request.resource.data.ai == myEmail() && request.resource.data.luc is int
         && request.resource.data.col in ['hocvien', 'giaovien', 'nhanxet', 'diemdanh', 'baitap', 'giaotrinh', 'lichnhac', 'tiendo', 'xephang', 'baive', 'bantin', 'kho',
              'thongbao', 'congviec', 'doiten', 'caday', 'trucnhat', 'thithu', 'thithubai', 'suco', 'bangiao', 'kiemtra', 'doica',
-             'luongdc', 'bangluong', 'suacong']
+             'luongdc', 'bangluong', 'suacong', 'cauhinh', 'sinhnhat']
         && request.resource.data.loai in ['tao', 'sua', 'xoa'] && request.resource.data.ma is string
         // Giáo viên không được tạo / xoá hồ sơ ở các bảng chỉ quản lý thao tác → nhật ký kiểu đó chắc chắn là giả
         && (isAdmin() || request.resource.data.loai == 'sua'
-            || !(request.resource.data.col in ['hocvien', 'giaovien', 'caday', 'kho', 'xephang', 'giaotrinh', 'lichnhac', 'tiendo', 'luongdc', 'bangluong']));
+            || !(request.resource.data.col in ['hocvien', 'giaovien', 'caday', 'kho', 'xephang', 'giaotrinh', 'lichnhac', 'tiendo', 'luongdc', 'bangluong', 'cauhinh']));
       allow update, delete: if false;
     }
 

@@ -186,3 +186,16 @@ Khi xóa bài, hệ thống xóa tài liệu kèm theo. Nếu mạng hoặc quy�
 - Mỗi khoá có từng bài riêng (Bài 0, Bài 1, … / Chuyên đề 0–11 / Sổ tay), nội dung lấy từ Sách học viên Pro Max: bảng, mẹo, thử thách, tự kiểm tra.
 - Quản lý chỉ cần **mở web bằng tài khoản quản lý một lần**: web tự đưa bài học mới lên (không cần bấm nút). Có bản mới (file `data/bai-hoc.js` đổi mã BAN) thì lần mở sau tự cập nhật.
 - Bài nào quản lý xoá trên web sẽ không bị thêm lại.
+
+## Thưởng & phạt giáo viên, sinh nhật, thông báo lớp (cập nhật 10/2026)
+
+**Lần đầu:** vào **Quản lý** → khung kiểm tra máy chủ → **Sao chép luật mới** → dán vào Firebase → **Publish** (luật mới có thêm thưởng, ngày sinh, thông báo cá nhân).
+
+- **Vận hành → 🏅 Thưởng & phạt** (quản lý):
+  1. Bấm **⚙️ Mức thưởng & phạt** để đặt tiền cho 6 khoản thưởng và các mức phạt nội quy (không cần sửa mã).
+  2. Cuối tháng bấm **🔄 Đề xuất từ dữ liệu**: web tự xét chuyên cần, chất lượng (đủ KPI), bài mẫu, đi muộn, vắng ca, thiếu bài mẫu → các khoản ở trạng thái **Chờ duyệt**.
+  3. Kiểm tra rồi bấm **Duyệt**. Chỉ khoản đã duyệt mới cộng/trừ vào cột **Thực nhận** ở bảng công. Trả xong bấm **Đã thanh toán**.
+  4. Thưởng tuyển sinh, đóng góp chuyên môn, cuối mùa thi: bấm **+ Ghi thưởng**. Giải thưởng cuộc thi cho trợ giảng: **+ Thêm giải** (mỗi cuộc thi ghi riêng).
+- **Chỉ tiêu KPI** (Theo dõi GV → bảng công → Chỉ tiêu): đặt số công và **số bài mẫu phải làm mỗi tháng**. Bài mẫu = bài vẽ quản lý tick "Bài mẫu", do giáo viên đó đăng hoặc đứng tên.
+- **Sinh nhật**: học viên, giáo viên điền ngày sinh khi đăng ký hoặc trong Tài khoản; quản lý sửa ở **Quản lý → 🎂 Sinh nhật**. Đến ngày, lời chúc tự hiện trong **Thông báo lớp** (giờ Việt Nam, mỗi người một lần mỗi năm, không hiện năm sinh). Chỉ đăng cho người đã tick đồng ý.
+- **Thông báo lớp** chia 6 loại; loại **Quan trọng** luôn nằm trên cùng 7 ngày; **Cá nhân** chỉ người nhận xem được.

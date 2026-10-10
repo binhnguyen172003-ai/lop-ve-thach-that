@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-label="Chúc mừng sinh nhật · Dreamers">
+  <defs><linearGradient id="n" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1b2033"/><stop offset="1" stop-color="#0b0d14"/></linearGradient></defs>
+  <rect width="120" height="120" rx="26" fill="url(#n)"/>
+  <g fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M30 92h60V66H30z" fill="#f5c400" stroke="#0b0d14"/>
+    <path d="M30 74c5 5 10 5 15 0s10-5 15 0 10 5 15 0 10-5 15 0" stroke="#0b0d14" fill="#fff"/>
+    <path d="M38 66V54h44v12" fill="#e5484d" stroke="#0b0d14"/>
+    <path d="M50 54v-9M60 54v-11M70 54v-9" stroke="#fff"/>
+    <path d="M50 41c-2-3 0-6 0-6s3 3 0 6zM60 39c-2-3 0-7 0-7s3 4 0 7zM70 41c-2-3 0-6 0-6s3 3 0 6z" fill="#ffb02e" stroke="#ffb02e" stroke-width="1.6"/>
+    <path d="M24 100h72"/>
+    <path d="M18 30l4 4M22 30l-4 4M98 22l3 3M101 22l-3 3M100 50l3 3M103 50l-3 3" stroke="#2ec4b6"/>
+    <circle cx="26" cy="52" r="2.2" fill="#f5c400" stroke="none"/><circle cx="94" cy="36" r="2.2" fill="#e5484d" stroke="none"/>
+  </g>
+  <text x="60" y="113" text-anchor="middle" font-family="Be Vietnam Pro,system-ui,sans-serif" font-size="9.5" font-weight="800" letter-spacing="1.5" fill="#f5c400">DREAMERS</text>
+</svg>

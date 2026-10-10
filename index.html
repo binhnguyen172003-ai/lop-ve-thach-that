@@ -45,8 +45,8 @@
 <!-- Phông chữ tải sau, không bắt người xem chờ trắng màn hình -->
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Be+Vietnam+Pro:wght@400;500;600&family=Playfair+Display:ital,wght@1,500;1,600&display=swap" media="print" onload="this.media='all'">
 <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Be+Vietnam+Pro:wght@400;500;600&family=Playfair+Display:ital,wght@1,500;1,600&display=swap"></noscript>
-<link rel="stylesheet" href="assets/css/style.css?v=20261010br">
-<link rel="modulepreload" href="assets/js/app.js?v=20261010br">
+<link rel="stylesheet" href="assets/css/style.css?v=20261010bs">
+<link rel="modulepreload" href="assets/js/app.js?v=20261010bs">
 <link rel="modulepreload" href="config/firebase-config.js?v=20261009b">
 <link rel="modulepreload" href="data/noi-dung.js?v=20261010bh">
 <script nomodule>document.addEventListener("DOMContentLoaded",function(){var d=document.createElement("div");d.className="slow-bar";d.innerHTML="Trình duyệt này đã quá cũ nên web chạy không đủ. Hãy cập nhật Chrome hoặc Safari rồi mở lại.";document.body.insertBefore(d,document.body.firstChild)})</script>
@@ -720,6 +720,8 @@
       <label for="rg-vt">Em là<select id="rg-vt"><option value="hocvien">Học sinh</option><option value="giaovien">Trợ giảng / Giáo viên của lớp</option></select></label>
       <label for="rg-ten"><span>Họ và tên <span class="req">*</span></span><input id="rg-ten" required maxlength="80" autocomplete="name" placeholder="VD: Nguyễn Văn An"></label>
       <label for="rg-nam" class="chi-hv"><span>Năm sinh <span class="req">*</span></span><select id="rg-nam" required><option value="">Chọn năm sinh</option><option>2016</option><option>2015</option><option>2014</option><option>2013</option><option>2012</option><option>2011</option><option>2010</option><option>2009</option><option>2008</option><option>2007</option><option>2006</option><option>2005</option><option>2004</option><option>2003</option></select></label>
+      <label for="rg-ngaysinh"><span>Ngày sinh <small class="muted">(để lớp gửi lời chúc sinh nhật)</small></span><input id="rg-ngaysinh" type="date" min="1940-01-01" autocomplete="bday"></label>
+      <label class="vh-check rg-sn" for="rg-sn"><input type="checkbox" id="rg-sn" checked> <span>Đồng ý để lớp đăng lời chúc trong mục Thông báo lớp vào ngày sinh nhật (chỉ hiện tên, không hiện năm sinh, tuổi)<span class="chi-hv"> · học viên dưới 18 tuổi cần bố mẹ đồng ý</span></span></label>
       <label for="rg-sdtph" class="chi-hv"><span>Số điện thoại bố hoặc mẹ <span class="req">*</span></span><input id="rg-sdtph" type="tel" inputmode="tel" required maxlength="15" placeholder="VD: 0912 345 678"></label>
       <label for="rg-sdtgv" class="chi-gv"><span>Số điện thoại của anh/chị <span class="req">*</span></span><input id="rg-sdtgv" type="tel" inputmode="tel" required maxlength="15" placeholder="VD: 0912 345 678"></label>
       <label for="rg-cs"><span>Học ở cơ sở nào <span class="req">*</span></span><select id="rg-cs" required><option value="">Chọn cơ sở</option><option>Bình Phú</option><option>Kim Quan</option><option>Online</option></select></label>
@@ -764,7 +766,7 @@
   <div id="lv-body" hidden>
     <div class="tabs" id="lv-tabs" role="tablist">
       <button class="tab" type="button" data-lv="tin" aria-selected="true">Tin nhắn <span class="nbadge num" id="lv-n-tin" hidden></span></button>
-      <button class="tab" type="button" data-lv="tb" aria-selected="false">Thông báo <span class="nbadge num" id="lv-n-tb" hidden></span></button>
+      <button class="tab" type="button" data-lv="tb" aria-selected="false">Thông báo lớp <span class="nbadge num" id="lv-n-tb" hidden></span></button>
       <button class="tab" type="button" data-lv="viec" aria-selected="false" data-teacher hidden>Việc cần làm <span class="nbadge num" id="lv-n-viec" hidden></span></button>
     </div>
 
@@ -795,13 +797,15 @@
     <!-- Thông báo -->
     <section class="lv-pane" id="lv-tb" hidden aria-label="Thông báo">
       <form class="card lv-form" id="f-tb" data-teacher hidden>
-        <h3>Viết thông báo cho học viên</h3>
+        <h3>Viết thông báo lớp</h3>
         <p class="muted">Chọn một mẫu có sẵn rồi sửa phần trong ngoặc [ ]. Lưu ý: bài vẽ và bản tin do quản lý đăng sẽ tự động có thông báo, không cần viết tay.</p>
         <label for="tb-mau">Mẫu có sẵn<select id="tb-mau"><option value="">— Viết tự do —</option><option value="top">Top bài vẽ tuần</option><option value="xuatsac">Bài tập được chấm Xuất sắc</option><option value="tintuc">Tin nổi bật mới</option><option value="lichhoc">Thay đổi lịch học</option><option value="baitap">Bài tập mới và hạn nộp</option><option value="online">Mở đăng ký lớp online</option></select></label>
         <label for="tb-tieude">Tiêu đề<input id="tb-tieude" maxlength="120" placeholder="VD: Nghỉ học tối thứ 6"></label>
         <label for="tb-nd">Nội dung<textarea id="tb-nd" maxlength="2000" required placeholder="Viết ngắn gọn, rõ ngày giờ."></textarea></label>
         <div class="fgrid">
+          <label for="tb-loai">Loại thông báo<select id="tb-loai"><option value="quantrong">❗ Quan trọng của lớp</option><option value="lichhoc">📅 Lịch học, đổi lịch</option><option value="baitap">✏️ Bài tập, hạn nộp</option><option value="thanhtich">🏆 Thành tích, giải thưởng, vinh danh</option><option value="sinhnhat">🎂 Sinh nhật</option><option value="canhan">👤 Thông báo cá nhân</option></select></label>
           <label for="tb-gui">Gửi tới<select id="tb-gui"><option value="tatca">Tất cả học viên và giáo viên</option><option value="giaovien">Chỉ giáo viên</option></select></label>
+          <label for="tb-cho" id="tb-cho-o" hidden>Gửi riêng cho<select id="tb-cho"><option value="">— Chọn người nhận —</option></select></label>
         </div>
         <div><button class="btn primary" type="submit">Đăng thông báo</button> <span class="status" id="tb-status"></span></div>
       </form>
@@ -820,6 +824,7 @@
         <div><button class="btn primary" type="submit">Thêm khung giờ</button> <span class="status" id="lich-st"></span></div>
         <div id="lich-ds"></div>
       </form>
+      <div class="tabs nho tb-loc" id="tb-loc" role="tablist" aria-label="Lọc thông báo theo loại"></div>
       <div class="tb-list" id="tb-list"></div>
     </section>
 
@@ -898,13 +903,14 @@
     <p class="eyebrow">Dành cho quản lý</p>
     <h1>Quản lý lớp</h1>
     <p class="muted">Học viên đi học, tiến độ, % đỗ dự báo, Top 5 bài nổi bật và duyệt tài khoản — tất cả ở một trang.</p>
-    <div class="ql-nhay" role="navigation" aria-label="Đi nhanh"><a href="#ql-tong">Học viên &amp; % đỗ</a><a href="#ql-top5">Top 5 tuần</a><a href="#ql-duyet-h">Duyệt tài khoản</a><a href="#ql-gv-h">Quyền giáo viên</a></div>
+    <div class="ql-nhay" role="navigation" aria-label="Đi nhanh"><a href="#ql-tong">Học viên &amp; % đỗ</a><a href="#ql-top5">Top 5 tuần</a><a href="#ql-sn">🎂 Sinh nhật</a><a href="#ql-duyet-h">Duyệt tài khoản</a><a href="#ql-gv-h">Quyền giáo viên</a></div>
   </div>
   <div class="lock" id="duyet-lock"><h3>Trang dành cho quản lý</h3><p class="muted">Chỉ Gmail quản lý lớp mới mở được trang này.</p><div class="ctas"><a class="btn primary" href="#tai-khoan">Đăng nhập</a></div></div>
   <div class="teacher" data-admin hidden id="duyet-body">
     <p class="sv-status" id="sv-status"></p>
     <section class="ql-sec" id="ql-tong" aria-labelledby="ql-tong-h"></section>
     <section class="ql-sec" id="ql-top5" aria-labelledby="ql-top5-h"></section>
+    <section class="ql-sec" id="ql-sn" aria-labelledby="ql-sn-h"></section>
     <h2 class="ql-h2" id="ql-duyet-h">Duyệt tài khoản</h2>
     <div class="ql-tim"><label for="ql-tim">Tìm trong yêu cầu, học viên, giáo viên<input id="ql-tim" type="search" autocomplete="off" placeholder="Gõ tên, Gmail hoặc số điện thoại (không dấu cũng được)"></label><p class="muted" id="ql-tim-kq" aria-live="polite"></p>
       <div class="gv-trao" id="gv-kq-o" hidden><p class="ql-nho">Trao quyền giáo viên cho người tìm được <small class="muted">· chọn chức vụ rồi bấm Trao quyền</small></p><div id="gv-kq" class="gv-kq" aria-live="polite"></div></div></div>
@@ -941,6 +947,6 @@
   <div class="lb-bar"><button type="button" id="lb-prev" aria-label="Bài trước">‹</button><span id="lb-cap" class="num"></span><p id="lb-mota" class="lb-mota" hidden></p><button type="button" id="lb-next" aria-label="Bài sau">›</button><button type="button" id="lb-close">Đóng</button></div>
 </div>
 <footer><div class="wrap">Lớp Vẽ Không Vui · Luyện thi năng khiếu Khối H, V · Thạch Thất, Hà Nội</div></footer>
-<script type="module" src="assets/js/app.js?v=20261010br"></script>
+<script type="module" src="assets/js/app.js?v=20261010bs"></script>
 </body>
 </html>

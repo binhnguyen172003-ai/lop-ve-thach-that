@@ -419,7 +419,7 @@ function keoDuoc(el, { batDau, di, tha }) {
   });
 }
 function datCum(cum) {
-  const v = store.get("lvtt-tl-cum", null); if (!v) { cum.classList.remove("trai", "tren"); return; }
+  const v = store.get("lvtt-tl-cum2", null); if (!v) { cum.classList.remove("trai", "tren"); return; }
   const r = cum.getBoundingClientRect(), W = innerWidth, H = innerHeight;
   // Không bao giờ đè lên thanh "Học thử · Vào lớp · Gọi · Zalo" ở đáy điện thoại
   // (thanh trượt lên khi cuộn, nên luôn chừa chỗ theo vị trí lúc thanh đã hiện)
@@ -465,7 +465,7 @@ function ganKeo(cum, ...khung) {
     batDau() { const r = cum.getBoundingClientRect(); x0 = r.left; y0 = r.top; cum.classList.add("keo"); Object.assign(cum.style, { left: x0 + "px", top: y0 + "px", right: "auto", bottom: "auto" }); },
     di(dx, dy) { const r = cum.getBoundingClientRect(); cum.style.left = kep(x0 + dx, 4, innerWidth - r.width - 4) + "px"; cum.style.top = kep(y0 + dy, 4, innerHeight - r.height - 4) + "px"; },
     tha() { const r = cum.getBoundingClientRect(); cum.classList.remove("keo");
-      store.set("lvtt-tl-cum", { ben: r.left + r.width / 2 < innerWidth / 2 ? "L" : "R", y: r.top / innerHeight }); datCum(cum);
+      store.set("lvtt-tl-cum2", { ben: r.left + r.width / 2 < innerWidth / 2 ? "L" : "R", y: r.top / innerHeight }); datCum(cum);
       khung.forEach(k => { if (!k.hidden && !store.get("lvtt-tl-khung", null)) datKhung(k); }); },
   }));
   // Khung chat: giữ thanh tiêu đề để kéo

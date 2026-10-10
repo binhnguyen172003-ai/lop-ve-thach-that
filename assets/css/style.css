@@ -3181,3 +3181,70 @@ table.roster.cc-cp{min-width:0}
   .cc-bang tfoot th,.cc-bang tfoot td{display:block;padding:0;border:0}
   .cc-bang-o{max-height:70vh}
 }
+
+/* ===== Thanh mục tài khoản: vòng xoay ngang — vuốt trái/phải, mục đang mở nằm giữa, hai mép mờ dần ===== */
+.acc-nav .wrap{scroll-snap-type:x proximity;overscroll-behavior-x:contain;padding-inline:24px;scroll-padding-inline:24px;
+  -webkit-mask-image:linear-gradient(90deg,transparent 0,#000 26px,#000 calc(100% - 26px),transparent 100%);mask-image:linear-gradient(90deg,transparent 0,#000 26px,#000 calc(100% - 26px),transparent 100%)}
+.acc-nav a{scroll-snap-align:center;flex:none;transition:transform .25s ease,opacity .25s ease,background .2s}
+@media (max-width:760px){
+  .acc-nav{margin-inline:-16px;padding-inline:0}
+  .acc-nav a:not([aria-current="page"]){opacity:.7;transform:scale(.93)}
+  .acc-nav a[aria-current="page"]{transform:scale(1.02);box-shadow:0 6px 18px -8px rgba(0,0,0,.5)}
+}
+@media (prefers-reduced-motion:reduce){.acc-nav a{transition:none}}
+
+/* ===== Điểm danh: danh sách học viên thành cửa sổ cuộn dọc, vuốt lên xuống từng thẻ, không phải kéo cả trang ===== */
+#dd-list{max-height:min(66vh,640px);overflow-y:auto;overscroll-behavior:contain;scroll-snap-type:y proximity;padding:8px;border:1px solid var(--rule);border-radius:var(--r);background:color-mix(in srgb,var(--ink) 3%,transparent);scrollbar-width:thin}
+#dd-list>li{scroll-snap-align:start;scroll-margin-top:8px}
+@media (max-width:640px){#dd-list{max-height:62svh;margin-inline:-4px}}
+
+/* ===== Nút nổi (nhắc việc, trợ lý): hạ thấp sát menu đáy, không che nội dung giữa màn hình ===== */
+@media (max-width:760px){
+  body.co-tab #tl-cum{bottom:calc(70px + env(safe-area-inset-bottom,0px))}
+  #tl-cum .tl-nut{width:50px;height:50px;font-size:1.2rem}#tl-cum .tl-nhac-nut{width:42px;height:42px;font-size:1.1rem}
+  #tl-cum{gap:8px}
+}
+
+/* ===== Lịch phân công dạy: điện thoại xem theo từng ngày (dọc), máy tính giữ bảng tuần ===== */
+.lpc-ngay-ds{display:none}
+@media (max-width:760px){
+  .lpc-cuon{display:none}
+  .lpc-ngay-ds{display:grid;gap:8px}
+  .lpc-dau{flex-direction:column;align-items:stretch}
+  .lpc-cs{display:grid;grid-template-columns:1fr 1fr}.lpc-cs .tab{justify-content:center}
+  .lpc-tuan{justify-content:space-between}.lpc-tuan>span{flex:1;text-align:center;font-weight:700}
+  .lpc-ngay{border:1px solid var(--rule);border-radius:12px;background:var(--paper);overflow:hidden}
+  .lpc-ngay.hom{border-color:color-mix(in srgb,#2ec4b6 60%,var(--rule));box-shadow:0 0 0 1px color-mix(in srgb,#2ec4b6 40%,transparent)}
+  .lpc-ngay.nghi{opacity:.55}
+  .lpc-ngay-dau{display:flex;align-items:center;gap:8px;padding:8px 12px;background:color-mix(in srgb,var(--ink) 5%,transparent);font-size:.9rem}
+  .lpc-ngay-dau .num{color:var(--graphite)}.lpc-ngay-dau .chip{margin-left:auto}
+  .lpc-trong{margin:0;padding:8px 12px;font-size:.82rem}
+  .lpc-dong{display:grid;grid-template-columns:74px minmax(0,1fr) auto;gap:10px;align-items:center;padding:10px 12px;border-top:1px solid var(--rule)}
+  .lpc-dong.thieu{background:color-mix(in srgb,#f5c400 12%,var(--paper))}
+  .lpc-gio{display:grid;line-height:1.2}.lpc-gio b{font-size:.88rem}.lpc-gio small{font-size:.7rem;color:var(--graphite)}
+  .lpc-noi{display:flex;flex-wrap:wrap;gap:4px;align-items:center;min-width:0}
+  .lpc-noi .lpc-mon{margin:0 4px 0 0;font-size:.74rem}
+  .lpc-noi .lpc-gv{display:inline-block;margin:0;font-size:.85rem}
+  .lpc-chua{color:var(--warn);font-weight:600}
+  .lpc-dong .lpc-xep{width:auto;min-height:36px;padding:4px 12px;font-size:.82rem;font-weight:600}
+}
+
+
+/* ===== Thông báo lớp: lọc theo loại, quan trọng nổi bật, sinh nhật gọn ===== */
+.tb-loc{margin:4px 0 12px;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}.tb-loc .tab{white-space:nowrap;flex:none}.tb-loc .tab small{opacity:.7}
+.tb.quantrong{border-left-color:#e5484d;background:color-mix(in srgb,#e5484d 6%,var(--sheet))}
+.tb-sn{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px;align-items:center;padding:10px 14px;border-left-color:#f5c400;background:color-mix(in srgb,#f5c400 7%,var(--sheet))}
+.tb-sn img{width:48px;height:48px;border-radius:12px}
+.tb-sn b{font:800 .95rem var(--f-display)}.tb-sn p{margin:2px 0;font-size:.9rem;line-height:1.45}.tb-sn .muted{font-size:.75rem}
+.sn-banh{font-size:.95em}
+/* Form đăng ký, hồ sơ: ô đồng ý lời chúc */
+.rg-sn,.hv-sn-ok{font-size:.86rem;line-height:1.4;align-items:flex-start!important}.rg-sn input,.hv-sn-ok input{margin-top:3px;flex:none}
+/* Quản lý: sinh nhật */
+.sn-loc{display:grid;gap:6px;margin:8px 0 12px}.sn-loc .tabs{margin:0;flex-wrap:wrap}
+.sn-ds{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.sn-ds li{display:grid;grid-template-columns:minmax(0,1fr) auto auto auto;gap:10px;align-items:center;padding:10px 12px;border:1px solid var(--rule);border-radius:12px;background:var(--sheet)}
+.sn-ds li.hom{border-color:#f5c400;background:color-mix(in srgb,#f5c400 10%,var(--sheet))}
+.sn-ten,.sn-ngay{display:grid;line-height:1.3}.sn-ten small,.sn-ngay small{font-size:.75rem;color:var(--graphite)}.sn-ngay{text-align:right}
+.sn-thieu{margin-top:12px}.sn-thieu summary{cursor:pointer;color:var(--graphite)}.sn-thieu .sn-ds li{grid-template-columns:minmax(0,1fr) auto}
+.sn-cfg{margin-top:14px}.sn-cfg summary{cursor:pointer}.sn-cfg form{display:grid;gap:10px;margin-top:10px}
+@media (max-width:640px){.sn-ds li{grid-template-columns:minmax(0,1fr) auto}.sn-ds li .chip{justify-self:start}.sn-ds li .btn{justify-self:end}}
