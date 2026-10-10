@@ -363,7 +363,7 @@ svg.art{display:block;width:100%;height:auto;aspect-ratio:4/3;color:var(--ink)}
 
 /* ===== Bài vẽ học viên ===== */
 .gallery{grid-template-columns:repeat(4,minmax(0,1fr))}
-.gallery button{position:relative}
+.gallery button{position:relative;font-family:inherit}
 .gallery .cap{position:absolute;left:0;right:0;bottom:0;padding:18px 10px 8px;background:linear-gradient(transparent,rgba(0,0,0,.65));color:#fff;font-size:.82rem;font-weight:600;text-align:left}
 .gallery.arts{grid-template-columns:repeat(5,minmax(0,1fr))}
 .gal-art{display:grid;gap:4px;align-content:start;padding:16px;background:var(--sheet);border:1px dashed var(--rule);border-radius:var(--r)}
@@ -2158,7 +2158,13 @@ body.hop-mo{overflow:hidden}
 .tl-dk[hidden]{display:none}
 .tl-tabs button[hidden]{display:none}
 /* Nút chat không đè thanh "Học thử miễn phí" trên điện thoại khi chưa đăng nhập */
-@media (max-width:640px){body:not(.da-dn) #tl-cum{bottom:calc(76px + env(safe-area-inset-bottom,0px))}}
+/* Chỉ nhấc nút lên khi thanh đó đang hiện; ở màn hình đầu thanh chưa hiện nên nút nằm sát đáy, không che dòng "đã đỗ" và tên trường */
+@media (max-width:640px){
+  #tl-cum{transition:bottom .35s ease}
+  body:not(.da-dn):has(.dock.show) #tl-cum{bottom:calc(76px + env(safe-area-inset-bottom,0px))}
+  .cine-schools{padding-inline:64px}
+}
+@media (prefers-reduced-motion:reduce){#tl-cum{transition:none}}
 /* Tin nhắn riêng: khung co theo phần màn hình còn lại khi bàn phím bật */
 @media (max-width:640px){.chat{height:calc(var(--vvh,100dvh) - 190px);min-height:min(380px,calc(var(--vvh,100dvh) - 120px))}}
 .menu-ov{z-index:70}
