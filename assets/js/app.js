@@ -3249,7 +3249,7 @@ function renderDash(show) {
     let keo = false, chan = false, dx = 0, x0 = 0;
     const viTri = e => { const r = t.getBoundingClientRect(), n = t.querySelectorAll("a").length || 1, w = (r.width - 8) / n;
       return Math.max(0, Math.min(n - 1, (e.clientX - r.left - 4) / w - .5)); };
-    const theo = e => { const v = viTri(e); t.classList.add("luot"); t.style.setProperty("--i", v.toFixed(3));
+    const theo = e => { const v = viTri(e); t.classList.add("luot"); t.style.setProperty("--i", v.toFixed(3)); t.style.setProperty("--a", v.toFixed(3)); t.style.setProperty("--b", v.toFixed(3));
       t.querySelectorAll("a").forEach((a, i) => a.classList.toggle("gan", i === Math.round(v))); };
     const traVe = () => { t.classList.remove("luot"); t.querySelectorAll("a.gan").forEach(a => a.classList.remove("gan")); viTriTab(); };
     t.addEventListener("pointerdown", e => { keo = true; dx = 0; x0 = e.clientX; });
@@ -3265,7 +3265,10 @@ function renderDash(show) {
 function viTriTab() {
   const t = $("#tab-duoi"); if (!t) return;
   const ds = [...t.querySelectorAll("a")], i = ds.findIndex(x => x.hasAttribute("aria-current"));
-  t.style.setProperty("--n", ds.length || 1); if (i >= 0) t.style.setProperty("--i", i); t.classList.toggle("co-chon", i >= 0);
+  t.style.setProperty("--n", ds.length || 1); t.classList.toggle("co-chon", i >= 0);
+  if (i >= 0) { const cu = t.dataset.i === undefined ? i : +t.dataset.i; // vòng sáng: đầu đi trước chạy nhanh, đầu sau bám theo → kéo dài thành vệt rồi thu lại (kiểu ARC)
+    t.classList.toggle("phai", i > cu); t.classList.toggle("trai", i < cu); t.dataset.i = i;
+    t.style.setProperty("--i", i); t.style.setProperty("--a", i); t.style.setProperty("--b", i); }
 }
 function renderTiles() {
   const box = $("#acc-tiles"); if (!box) return;
@@ -4087,15 +4090,38 @@ function showCachedSession() {
   $("#hw-list").innerHTML = `<div class="empty">Đang tải bài tập…</div>`;
 }
 
+// Mã PIN 4 số (kiểu ô OTP): cách mở khoá dự phòng / cho máy không có cảm biến vân tay
+function nutPin(u) {
+  const b = $("#pin-bat"); if (!b) return;
+  if (!u) { b.hidden = true; return; }
+  const ve = () => { const on = vanTay.coPin(u.uid); b.hidden = false; b.setAttribute("aria-pressed", on);
+    b.innerHTML = on ? "🔢 Bỏ mã PIN mở khoá trên máy này" : "🔢 Đặt mã PIN 4 số để mở khoá trên máy này"; };
+  ve();
+  b.onclick = () => {
+    if (vanTay.coPin(u.uid)) { vanTay.boPin(u); ve(); return toast("Đã bỏ mã PIN trên máy này."); }
+    let lan1 = "";
+    const h = moHop(`<h3>Đặt mã PIN mở khoá</h3><p class="muted" id="pin-hd">Nhập 4 số dễ nhớ với em, khó đoán với người khác (đừng dùng 0000, 1234, năm sinh).</p>
+      <label class="otp otp-hop" data-an="0"><span class="sr-only">Mã PIN 4 số</span><input inputmode="numeric" pattern="[0-9]*" maxlength="4" autocomplete="off" aria-label="Mã PIN 4 số"><span class="otp-o"></span><span class="otp-o"></span><span class="otp-o"></span><span class="otp-o"></span></label>
+      <p class="muted otp-ghi">Mã chỉ lưu dạng mã hoá trên máy này. Nhập sai 5 lần, web tự đăng xuất.</p>`, "Đặt mã PIN");
+    const nhan = h.el.querySelector(".otp"), inp = nhan.querySelector("input"); setTimeout(() => inp.focus(), 80);
+    vanTay.otp(nhan, async ma => {
+      if (/^(\d)\1{3}$|^(0123|1234|2345|3456|4567|5678|6789|9876|4321)$/.test(ma)) { $("#pin-hd").textContent = "Mã này dễ đoán quá, em chọn 4 số khác nhé."; return false; }
+      if (!lan1) { lan1 = ma; $("#pin-hd").textContent = "Nhập lại mã PIN một lần nữa để xác nhận."; setTimeout(() => { inp.value = ""; inp.dispatchEvent(new Event("input")); inp.focus(); }, 250); return true; }
+      if (ma !== lan1) { lan1 = ""; $("#pin-hd").textContent = "Hai lần nhập chưa khớp. Nhập lại mã mới từ đầu."; return false; }
+      await vanTay.datPin(u, ma); h.dong ? h.dong() : h.el.closest(".hop-ov")?.remove(); ve(); toast("Đã đặt mã PIN. Lần sau mở web trên máy này, nhập mã là vào được."); return true;
+    });
+  };
+}
 // Nút bật / tắt mở khoá bằng vân tay trên máy này (chỉ hiện khi máy có cảm biến vân tay / Face ID)
 async function nutVanTay(u) {
+  nutPin(u);
   const b = $("#vt-bat"); if (!b) return;
   if (!u || !(await vanTay.hoTro())) { b.hidden = true; return; }
   const ve = () => { const on = vanTay.daBat(u.uid); b.hidden = false; b.setAttribute("aria-pressed", on);
     b.innerHTML = on ? "🔓 Tắt mở khoá bằng vân tay trên máy này" : "🔒 Bật mở khoá bằng vân tay / Face ID trên máy này"; };
   ve();
   b.onclick = async () => {
-    if (vanTay.daBat(u.uid)) { vanTay.tat(); ve(); return toast("Đã tắt khoá vân tay trên máy này."); }
+    if (vanTay.daBat(u.uid)) { vanTay.tatVanTay(u); ve(); return toast("Đã tắt khoá vân tay trên máy này."); }
     try { b.disabled = true; await vanTay.bat(u); ve(); toast("Đã bật! Lần sau mở web trên máy này, chạm vân tay là vào được."); }
     catch (e) { toast(e && e.name === "NotAllowedError" ? "Chưa bật: em đã huỷ hoặc chưa xác minh vân tay." : "Máy này chưa bật được khoá vân tay.", "err"); }
     finally { b.disabled = false; }
