@@ -199,3 +199,15 @@ Khi xóa bài, hệ thống xóa tài liệu kèm theo. Nếu mạng hoặc quy�
 - **Chỉ tiêu KPI** (Theo dõi GV → bảng công → Chỉ tiêu): đặt số công và **số bài mẫu phải làm mỗi tháng**. Bài mẫu = bài vẽ quản lý tick "Bài mẫu", do giáo viên đó đăng hoặc đứng tên.
 - **Sinh nhật**: học viên, giáo viên điền ngày sinh khi đăng ký hoặc trong Tài khoản; quản lý sửa ở **Quản lý → 🎂 Sinh nhật**. Đến ngày, lời chúc tự hiện trong **Thông báo lớp** (giờ Việt Nam, mỗi người một lần mỗi năm, không hiện năm sinh). Chỉ đăng cho người đã tick đồng ý.
 - **Thông báo lớp** chia 6 loại; loại **Quan trọng** luôn nằm trên cùng 7 ngày; **Cá nhân** chỉ người nhận xem được.
+
+## Xét tuyển đại học (cập nhật 10/2026)
+
+**Lần đầu:** Quản lý → khung kiểm tra máy chủ → **Sao chép luật mới** → dán vào Firebase → **Publish**.
+
+1. **Nhập công thức** (quản lý): Tài khoản → **🎓 Xét tuyển** → *Công thức tính điểm & phân phạm vi* → **+ Thêm cấu hình**. Mỗi trường / ngành / phương thức / năm là một cấu hình: môn, nguồn điểm (thi THPT, học bạ 5 kỳ…, năng khiếu), hệ số, quy về thang 30 hay không, cách cộng ưu tiên, điều kiện môn, điểm chuẩn các năm trước, **link đề án**. Chỉ tick **Đã đối chiếu với đề án chính thức** khi đã kiểm tra; chưa tick thì web báo “Chưa đủ dữ liệu tính điểm”. Sang năm mới bấm **Nhân bản** rồi sửa theo đề án mới.
+2. **Phân phạm vi**: chọn cơ sở mỗi giáo viên được xem (mặc định theo cơ sở của giáo viên).
+3. **Gửi thông báo**: nút *Gửi thông báo yêu cầu bổ sung* (mỗi tháng một lần, không gửi trùng). Giáo viên bấm *Nhắc bổ sung* để nhắc riêng từng em (mỗi ngày tối đa một lần).
+4. **Học viên** điền nguyện vọng, học bạ, điểm thi; web chỉ hỏi các môn, học kỳ nguyện vọng cần. Có **Lưu tạm** và bản nháp tự lưu.
+5. **Giáo viên** ghi điểm năng khiếu (thi thử / trên lớp / chính thức), đặt mục tiêu, ước tính, xác minh, nhận xét riêng (học viên không xem được), dùng công cụ **Cần bao nhiêu điểm để đạt mục tiêu?**, xuất CSV.
+
+Web **không hiển thị tỷ lệ % trúng tuyển** vì chưa có mô hình được kiểm định; chỉ hiện tổng điểm, chênh lệch với điểm chuẩn tham khảo và mức độ đáp ứng.

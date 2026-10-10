@@ -34,7 +34,7 @@ async function loadFirebase() {
 /* ---------- Nhật ký sửa: ghi lại ai thêm/sửa/xoá dữ liệu quan trọng, kèm bản trước và sau ----------
    Chỉ ghi thao tác của giáo viên/quản lý. Quản lý xem và khôi phục ở Vận hành → Nhật ký sửa. */
 const NK_BANG = new Set(["hocvien", "giaovien", "nhanxet", "diemdanh", "baitap", "giaotrinh", "lichnhac", "tiendo", "xephang", "baive", "bantin", "kho", "thongbao",
-  "congviec", "doiten", "caday", "trucnhat", "thithu", "thithubai", "suco", "bangiao", "kiemtra", "doica", "luongdc", "bangluong", "suacong", "cauhinh", "sinhnhat"]);
+  "congviec", "doiten", "caday", "trucnhat", "thithu", "thithubai", "suco", "bangiao", "kiemtra", "doica", "luongdc", "bangluong", "suacong", "cauhinh", "sinhnhat", "xettuyen", "nangkhieu", "xtnoibo", "xtcauhinh"]);
 const nkGoc = {};
 const nkCan = ref => isTeacher && ref && ref.parent && !ref.parent.parent && NK_BANG.has(ref.parent.id) && !String(ref.id).startsWith("_");
 const nkJson = d => { try { const t = JSON.stringify(d); return t.length > 600000 ? "(quá lớn)" : t; } catch (e) { return "(quá lớn)"; } };
@@ -75,10 +75,12 @@ function bocNhatKy() {
 
 const $ = s => document.querySelector(s);
 // Trợ lý (chat + nhắc việc) tải riêng, không làm chậm trang
-const troLyPromise = import("./tro-ly.js?v=20261010bs").catch(e => console.warn("Chưa tải được trợ lý", e));
+const troLyPromise = import("./tro-ly.js?v=20261011a").catch(e => console.warn("Chưa tải được trợ lý", e));
 // Thi thử + vận hành lớp: chỉ tải khi đã đăng nhập vào học
-let vanHanhP = null, vanHanhM = null;
-const taiVanHanh = () => vanHanhP ||= import("./van-hanh.js?v=20261010bs").then(m => vanHanhM = m).catch(e => { vanHanhP = null; console.warn("Chưa tải được phần vận hành", e); });
+let vanHanhP = null, vanHanhM = null, xetTuyenP = null, xetTuyenM = null;
+// Xét tuyển đại học: chỉ tải khi đã đăng nhập vào học
+const taiXetTuyen = () => xetTuyenP ||= import("./xet-tuyen.js?v=20261011a").then(m => xetTuyenM = m).catch(e => { xetTuyenP = null; console.warn("Chưa tải được phần xét tuyển", e); });
+const taiVanHanh = () => vanHanhP ||= import("./van-hanh.js?v=20261011a").then(m => vanHanhM = m).catch(e => { vanHanhP = null; console.warn("Chưa tải được phần vận hành", e); });
 window.__appOk = true;
 document.querySelectorAll(".slow-bar").forEach(el => el.remove());
 
@@ -124,7 +126,7 @@ addEventListener("error", e => {
 });
 /* ---------- Mở tức thì ở lần sau + dùng được khi mạng yếu ---------- */
 if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost") && !/[?&]khongcache/.test(location.search))
-  addEventListener("load", () => navigator.serviceWorker.register("sw.js?v=20261010bs").catch(() => {}));
+  addEventListener("load", () => navigator.serviceWorker.register("sw.js?v=20261011a").catch(() => {}));
 
 /* ---------- Đo tốc độ: mở web kèm ?chandoan=1 để xem từng bước mất bao lâu ---------- */
 const DIAG = /[?&]chandoan/.test(location.search);
@@ -203,7 +205,7 @@ function copyText(text, statusEl, okMsg, selectEl) {
 }
 
 /* ================= Điều hướng ================= */
-const PAGES = ["giao-trinh", "bai-tap", "tai-khoan", "duyet", "diem-danh", "lam-viec", "thi-thu", "van-hanh"];
+const PAGES = ["giao-trinh", "bai-tap", "tai-khoan", "duyet", "diem-danh", "lam-viec", "thi-thu", "van-hanh", "xet-tuyen"];
 // Nhớ vị trí cuộn theo từng bước lịch sử: mở mục mới → lên đầu; bấm quay lại / tiến tới → về đúng chỗ đang xem
 try { history.scrollRestoration = "manual"; } catch (e) {}
 const viTriCuon = {}; let khoaCuon = null;
@@ -267,6 +269,7 @@ function route() {
   { const on = $("#acc-nav [aria-current='page']"), w = $("#acc-nav .wrap"); if (on && w) requestAnimationFrame(() => w.scrollTo({ left: on.offsetLeft - (w.clientWidth - on.offsetWidth) / 2, behavior: "smooth" })); }
   if (page === "home") $("#nav-acct").removeAttribute("aria-current"); else $("#nav-acct").setAttribute("aria-current", "page");
   if (window.__lvReady) { renderAccNav(); if (page === "lam-viec") lvOnShow(); }
+  if (page === "xet-tuyen" && xetTuyenM) xetTuyenM.veLai();
   if (yCu !== undefined) requestAnimationFrame(() => window.scrollTo(0, yCu));
   else if (page !== "home") window.scrollTo(0, 0);
   else if (h) { const el = document.getElementById(h); if (el) el.scrollIntoView(); }
@@ -2456,6 +2459,8 @@ async function checkRules() {
     buoc = "Báo sự cố";
     // Phiếu thử của lần kiểm tra trước có thể còn sót (đóng trang giữa chừng): dọn trước, nếu không lần ghi này bị tính là "sửa" và bị chặn oan
     const scRef = doc(db, "suco", "_kiem-tra"); await deleteDoc(scRef).catch(() => {}); await setDoc(scRef, { coSo: "thử", loai: "Khác", moTa: "thử", ai: mail, ten: "", luc: Date.now(), capNhat: Date.now(), trangThai: "moi" }); await deleteDoc(scRef);
+    buoc = "Xét tuyển đại học";
+    const xtRef = doc(db, "xtcauhinh", "_kiem-tra"); await setDoc(xtRef, { mon: [{ ma: "toan", nguon: "thpt", heSo: 1 }], xacMinh: false }); await deleteDoc(xtRef);
     buoc = "Ngày sinh, lời chúc sinh nhật";
     const snRef = doc(db, "sinhnhat", "_kiem-tra"); await setDoc(snRef, { ten: "thử", ngay: "01-01", coSo: "", vaiTro: "hv", congKhai: false, capNhat: Date.now() }); await deleteDoc(snRef);
     box.className = "sv-status ok"; box.textContent = "✓ Máy chủ hoạt động tốt: học viên gửi phiếu sẽ hiện ngay ở đây.";
@@ -3652,6 +3657,8 @@ function capNhatNhac() {
       chuaXem.slice(0, 3).forEach(x => ds.push({ id: "tb-" + x.id, icon: loaiTB(x) === "quantrong" ? "❗" : "📣", muc: loaiTB(x) === "quantrong" ? "gap" : "", tieuDe: "Thông báo: " + (x.tieuDe || "mới của lớp"), nd: String(x.nd || "").slice(0, 100), link: "#lam-viec", tab: "tb", dich: `[data-nhac-id="${CSS.escape("tb-" + x.id)}"]` }));
       if (tb > 3) ds.push({ id: "tb-more-" + tb, icon: "📣", muc: "", tieuDe: `Còn ${tb - 3} thông báo mới khác`, link: "#lam-viec", tab: "tb", dich: "#lv-tb" });
     }
+    // Hồ sơ xét tuyển còn thiếu: nhắc học viên bổ sung (một dòng, bấm mở đúng biểu mẫu)
+    if (!isTeacher && xetTuyenM) { const x = xetTuyenM.nhac(); if (x) ds.push(x); }
     // Sinh nhật hôm nay: một dòng gọn, luôn xếp cuối, không che các nhắc quan trọng
     const sn = tbSinhNhatHomNay();
     if (sn.length) ds.push({ id: "sn-" + hom, icon: "🎂", muc: "", tieuDe: "Hôm nay sinh nhật " + sn.map(x => x.tenNguoi).join(", "), nd: "Gửi lời chúc trong mục Thông báo lớp nhé 🎉", link: "#lam-viec", tab: "tb", dich: "#lv-tb" });
@@ -3928,6 +3935,7 @@ function renderTB() {
       <div class="tb-head">${lo ? `<span class="chip ${lo === "quantrong" ? "bad" : "line"}">${ic} ${esc(tenLoai)}</span>` : ""}${t.gui === "giaovien" ? `<span class="chip line">Nội bộ giáo viên</span>` : ""}${t.gui === "canhan" ? `<span class="chip line">Gửi riêng${isTeacher && t.choTen ? " · " + esc(t.choTen) : ""}</span>` : ""}${t.tuDong ? `<span class="chip line">Tự động</span>` : ""}<b>${esc(t.tieuDe || "Thông báo")}</b>
         <span class="muted num">${esc(t.ten || "")} · ${esc(fmtDate(t.luc))}</span></div>
       <p>${esc(t.nd).replace(/\n/g, "<br>")}</p>
+      ${/^#[a-z0-9-]+$/.test(t.link || "") ? `<a class="btn small primary" href="${esc(t.link)}">${t.link === "#xet-tuyen" ? "Cập nhật thông tin" : "Mở mục liên quan"}</a>` : ""}
       ${isAdmin || t.tacGia === mail ? `<button type="button" class="btn small" data-xtb="${esc(t.id)}">Xoá</button>` : ""}</article>`; }).join("")
     : `<p class="muted empty">${tbLoc === "tatca" ? "Chưa có thông báo nào." : "Chưa có thông báo loại này."}</p>`;
   $$("#tb-list [data-xtb]").forEach(b => confirmButton(b, () => deleteDoc(doc(db, "thongbao", b.dataset.xtb))));
@@ -4069,7 +4077,7 @@ motLan($("#f-viec"), async e => {
 });
 
 /* ---------- Đăng nhập ---------- */
-function stopListeners() { unsubs.forEach(u => u()); unsubs = []; if (vanHanhM) vanHanhM.dung(); }
+function stopListeners() { unsubs.forEach(u => u()); unsubs = []; if (vanHanhM) vanHanhM.dung(); if (xetTuyenM) xetTuyenM.dung(); }
 function listen(q, fn) {
   const t = performance.now(); let first = true;
   const name = q.path || (q._query && q._query.path && q._query.path.segments && q._query.path.segments.join("/")) || "dữ liệu";
@@ -4270,6 +4278,11 @@ async function onUser(u) {
     m.batDau({ db, fs: { collection, doc, getDoc, setDoc, deleteDoc, writeBatch, query, orderBy, where, limit, onSnapshot, deleteField }, themHuy: f => unsubs.push(f),
       mail, ten: (!isTeacher && myHv && myHv.ten) || (user && user.displayName) || mail.split("@")[0], isAdmin, isTeacher,
       toast, moHop, nenAnh, homNay: todayVN, giaoVien: () => teachers, hocVien: () => roster, gvToi: () => myGvDoc, taiCSV, ddCa, ddNgay, doiCa: renderAttend });
+  });
+  taiXetTuyen().then(m => { if (!m || !user || mail !== (u.email || "").toLowerCase()) return;
+    m.batDau({ db, fs: { collection, doc, getDoc, setDoc, deleteDoc, writeBatch, query, where, onSnapshot }, themHuy: f => unsubs.push(f),
+      mail, ten: (!isTeacher && myHv && myHv.ten) || (user && user.displayName) || mail.split("@")[0], isAdmin, isTeacher,
+      toast, moHop, homNay: todayVN, giaoVien: () => teachers, hocVien: () => roster, gvToi: () => myGvDoc, hvToi: () => myHv, taiCSV });
   });
   if (!isAdmin && !isTeacher) listen(query(collection(db, "dondh"), where("mail", "==", mail)), snap => { donCuaToi = snap.docs.map(d => ({ id: d.id, ...d.data() })); renderHvInfo(); });
   if (isAdmin) {

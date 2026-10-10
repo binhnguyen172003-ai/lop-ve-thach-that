@@ -428,7 +428,8 @@ function datCum(cum) {
   // Menu 4 nút dưới đáy (điện thoại, đã vào lớp) cũng phải chừa chỗ
   const tab = document.getElementById("tab-duoi"), tt = tab && tab.offsetHeight && getComputedStyle(tab).display !== "none" ? tab.getBoundingClientRect().top - 10 : H;
   const day2 = Math.min(day, tt);
-  const x = v.ben === "L" ? 12 : W - r.width - 12, y = kep(v.y * H, 12, day2 - r.height);
+  // Điện thoại: luôn nằm sát menu đáy (chỉ nhớ bên trái/phải), không lơ lửng giữa màn hình che nội dung
+  const x = v.ben === "L" ? 12 : W - r.width - 12, y = W <= 760 ? day2 - r.height : kep(v.y * H, 12, day2 - r.height);
   Object.assign(cum.style, { left: x + "px", top: y + "px", right: "auto", bottom: "auto" });
   cum.classList.toggle("trai", v.ben === "L"); cum.classList.toggle("tren", y < H * .35);
 }

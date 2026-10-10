@@ -195,6 +195,7 @@ service cloud.firestore {
         && request.resource.data.gui in ['tatca', 'giaovien', 'canhan']
         && (request.resource.data.gui != 'canhan' || (request.resource.data.cho is string && request.resource.data.cho.size() > 3 && request.resource.data.cho.size() <= 100))
         && (!('loai' in request.resource.data) || request.resource.data.loai in ['quantrong', 'lichhoc', 'baitap', 'thanhtich', 'sinhnhat', 'canhan'])
+        && linkHopLe(request.resource.data)
         && request.resource.data.nd is string && request.resource.data.nd.size() > 0 && request.resource.data.nd.size() <= 2000
         && shortText(request.resource.data, 'tieuDe', 120);
       allow delete: if isAdmin() || (isStaff() && resource.data.tacGia == myEmail());
@@ -450,12 +451,83 @@ service cloud.firestore {
       allow create: if isStaff() && request.resource.data.ai == myEmail() && request.resource.data.luc is int
         && request.resource.data.col in ['hocvien', 'giaovien', 'nhanxet', 'diemdanh', 'baitap', 'giaotrinh', 'lichnhac', 'tiendo', 'xephang', 'baive', 'bantin', 'kho',
              'thongbao', 'congviec', 'doiten', 'caday', 'trucnhat', 'thithu', 'thithubai', 'suco', 'bangiao', 'kiemtra', 'doica',
-             'luongdc', 'bangluong', 'suacong', 'cauhinh', 'sinhnhat']
+             'luongdc', 'bangluong', 'suacong', 'cauhinh', 'sinhnhat', 'xettuyen', 'nangkhieu', 'xtnoibo', 'xtcauhinh']
         && request.resource.data.loai in ['tao', 'sua', 'xoa'] && request.resource.data.ma is string
         // Giáo viên không được tạo / xoá hồ sơ ở các bảng chỉ quản lý thao tác → nhật ký kiểu đó chắc chắn là giả
         && (isAdmin() || request.resource.data.loai == 'sua'
-            || !(request.resource.data.col in ['hocvien', 'giaovien', 'caday', 'kho', 'xephang', 'giaotrinh', 'lichnhac', 'tiendo', 'luongdc', 'bangluong', 'cauhinh']));
+            || !(request.resource.data.col in ['hocvien', 'giaovien', 'caday', 'kho', 'xephang', 'giaotrinh', 'lichnhac', 'tiendo', 'luongdc', 'bangluong', 'cauhinh', 'xtcauhinh']));
       allow update, delete: if false;
+    }
+
+    // ===== XÉT TUYỂN ĐẠI HỌC =====
+    // Phạm vi giáo viên: quản lý gán trong hồ sơ giáo viên (xtPhamVi = ['Bình Phú'] / ['Kim Quan'] / ['tatca']); chưa gán thì theo cơ sở của giáo viên.
+    function xtPhamVi() {
+      let g = get(/databases/$(database)/documents/giaovien/$(myEmail())).data;
+      return g.get('xtPhamVi', [g.get('coso', '')]);
+    }
+    // Quản lý xem tất cả; giáo viên chỉ xem học viên thuộc cơ sở được phân công
+    function xtDuocXem(cs) {
+      return isAdmin() || (isTeacher() && (xtPhamVi().hasAny(['tatca']) || cs in xtPhamVi()));
+    }
+    function coSoHV(mail) {
+      return get(/databases/$(database)/documents/hocvien/$(mail)).data.get('coso', '');
+    }
+    function diemOk(v) { return v is number && v >= 0 && v <= 10; }
+    // Ghi có số phiên bản: ai lưu sau dựa trên bản cũ sẽ bị chặn (không ghi đè âm thầm khi hai người cùng sửa)
+    function dungPhienBan() {
+      return request.method == 'create' ? request.resource.data.phienBan == 1
+        : request.resource.data.phienBan == resource.data.phienBan + 1;
+    }
+    // Công thức tính điểm: ai đăng nhập cũng đọc (để tự tính điểm của mình); chỉ quản lý thêm/sửa
+    match /xtcauhinh/{id} {
+      allow read: if signedIn();
+      allow write: if isAdmin()
+        && request.resource.data.mon is list && request.resource.data.mon.size() > 0 && request.resource.data.mon.size() <= 8
+        && request.resource.data.xacMinh is bool
+        && (request.resource.data.xacMinh == false || (request.resource.data.nguonUrl is string && request.resource.data.nguonUrl.matches('^https://[^ "<>]+$')));
+      allow delete: if isAdmin();
+    }
+    // Hồ sơ xét tuyển của học viên (nguyện vọng, học bạ, điểm thi): học viên tự sửa của mình; giáo viên trong phạm vi xem và sửa giúp
+    match /xettuyen/{mail} {
+      allow read: if isMe(mail) || xtDuocXem(resource.data.coSo);
+      allow create, update: if (isMe(mail) && isStudent() || xtDuocXem(coSoHV(mail)))
+        && hvDaDuyet(mail)
+        && request.resource.data.coSo == coSoHV(mail)
+        && dungPhienBan()
+        && request.resource.data.nv is list && request.resource.data.nv.size() <= 2
+        && request.resource.data.hocBa is map && request.resource.data.thpt is map
+        && (!('uuTien' in request.resource.data) || (request.resource.data.uuTien is number && request.resource.data.uuTien >= 0 && request.resource.data.uuTien <= 3))
+        && (!('namThi' in request.resource.data) || request.resource.data.namThi == null || (request.resource.data.namThi is int && request.resource.data.namThi >= 2024 && request.resource.data.namThi <= 2040))
+        && request.resource.data.capNhatBoi == myEmail();
+      allow delete: if isAdmin();
+      // Lịch sử cập nhật: chỉ thêm, không ai sửa/xoá
+      match /lichsu/{id} {
+        allow read: if isMe(mail) || xtDuocXem(coSoHV(mail));
+        allow create: if (isMe(mail) || xtDuocXem(coSoHV(mail))) && request.resource.data.ai == myEmail() && request.resource.data.luc is int
+          && shortText(request.resource.data, 'tom', 2000);
+        allow update, delete: if false;
+      }
+    }
+    // Điểm năng khiếu: thi thử, đánh giá trên lớp, thi chính thức. Giáo viên trong phạm vi ghi; học viên chỉ xem điểm của mình.
+    match /nangkhieu/{id} {
+      allow read: if (signedIn() && resource.data.mail == myEmail()) || xtDuocXem(resource.data.coSo);
+      allow create, update: if xtDuocXem(coSoHV(request.resource.data.mail))
+        && request.resource.data.coSo == coSoHV(request.resource.data.mail)
+        && request.resource.data.mon in ['hinhhoa', 'bocucmau', 'trangtrimau', 'vemythuat', 'mythuat2', 'nkkhac']
+        && request.resource.data.loai in ['thithu', 'trenlop', 'chinhthuc']
+        && diemOk(request.resource.data.diem)
+        && request.resource.data.ngay is string && request.resource.data.ngay.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+        && shortText(request.resource.data, 'ghiChu', 300) && shortText(request.resource.data, 'deTruong', 120) && shortText(request.resource.data, 'gvCham', 80)
+        && (request.method == 'create' ? request.resource.data.nguoi == myEmail()
+            : request.resource.data.nguoi == resource.data.nguoi && request.resource.data.mail == resource.data.mail);
+      allow delete: if isAdmin();
+    }
+    // Đánh giá nội bộ (mục tiêu, ước tính, xác minh, nhận xét riêng): CHỈ giáo viên trong phạm vi và quản lý; học viên không đọc được
+    match /xtnoibo/{mail} {
+      allow read: if xtDuocXem(resource.data.coSo);
+      allow create, update: if xtDuocXem(coSoHV(mail)) && request.resource.data.coSo == coSoHV(mail) && dungPhienBan()
+        && shortText(request.resource.data, 'nhanXet', 2000) && request.resource.data.capNhatBoi == myEmail();
+      allow delete: if isAdmin();
     }
 
     match /admins/{mail} {
