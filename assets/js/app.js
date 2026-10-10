@@ -7,6 +7,7 @@ import { FILE_LIMITS, FILE_TYPES, fileExt, fileSize, validateFiles, attachmentSt
 import { GIAO_TRINH_MAU as GT_LO_TRINH } from "../../data/giao-trinh-mau.js?v=20261010bf";
 import { soSanhTenHocVien } from "./ten-hoc-vien.js?v=20261010bs";
 import { GO_KHOI_CA, thuocDanhSachCa } from "./danh-sach-ca.js?v=20261010bs";
+import * as vanTay from "./van-tay.js?v=20261011vt";
 import { LIEN_HE, NAM_THI, LICH_THI, BO_LOC_TRUONG, CA_HOC, THOI_GIAN_BIEU, BAI_VE, BANG_VANG, TRUONG, MUC_TIEU, GIAO_VIEN, VIDEO_BIA, BAI_NOI_BAT, THANH_TUU_TRAO, XP_THUONG, AVATAR, SO_DU_THI, HOA_CU, TON_DAU_KY, BAN_TIN, SAN_PHAM, LICH_THI_CAP_NHAT, DO_MANG, MANG_XA_HOI } from "../../data/noi-dung.js?v=20261010bh";
 
 // Firebase được tải riêng, để phần giới thiệu vẫn chạy kể cả khi mạng chậm hoặc chưa cấu hình.
@@ -75,6 +76,8 @@ function bocNhatKy() {
 }
 
 const $ = s => document.querySelector(s);
+// Máy đã bật khoá vân tay: che nội dung ngay khi web mở, trước khi dữ liệu đã lưu kịp hiện ra
+vanTay.khoiDong({ dangXuat: () => document.getElementById("btn-switch")?.click() });
 // Trợ lý (chat + nhắc việc) tải riêng, không làm chậm trang
 const troLyPromise = import("./tro-ly.js?v=20261010bt").catch(e => console.warn("Chưa tải được trợ lý", e));
 // Thi thử + vận hành lớp: chỉ tải khi đã đăng nhập vào học
@@ -2894,7 +2897,8 @@ function renderAttend() {
     ${noiKhac(r) ? `<span class="chip">Đã điểm danh tại ${esc(noiKhac(r))}</span>` : `<div class="dd-nut"><div class="seg seg5" role="group" aria-label="Điểm danh ${esc(r.ten)}">${DD_TT.map(([v, t]) =>
       `<button type="button" class="${v}" data-dd="${esc(r.id)}" data-v="${v}" aria-pressed="${val(r) === v}">${t}</button>`).join("")}</div><button type="button" class="linkish" data-gc="${esc(r.id)}">${(diemdanhAll[r.id] || {})["gc:" + key] ? "Sửa ghi chú" : "Ghi chú"}</button></div>`}${!khoa ? `<button type="button" class="dd-go" data-dd-go="${esc(r.id)}" aria-label="Gỡ ${esc(r.ten)} khỏi ca này" title="Chỉ gỡ khỏi ca, giữ nguyên hồ sơ">×</button>` : ""}</li>`).join("")
     : `<li class="muted">${empty}</li>`;
-  $$("#dd-list [data-dd]").forEach(b => b.onclick = () => ghiDiemDanh([b.dataset.dd], key, b.dataset.v, cs));
+  $$("#dd-list [data-dd]").forEach(b => b.onclick = () => { ghiDiemDanh([b.dataset.dd], key, b.dataset.v, cs); ddTiep(b); });
+  ddVuot();
   $$("#dd-list [data-gc]").forEach(b => b.onclick = () => ghiChuDD(b.dataset.gc, key));
   $("#dd-them-hv")?.addEventListener("click", () => moThemHocVienCa(key, cs));
   $$("#dd-list [data-dd-go]").forEach(b => b.onclick = () => moGoHocVienCa(b.dataset.ddGo, key));
@@ -3140,6 +3144,22 @@ function ganBieuDoDash(box) {
     goi.innerHTML = `<b class="num">${so[i]} bài</b><span>${esc(THU_DAY[new Date(ngay[i] + "T12:00:00").getDay()] || "")} ${nhanNgay(ngay[i])}</span>`;
     goi.style.left = `${Math.min(Math.max(cx / W * 100, 12), 88)}%`; goi.style.top = `${cy / H * 100}%`; });
   svg.addEventListener("pointerleave", an);
+}
+// Điểm danh trên điện thoại: danh sách thành dải thẻ vuốt ngang (đỡ phải cuộn dài), có số thứ tự "3/25"
+const ddNgang = () => matchMedia("(max-width:640px)").matches;
+function ddVuot() {
+  const ul = $("#dd-list"); if (!ul) return;
+  let dem = $("#dd-vuot"); if (!dem) { dem = document.createElement("p"); dem.id = "dd-vuot"; dem.className = "dd-vuot muted"; dem.setAttribute("aria-live", "polite"); ul.after(dem); }
+  const the = [...ul.children].filter(x => x.classList.contains("dd-hv"));
+  const ve = () => { if (!ddNgang() || the.length < 2) { dem.hidden = true; return; } const w = the[0].offsetWidth + 10, i = Math.min(the.length - 1, Math.round(ul.scrollLeft / w));
+    dem.hidden = false; dem.innerHTML = `<b class="num">${i + 1}/${the.length}</b> · vuốt ngang để sang học viên khác`; };
+  ul.onscroll = () => { cancelAnimationFrame(ul._raf); ul._raf = requestAnimationFrame(ve); }; ve();
+}
+// Bấm điểm danh xong thì tự trượt sang thẻ học viên kế tiếp
+function ddTiep(b) {
+  if (!ddNgang()) return; const ul = $("#dd-list"), li = b.closest("li"); if (!ul || !li) return;
+  const w = li.offsetWidth + 10, i = Math.round(ul.scrollLeft / w);
+  setTimeout(() => ul.scrollTo({ left: (i + 1) * w, behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" }), 450);
 }
 function renderDash(show) {
   const box = $("#dash"), tab = $("#tab-duoi"); if (!box || !tab) return;
@@ -4067,11 +4087,26 @@ function showCachedSession() {
   $("#hw-list").innerHTML = `<div class="empty">Đang tải bài tập…</div>`;
 }
 
+// Nút bật / tắt mở khoá bằng vân tay trên máy này (chỉ hiện khi máy có cảm biến vân tay / Face ID)
+async function nutVanTay(u) {
+  const b = $("#vt-bat"); if (!b) return;
+  if (!u || !(await vanTay.hoTro())) { b.hidden = true; return; }
+  const ve = () => { const on = vanTay.daBat(u.uid); b.hidden = false; b.setAttribute("aria-pressed", on);
+    b.innerHTML = on ? "🔓 Tắt mở khoá bằng vân tay trên máy này" : "🔒 Bật mở khoá bằng vân tay / Face ID trên máy này"; };
+  ve();
+  b.onclick = async () => {
+    if (vanTay.daBat(u.uid)) { vanTay.tat(); ve(); return toast("Đã tắt khoá vân tay trên máy này."); }
+    try { b.disabled = true; await vanTay.bat(u); ve(); toast("Đã bật! Lần sau mở web trên máy này, chạm vân tay là vào được."); }
+    catch (e) { toast(e && e.name === "NotAllowedError" ? "Chưa bật: em đã huỷ hoặc chưa xác minh vân tay." : "Máy này chưa bật được khoá vân tay.", "err"); }
+    finally { b.disabled = false; }
+  };
+}
 async function onUser(u) {
   mark(u ? "Khôi phục đăng nhập (" + (u.email || "") + ")" : "Khôi phục đăng nhập (chưa đăng nhập)");
   stopListeners();
   const prevMail = mail;
   user = u; mail = u ? String(u.email || "").toLowerCase() : "";
+  vanTay.khiDangNhap(u); nutVanTay(u);
   isAdmin = false; isTeacher = false; approved = false; needVerify = false;
   napAvatarMay(mail);
   roster = []; requests = []; teachers = []; progressAll = {}; feedbackAll = {};
@@ -4307,6 +4342,7 @@ async function startFirebase() {
   onAuthStateChanged(auth, onUser);
   $("#btn-switch").onclick = async () => {
     const prev = mail;
+    vanTay.tat(); // đăng xuất thì bỏ khoá vân tay của người này trên máy
     await signOut(auth);
     // Máy dùng chung: xoá bản nháp, phiếu chưa gửi, ghi chú bàn giao, giỏ hàng, ảnh đại diện của người vừa đăng xuất
     try { Object.keys(localStorage).filter(k => /^(nhap-|phieu-chua-gui-|vh-bg-nhap-|lvtt-gio|lvtt-avatar:|lvkv-dulieu-|lvkv-moc-thi)/.test(k)).forEach(k => localStorage.removeItem(k)); } catch (e) {}
