@@ -37,13 +37,13 @@ export const MANG_XA_HOI = [
 ];
 
 // ---------- SẢN PHẨM THÊM (hiện trong menu ☰ trên điện thoại) ----------
-// link: dán link Google Drive (chia sẻ "Bất kỳ ai có link") vào đây. Để trống = hiện "Sắp ra mắt".
+// link: dán link Google Drive (chia sẻ "Bất kỳ ai có link") hoặc "#mục-trên-web". Để trống = hiện "Sắp ra mắt".
 // thongTin: ghi chú nội bộ cho anh chị, không hiện trên web.
 export const SAN_PHAM = [
   {
     ten: "Khoá học nâng cao",
-    moTa: "Luyện nâng cao cho học viên đã có nền",
-    link: "",
+    moTa: "Video chân dung tham khảo cho học viên đã có nền",
+    link: "#nang-cao",                 // mục Khoá học nâng cao trong trang Giáo trình
     gia: "",
     thongTin: "Đối tượng, số buổi, lịch học, học phí, cách đăng ký",
   },
