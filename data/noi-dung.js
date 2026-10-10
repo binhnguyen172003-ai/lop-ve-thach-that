@@ -50,7 +50,12 @@ export const SAN_PHAM = [
 // truong: mã trường để lọc (phải có trong BO_LOC_TRUONG bên dưới), hoặc "THPT".
 // ngay:   ngày bắt đầu thi, dùng để đếm ngược.
 // hienThi: chữ hiện trên web.
+// chinhThuc: true khi trường đã công bố chính thức (web hiện nhãn "Chính thức"); bỏ trống = "Dự kiến".
+// nguon: (không bắt buộc) link thông báo của trường, web hiện chữ "Nguồn" bấm được.
 export const NAM_THI = 2027;
+
+// Ngày lớp cập nhật lịch thi gần nhất (hiện trên web để học sinh biết lịch mới hay cũ).
+export const LICH_THI_CAP_NHAT = "2026-10-10";
 
 export const LICH_THI = [
   { truong: "XD",   ten: "ĐH Xây dựng Hà Nội",                          dot: "Đợt 1 · thủ tục 28/3", ngay: "2027-03-29", hienThi: "29/3" },
@@ -96,6 +101,14 @@ export const THOI_GIAN_BIEU = {
     chieu: { CN: "Hình hoạ" },
     toi:   { T3: "Màu", T5: "Màu", T6: "Hình hoạ", T7: "Hình hoạ", CN: "Hình hoạ" },
   },
+};
+
+
+// Đồ cần mang theo từng môn (hiện ở thẻ "Hôm nay học gì?"). Sửa cho đúng yêu cầu của lớp.
+export const DO_MANG = {
+  "Hình hoạ": "Bút chì, tẩy, giấy vẽ, kẹp giấy",
+  "Màu": "Màu, cọ, bảng pha, giấy vẽ màu",
+  "Mỹ thuật 2": "Bút chì, màu, giấy vẽ",
 };
 
 
