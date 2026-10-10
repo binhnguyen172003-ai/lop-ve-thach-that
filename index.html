@@ -575,6 +575,8 @@
                 <label for="bt-han">Hạn nộp *<input id="bt-han" type="date" required></label>
               </div>
               <label for="bt-lop">Lớp / nhóm<input id="bt-lop" maxlength="120" placeholder="VD: 2k9 khối H · Kim Quan"></label>
+              <label for="bt-cho">Giao cho<select id="bt-cho"><option value="tatca">Cả lớp (mọi học viên)</option><option value="Bình Phú">Học viên cơ sở Bình Phú</option><option value="Kim Quan">Học viên cơ sở Kim Quan</option><option value="chon">Chọn học viên cụ thể…</option></select></label>
+              <div class="bt-chon" id="bt-chon" hidden><input id="bt-chon-tim" type="search" placeholder="Tìm tên học viên" aria-label="Tìm học viên để giao bài" autocomplete="off"><div class="bt-chon-ds" id="bt-chon-ds"></div><small class="muted" id="bt-chon-so" role="status"></small></div>
               <label for="bt-mota">Yêu cầu bài tập<textarea id="bt-mota" rows="5" maxlength="5000" placeholder="Khổ giấy, chất liệu, nội dung cần làm và tiêu chí hoàn thành…"></textarea></label>
               <div class="attachment-label"><b>Tài liệu đính kèm</b><span>Không bắt buộc</span></div>
               <ul class="file-queue" id="bt-file-existing" aria-label="Tệp đang có của bài" hidden></ul>
@@ -766,7 +768,7 @@
     <div class="tabs" id="lv-tabs" role="tablist">
       <button class="tab" type="button" data-lv="tin" aria-selected="true">Tin nhắn <span class="nbadge num" id="lv-n-tin" hidden></span></button>
       <button class="tab" type="button" data-lv="tb" aria-selected="false">Thông báo <span class="nbadge num" id="lv-n-tb" hidden></span></button>
-      <button class="tab" type="button" data-lv="viec" aria-selected="false" data-teacher hidden>Việc cần làm <span class="nbadge num" id="lv-n-viec" hidden></span></button>
+      <button class="tab" type="button" data-lv="viec" aria-selected="false" data-teacher hidden>Tác vụ <span class="nbadge num" id="lv-n-viec" hidden></span></button>
     </div>
 
     <!-- Tin nhắn -->
@@ -825,21 +827,8 @@
     </section>
 
     <!-- Việc cần làm (giáo viên + quản lý) -->
-    <section class="lv-pane" id="lv-viec" hidden aria-label="Việc cần làm">
-      <form class="card lv-form" id="f-viec" data-admin hidden>
-        <h3>Giao việc cho giáo viên</h3>
-        <label for="cv-viec">Việc cần làm<input id="cv-viec" maxlength="200" required placeholder="VD: Chấm bài tuần 3 lớp 2k9 Khối H"></label>
-        <div class="fgrid">
-          <label for="cv-cho">Giao cho<select id="cv-cho"><option value="tatca">Tất cả giáo viên</option></select></label>
-          <label for="cv-han">Hạn<input id="cv-han" type="date"></label>
-        </div>
-        <div><button class="btn primary" type="submit">Giao việc</button> <span class="status" id="cv-status"></span></div>
-      </form>
-      <div class="tabs" id="cv-filter">
-        <button class="tab" type="button" data-cv="mo" aria-selected="true">Chưa xong</button>
-        <button class="tab" type="button" data-cv="xong" aria-selected="false">Đã xong</button>
-      </div>
-      <ul class="cv-list" id="cv-list"></ul>
+    <section class="lv-pane" id="lv-viec" hidden aria-label="Tác vụ">
+      <div id="tv-goc"><p class="muted">Đang tải tác vụ…</p></div>
     </section>
   </div>
 </main>
