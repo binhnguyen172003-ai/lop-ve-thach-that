@@ -424,19 +424,6 @@ svg.art{display:block;width:100%;height:auto;aspect-ratio:4/3;color:var(--ink)}
 .hv-table.gon li.them{display:none}
 .bv-more{margin-top:12px;width:100%}
 
-/* ===== Top 3 Bảng vàng: thẻ vinh danh nổi bật ===== */
-  box-shadow:0 0 0 2px var(--g),0 24px 50px -24px var(--g2);isolation:isolate;display:grid}
-  radial-gradient(120% 70% at 50% 0%,color-mix(in srgb,var(--g) 55%,transparent),transparent 60%),
-  repeating-linear-gradient(115deg,rgba(255,255,255,.05) 0 2px,transparent 2px 14px),
-  linear-gradient(180deg,#1c2a63,#0b1028)}
-  -webkit-text-stroke:2px var(--g);text-shadow:0 6px 24px rgba(0,0,0,.45);z-index:2}
-  padding:6px 9px;border-radius:999px;background:var(--g);color:#1a1300}
-  background:linear-gradient(90deg,color-mix(in srgb,var(--g) 22%,transparent),rgba(255,255,255,.04));border:1px solid color-mix(in srgb,var(--g) 50%,transparent)}
-@media (prefers-reduced-motion:no-preference){
-}
-@media (max-width:640px){
-}
-
 /* ===== Ảnh bìa trang chủ ===== */
 .hero.cover{display:grid;position:relative;overflow:hidden;margin-top:18px;padding:0;border-radius:20px;min-height:clamp(500px,74vh,640px);align-items:end;color:#fff;background:#0b0f1e;isolation:isolate}
 .cover-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 35%;z-index:-2}
