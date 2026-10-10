@@ -225,6 +225,7 @@ function route() {
     if (on) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current");
   });
   $("#acc-nav").dataset.page = page;
+  $$("#tab-duoi a").forEach(x => { if (x.getAttribute("href") === "#" + page) x.setAttribute("aria-current", "page"); else x.removeAttribute("aria-current"); });
   $$("#acc-nav [data-acc]").forEach(a => { if (a.dataset.acc === page) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current"); });
   // Thanh tài khoản cuộn ngang: luôn kéo mục đang mở vào giữa, không để bị cắt nửa chữ
   { const on = $("#acc-nav [aria-current='page']"), w = $("#acc-nav .wrap"); if (on && w) requestAnimationFrame(() => w.scrollTo({ left: on.offsetLeft - (w.clientWidth - on.offsetWidth) / 2, behavior: "smooth" })); }
@@ -1902,7 +1903,7 @@ function renderLessons() {
     ${phan("🪜", "Quy trình thực hiện", md(P.quytrinh))}
     ${phan("⚠️", "Lỗi thường gặp & cách sửa", md(P.loi))}
     ${phan("✅", "Yêu cầu hoàn thành", md(P.yeucau) + (l.ghichu ? `<p class="gc"><b>Anh chị dặn:</b> ${esc(l.ghichu)}</p>` : "") + (nutXong ? `<p class="muted gtb-ghichu">Làm xong bài và tự kiểm theo các ý trên rồi mới bấm hoàn thành. Mở bài chỉ được tính là “Đang học”.</p>${nutXong}` : ""))}
-    <nav class="gtb-chuyen" aria-label="Chuyển bài">${truoc ? `<button type="button" data-mo="${esc(truoc.id)}"><small>‹ Bài trước</small><b>${esc(truoc.ten)}</b></button>` : "<span></span>"}${sau ? `<button type="button" data-mo="${esc(sau.id)}" class="sau${sauKhoa ? " khoa" : ""}"${sauKhoa ? ` data-truoc="${esc(l.ten)}"` : ""}><small>${sauKhoa ? "🔒 Hoàn thành bài này để mở" : "Bài tiếp theo ›"}</small><b>${esc(sau.ten)}</b></button>` : "<span></span>"}</nav>
+    <div class="gtb-chuyen" role="navigation" aria-label="Chuyển bài">${truoc ? `<button type="button" data-mo="${esc(truoc.id)}"><small>‹ Bài trước</small><b>${esc(truoc.ten)}</b></button>` : "<span></span>"}${sau ? `<button type="button" data-mo="${esc(sau.id)}" class="sau${sauKhoa ? " khoa" : ""}"${sauKhoa ? ` data-truoc="${esc(l.ten)}"` : ""}><small>${sauKhoa ? "🔒 Hoàn thành bài này để mở" : "Bài tiếp theo ›"}</small><b>${esc(sau.ten)}</b></button>` : "<span></span>"}</div>
     ${isAdmin ? `<div class="gtb-ql"><b>Quản lý bài</b><button class="btn small" type="button" id="gtb-sua">Sửa tên, mô tả, ảnh</button><button class="btn small" type="button" id="gtb-len" ${k <= 0 ? "disabled" : ""}>↑ Lên</button><button class="btn small" type="button" id="gtb-xuong" ${k < 0 || k >= baiSo.length - 1 ? "disabled" : ""}>↓ Xuống</button><button class="btn small" type="button" id="del-l">Xoá bài này</button></div>` : ""}`;
   $("#gtb-ve").onclick = () => dongBai();
   $$("#lesson [data-mo]").forEach(b => b.onclick = () => b.dataset.truoc ? toast(`Hoàn thành bài “${b.dataset.truoc}” trước để mở bài tiếp theo nhé.`) : moBai(b.dataset.mo));
@@ -2810,6 +2811,102 @@ function updBadges() {
   set("#nav-req", tin + tb + viec + (isAdmin ? reqCount : 0));
   renderTiles();
 }
+/* ================= Tổng quan: việc hôm nay + menu dưới đáy (điện thoại) ================= */
+// Buổi học gần nhất theo thời gian biểu của cơ sở em học (Online/chưa rõ thì xét mọi cơ sở)
+function buoiToi(coso) {
+  const ks = CO_SO.filter(k => !coso || k.includes(coso)), dsK = ks.length ? ks : CO_SO;
+  const now = new Date(), vn = new Date(now.getTime() + (now.getTimezoneOffset() + 420) * 60000), phut = vn.getHours() * 60 + vn.getMinutes();
+  const het = ca => { const m = String(ca.gio).split(/[–-]/).pop().match(/(\d+)h(\d*)/); return m ? +m[1] * 60 + +(m[2] || 0) : 1440; };
+  const i = DAYS.indexOf(todayKey());
+  for (let n = 0; n < 8; n++) {
+    const d = DAYS[(i + n) % 7];
+    for (const ca of CA_HOC) {
+      if (n === 0 && het(ca) <= phut) continue;
+      for (const k of dsK) { const mon = ((THOI_GIAN_BIEU[k] || {})[ca.ma] || {})[d]; if (mon) return { n, d, ca, mon, cs: k.replace("Cơ sở ", "") }; }
+    }
+  }
+  return null;
+}
+const icoTab = {
+  tq: '<path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',
+  bt: '<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h4"/>',
+  gt: '<path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 19V5"/>',
+  dd: '<path d="M4 12l5 5L20 6"/>',
+  td: '<path d="M4 5h16v11H8l-4 4z"/>',
+};
+function renderDash(show) {
+  const box = $("#dash"), tab = $("#tab-duoi"); if (!box || !tab) return;
+  const vao = !!user && show;
+  const doi = tab.hidden === vao;
+  box.hidden = !vao; tab.hidden = !vao; document.body.classList.toggle("co-tab", vao);
+  if (doi) requestAnimationFrame(() => dispatchEvent(new Event("resize"))); // nút Chì tự né menu dưới
+  if (!vao) { box.innerHTML = ""; tab.innerHTML = ""; return; }
+  const today = todayVN(), tin = lvUnreadMsgs() + lvUnreadTB();
+  const nut = (href, ico, ten, so) => `<a href="${href}"><svg viewBox="0 0 24 24" aria-hidden="true">${icoTab[ico]}</svg><span>${ten}</span>${so ? `<b class="tab-so num">${so > 99 ? "99+" : so}</b>` : ""}</a>`;
+  if (isTeacher) {
+    // ---- Anh chị: việc cần xử lý hôm nay (số liệu thật từ bài nộp, nhận xét, việc được giao)
+    const hv = roster.filter(r => r.vaiTro !== "giaovien");
+    let canCham = 0; const chuaNop = new Set();
+    homework.forEach(h => {
+      const n = h.han ? daysUntil(h.han) : null;
+      hv.forEach(r => { const nop = progressAll[r.id]?.baitap?.[h.id], fb = feedbackAll[r.id]?.[h.id];
+        if ((nop && !fb) || daNopLai(fb, nop)) canCham++;
+        if (!nop && n !== null && n >= -7 && n <= 2) chuaNop.add(r.id); });
+    });
+    const viec = isAdmin ? lvCV.filter(c => !c.xong).length : lvMyOpenTasks();
+    const o = (href, cls, so, chu) => `<a class="dash-so ${cls}" href="${href}"><b class="num">${so}</b><span>${chu}</span></a>`;
+    box.innerHTML = `<div class="dash-dau"><div><p class="eyebrow">${isAdmin ? "Quản lý lớp" : "Giáo viên"} · ${esc(TEN_NGAY[todayKey()])}</p><h1>Việc cần xử lý hôm nay</h1></div>
+      <div class="dash-nut"><button class="btn primary small" type="button" id="dash-giao">+ Giao bài</button>${isAdmin ? `<button class="btn small" type="button" id="dash-viec">+ Giao việc</button>` : ""}</div></div>
+      <div class="dash-sos">${o("#bai-tap", "vang", canCham, "bài cần chấm")}${o("#bai-tap", "do", chuaNop.size, "bạn chưa nộp (hạn gần)")}${o("#lam-viec", "xanh", viec, isAdmin ? "việc chưa xong" : "việc được giao")}${isAdmin ? o("#duyet", "tim", reqCount, "người chờ duyệt") : ""}</div>`;
+    $("#dash-giao").onclick = () => { location.hash = "#bai-tap"; requestAnimationFrame(() => { const c = $("#hw-composer"); if (c) { c.open = true; c.scrollIntoView({ block: "start", behavior: "smooth" }); setTimeout(() => $("#bt-ten")?.focus(), 300); } }); };
+    if ($("#dash-viec")) $("#dash-viec").onclick = () => { location.hash = "#lam-viec"; requestAnimationFrame(() => $('#lv-tabs [data-lv="viec"]')?.click()); };
+    tab.innerHTML = nut("#tai-khoan", "tq", "Tổng quan") + nut("#bai-tap", "bt", "Bài tập", canCham) + nut("#diem-danh", "dd", "Điểm danh") + nut("#lam-viec", "td", "Trao đổi", tin + viec);
+  } else {
+    // ---- Học viên: hôm nay em cần làm gì
+    const ten = (myHv && myHv.ten) || (user && user.displayName) || "";
+    const can = homework.filter(h => (!h.han || h.han >= today) && (!myProgress.baitap[h.id] || canLamLai(myFeedback[h.id], myProgress.baitap[h.id])))
+      .sort((a, b) => String(a.han || "9999").localeCompare(String(b.han || "9999")));
+    const bai = can.slice(0, 3).map(h => { const n = h.han ? daysUntil(h.han) : null, [, m, d] = String(h.han || "").split("-"), ll = canLamLai(myFeedback[h.id], myProgress.baitap[h.id]);
+      return `<li><div><b>${esc(h.ten)}</b><span class="dash-meta"><i class="chip">${esc(goc(h.khoa) || "Bài tập")}</i>${h.han ? `<span class="num">Hạn ${+d}/${+m}</span>` : ""}${ll ? `<i class="chip dash-ll">Cần làm lại</i>` : n !== null && n <= 2 ? `<i class="chip dash-gap">${n === 0 ? "Hạn hôm nay" : `Còn ${n} ngày`}</i>` : ""}</span></div>
+        <button class="btn small ${n !== null && n <= 2 || ll ? "primary" : ""}" type="button" data-dbt="${esc(h.id)}">${ll ? "Nộp lại" : "Nộp bài"}</button></li>`; }).join("");
+    // Nhận xét mới nhất
+    const nx = Object.entries(myFeedback || {}).filter(([, f]) => f && f.nhanXet).sort((a, b) => (b[1].luc || 0) - (a[1].luc || 0))[0];
+    const nxBai = nx && homework.find(h => h.id === nx[0]);
+    // Giáo trình: tiến độ các khoá được cấp + bài tiếp theo
+    const cap = khoaDuocCap(), ds = lessons.filter(l => cap.includes(goc(l.khoa)) && !laLoTrinh(l));
+    const mon = [...new Set(ds.map(l => l.khoa))].map(k => { const b = ds.filter(l => l.khoa === k); return { k, ten: goc(k), tong: b.length, xong: b.filter(l => myProgress.bai[l.id]).length, tiep: b.find(l => !myProgress.bai[l.id]) }; });
+    const tong = ds.length, xong = ds.filter(l => myProgress.bai[l.id]).length, pt = tong ? Math.round(xong / tong * 100) : 0;
+    const dang = mon.find(m => m.tiep), tiep = dang && dang.tiep;
+    const tuan = Object.values(myProgress.bai || {}).filter(v => v > 1e12 && v > Date.now() - 7 * 864e5).length;
+    const b = buoiToi(myHv && myHv.coso);
+    box.innerHTML = `<div class="dash-dau"><div><p class="eyebrow">Chào mừng trở lại</p><h1>${esc(ten ? ten.split(/\s+/).slice(-2).join(" ") : "em")}!</h1><p class="muted">Hôm nay em cần làm gì? Bài cần nộp, lịch học và nhận xét mới ở ngay dưới đây.</p></div></div>
+      <div class="dash-luoi">
+        <section class="dash-o dash-td"><h2>Tiến độ học tập</h2>
+          <div class="dash-vong" style="--pt:${pt}" role="img" aria-label="Đã hoàn thành ${pt}% giáo trình"><b class="num">${pt}%</b></div>
+          <p>Đã hoàn thành <b class="num">${xong}/${tong}</b> bài${tuan ? ` · tuần này <b class="num">${tuan}</b>` : ""}</p>
+          ${tiep ? `<button class="btn primary small" type="button" data-dtiep="${esc(tiep.id)}">Tiếp tục học →</button>` : tong ? `<p class="muted">🎉 Em đã học xong các khoá được cấp.</p>` : ""}</section>
+        <section class="dash-o dash-bai"><h2>Bài cần hoàn thành <span class="muted num">${can.length} bài</span></h2>
+          ${bai ? `<ul class="dash-ds">${bai}</ul>` : `<p class="muted dash-trong">Em không còn bài nào cần nộp. 🎉</p>`}
+          ${can.length > 3 ? `<a class="dash-them" href="#bai-tap">Xem tất cả ${can.length} bài →</a>` : ""}</section>
+        <section class="dash-o dash-buoi"><h2>Buổi học tiếp theo</h2>
+          ${b ? `<p class="dash-mon"><span class="slot ${SLOT[b.mon] || "mt2"}">${esc(b.mon)}</span></p>
+            <ul class="dash-tt"><li>📅 ${b.n === 0 ? "Hôm nay" : b.n === 1 ? "Ngày mai" : esc(TEN_NGAY[b.d])}</li><li>📍 ${esc(b.cs)}</li><li class="num">🕒 ${esc(b.ca.gio)}</li></ul>
+            ${DO_MANG[b.mon] ? `<p class="muted dash-mang">Mang theo: ${esc(DO_MANG[b.mon])}</p>` : ""}` : `<p class="muted">Chưa có lịch học.</p>`}
+          <a class="dash-them" href="#lich-hoc">Xem lịch tuần →</a></section>
+        <section class="dash-o dash-nx"><h2>Nhận xét mới</h2>
+          ${nx ? `<p class="dash-nx-bai">${esc(nxBai ? nxBai.ten : "Bài tập")}${nx[1].diem ? ` · <b class="num">${esc(nx[1].diem)} điểm</b>` : ""}</p><blockquote>${esc(String(nx[1].nhanXet).slice(0, 160))}</blockquote>
+            <a class="dash-them" href="#bai-tap" data-dcham>Xem bài đã chữa →</a>` : `<p class="muted">Chưa có nhận xét. Nộp bài để anh chị chữa cho em nhé.</p>`}</section>
+        ${mon.length ? `<section class="dash-o dash-lt"><h2>Lộ trình của em</h2><div class="dash-mons">${mon.map(m => `<button type="button" class="dash-monb${m === dang ? " on" : ""}" data-dmon="${esc(m.ten)}"><b>${esc(m.ten)}</b><small class="num">${m.xong}/${m.tong}</small></button>`).join("")}</div></section>` : ""}
+      </div>
+      <div class="dash-nhanh" role="navigation" aria-label="Truy cập nhanh">${[["#giao-trinh", "📚", "Giáo trình"], ["#bai-tap", "📝", "Bài tập"], ["#lich-hoc", "📅", "Lịch học"], ["#thi-thu", "⏱️", "Thi thử"], ["#bai-ve", "🖼️", "Bài vẽ"], ["#xep-hang", "🏆", "Xếp hạng"]].map(([h, i, t]) => `<a href="${h}"><i aria-hidden="true">${i}</i>${t}</a>`).join("")}</div>`;
+    $$("#dash [data-dbt]").forEach(x => x.onclick = () => { location.hash = "#bai-tap"; requestAnimationFrame(() => setTimeout(() => { const c = $(`#hw-list [data-nhac-id="bt-${CSS.escape(x.dataset.dbt)}"]`); if (c) { c.scrollIntoView({ block: "center", behavior: "smooth" }); c.classList.add("dash-sang"); setTimeout(() => c.classList.remove("dash-sang"), 2200); } }, 80)); });
+    $$("#dash [data-dtiep]").forEach(x => x.onclick = () => { const l = lessons.find(y => y.id === x.dataset.dtiep); if (!l) return; khoaMuon = goc(l.khoa); lessonId = null; location.hash = "#giao-trinh"; requestAnimationFrame(() => { renderLessons(); moBai(l.id); }); });
+    $$("#dash [data-dmon]").forEach(x => x.onclick = () => { khoaMuon = x.dataset.dmon; if (lessonId) dongBai(true); lessonId = null; gtLoc = "tat"; location.hash = "#giao-trinh"; requestAnimationFrame(() => { renderLessons(); $("#gt-wrap")?.scrollIntoView({ block: "start" }); }); });
+    $$("#dash [data-dcham]").forEach(x => x.onclick = () => requestAnimationFrame(() => $('#hw-filter [data-h="cham"]')?.click()));
+    tab.innerHTML = nut("#tai-khoan", "tq", "Tổng quan") + nut("#bai-tap", "bt", "Bài tập", can.length) + nut("#giao-trinh", "gt", "Giáo trình") + nut("#lam-viec", "td", "Trao đổi", tin);
+  }
+  const h = location.hash.slice(1); $$("#tab-duoi a").forEach(x => { if (x.getAttribute("href") === "#" + h) x.setAttribute("aria-current", "page"); });
+}
 function renderTiles() {
   const box = $("#acc-tiles"); if (!box) return;
   const show = canLearnNow();
@@ -2834,6 +2931,7 @@ function renderTiles() {
   capNhatVaiTro();
   { const av = $("#av-doi"); if (av) av.hidden = !user; }
   baoTroLy(show); try { renderXHQL(); renderKho(); } catch (e) {}
+  renderDash(show);
   if (!show) { box.innerHTML = ""; return; }
   const today = todayVN();
   const tin = lvUnreadMsgs(), tb = lvUnreadTB(), viec = lvMyOpenTasks();
@@ -3636,9 +3734,10 @@ function showCachedSession() {
   if (!c || !c.mail) { renderLocks("out"); renderAccount(false); return; }
   user = { displayName: c.ten, photoURL: c.anh, email: c.mail }; mail = c.mail; napAvatarMay(c.mail);
   isAdmin = !!c.isAdmin; isTeacher = !!c.isTeacher; approved = !!c.approved; myHv = c.hv || null;
+  const coDL = (isTeacher || approved) && loadData(c.mail); // nạp dữ liệu trên máy trước để các ô số liệu không hiện "0"
   renderLocks(isTeacher || approved ? "ok" : "pending");
   renderAccount(c.pending || false);
-  if ((isTeacher || approved) && loadData(c.mail)) { renderLessons(); renderHomework(); return; }
+  if (coDL) { renderLessons(); renderHomework(); return; }
   $("#lesson").innerHTML = `<p class="muted">Đang tải giáo trình…</p>`;
   $("#hw-list").innerHTML = `<div class="empty">Đang tải bài tập…</div>`;
 }
