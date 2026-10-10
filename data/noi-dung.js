@@ -360,8 +360,8 @@ export const HOA_CU = [
   { ma: "combo-pentel", ten: "Combo Pentel (bộ màu pha sẵn)", loai: "Màu", gia: 600000, von: 0, can: [] },
 ];
 
-// Số tồn theo sổ tháng 07 — dùng làm số đầu kỳ khi mở Kho lần đầu (anh chị kiểm kho thực tế rồi sửa trên web)
-export const TON_DAU_KY = { "chi-koh": 73, tay: 6, "tay-ganh": 31, "tay-dat-set": 3, "bang-a3": 15, "bang-dinh": 9, "bo-but": 12, dao: 9, "luoi-dao": 4, "noi-1": 1, "giay-a1": 50, "3let": 10, "di-bay": 2, "di-chi": 3, co: 40, ho: 9, "lo-ho": 32, "bot-nang": 26, "bot-do": 15, "bot-xanh": 19, pentel: 3, pay: 10, "xit-am": 4, "xo-nho": 17, "xo-to": 1, "hop-bot": 60, "khan-giay": 16, "chi-duc": 21, sketch: 4, thuoc: 3, "combo-mt2-kv": 3, "moc-capy": 16 };
+// Đã đưa về 0 ngày 10/10/2026 để anh chị kiểm kho lại từ đầu (nhập số thực tế bằng nút "Sửa" hoặc "Nhập hàng")
+export const TON_DAU_KY = {};
 
 // ===== SỐ HỌC VIÊN DỰ THI MỖI MÙA (để tính % đỗ ở Bảng vàng) =====
 // Điền tổng số học viên của lớp đi thi năm đó. Để 0 nếu chưa có: web chỉ hiện số đỗ, chưa tính %.
