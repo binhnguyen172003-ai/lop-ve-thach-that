@@ -42,7 +42,6 @@ Nguyên tắc: **mỗi việc chỉ sửa đúng một file**. Nội dung hay đ
 ├── HUONG-DAN.md            Hướng dẫn cài đặt và dùng hằng ngày
 ├── sw.js                   Bộ nhớ đệm: mở tức thì lần sau, xem được khi mất mạng
 ├── manifest.webmanifest    Cho phép "Thêm vào màn hình chính" như một ứng dụng
-├── app/                    Đóng gói thành app Android/iPhone (xem app/HUONG-DAN-APP.md)
 ├── robots.txt              Cho phép Google đọc web
 ├── sitemap.xml             Danh sách trang gửi Google Search Console
 ├── 404.html                Gõ sai địa chỉ → tự đưa về trang chủ

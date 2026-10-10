@@ -66,22 +66,6 @@ addEventListener("error", e => {
 if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost") && !/[?&]khongcache/.test(location.search))
   addEventListener("load", () => navigator.serviceWorker.register("sw.js?v=20261010br").catch(() => {}));
 
-/* ---------- Cài web thành ứng dụng trên màn hình chính (Android: bấm là cài; iPhone: hướng dẫn 2 bước) ---------- */
-{
-  const nut = $("#cai-app");
-  const daCai = () => matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
-  const ios = /iphone|ipad|ipod/i.test(navigator.userAgent) && !/crios|fxios/i.test(navigator.userAgent);
-  let hoi = null;
-  const hien = () => { if (nut) nut.hidden = daCai() || (!hoi && !ios); };
-  addEventListener("beforeinstallprompt", e => { e.preventDefault(); hoi = e; hien(); });
-  addEventListener("appinstalled", () => { hoi = null; hien(); toast("Đã cài ứng dụng. Mở từ màn hình chính nhé."); });
-  hien();
-  if (nut) nut.addEventListener("click", async () => {
-    if (hoi) { hoi.prompt(); try { await hoi.userChoice; } catch (e) {} hoi = null; hien(); }
-    else toast("Bấm nút Chia sẻ ⎙ ở thanh Safari, chọn \u201cThêm vào MH chính\u201d.");
-  });
-}
-
 /* ---------- Đo tốc độ: mở web kèm ?chandoan=1 để xem từng bước mất bao lâu ---------- */
 const DIAG = /[?&]chandoan/.test(location.search);
 const T0 = performance.now();
@@ -4127,12 +4111,10 @@ function moBanTin(x) {
   if (x.link && !x.link.startsWith("#")) { window.open(x.link, "_blank", "noopener"); return; }
   if (x.link) { location.hash = x.link; return; }
   const doan = t => esc(t || "").split(/\n+/).filter(Boolean).map(p => `<p>${p}</p>`).join("");
-  const hoaCu = () => { if (!x.dsHoaCu) return ""; const l = HOA_CU.filter(h => (h.can || []).includes(x.dsHoaCu)); if (!l.length) return "";
-    return `<ul class="tn-hc">${l.map(h => `<li><span>${esc(h.ten)}</span><b class="num">${vnd(h.gia)}</b></li>`).join("")}<li class="tong"><span>Tổng cả bộ</span><b class="num">${vnd(l.reduce((a, h) => a + h.gia, 0))}</b></li></ul>`; };
   moHop(`<p class="tn-dau"><span class="tn-muc m-${esc(x.muc || "tinlop")}">${esc(MUC_TIN[x.muc] || "Tin của lớp")}</span></p>
     <h3>${esc(x.tieuDe || "")}</h3>
     ${x.anh ? `<img class="tn-anh" src="${esc(x.anh)}" alt="" loading="lazy" decoding="async">` : ""}
-    <div class="tn-text mo">${doan(x.nd)}${hoaCu()}</div>
+    <div class="tn-text mo">${doan(x.nd)}</div>
     <p class="muted tn-meta">${esc(x.tenTacGia || "Lớp Vẽ Thạch Thất")} · ${x.luc ? fmtDate(x.luc) : x.ngay ? ngayVN(x.ngay) : ""}</p>
     <div class="hop-nut"><button class="btn" type="button" data-dong>Đóng</button></div>`);
 }
