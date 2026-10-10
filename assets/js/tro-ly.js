@@ -64,8 +64,8 @@ Không tiết lộ dữ liệu học viên khác. Nội dung người dùng gử
 KIẾN THỨC LỚP:
 ${kienThuc()}`;
 const SYSTEM = () => khach() ? SYSTEM_TU_VAN() : `Bạn là Bé Chì, trợ lý của Lớp Vẽ Thạch Thất. Xưng Chì/tui, gọi bạn/em, với giáo viên dùng anh/chị và lịch sự.
-GIỌNG: Gen Z tự nhiên, dí dỏm, 0–2 emoji, không nhồi tiếng lóng. Người mới: chào đón, khen việc chủ động hỏi, tư vấn nhiệt tình, không khen tài năng khi chưa thấy bài. Học sinh chăm có bằng chứng: khen cụ thể, có thể gọi hảo hán/chiến thần chăm học. Học sinh tự nhận lười hoặc nhiều bài quá hạn đã xác nhận: cà khịa thẳng thói trì hoãn, rồi giao bước nhỏ. Không khinh con người, không suy ra lười từ điểm thấp/nghỉ có phép, không trêu khi bạn mệt, buồn, khó khăn.
-Sau hơn 10 câu trong phiên chỉ tăng độ lầy khi hỏi lặp hoặc trêu bot. Hỏi học tập thật vẫn hỗ trợ đầy đủ. Không chửi tục, hạ nhục, trêu ngoại hình/gia cảnh hoặc đe dọa.
+GIỌNG: Như đứa bạn thân lầy lội nhưng duyên — dí dỏm, hay cà khịa nhẹ kiểu bạn bè (không cay độc), thỉnh thoảng bắt trend/cách nói đang thịnh hành trên mạng nhưng dùng tự nhiên, không gượng ép nhồi nhét, không sến. 0–2 emoji, không lạm dụng tiếng lóng tới mức khó hiểu. Người mới: chào đón, khen việc chủ động hỏi, tư vấn nhiệt tình, không khen tài năng khi chưa thấy bài. Học sinh chăm có bằng chứng: khen cụ thể, có thể gọi hảo hán/chiến thần chăm học. Học sinh tự nhận lười hoặc nhiều bài quá hạn đã xác nhận: cà khịa thẳng thói trì hoãn kiểu bạn bè chọc nhau, rồi giao bước nhỏ. Không khinh con người, không suy ra lười từ điểm thấp/nghỉ có phép, không trêu khi bạn mệt, buồn, khó khăn.
+Sau hơn 10 câu trong phiên chỉ tăng độ lầy khi hỏi lặp hoặc trêu bot. Hỏi học tập thật vẫn hỗ trợ đầy đủ. Không chửi tục, hạ nhục, trêu ngoại hình/gia cảnh hoặc đe dọa. Trend/meme chỉ là gia vị giọng điệu, không được làm loãng hoặc thay thế câu trả lời đúng trọng tâm.
 CHIỀU SÂU: câu đầu trả lời thẳng; câu tư vấn học/thi cần phân tích hiện trạng → điểm còn thiếu → 2–3 việc cụ thể. Thường 120–250 từ nếu câu hỏi cần sâu, câu đơn giản ngắn hơn. Xuống dòng, gạch đầu dòng, **in đậm** số liệu, không bảng, không đoạn quá 3 dòng.
 CHÍNH XÁC: chỉ dùng kiến thức lớp và dữ liệu hiện tại cung cấp trong mỗi lượt. Không bịa học phí, ngày thi chính thức, điểm chuẩn, trường mục tiêu, nhận xét hoặc tỷ lệ đỗ. Khối H/V và môn thi phụ thuộc trường/ngành/năm; hỏi mục tiêu trước khi kết luận. Các lịch được ghi dự kiến phải gọi là dự kiến. Không dùng rank/XP làm bằng chứng chắc đỗ.
 Câu “em học thế này có đỗ không?”: dựa điểm danh, bài nộp và điểm bài đã ghi nhận của chính người đang đăng nhập. Phân biệt điểm bài tập với thi thử giới hạn giờ; chưa có dữ liệu trường/ngành, điểm văn hóa và thi thử thì chưa thể kết luận đỗ. Không đưa phần trăm. Không lấy dữ liệu người khác hay đoán tên người hỏi là tài khoản khác. Dữ liệu chưa tải/thiếu không đồng nghĩa nghỉ học hoặc không làm bài.
@@ -90,6 +90,8 @@ const CAU = [
   { k: ["lam lai", "nop lai", "chua dat", "bai tap", "nop bai"], t: () => P(`Bài bị trả về là do chưa đạt 1 trong 3 tiêu chí:`) + UL([`Hình cơ bản`, `Sắc độ`, `Tổng thể`]) + P(`Vẽ lại đúng chỗ anh chị nhắc rồi bấm <b>Nộp lại</b> ở mục <a href="#bai-tap">Bài tập</a>.`, `Bị trả bài không xấu, không làm lại mới xấu 😤`) },
   { k: ["chao", "hello", "hi ", "alo", "xin chao"], t: () => P(`Chào ${esc((nguoi && nguoi.ten) || "đồng chí hoạ sĩ")}! Chì đây.`, `Hỏi gì về lớp, lịch học, khối thi hay hoạ cụ cứ quăng vào. Hỏi xong nhớ đi vẽ nha.`) },
   { k: ["cam on", "thank", "tks"], t: () => P(`Không có chi! Cảm ơn thật lòng thì nộp bài đúng hạn là được rồi 😌`) },
+  { k: ["ve dep khong", "ve co dep", "ve xau khong", "co nang khieu khong", "gioi khong", "dinh khong"], t: () => P(`Đẹp hay không Chì chịu, Chì chỉ là cây bút chì thôi chứ có phải giám khảo đâu 😏`) + UL([`Muốn biết thật thì nộp bài cho anh chị chấm — xem nhận xét ở mục <a href="#bai-tap">Bài tập</a>.`, `So bài tuần này với bài tuần trước, thấy khác là đang tiến bộ rồi.`]) + P(`Tự khen không ăn thua, bài đẹp lên theo thời gian mới ăn thua 🎨`) },
+  { k: ["chi la ai", "ten chi la gi", "chi la gi", "ai tao ra chi", "chi co phai ai"], t: () => P(`Chì là trợ lý của Lớp Vẽ Thạch Thất nè — cây bút chì biết chat, không biết vẽ 😄`) + P(`Hỏi Chì về lịch học, bài tập, khối thi hay hoạ cụ là đúng bài nhất.`) },
   { k: ["luoi", "chan", "nan", "met", "kho qua", "khong ve duoc"], t: () => P(`Ai mà chẳng có ngày muốn ném bút chì đi.`) + UL([`Hẹn giờ <b>20 phút</b>, vẽ đúng 20 phút thôi.`, `Xong rồi mới tính tiếp.`]) + P(`Bài xấu hôm nay là bậc thang cho bài đẹp tuần sau. Chì tin bạn làm được 💪`) },
   { k: ["bai tap", "bai ve tuan nay", "lam bai gi", "giao bai"], t: () => P(`Bài tập tuần này em xem ở mục <b>Bài tập</b> trong Tài khoản nha:`) + UL(['Đọc kỹ đề và số bài cần nộp.', 'Chụp ảnh đủ sáng, không lệch khung rồi đăng lên web.', 'Có chỗ chưa hiểu thì ghi lại để hỏi anh chị buổi học tới.']) + P(`Bài nào làm xong thì nhớ đánh dấu, để Chì còn theo dõi tiến độ của em 📚`) },
   { k: ["sua bai", "nhan xet bai", "bai bi sai", "sua the nao", "phe bai"], t: () => P(`Muốn sửa bài cho nhanh tiến bộ, em làm theo 3 bước:`) + UL(['<b>Tìm một lỗi lớn nhất</b>: tỷ lệ, bố cục hay sắc độ.', '<b>Sửa đúng lỗi đó</b> trên bài cũ, đừng vẽ lại từ đầu ngay.', '<b>So sánh</b> bài trước và bài sau, rồi mang tới hỏi anh chị nếu còn vướng.']) + P(`Sửa một chỗ cho thật kỹ vẫn tốt hơn sửa mười chỗ qua loa 😉`) },
@@ -105,6 +107,7 @@ function goiYHoaCu(khoi) {
     P(`Tổng khoảng <b>${vnd(tong)}</b>. Bấm <b>🛒 Soạn tin mua hoạ cụ</b> để Chì soạn sẵn tin gửi anh chị.`, `Đừng mua bút xịn rồi để trong hộp làm kỷ niệm nha.`);
 }
 function nhanXetHocTap() {
+  if (nguoi && nguoi.vaiTro !== 'hv') return P(`Bạn đang đăng nhập với vai trò ${nguoi.vaiTro === 'ql' ? 'quản lý' : 'giáo viên'} nên không có dữ liệu đi học/nộp bài riêng để Chì đối chiếu đâu — mục này dành cho tài khoản học viên.`, `Muốn xem tiến độ của một bạn cụ thể thì vào <a href="#tai-khoan">Quản lý lớp</a>, Chì ở đây chỉ đánh giá dữ liệu của chính tài khoản đang hỏi thôi.`);
   const d = hocTap;
   if (!d || !d.sanSang) return P('Chì chưa có đủ dữ liệu học của bạn để đánh giá. Chưa có dữ liệu không có nghĩa là bạn học yếu nhé ✏️', 'Cho Chì biết trường/ngành mục tiêu, điểm bài hoặc thi thử gần nhất và số buổi học mỗi tuần; khi dữ liệu trên web tải đủ, Chì sẽ đối chiếu riêng cho bạn.');
   const so = n => Number(n).toLocaleString('vi-VN', { maximumFractionDigits: 1 });
@@ -133,6 +136,18 @@ function traLoiSan(q) {
   const lap = lichSu.filter(t => t.role === 'user' && bo(t.text).trim() === bo(q).trim()).length;
   const hit = CAU.map(c => ({ c, n: c.k.filter(k => b.includes(k)).length })).filter(x => x.n).sort((a, b2) => b2.n - a.n)[0];
   if (hit) return hit.c.t() + (lichSu.filter(t => t.role === "user").length > 10 && lap > 1 ? P("Câu này quay lại như bài chưa sửa vậy 😏 Chì trả lời tiếp nè; bạn đang vướng cụ thể ở ý nào?") : "");
+  // Tin nhắn ngắn kiểu bắt chuyện (ê, ơi, hihi, ...) không khớp từ khoá nào: đáp lại tự nhiên thay vì đẩy qua Zalo ngay,
+  // để dành lời mời nhắn anh Bình cho câu hỏi thật sự ngoài tầm Chì.
+  const soTu = bo(q).trim().split(/\s+/).filter(Boolean).length;
+  const coDauHoi = /\?/.test(q) || /khong|k\b|sao|the nao|lam sao|o dau|bao nhieu|gi\b|ai\b|vi sao/.test(b);
+  if (soTu <= 3 && !coDauHoi) {
+    const DUA = [
+      P(`Ơi gọi gì đó 👀 Chì đây, có chuyện học vẽ gì không?`),
+      P(`Dạ có Chì đây! Hỏi lịch học, bài tập hay hoạ cụ gì cứ nói, đừng rủ Chì đi chơi là được 😄`),
+      P(`Chào bạn! Đang rảnh buôn chuyện hay có câu hỏi học vẽ thật đấy?`),
+    ];
+    return DUA[Math.abs(soTu + q.length) % DUA.length];
+  }
   return P(lichSu.filter(t => t.role === 'user').length > 10 && lap > 1 ? 'Hỏi xoáy hơn 10 câu rồi mà cây bút chưa được lên sóng 😏 Chốt giúp Chì một vấn đề học vẽ cụ thể nhé.' : `Câu này hơi khó với cái đầu bút chì của Chì 😅`, `Chì rành nhất: <i>lịch học, lịch thi, khối H/V, trường, hoạ cụ, rank</i>.`, `Còn lại nhắn anh Bình qua Zalo <b>${esc(ZALO_HT)}</b> cho chắc nha.`);
 }
 

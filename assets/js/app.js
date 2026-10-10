@@ -144,6 +144,13 @@ function copyText(text, statusEl, okMsg, selectEl) {
 const PAGES = ["giao-trinh", "bai-tap", "tai-khoan", "duyet", "diem-danh", "lam-viec"];
 function route() {
   const h = location.hash.replace("#", "");
+  if (h && !PAGES.includes(h)) {
+    // Hash không phải trang cấp cao nhất: có thể là link "đi nhanh" tới một mục trong trang đang mở
+    // (VD #ql-duyet-h trong Quản lý). Nhảy tới mục đó thay vì coi là trang lạ rồi quay về trang chủ.
+    const el = document.getElementById(h);
+    const trongTrangDangMo = el && el.closest("main[id^='v-']") && !el.closest("main[id^='v-']").hidden;
+    if (trongTrangDangMo) { el.scrollIntoView({ block: "start" }); return; }
+  }
   const page = PAGES.includes(h) ? h : "home";
   $("#v-home").hidden = page !== "home";
   PAGES.forEach(p => $("#v-" + p).hidden = page !== p);
