@@ -5,6 +5,7 @@
 // =====================================================================
 import { CA_HOC, THOI_GIAN_BIEU, VIEC_CUOI_BUOI, TIEU_CHI_THI } from "../../data/noi-dung.js?v=20261010bh";
 
+let tuanLich = 0, csLich = ""; // lịch phân công dạy: tuần đang xem (0 = tuần này), cơ sở đang xem
 let C = null, huy = [], dongHo = 0, anhThi = [], tabVH = "", locSC = "mo", timBG = "", locNK = "", chiCaToi = false;
 const D = { thi: [], bai: [], ca: [], doica: [], bg: [], suco: [], truc: {}, kt: [], nk: [], loi: "" };
 
@@ -284,6 +285,15 @@ function xacNhan(btn, viec, hoi = "Bấm lần nữa để chắc chắn") {
 function hanhDongVH(loai, id, btn) {
   const { db, fs: { doc, setDoc, deleteDoc } } = C;
   const nk = D.nk.find(x => x.id === id), sc = D.suco.find(x => x.id === id), dc = D.doica.find(x => x.id === id);
+  if (loai === "lich-tuan") { tuanLich = id === "0" ? 0 : tuanLich + Number(id); return ve(); }
+  if (loai === "lich-cs") { csLich = id; return ve(); }
+  if (loai === "lich-xep") { // điền sẵn ngày, ca, cơ sở vào khung Xếp ca; gợi ý trước giáo viên đúng môn
+    const [n, ca, mon] = id.split("|"), f = $("#ca-ngay"); if (!f) return;
+    f.value = n; $("#ca-ca").value = ca; $("#ca-cs").value = csLich;
+    const sel = $("#ca-gv"), hop = [...sel.options].find(o => o.value !== C.mail && hopMon(monGV(o.value), mon)); if (hop) sel.value = hop.value;
+    const k = f.closest("details"); if (k) k.open = true; k?.scrollIntoView({ block: "start", behavior: "smooth" }); setTimeout(() => sel.focus(), 300);
+    return C.toast(`Đã điền ${TEN_THU[thuCua(n)]} ${ngayVN(n)} · ca ${tenCa(ca).toLowerCase()} · ${csLich}${mon ? " · môn " + mon : ""}. Chọn giáo viên rồi bấm Lưu ca.`);
+  }
   if (loai === "xoa-ca") return xacNhan(btn, () => ghi(deleteDoc(doc(db, "caday", id)), "Đã xoá ca."));
   if (loai === "xoa-bg") return xacNhan(btn, () => ghi(deleteDoc(doc(db, "bangiao", id)), "Đã xoá bàn giao."));
   if (loai === "doi-ca") return moDoiCa(D.ca.find(x => x.id === id));
@@ -306,7 +316,7 @@ function hanhDongVH(loai, id, btn) {
 /* ---- 2. Ca dạy & đổi ca ---- */
 function paneCa() {
   if (!C.isAdmin) return `<p class="muted">Lịch ca anh chị phụ trách trong 2 tuần tới. Bận thì bấm <b>Xin đổi ca</b>, quản lý duyệt sẽ báo lại ở đây.</p>`;
-  const gv = [[C.mail, C.ten + " (quản lý)"], ...C.giaoVien().map(g => [g.id, g.ten || g.id])];
+  const gv = [[C.mail, C.ten + " (quản lý)"], ...C.giaoVien().map(g => [g.id, (g.ten || g.id) + (g.chucVu ? " · " + g.chucVu : "") + (g.mon ? " · " + g.mon : "")])];
   return `<details class="card vh-form" open><summary><b>+ Xếp ca dạy</b></summary>
     <div class="fgrid"><label>Ngày<input type="date" id="ca-ngay" value="${C.homNay()}"></label><label>Ca${chonCa("ca-ca", "toi")}</label>
     <label>Cơ sở${chonCS("ca-cs")}</label><label>Giáo viên${chon("ca-gv", gv)}</label></div>
@@ -333,7 +343,7 @@ function dsCa() {
   const caoCa = c => CA_HOC.findIndex(x => x.ma === c.ca);
   const ds = D.ca.filter(c => c.ngay >= hom && c.ngay <= het && (!chiCaToi || c.gv === C.mail)).sort((a, b) => a.ngay.localeCompare(b.ngay) || caoCa(a) - caoCa(b));
   const choDC = new Set(D.doica.filter(d => d.trangThai === "cho").map(d => d.ca));
-  let h = `<label class="vh-check"><input type="checkbox" id="ca-toi"${chiCaToi ? " checked" : ""}> Chỉ ca của tôi</label>`;
+  let h = lichPhanCong() + `<label class="vh-check"><input type="checkbox" id="ca-toi"${chiCaToi ? " checked" : ""}> Chỉ ca của tôi</label>`;
   const nhom = {}; ds.forEach(c => (nhom[c.ngay] ||= []).push(c));
   h += Object.keys(nhom).length ? Object.entries(nhom).map(([n, cs]) => `<div class="vh-ngay${n === hom ? " hom" : ""}"><h3>${TEN_THU[thuCua(n)]} ${ngayVN(n)}${n === hom ? ' <span class="chip">Hôm nay</span>' : ""}</h3>
     ${cs.map(c => `<div class="vh-ca${c.gv === C.mail ? " toi" : ""}"><div><b>Ca ${esc(tenCa(c.ca).toLowerCase())} <span class="num muted">${esc(gioCa(c.ca))}</span> · ${esc(c.coSo)}</b>
@@ -353,6 +363,29 @@ function dsCa() {
         : !C.isAdmin && d.trangThai === "cho" ? `<button class="btn small" type="button" data-x="huy-dc" data-id="${esc(d.id)}">Huỷ yêu cầu</button>` : ""}</div>`; }).join("");
   }
   return h;
+}
+// Lịch tuần phân công dạy: mỗi ô = một ca trong ngày ở cơ sở đang xem, hiện môn của ca (theo thời gian biểu) và ai dạy
+const monGV = id => { const g = (C.giaoVien() || []).find(x => x.id === id); return (g && g.mon) || ""; };
+const hopMon = (monGv, monCa) => !monGv || monGv === "Tất cả" || monGv.includes(monCa) || (monCa === "Hình hoạ" && /hình hoạ/i.test(monGv));
+function lichPhanCong() {
+  if (!csLich || !CO_SO.includes(csLich)) csLich = CO_SO[0];
+  const goc = new Date(C.homNay() + "T12:00:00"); goc.setDate(goc.getDate() - ((goc.getDay() + 6) % 7) + 7 * tuanLich); // thứ 2 của tuần
+  const ngay = Array.from({ length: 7 }, (_, i) => { const d = new Date(goc); d.setDate(d.getDate() + i); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; });
+  const tkb = THOI_GIAN_BIEU["Cơ sở " + csLich] || {}, hom = C.homNay();
+  const o = (n, ca) => {
+    const mon = (tkb[ca.ma] || {})[thuCua(n)], ds = D.ca.filter(c => c.ngay === n && c.ca === ca.ma && c.coSo === csLich);
+    if (!mon && !ds.length) return `<td class="lpc-nghi"></td>`;
+    return `<td class="${n === hom ? "hom" : ""}${mon && !ds.length ? " thieu" : ""}">${mon ? `<span class="lpc-mon">${esc(mon)}</span>` : ""}
+      ${ds.map(c => `<span class="lpc-gv${c.gv === C.mail ? " toi" : ""}">${esc(c.gvTen || c.gv)}</span>`).join("")}
+      ${C.isAdmin ? `<button type="button" class="lpc-xep" data-x="lich-xep" data-id="${esc(n + "|" + ca.ma + "|" + (mon || ""))}">${ds.length ? "+ Thêm" : "+ Xếp"}</button>` : !ds.length && mon ? `<small class="muted">Chưa xếp</small>` : ""}</td>`;
+  };
+  const thieu = ngay.reduce((a, n) => a + CA_HOC.filter(ca => (tkb[ca.ma] || {})[thuCua(n)] && !D.ca.some(c => c.ngay === n && c.ca === ca.ma && c.coSo === csLich)).length, 0);
+  return `<section class="card lpc" aria-label="Lịch phân công dạy"><div class="lpc-dau"><b>Lịch phân công dạy</b>
+      <div class="lpc-cs">${CO_SO.map(c => `<button type="button" class="tab" data-x="lich-cs" data-id="${esc(c)}" aria-selected="${c === csLich}">${esc(c)}</button>`).join("")}</div>
+      <div class="lpc-tuan"><button type="button" class="btn small" data-x="lich-tuan" data-id="-1" aria-label="Tuần trước">‹</button><span class="num">${ngayVN(ngay[0]).slice(0, -5)} – ${ngayVN(ngay[6])}</span><button type="button" class="btn small" data-x="lich-tuan" data-id="1" aria-label="Tuần sau">›</button>${tuanLich ? `<button type="button" class="linkish" data-x="lich-tuan" data-id="0">Tuần này</button>` : ""}</div></div>
+    ${thieu ? `<p class="lpc-bao">⚠ ${thieu} ca có lớp nhưng chưa xếp người dạy${C.isAdmin ? " — bấm “+ Xếp” ở ô tô vàng" : ""}.</p>` : `<p class="muted lpc-bao">Đủ người dạy cho các ca có lớp trong tuần này.</p>`}
+    <div class="lpc-cuon"><table class="lpc-bang"><thead><tr><th></th>${ngay.map(n => `<th class="${n === hom ? "hom" : ""}">${TEN_THU[thuCua(n)].replace("Thứ ", "T")}<br><small class="num">${ngayVN(n).slice(0, -5)}</small></th>`).join("")}</tr></thead>
+    <tbody>${CA_HOC.map(ca => `<tr><th>Ca ${esc(ca.ten.toLowerCase())}<br><small class="num muted">${esc(ca.gio)}</small></th>${ngay.map(n => o(n, ca)).join("")}</tr>`).join("")}</tbody></table></div></section>`;
 }
 function moDoiCa(ca) {
   if (!ca) return;
