@@ -51,10 +51,10 @@ Mã này không phải mật khẩu, để công khai trên web là bình thư�
 ## Bước 6. Bật GitHub Pages
 
 1. Mở kho trên GitHub → **Settings → Pages**.
-2. Mục **Build and deployment**: Source chọn **Deploy from a branch**, Branch chọn **main** và **/(root)** → **Save**.
+2. Mục **Build and deployment**: Source chọn **GitHub Actions** (không chọn "Deploy from a branch").
 3. Chờ 1–2 phút, trang hiện địa chỉ dạng `https://<tên-github>.github.io/<tên-kho>/`.
 
-Từ đó, mỗi lần có thay đổi trên nhánh main, web tự cập nhật sau 1–2 phút.
+Từ đó, mỗi lần có thay đổi trên nhánh main, web tự cập nhật sau 1–2 phút (xem tiến độ ở tab **Actions** của kho, dấu ✓ xanh là đã lên). Bước đưa lên còn tự gắn mã phiên bản mới, nên học viên không bị kẹt ở bản cũ.
 
 ## Bước 7. Cho phép web dùng địa chỉ mới
 
@@ -75,8 +75,9 @@ Bỏ qua bước này, link xác nhận Gmail sẽ không quay về đúng web.
 
 1. Vào **search.google.com/search-console** → **Add property** → **URL prefix** → dán địa chỉ web.
 2. Chọn cách xác minh **HTML tag**, gửi đoạn mã cho Claude để thêm vào `index.html`, chờ 2 phút rồi bấm **Verify**.
-3. Mục **URL inspection** → dán địa chỉ → **Request indexing**.
-4. Gắn địa chỉ web vào fanpage, bio Instagram, TikTok và **Google Business Profile** của 2 cơ sở để Google tin cậy web hơn.
+3. Menu trái **Sitemaps** → nhập `sitemap.xml` → **Submit** (file này đã có sẵn trong kho).
+4. Mục **URL inspection** → dán địa chỉ → **Request indexing**.
+5. Gắn địa chỉ web vào fanpage, bio Instagram, TikTok và **Google Business Profile** của 2 cơ sở để Google tin cậy web hơn.
 
 ---
 

@@ -1,2 +1,4 @@
 User-agent: *
 Allow: /
+
+Sitemap: https://binhnguyen172003-ai.github.io/lop-ve-thach-that/sitemap.xml
