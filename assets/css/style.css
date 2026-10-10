@@ -2604,3 +2604,11 @@ body.hop-mo{overflow:hidden}
 .gc-i{position:relative}
 .gc-i::before{content:"";position:absolute;inset:-12px}
 .cine-schools a{display:inline-block;padding:8px 6px}
+.dk-rieng{font-size:.85rem;margin:10px 0 0}
+.dk-ok.err{color:var(--warn)}
+
+/* Phản hồi khi nhấn: mọi phần bấm được tối đi một nhịp ngay lập tức (không đổi kích thước, không lệch bố cục) */
+button:not(:disabled):active,.btn:active,a.link:active,.menu-links a:active,.gal-b:active,[role=button]:active,.pill:active{opacity:.72;transition:none}
+/* Nút đang khoá: nhìn rõ là chưa bấm được */
+button:disabled{cursor:not-allowed}
+button:disabled:not(.btn){opacity:.45}
