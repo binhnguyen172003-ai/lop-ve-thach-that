@@ -27,6 +27,13 @@ jobs:
       # Gắn mã phiên bản mới vào đường dẫn file, để trình duyệt luôn tải bản mới nhất.
       - name: Gắn mã phiên bản
         run: sed -i -E "s/\?v=[0-9A-Za-z]+/?v=${GITHUB_SHA::8}/g" index.html assets/js/*.js
+      # Nén mã (bỏ khoảng trắng, chú thích) để web tải nhanh hơn ~20%. Chỉ nén bản đưa lên, file trong kho vẫn giữ nguyên dễ đọc.
+      # Nén lỗi thì giữ file gốc, web vẫn lên bình thường.
+      - name: Nén mã cho web nhẹ hơn
+        run: |
+          for f in assets/js/*.js data/*.js config/*.js assets/css/*.css; do
+            npx --yes esbuild@0.24.0 "$f" --minify --charset=utf8 --log-level=error --outfile="$f.min" && mv "$f.min" "$f" || rm -f "$f.min"
+          done
       - uses: actions/upload-pages-artifact@v3
         with:
           path: .
