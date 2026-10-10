@@ -79,7 +79,7 @@ const $ = s => document.querySelector(s);
 const troLyPromise = import("./tro-ly.js?v=20261010bt").catch(e => console.warn("Chưa tải được trợ lý", e));
 // Thi thử + vận hành lớp: chỉ tải khi đã đăng nhập vào học
 let vanHanhP = null, vanHanhM = null;
-const taiVanHanh = () => vanHanhP ||= import("./van-hanh.js?v=20261010bf").then(m => vanHanhM = m).catch(e => { vanHanhP = null; console.warn("Chưa tải được phần vận hành", e); });
+const taiVanHanh = () => vanHanhP ||= import("./van-hanh.js?v=20261010bg").then(m => vanHanhM = m).catch(e => { vanHanhP = null; console.warn("Chưa tải được phần vận hành", e); });
 window.__appOk = true;
 document.querySelectorAll(".slow-bar").forEach(el => el.remove());
 
@@ -125,7 +125,7 @@ addEventListener("error", e => {
 });
 /* ---------- Mở tức thì ở lần sau + dùng được khi mạng yếu ---------- */
 if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost") && !/[?&]khongcache/.test(location.search))
-  addEventListener("load", () => navigator.serviceWorker.register("sw.js?v=20261010bt").catch(() => {}));
+  addEventListener("load", () => navigator.serviceWorker.register("sw.js?v=20261010bu").catch(() => {}));
 
 /* ---------- Đo tốc độ: mở web kèm ?chandoan=1 để xem từng bước mất bao lâu ---------- */
 const DIAG = /[?&]chandoan/.test(location.search);
@@ -155,6 +155,8 @@ function serverIssue(e) {
                    : "Tài khoản này chưa có quyền làm việc đó. Nếu em đã được anh chị duyệt, hãy tải lại trang.";
   else if (code === "unavailable" || /offline|network/i.test(code + msg))
     text = "Mạng đang chập chờn nên chưa lưu được. Kiểm tra wifi/4G rồi thử lại.";
+  else if (code === "timeout")
+    text = "Máy chủ đang phản hồi chậm. Web sẽ tự thử lại; anh chị có thể kiểm tra mạng nếu vẫn chưa thấy dữ liệu.";
   else if (code === "failed-precondition")
     text = "Máy chủ chưa sẵn sàng. Anh chị kiểm tra Firestore Database đã được tạo chưa.";
   else text = "Có lỗi khi kết nối máy chủ" + (code ? " (mã: " + code + ")" : "") + ". Tải lại trang rồi thử lại.";
@@ -4017,11 +4019,11 @@ async function onUser(u) {
   let tuChoiQuyen = false, tuLoi = ""; // tuChoiQuyen: máy chủ từ chối đọc; tuLoi: mã lỗi để báo anh chị
   const exists = async (col) => { try { return (await hanTuoi(getDoc(doc(db, col, mail)))).exists(); } catch (e) { if (e && e.code === "permission-denied") tuChoiQuyen = true; return false; } };
   // Hỏi cả 4 thông tin cùng lúc thay vì lần lượt, để trang hiện nhanh hơn.
-  const getData = async (col) => {
+  const getData = async (col, optional = false) => {
     try { const d = await hanTuoi(getDoc(doc(db, col, mail))); return d.exists() ? (d.data() || {}) : null; }
     catch (e) {
       tuLoi = (e && (e.code || e.name)) || "khong-ro";
-      if (e && e.code === "permission-denied") tuChoiQuyen = true; else if (e) serverIssue(e);
+      if (e && e.code === "permission-denied") tuChoiQuyen = true; else if (e && !optional) serverIssue(e);
       return undefined; // undefined = chưa hỏi được, khác null = không có
     }
   };
@@ -4030,7 +4032,7 @@ async function onUser(u) {
   const tr = performance.now();
   // Ảnh đại diện riêng của tài khoản này (giáo viên, quản lý, học viên đều có)
   let avaTuMay = false;
-  getData("anhdaidien").then(a => { if (user !== u || !a) return; avaTuMay = true; myAvatar = a.anh || ""; try { myAvatar ? localStorage.setItem(AVA_KEY(mail), myAvatar) : localStorage.removeItem(AVA_KEY(mail)); } catch (e) {} renderTiles(); });
+  getData("anhdaidien", true).then(a => { if (user !== u || !a) return; avaTuMay = true; myAvatar = a.anh || ""; try { myAvatar ? localStorage.setItem(AVA_KEY(mail), myAvatar) : localStorage.removeItem(AVA_KEY(mail)); } catch (e) {} renderTiles(); });
   const [isAdm, gvDoc, hvDoc, ycDoc, tdDoc] = isAdminMail ? [true, null, null, null, null] : await Promise.all([
     exists("admins"), getData("giaovien"), getData("hocvien"), getData("yeucau"), getData("tiendo")
   ]);
@@ -4150,6 +4152,7 @@ async function onUser(u) {
     });
     listen(query(collection(db, "giaovien"), orderBy("duyetLuc", "desc")), snap => {
       teachers = snap.docs.map(d => ({ id: d.id, ...d.data() })); renderTeachers(); renderLV();
+      if (vanHanhM) vanHanhM.capNhatGiaoVien();
     });
   }
 }

@@ -65,6 +65,16 @@ export function dung() {
 let veHen = 0;
 function ve() { cancelAnimationFrame(veHen); veHen = requestAnimationFrame(() => { veThi(); veVH(); demViec(); }); }
 export const veLai = ve;
+// Hồ sơ nhân sự có thể về sau lịch ca. Cập nhật riêng ô chọn để không xoá form đang nhập.
+export function capNhatGiaoVien() {
+  if (!C || !C.isAdmin) return;
+  const sel = $("#ca-gv");
+  if (!sel) return;
+  const cu = sel.value;
+  const ds = [[C.mail, C.ten + " (quản lý)"], ...C.giaoVien().filter(g => g.id !== C.mail).map(g => [g.id, (g.ten || g.id) + (g.chucVu ? " · " + g.chucVu : "") + (g.mon ? " · " + g.mon : "")])];
+  sel.innerHTML = ds.map(([id, ten]) => `<option value="${esc(id)}">${esc(ten)}</option>`).join("");
+  if (ds.some(([id]) => id === cu)) sel.value = cu;
+}
 // ca đã xếp trong ngày (trang Điểm danh dùng để chỉ mở cơ sở anh chị được phân công); null khi chưa tải xong
 export const caNgay = ngay => C && C.isTeacher && !D.loi ? D.ca.filter(c => c.ngay === ngay) : null;
 
@@ -316,6 +326,8 @@ function hanhDongVH(loai, id, btn) {
   if (loai === "cc-molai") return xacNhan(btn, () => chotLuong(btn, true), "Bấm lần nữa để mở lại");
   if (loai === "lich-tuan") { tuanLich = id === "0" ? 0 : tuanLich + Number(id); return ve(); }
   if (loai === "lich-cs") { csLich = id; return ve(); }
+  if (loai === "lich-sua") return moSuaCa(D.ca.find(c => c.id === id));
+  if (loai === "lich-xoa") return moXoaCa(D.ca.find(c => c.id === id));
   if (loai === "lich-xep") { // điền sẵn ngày, ca, cơ sở vào khung Xếp ca; gợi ý trước giáo viên đúng môn
     const [n, ca, mon] = id.split("|"), f = $("#ca-ngay"); if (!f) return;
     f.value = n; $("#ca-ca").value = ca; $("#ca-cs").value = csLich;
@@ -345,7 +357,7 @@ function hanhDongVH(loai, id, btn) {
 /* ---- 2. Ca dạy & đổi ca ---- */
 function paneCa() {
   if (!C.isAdmin) return `<p class="muted">Lịch ca anh chị phụ trách trong 2 tuần tới. Bận thì bấm <b>Xin đổi ca</b>, quản lý duyệt sẽ báo lại ở đây.</p>`;
-  const gv = [[C.mail, C.ten + " (quản lý)"], ...C.giaoVien().map(g => [g.id, (g.ten || g.id) + (g.chucVu ? " · " + g.chucVu : "") + (g.mon ? " · " + g.mon : "")])];
+  const gv = [[C.mail, C.ten + " (quản lý)"], ...C.giaoVien().filter(g => g.id !== C.mail).map(g => [g.id, (g.ten || g.id) + (g.chucVu ? " · " + g.chucVu : "") + (g.mon ? " · " + g.mon : "")])];
   return `<details class="card vh-form" open><summary><b>+ Xếp ca dạy</b></summary>
     <div class="fgrid"><label>Ngày<input type="date" id="ca-ngay" value="${C.homNay()}"></label><label>Ca${chonCa("ca-ca", "toi")}</label>
     <label>Cơ sở${chonCS("ca-cs")}</label><label>Giáo viên${chon("ca-gv", gv)}</label></div>
@@ -360,12 +372,34 @@ function ganCa() {
     const ngay = val("ca-ngay"), gv = val("ca-gv"); if (!ngay) return C.toast("Chọn ngày.", "err");
     const ten = gv === C.mail ? C.ten : (C.giaoVien().find(g => g.id === gv) || {}).ten || gv;
     const lan = $("#ca-lap").checked ? 4 : 1;
+    const ngayCa = Array.from({ length: lan }, (_, i) => { const d = new Date(ngay + "T12:00:00"); d.setDate(d.getDate() + 7 * i); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; });
+    if (ngayCa.some(iso => D.ca.some(c => c.ngay === iso && c.ca === val("ca-ca") && c.coSo === val("ca-cs") && c.gv === gv))) return C.toast("Người này đã có trong một ca đã chọn.", "err");
     guiNut(b, async () => { const bt = writeBatch(db);
-      for (let i = 0; i < lan; i++) { const d = new Date(ngay + "T12:00:00"); d.setDate(d.getDate() + 7 * i);
-        const iso = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+      for (const iso of ngayCa) {
         bt.set(doc(collection(db, "caday")), { ngay: iso, ca: val("ca-ca"), coSo: val("ca-cs"), gv, gvTen: ten, ghiChu: val("ca-gc"), tao: Date.now() }); }
       await bt.commit(); }, lan > 1 ? `Đã xếp ${lan} ca ✓` : "Đã xếp ca ✓");
   };
+}
+function caDaCham(c) { return !!(c.vao || c.ra || typeof c.cong === "number"); }
+function moSuaCa(c) {
+  if (!C.isAdmin || !c) return;
+  if (caDaCham(c)) return C.toast("Ca đã chấm công. Hãy chỉnh trong mục Chấm công để giữ đúng dữ liệu lương.", "err");
+  const gv = [[C.mail, C.ten + " (quản lý)"], ...C.giaoVien().filter(g => g.id !== C.mail).map(g => [g.id, (g.ten || g.id) + (g.chucVu ? " · " + g.chucVu : "")])];
+  if (!gv.some(([id]) => id === c.gv)) gv.push([c.gv, c.gvTen || c.gv]);
+  const h = C.moHop(`<h3>Sửa phân công ca dạy</h3><div class="fgrid"><label>Ngày<input type="date" id="sc-ngay" value="${esc(c.ngay)}"></label><label>Ca${chonCa("sc-ca", c.ca)}</label><label>Cơ sở${chonCS("sc-cs", c.coSo)}</label><label>Người dạy${chon("sc-gv", gv, c.gv)}</label></div><label>Ghi chú<input id="sc-gc" maxlength="200" value="${esc(c.ghiChu || "")}"></label><div class="hop-nut"><button class="btn" type="button" data-dong>Hủy</button><button class="btn primary" type="button" id="sc-luu">Lưu thay đổi</button></div>`, "Sửa ca dạy");
+  h.el.querySelector("#sc-luu").onclick = async e => {
+    const ngay = h.el.querySelector("#sc-ngay").value, ca = h.el.querySelector("#sc-ca").value, coSo = h.el.querySelector("#sc-cs").value, nguoi = h.el.querySelector("#sc-gv").value;
+    if (!ngay || !nguoi) return C.toast("Chọn ngày và người dạy.", "err");
+    if (D.ca.some(x => x.id !== c.id && x.ngay === ngay && x.ca === ca && x.coSo === coSo && x.gv === nguoi)) return C.toast("Người này đã có trong ca đó.", "err");
+    const ten = nguoi === C.mail ? C.ten : (C.giaoVien().find(g => g.id === nguoi) || {}).ten || c.gvTen || nguoi;
+    if (await guiNut(e.target, () => C.fs.setDoc(C.fs.doc(C.db, "caday", c.id), { ngay, ca, coSo, gv: nguoi, gvTen: ten, ghiChu: h.el.querySelector("#sc-gc").value.trim() }, { merge: true }), "Đã sửa ca ✓")) h.dong();
+  };
+}
+function moXoaCa(c) {
+  if (!C.isAdmin || !c) return;
+  if (caDaCham(c)) return C.toast("Ca đã chấm công. Hãy kiểm tra bảng công trước khi gỡ phân công.", "err");
+  const h = C.moHop(`<h3>Gỡ người khỏi ca?</h3><p><b>${esc(c.gvTen || c.gv)}</b> · ${ngayVN(c.ngay)} · ca ${esc(tenCa(c.ca).toLowerCase())} · ${esc(c.coSo)}</p><p class="muted">Chỉ gỡ phân công này; không xóa tài khoản giáo viên.</p><div class="hop-nut"><button class="btn" type="button" data-dong>Hủy</button><button class="btn" type="button" id="sc-xoa">Gỡ khỏi ca</button></div>`, "Gỡ phân công");
+  h.el.querySelector("#sc-xoa").onclick = async e => { if (await guiNut(e.target, () => C.fs.deleteDoc(C.fs.doc(C.db, "caday", c.id)), "Đã gỡ khỏi ca ✓")) h.dong(); };
 }
 function dsCa() {
   const hom = C.homNay(), het = (() => { const d = new Date(hom + "T12:00:00"); d.setDate(d.getDate() + 14); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; })();
@@ -405,7 +439,7 @@ function lichPhanCong() {
     const mon = (tkb[ca.ma] || {})[thuCua(n)], ds = D.ca.filter(c => c.ngay === n && c.ca === ca.ma && c.coSo === csLich);
     if (!mon && !ds.length) return `<td class="lpc-nghi"></td>`;
     return `<td class="${n === hom ? "hom" : ""}${mon && !ds.length ? " thieu" : ""}">${mon ? `<span class="lpc-mon">${esc(mon)}</span>` : ""}
-      <div class="lpc-nguoi">${ds.map(c => `<span class="lpc-gv${c.gv === C.mail ? " toi" : ""}">${esc(c.gvTen || c.gv)}</span>`).join("")}</div>
+      <div class="lpc-nguoi">${ds.map(c => `<span class="lpc-gv${c.gv === C.mail ? " toi" : ""}"><span class="lpc-gv-ten">${esc(c.gvTen || c.gv)}</span>${C.isAdmin ? `<span class="lpc-gv-nut"><button type="button" data-x="lich-sua" data-id="${esc(c.id)}" aria-label="Sửa ca của ${esc(c.gvTen || c.gv)}" title="Sửa phân công">✎</button><button type="button" data-x="lich-xoa" data-id="${esc(c.id)}" aria-label="Gỡ ${esc(c.gvTen || c.gv)} khỏi ca" title="Gỡ khỏi ca">×</button></span>` : ""}</span>`).join("")}</div>
       ${C.isAdmin ? `<button type="button" class="lpc-xep" data-x="lich-xep" data-id="${esc(n + "|" + ca.ma + "|" + (mon || ""))}">${ds.length ? "+ Thêm" : "+ Xếp"}</button>` : !ds.length && mon ? `<small class="muted">Chưa xếp</small>` : ""}</td>`;
   };
   const thieu = ngay.reduce((a, n) => a + CA_HOC.filter(ca => (tkb[ca.ma] || {})[thuCua(n)] && !D.ca.some(c => c.ngay === n && c.ca === ca.ma && c.coSo === csLich)).length, 0);
