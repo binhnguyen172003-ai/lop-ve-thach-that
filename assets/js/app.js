@@ -5,7 +5,7 @@
 import { firebaseConfig, ADMIN_EMAIL, EMAIL_NHAN_THONG_BAO } from "../../config/firebase-config.js?v=20261009b";
 import { FILE_LIMITS, FILE_TYPES, fileExt, fileSize, validateFiles, attachmentStorage, uploadError, validAttachmentPath } from "./attachments.js?v=20261009b";
 import { GIAO_TRINH_MAU as GT_LO_TRINH } from "../../data/giao-trinh-mau.js?v=20261010bf";
-import { LIEN_HE, NAM_THI, LICH_THI, BO_LOC_TRUONG, CA_HOC, THOI_GIAN_BIEU, BAI_VE, BANG_VANG, TRUONG, MUC_TIEU, GIAO_VIEN, VIDEO_BIA, BAI_NOI_BAT, THANH_TUU_TRAO, XP_THUONG, AVATAR, SO_DU_THI, HOA_CU, TON_DAU_KY, BAN_TIN, SAN_PHAM, LICH_THI_CAP_NHAT, DO_MANG } from "../../data/noi-dung.js?v=20261010bh";
+import { LIEN_HE, NAM_THI, LICH_THI, BO_LOC_TRUONG, CA_HOC, THOI_GIAN_BIEU, BAI_VE, BANG_VANG, TRUONG, MUC_TIEU, GIAO_VIEN, VIDEO_BIA, BAI_NOI_BAT, THANH_TUU_TRAO, XP_THUONG, AVATAR, SO_DU_THI, HOA_CU, TON_DAU_KY, BAN_TIN, SAN_PHAM, LICH_THI_CAP_NHAT, DO_MANG, MANG_XA_HOI } from "../../data/noi-dung.js?v=20261010bh";
 
 // Firebase được tải riêng, để phần giới thiệu vẫn chạy kể cả khi mạng chậm hoặc chưa cấu hình.
 const FB = "https://www.gstatic.com/firebasejs/10.12.2/";
@@ -365,16 +365,52 @@ renderSched(CO_SO[0]);
 /* ================= Liên hệ & mạng xã hội ================= */
 const ZALO_LOP = String(LIEN_HE.zalo || LIEN_HE.sdt || "").replace(/\D/g, "");
 const ZALO_LINK = LIEN_HE.zaloLink || "https://zalo.me/" + ZALO_LOP;
+const MXH = (MANG_XA_HOI || []).filter(m => m && m.link);
 const mapCua = c => c.map || "https://maps.google.com/?q=" + encodeURIComponent(c.diaChi || "");
 $("#lien-he").innerHTML =
   `<div><dt>Gọi quản lý</dt><dd class="num"><a href="tel:${esc(String(LIEN_HE.sdt || "").replace(/\D/g, ""))}">${esc(LIEN_HE.sdt)}</a></dd></div>
    <div><dt>Zalo tư vấn</dt><dd class="num"><a href="${esc(ZALO_LINK)}" target="_blank" rel="noopener">${esc(LIEN_HE.zaloHienThi || LIEN_HE.zalo)}</a></dd></div>
    <div><dt>Email</dt><dd>${esc(LIEN_HE.email)}</dd></div>
    ${LIEN_HE.coSo.map(c => `<div><dt>${esc(c.ten)}</dt><dd>${esc(c.diaChi)} <a class="map-link" href="${esc(mapCua(c))}" target="_blank" rel="noopener">📍 Chỉ đường</a></dd></div>`).join("")}
-   <div><dt>Instagram</dt><dd><a href="${esc(LIEN_HE.instagram.link)}" target="_blank" rel="noopener">${esc(LIEN_HE.instagram.ten)}</a></dd></div>`;
-$("#link-ig").href = LIEN_HE.instagram.link;
-$("#ten-ig").textContent = LIEN_HE.instagram.ten;
-$("#link-pin").href = LIEN_HE.pinterest.link;
+   ${MXH.map(m => `<div><dt>${esc(m.ten)}</dt><dd><a href="${esc(m.link)}" target="_blank" rel="noopener">${esc(m.tk || m.ten)}</a></dd></div>`).join("")}`;
+
+/* ---------- Băng thẻ mạng xã hội: tự xoay, dừng khi người xem chạm/rê chuột, vuốt tay được ---------- */
+function batMxh() {
+  const box = $("#mxh"), tr = $("#mxh-track"); if (!box || !tr) return;
+  if (!MXH.length) { box.hidden = true; return; }
+  const ICON = {
+    tiktok: '<path d="M14 4v10.5a3.5 3.5 0 1 1-3.5-3.5"/><path d="M14 4c.4 2.4 2 4 4.5 4.3"/>',
+    facebook: '<path d="M14 8h2.5V4.5H14a3.5 3.5 0 0 0-3.5 3.5v2.5H8V14h2.5v6.5H14V14h2.5l.5-3.5h-3V8.5c0-.3.2-.5.5-.5z"/>',
+    instagram: '<rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r=".8"/>',
+    pinterest: '<circle cx="12" cy="12" r="9"/><path d="M11 8.5c2.5-1 5 .5 4.5 3s-3 3.5-4.5 2.5M11.5 10l-2 10"/>',
+    youtube: '<rect x="2.5" y="5.5" width="19" height="13" rx="4"/><path d="M10 9.5v5l4.5-2.5z"/>' };
+  tr.innerHTML = MXH.map((m, i) => `<a class="mxh-the mxh-${esc(m.loai)}" href="${esc(m.link)}" target="_blank" rel="noopener" data-i="${i}" aria-label="${esc(m.ten)} ${esc(m.tk || "")} (mở tab mới)">
+    <span class="mxh-ico"><svg viewBox="0 0 24 24" aria-hidden="true">${ICON[m.loai] || ICON.instagram}</svg></span>
+    <span class="mxh-chu"><b>${esc(m.ten)}</b><small>${esc(m.tk || "")}</small><span class="muted">${esc(m.moTa || "")}</span></span>
+    <span class="go">${esc(m.nut || "Xem")} ↗</span></a>`).join("");
+  const the = [...tr.children], dots = $("#mxh-dots"), ctl = $("#mxh .mxh-ctl");
+  let cur = 0, dung = false, hen = 0, vt = [];
+  const giam = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  // Các vị trí cuộn được (thẻ cuối có thể không cuộn tới mép trái được → gộp lại)
+  const tinhVT = () => { const max = tr.scrollWidth - tr.clientWidth; vt = [...new Set(the.map(t => Math.round(Math.min(t.offsetLeft - tr.offsetLeft, max))))].filter(x => x >= 0);
+    if (max <= 4) vt = [0]; ctl.hidden = vt.length < 2;
+    dots.innerHTML = vt.map((_, k) => `<button type="button" aria-label="Nhóm kênh ${k + 1}"></button>`).join("");
+    [...dots.children].forEach((d, k) => d.onclick = () => den(k)); cur = Math.min(cur, vt.length - 1); danh(); };
+  const danh = () => [...dots.children].forEach((d, k) => d.setAttribute("aria-current", k === cur));
+  const den = k => { if (vt.length < 2) return; cur = (k + vt.length) % vt.length; tr.scrollTo({ left: vt[cur], behavior: giam ? "auto" : "smooth" }); danh(); };
+  tr.addEventListener("scroll", () => { clearTimeout(tr._h); tr._h = setTimeout(() => { const x = tr.scrollLeft; let g = 0; vt.forEach((v, k) => { if (Math.abs(v - x) < Math.abs(vt[g] - x)) g = k; }); cur = g; danh(); }, 90); }, { passive: true });
+  const chay = () => { clearInterval(hen); if (giam) return; hen = setInterval(() => { if (!dung && !document.hidden && vt.length > 1) den(cur + 1); }, 4000); };
+  // Dừng xoay khi người xem đang chạm, rê chuột hoặc dùng bàn phím trong khối
+  box.addEventListener("pointerenter", e => { if (e.pointerType === "mouse") dung = true; });
+  box.addEventListener("pointerleave", e => { if (e.pointerType === "mouse") dung = false; });
+  box.addEventListener("pointerdown", () => { dung = true; clearTimeout(box._h); box._h = setTimeout(() => dung = false, 6000); });
+  box.addEventListener("focusin", () => dung = true); box.addEventListener("focusout", () => dung = false);
+  $("#mxh-prev").onclick = () => den(cur - 1); $("#mxh-next").onclick = () => den(cur + 1);
+  addEventListener("resize", () => { clearTimeout(box._r); box._r = setTimeout(tinhVT, 150); });
+  tinhVT();
+  chay();
+}
+batMxh();
 
 /* ================= Bài vẽ học viên ================= */
 const LOAI_BAI = [
