@@ -405,7 +405,7 @@ function lichPhanCong() {
     const mon = (tkb[ca.ma] || {})[thuCua(n)], ds = D.ca.filter(c => c.ngay === n && c.ca === ca.ma && c.coSo === csLich);
     if (!mon && !ds.length) return `<td class="lpc-nghi"></td>`;
     return `<td class="${n === hom ? "hom" : ""}${mon && !ds.length ? " thieu" : ""}">${mon ? `<span class="lpc-mon">${esc(mon)}</span>` : ""}
-      ${ds.map(c => `<span class="lpc-gv${c.gv === C.mail ? " toi" : ""}">${esc(c.gvTen || c.gv)}</span>`).join("")}
+      <div class="lpc-nguoi">${ds.map(c => `<span class="lpc-gv${c.gv === C.mail ? " toi" : ""}">${esc(c.gvTen || c.gv)}</span>`).join("")}</div>
       ${C.isAdmin ? `<button type="button" class="lpc-xep" data-x="lich-xep" data-id="${esc(n + "|" + ca.ma + "|" + (mon || ""))}">${ds.length ? "+ Thêm" : "+ Xếp"}</button>` : !ds.length && mon ? `<small class="muted">Chưa xếp</small>` : ""}</td>`;
   };
   const thieu = ngay.reduce((a, n) => a + CA_HOC.filter(ca => (tkb[ca.ma] || {})[thuCua(n)] && !D.ca.some(c => c.ngay === n && c.ca === ca.ma && c.coSo === csLich)).length, 0);

@@ -618,9 +618,10 @@ function diDen(n) {
     let lan = 0;
     const thu = () => {
       const el = document.querySelector(n.dich);
-      if (el) {
+      const canChoDanhSach = n.dich === "#ql-duyet-h" && window.__rosterReady === false;
+      if (el && el.getClientRects().length && (!canChoDanhSach || lan >= 24)) {
         // Khối cao hơn nửa màn hình (ví dụ cả phần tiến độ): đưa lên đầu khối, không khung vàng bao cả trang
-        const cao = el.offsetHeight > innerHeight * 0.5;
+        const cao = /^(H[1-6]|SECTION|MAIN)$/.test(el.tagName) || el.offsetHeight > innerHeight * 0.5;
         if (window.__cuonToi) window.__cuonToi(el, cao ? "start" : "center"); else el.scrollIntoView({ behavior: "smooth", block: cao ? "start" : "center" });
         if (cao) return;
         el.classList.add("nhac-nhay");

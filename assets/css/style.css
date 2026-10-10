@@ -595,6 +595,13 @@ svg.art{display:block;width:100%;height:auto;aspect-ratio:4/3;color:var(--ink)}
 .dd-sum b{color:var(--ink)}
 .dd-list{list-style:none;margin:0;padding:0;display:grid;gap:8px}
 .dd-list li{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;padding:12px 14px;background:var(--sheet);border:1px solid var(--rule);border-radius:var(--r)}
+.dd-list li.dd-hv{position:relative;padding-right:52px}
+.dd-go{position:absolute;top:7px;right:7px;display:grid;place-items:center;width:38px;height:38px;border:1px solid var(--rule);border-radius:9px;background:var(--paper);color:var(--graphite);font-size:1.35rem;line-height:1;cursor:pointer}
+.dd-go:hover,.dd-go:focus-visible{color:var(--warn);border-color:var(--warn)}
+.dd-them{justify-self:start}
+.dd-chon-ds{max-height:min(45vh,420px);overflow:auto;border:1px solid var(--rule);border-radius:10px;margin:10px 0}
+.dd-chon{display:flex;align-items:center;gap:10px;padding:9px 12px;border-bottom:1px solid var(--rule);cursor:pointer}
+.dd-chon:last-child{border-bottom:0}.dd-chon input{width:20px;height:20px;flex:none}.dd-chon span{display:grid;min-width:0;flex:1}.dd-chon small{overflow-wrap:anywhere;color:var(--graphite)}
 .dd-list li > div:first-child{display:grid}
 .dd-list .muted{font-size:.85rem}
 .seg{display:flex;border:1.5px solid var(--rule);border-radius:999px;overflow:hidden}
@@ -3032,6 +3039,7 @@ main.wrap[id^="v-"]:not(#v-home){min-height:calc(100svh - var(--nav-h,57px))}
 .lpc-bang td.lpc-nghi{background:none;border-style:dashed;opacity:.4}
 .lpc-mon{display:block;font-size:.7rem;font-weight:700;color:var(--graphite);margin-bottom:4px}
 .lpc-gv{display:block;padding:2px 6px;margin-bottom:3px;border-radius:6px;background:color-mix(in srgb,var(--accent) 16%,transparent);font-weight:600;overflow-wrap:anywhere}
+.lpc-nguoi{max-height:132px;overflow-y:auto;overscroll-behavior:contain}
 .lpc-gv.toi{background:color-mix(in srgb,#2ec4b6 22%,transparent)}
 .lpc-xep{border:1px dashed var(--rule);background:none;color:var(--accent);border-radius:6px;padding:2px 6px;font:inherit;font-size:.72rem;cursor:pointer;min-height:28px;width:100%}
 

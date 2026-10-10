@@ -5,6 +5,8 @@
 import { firebaseConfig, ADMIN_EMAIL, EMAIL_NHAN_THONG_BAO } from "../../config/firebase-config.js?v=20261009b";
 import { FILE_LIMITS, FILE_TYPES, fileExt, fileSize, validateFiles, attachmentStorage, uploadError, validAttachmentPath } from "./attachments.js?v=20261009b";
 import { GIAO_TRINH_MAU as GT_LO_TRINH } from "../../data/giao-trinh-mau.js?v=20261010bf";
+import { soSanhTenHocVien } from "./ten-hoc-vien.js?v=20261010bs";
+import { GO_KHOI_CA, thuocDanhSachCa } from "./danh-sach-ca.js?v=20261010bs";
 import { LIEN_HE, NAM_THI, LICH_THI, BO_LOC_TRUONG, CA_HOC, THOI_GIAN_BIEU, BAI_VE, BANG_VANG, TRUONG, MUC_TIEU, GIAO_VIEN, VIDEO_BIA, BAI_NOI_BAT, THANH_TUU_TRAO, XP_THUONG, AVATAR, SO_DU_THI, HOA_CU, TON_DAU_KY, BAN_TIN, SAN_PHAM, LICH_THI_CAP_NHAT, DO_MANG, MANG_XA_HOI } from "../../data/noi-dung.js?v=20261010bh";
 
 // Firebase được tải riêng, để phần giới thiệu vẫn chạy kể cả khi mạng chậm hoặc chưa cấu hình.
@@ -74,7 +76,7 @@ function bocNhatKy() {
 
 const $ = s => document.querySelector(s);
 // Trợ lý (chat + nhắc việc) tải riêng, không làm chậm trang
-const troLyPromise = import("./tro-ly.js?v=20261010bf").catch(e => console.warn("Chưa tải được trợ lý", e));
+const troLyPromise = import("./tro-ly.js?v=20261010bt").catch(e => console.warn("Chưa tải được trợ lý", e));
 // Thi thử + vận hành lớp: chỉ tải khi đã đăng nhập vào học
 let vanHanhP = null, vanHanhM = null;
 const taiVanHanh = () => vanHanhP ||= import("./van-hanh.js?v=20261010bf").then(m => vanHanhM = m).catch(e => { vanHanhP = null; console.warn("Chưa tải được phần vận hành", e); });
@@ -123,7 +125,7 @@ addEventListener("error", e => {
 });
 /* ---------- Mở tức thì ở lần sau + dùng được khi mạng yếu ---------- */
 if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost") && !/[?&]khongcache/.test(location.search))
-  addEventListener("load", () => navigator.serviceWorker.register("sw.js?v=20261010br").catch(() => {}));
+  addEventListener("load", () => navigator.serviceWorker.register("sw.js?v=20261010bt").catch(() => {}));
 
 /* ---------- Đo tốc độ: mở web kèm ?chandoan=1 để xem từng bước mất bao lâu ---------- */
 const DIAG = /[?&]chandoan/.test(location.search);
@@ -228,11 +230,11 @@ function cuonToi(el, block = "start") {
     if ((st === "sticky" || st === "fixed") && b.bottom > 0 && b.top < innerHeight / 4 && b.height < innerHeight / 3) h = Math.max(h, b.bottom); }); return h + 12; };
   const dich = () => { const b = el.getBoundingClientRect(); return block === "center" ? b.top + b.height / 2 - (innerHeight + lech()) / 2 : b.top - lech(); };
   const ac = new AbortController(); ["touchstart", "wheel", "keydown"].forEach(t => addEventListener(t, () => ac.abort(), { passive: true, signal: ac.signal }));
-  scrollBy({ top: dich(), behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
-  let lan = 0, yTruoc = -1;
-  const kiem = () => { if (ac.signal.aborted) return; if (++lan > 14) return ac.abort();
-    const y = scrollY, d = dich(); if (y === yTruoc && Math.abs(d) > 6) scrollBy({ top: d, behavior: "auto" }); yTruoc = y; setTimeout(kiem, 180); };
-  setTimeout(kiem, 300);
+  // Một lần sau khi bố cục đã vẽ xong. Không tự căn lại nhiều lần khi dữ liệu tải tiếp.
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    if (!ac.signal.aborted) scrollBy({ top: dich(), behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+    setTimeout(() => ac.abort(), 500);
+  }));
 }
 window.__cuonToi = cuonToi;
 function route() {
@@ -247,7 +249,7 @@ function route() {
     // Mục nằm trong một trang khác (VD #nang-cao trong Giáo trình): mở trang đó rồi cuộn tới mục
     const trang = el && el.closest("main[id^='v-']");
     if (trang && trang.id !== "v-home" && PAGES.includes(trang.id.slice(2))) {
-      history.replaceState(null, "", "#" + trang.id.slice(2)); route();
+      history.replaceState(history.state, "", "#" + trang.id.slice(2)); route();
       // mục có thể còn ẩn tới khi dữ liệu / quyền tải xong: chờ tối đa 4 giây rồi mới cuộn
       let lan = 0; const cho = () => { if (location.hash !== "#" + trang.id.slice(2)) return; if (el.offsetParent) cuonToi(el); else if (++lan < 20) setTimeout(cho, 200); };
       requestAnimationFrame(() => setTimeout(cho, 60));
@@ -2773,13 +2775,13 @@ const DD_TT = [["co", "Có mặt"], ["muon", "Muộn"], ["phep", "Phép"], ["van
 const coMat = v => v === "co" || v === "muon" || v === "bu";
 const csHoc = (r, key) => (diemdanhAll[r.id] || {})["cs:" + key] || r.coso || "";
 // học viên thuộc danh sách cơ sở cs của ca key: đã điểm danh ở cs, hoặc chưa điểm danh nơi khác và cơ sở gốc là cs
-const thuocCS = (r, cs, key) => !cs || (diemdanhAll[r.id] || {})["cs:" + key] === cs || String(r.coso || "").includes(cs);
+const thuocCS = (r, cs, key) => thuocDanhSachCa(r, diemdanhAll[r.id], cs, key);
 function hocVienDiemDanh(cs, search, sort, key) {
   const words = timTen(search).split(" ").filter(Boolean);
   return roster.filter(r => thuocCS(r, cs, key) && words.every(w => timTen(r.ten).includes(w)))
     .map(r => ({ r, t: thongKe(diemdanhAll[r.id], r, feedbackAll[r.id]) }))
     .sort((a, b) => {
-      const name = String(a.r.ten || "").localeCompare(String(b.r.ten || ""), "vi");
+      const name = soSanhTenHocVien(a.r, b.r);
       if (sort === "least" || sort === "most") return Number(!a.t.records28) - Number(!b.t.records28)
         || (sort === "least" ? a.t.co28 - b.t.co28 : b.t.co28 - a.t.co28) || name;
       if (sort === "attention") return Number(!a.t.records28) - Number(!b.t.records28)
@@ -2843,16 +2845,19 @@ function renderAttend() {
   // nơi khác đã điểm danh em này trong ca này → khoá ở đây (không điểm danh trùng giữa hai cơ sở)
   const noiKhac = r => cs && val(r) && !csHoc(r, key).includes(cs) ? csHoc(r, key) : "";
   const daDD = ds.filter(r => val(r) && !noiKhac(r)).length;
-  $("#dd-phan").innerHTML = phanCongDD(ngay, ca, cs, daDD);
+  $("#dd-phan").innerHTML = phanCongDD(ngay, ca, cs, daDD)
+    + (!khoa ? `<button type="button" class="btn small dd-them" id="dd-them-hv">＋ Thêm học viên vào ca</button>` : "");
   // Tổng kết ca đang chọn: chia ô rõ ràng thay vì một dòng chữ dài
   $("#dd-sum").innerHTML = `<span class="dds-t">Đang hiển thị <b>${ds.length}</b>/${roster.length} học viên</span>` + (ds.length ? `<span class="dds co"><b class="num">${n("co") + n("muon") + n("bu")}</b>Có mặt${n("muon") ? ` · ${n("muon")} muộn` : ""}${n("bu") ? ` · ${n("bu")} bù` : ""}</span><span class="dds vang"><b class="num">${n("vang")}</b>Vắng KP</span><span class="dds phep"><b class="num">${n("phep")}</b>Phép</span><span class="dds chua"><b class="num">${ds.length - daDD - ds.filter(noiKhac).length}</b>Chưa điểm danh</span>` : "");
   const empty = khoa ? "Ca này anh/chị không được phân công dạy." : roster.length ? "Không tìm thấy học viên phù hợp. Thử đổi tên tìm kiếm hoặc cơ sở." : "Chưa có học viên nào được duyệt.";
-  $("#dd-list").innerHTML = rows.length ? rows.map(({ r, t }) => `<li><div><b>${esc(r.ten)}</b> ${(t2 => huyHieu(t2.r, t2.i, "xs", r.ten))(tinhRank(diemdanhAll[r.id], progressAll[r.id], feedbackAll[r.id], r.ten))}<span class="muted">${esc(r.chuongTrinh || r.lop || "")}${r.coso ? " · " + esc(r.coso) : ""}</span><span class="dd-history">${t.records28 ? `Đã đi ${t.co28} buổi trong 4 tuần` : "Chưa có điểm danh trong 4 tuần"}</span>${(diemdanhAll[r.id] || {})["gc:" + key] ? `<span class="dd-gc">📝 ${esc(diemdanhAll[r.id]["gc:" + key])}</span>` : ""}</div>
+  $("#dd-list").innerHTML = rows.length ? rows.map(({ r, t }) => `<li class="dd-hv"><div><b>${esc(r.ten)}</b> ${(t2 => huyHieu(t2.r, t2.i, "xs", r.ten))(tinhRank(diemdanhAll[r.id], progressAll[r.id], feedbackAll[r.id], r.ten))}<span class="muted">${esc(r.chuongTrinh || r.lop || "")}${r.coso ? " · " + esc(r.coso) : ""}</span><span class="dd-history">${t.records28 ? `Đã đi ${t.co28} buổi trong 4 tuần` : "Chưa có điểm danh trong 4 tuần"}</span>${(diemdanhAll[r.id] || {})["gc:" + key] ? `<span class="dd-gc">📝 ${esc(diemdanhAll[r.id]["gc:" + key])}</span>` : ""}</div>
     ${noiKhac(r) ? `<span class="chip">Đã điểm danh tại ${esc(noiKhac(r))}</span>` : `<div class="dd-nut"><div class="seg seg5" role="group" aria-label="Điểm danh ${esc(r.ten)}">${DD_TT.map(([v, t]) =>
-      `<button type="button" class="${v}" data-dd="${esc(r.id)}" data-v="${v}" aria-pressed="${val(r) === v}">${t}</button>`).join("")}</div><button type="button" class="linkish" data-gc="${esc(r.id)}">${(diemdanhAll[r.id] || {})["gc:" + key] ? "Sửa ghi chú" : "Ghi chú"}</button></div>`}</li>`).join("")
+      `<button type="button" class="${v}" data-dd="${esc(r.id)}" data-v="${v}" aria-pressed="${val(r) === v}">${t}</button>`).join("")}</div><button type="button" class="linkish" data-gc="${esc(r.id)}">${(diemdanhAll[r.id] || {})["gc:" + key] ? "Sửa ghi chú" : "Ghi chú"}</button></div>`}${!khoa ? `<button type="button" class="dd-go" data-dd-go="${esc(r.id)}" aria-label="Gỡ ${esc(r.ten)} khỏi ca này" title="Chỉ gỡ khỏi ca, giữ nguyên hồ sơ">×</button>` : ""}</li>`).join("")
     : `<li class="muted">${empty}</li>`;
   $$("#dd-list [data-dd]").forEach(b => b.onclick = () => ghiDiemDanh([b.dataset.dd], key, b.dataset.v, cs));
   $$("#dd-list [data-gc]").forEach(b => b.onclick = () => ghiChuDD(b.dataset.gc, key));
+  $("#dd-them-hv")?.addEventListener("click", () => moThemHocVienCa(key, cs));
+  $$("#dd-list [data-dd-go]").forEach(b => b.onclick = () => moGoHocVienCa(b.dataset.ddGo, key));
   const bu = $("#dd-bu-them"); if (bu) bu.onclick = () => { const t = $("#dd-bu-tim").value.trim(), hv = roster.find(x => `${x.ten} · ${x.gmail || x.id}` === t);
     if (!hv) return toast("Chọn học viên trong danh sách gợi ý.", "err"); $("#dd-bu-tim").value = ""; ghiDiemDanh([hv.id], key, "bu", cs); };
   const xong = $("#dd-xong"); if (xong) xong.onclick = () => xongDiemDanh(xong.dataset.id, xong);
@@ -2895,6 +2900,56 @@ function ghiDiemDanh(ids, key, v, cs) {
     cu.forEach(([id, old]) => { if ((diemdanhAll[id] || {})[key] !== v) return; const o = { ...(diemdanhAll[id] || {}) }; if (old) o[key] = old; else delete o[key]; diemdanhAll[id] = o; });
     renderAttend(); toast("Chưa lưu được điểm danh. Kiểm tra mạng rồi bấm lại.", "err");
   });
+}
+async function ghiDanhSachCa(ids, key, coSo) {
+  if (!isTeacher || !db || khoaDD($("#dd-ngay").value, $("#dd-ca").value)) return;
+  const truong = "ds:" + key, truoc = ids.map(id => [id, (diemdanhAll[id] || {})[truong]]);
+  const y = scrollY;
+  ids.forEach(id => { diemdanhAll[id] = { ...(diemdanhAll[id] || {}), [truong]: coSo }; });
+  renderAttend(); requestAnimationFrame(() => scrollTo(0, y));
+  const batch = writeBatch(db);
+  ids.forEach(id => batch.set(doc(db, "diemdanh", id), { [truong]: coSo }, { merge: true }));
+  try { await timed("Lưu danh sách ca", batch.commit()); toast(coSo === GO_KHOI_CA ? "Đã gỡ khỏi ca; hồ sơ và điểm danh được giữ nguyên." : "Đã thêm học viên vào ca ✓"); }
+  catch (e) {
+    truoc.forEach(([id, old]) => { if ((diemdanhAll[id] || {})[truong] !== coSo) return;
+      const o = { ...(diemdanhAll[id] || {}) }; if (old === undefined) delete o[truong]; else o[truong] = old; diemdanhAll[id] = o; });
+    renderAttend(); toast("Chưa lưu được danh sách ca. Kiểm tra mạng rồi thử lại.", "err");
+  }
+}
+function moThemHocVienCa(key, coSoDangXem) {
+  if (!isTeacher) return;
+  const duoc = [...$("#dd-cs").options].filter(o => o.value && !o.disabled).map(o => o.value);
+  const coSo = duoc.includes(coSoDangXem) ? coSoDangXem : duoc[0];
+  if (!coSo) return toast("Tài khoản chưa được phân công cơ sở của ca này.", "err");
+  const h = moHop(`<h3>Thêm học viên vào ca</h3><p class="muted">${esc(ngayVN(key.slice(0, 10)))} · Chọn nhiều học viên rồi lưu. Hồ sơ và lịch sử học được giữ nguyên.</p>
+    <label>Cơ sở của ca<select id="dd-them-cs">${duoc.map(x => `<option${x === coSo ? " selected" : ""}>${esc(x)}</option>`).join("")}</select></label>
+    <label>Tìm theo tên, cơ sở hoặc mã học viên<input id="dd-them-tim" type="search" autocomplete="off"></label>
+    <div id="dd-them-ds" class="dd-chon-ds" role="group" aria-label="Chọn học viên"></div>
+    <div class="hop-nut"><button type="button" class="btn" data-dong>Huỷ</button><button type="button" class="btn primary" id="dd-them-luu">Thêm học viên</button></div>`, "Thêm học viên vào ca");
+  const chon = new Set(), tim = h.el.querySelector("#dd-them-tim"), cs = h.el.querySelector("#dd-them-cs"), ds = h.el.querySelector("#dd-them-ds");
+  const ve = () => {
+    const q = timTen(tim.value), loc = roster.filter(r => !q || timTen(`${r.ten} ${r.coso || ""} ${r.id}`).includes(q)).sort(soSanhTenHocVien);
+    ds.innerHTML = loc.length ? loc.map(r => { const daCo = thuocCS(r, cs.value, key);
+      return `<label class="dd-chon"><input type="checkbox" value="${esc(r.id)}"${daCo ? " disabled" : chon.has(r.id) ? " checked" : ""}><span><b>${esc(r.ten)}</b><small>${esc(r.coso || "Chưa có cơ sở")} · ${esc(r.id)}</small></span>${daCo ? '<small>Đã có trong ca</small>' : ""}</label>`; }).join("") : '<p class="muted">Không tìm thấy học viên.</p>';
+    ds.querySelectorAll("input:not(:disabled)").forEach(x => x.onchange = () => x.checked ? chon.add(x.value) : chon.delete(x.value));
+  };
+  tim.oninput = ve; cs.onchange = () => { chon.clear(); ve(); }; ve();
+  h.el.querySelector("#dd-them-luu").onclick = async e => {
+    if (!duoc.includes(cs.value)) return toast("Chọn cơ sở được phân công.", "err");
+    const ids = [...chon].filter(id => { const r = roster.find(x => x.id === id); return r && !thuocCS(r, cs.value, key); });
+    if (!ids.length) return toast("Chọn học viên chưa có trong ca này.", "err");
+    if (ids.length > 100) return toast("Mỗi lần chỉ thêm tối đa 100 học viên.", "err");
+    e.currentTarget.disabled = true;
+    const noi = cs.value; h.dong(); $("#dd-cs").value = noi; $("#dd-search").value = "";
+    await ghiDanhSachCa(ids, key, noi);
+  };
+}
+function moGoHocVienCa(id, key) {
+  if (!isTeacher) return;
+  const r = roster.find(x => x.id === id); if (!r) return;
+  const h = moHop(`<h3>Gỡ học viên khỏi ca?</h3><p>Gỡ <b>${esc(r.ten)}</b> khỏi ca đang chọn. Hồ sơ, điểm danh, điểm số, học phí và tiến độ vẫn được giữ nguyên.</p>
+    <div class="hop-nut"><button type="button" class="btn" data-dong>Huỷ</button><button type="button" class="btn primary" id="dd-go-xac-nhan">Chỉ gỡ khỏi ca</button></div>`, "Gỡ học viên khỏi ca");
+  h.el.querySelector("#dd-go-xac-nhan").onclick = async () => { h.dong(); await ghiDanhSachCa([id], key, GO_KHOI_CA); };
 }
 // Ghi chú tình hình học tập / bài tập / tiến độ của học viên trong ca
 function ghiChuDD(id, key) {
@@ -4061,8 +4116,9 @@ async function onUser(u) {
     troLyDaTai.bai = true; homework = snap.docs.map(d => ({ id: d.id, ...d.data() })); renderHomework(); saveData(); renderTiles(); if (isAdmin) renderQL();
   });
   if (isTeacher) {
+    window.__rosterReady = false;
     listen(query(collection(db, "hocvien"), orderBy("duyetLuc", "desc")), snap => {
-      roster = snap.docs.map(d => ({ id: d.id, ...d.data() })); renderHomework(); if (isAdmin) renderRoster(); renderAttend(); renderLV();
+      roster = snap.docs.map(d => ({ id: d.id, ...d.data() })); renderHomework(); if (isAdmin) renderRoster(); renderAttend(); renderLV(); window.__rosterReady = true;
     });
     listen(collection(db, "diemdanh"), snap => {
       diemdanhAll = {}; snap.docs.forEach(d => diemdanhAll[d.id] = d.data()); renderAttend(); if (vanHanhM) vanHanhM.veLai();
@@ -4882,7 +4938,7 @@ function renderQL() {
     .map(([k, t, f]) => ({ k, t, n: all.filter(f).length }));
   const words = timTen(qlLoc.q).split(" ").filter(Boolean);
   const rows = all.filter(x => (!qlLoc.cs || String(x.r.coso || "").includes(qlLoc.cs)) && words.every(w => timTen(x.r.ten).includes(w)))
-    .sort((a, b) => qlLoc.sx === "ten" ? String(a.r.ten).localeCompare(String(b.r.ten), "vi")
+    .sort((a, b) => qlLoc.sx === "ten" ? soSanhTenHocVien(a.r, b.r)
       : qlLoc.sx === "do" ? (a.t.pass ?? 101) - (b.t.pass ?? 101)
       : qlLoc.sx === "it" ? a.t.co28 - b.t.co28
       : ({ bad: 0, warn: 1, ok: 2 }[a.t.keys.length ? a.t.muc : "ok"] - { bad: 0, warn: 1, ok: 2 }[b.t.keys.length ? b.t.muc : "ok"]) || (a.t.pass ?? 101) - (b.t.pass ?? 101));

@@ -3,3 +3,6 @@ Thumbs.db
 *.zip
 *.psd
 node_modules/
+playwright-report/
+test-results/
+graphify-out/
