@@ -2941,7 +2941,7 @@ button:disabled:not(.btn){opacity:.45}
 /* ===== Điện thoại đã vào lớp: menu 4 nút dưới đáy ===== */
 .tab-duoi{display:none}
 @media(max-width:760px){
-  body.co-tab .tab-duoi:not([hidden]){position:fixed;left:0;right:0;bottom:0;z-index:35;display:grid;grid-template-columns:repeat(4,1fr);padding:4px 4px calc(4px + env(safe-area-inset-bottom,0px));
+  body.co-tab .tab-duoi:not([hidden]){position:fixed;left:0;right:0;bottom:0;z-index:35;display:grid;grid-auto-flow:column;grid-auto-columns:1fr;padding:4px 4px calc(4px + env(safe-area-inset-bottom,0px));
     background:color-mix(in srgb,var(--paper) 94%,transparent);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border-top:1px solid var(--rule)}
   .tab-duoi a{position:relative;display:grid;justify-items:center;align-content:center;gap:2px;min-height:54px;color:var(--graphite);text-decoration:none;font-size:.7rem;font-weight:600}
   .tab-duoi a svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linejoin:round;stroke-linecap:round}
@@ -3034,3 +3034,47 @@ main.wrap[id^="v-"]:not(#v-home){min-height:calc(100svh - var(--nav-h,57px))}
 .lpc-gv{display:block;padding:2px 6px;margin-bottom:3px;border-radius:6px;background:color-mix(in srgb,var(--accent) 16%,transparent);font-weight:600;overflow-wrap:anywhere}
 .lpc-gv.toi{background:color-mix(in srgb,#2ec4b6 22%,transparent)}
 .lpc-xep{border:1px dashed var(--rule);background:none;color:var(--accent);border-radius:6px;padding:2px 6px;font:inherit;font-size:.72rem;cursor:pointer;min-height:28px;width:100%}
+
+/* Chấm công: lịch tháng kiểu ứng dụng Lịch, chip theo cơ sở + trạng thái */
+.cc{display:grid;gap:10px;padding:14px;margin-bottom:14px}
+.cc-dau{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;justify-content:space-between}
+.cc-thang{font-family:var(--f-display);font-size:1.3rem;min-width:130px;text-align:center}
+.cc-loc{overflow-x:auto;flex-wrap:nowrap;max-width:100%;scrollbar-width:none}
+.cc-luoi{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));border-top:1px solid var(--rule)}
+.cc-thu{text-align:center;font-size:.75rem;font-weight:700;color:var(--graphite);padding:6px 0;border-bottom:1px solid var(--rule)}
+.cc-o{min-height:86px;padding:4px 3px 6px;border-bottom:1px solid var(--rule);display:flex;flex-direction:column;gap:3px;align-items:stretch;min-width:0}
+.cc-o.trong{opacity:0}
+.cc-so{align-self:center;font-weight:700;font-size:1.05rem;width:32px;height:32px;display:grid;place-items:center;border-radius:50%}
+.cc-o.cuoituan .cc-so{color:var(--graphite)}
+.cc-o.hom .cc-so{background:#e5484d;color:#fff}
+.cc-chip{display:block;width:100%;padding:3px 4px;border-radius:999px;font:inherit;font-size:.68rem;font-weight:700;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border:1px solid transparent;cursor:default;line-height:1.3}
+button.cc-chip{cursor:pointer;min-height:24px}
+.cc-chip.chua{background:color-mix(in srgb,var(--ink) 10%,transparent);color:var(--graphite);border-color:var(--rule)}
+.cc-chip.ok{background:color-mix(in srgb,#2ec4b6 25%,transparent);color:color-mix(in srgb,#2ec4b6 70%,var(--ink))}
+.cc-chip.warn{background:color-mix(in srgb,#f5c400 25%,transparent);color:color-mix(in srgb,#c79a00 70%,var(--ink))}
+.cc-chip.bad{background:color-mix(in srgb,#e5484d 22%,transparent);color:color-mix(in srgb,#e5484d 75%,var(--ink))}
+.cc-chu{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:0}.cc-chu .cc-chip{width:auto;padding:3px 10px}
+.cc-bao{padding:12px 14px;border-radius:12px;margin-bottom:12px;background:color-mix(in srgb,#f5c400 14%,var(--sheet));border:1px solid color-mix(in srgb,#f5c400 50%,var(--rule));display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.cc-bang td small{display:block;color:var(--graphite);font-size:.75rem}.cc-bang tfoot th,.cc-bang tfoot td{padding-top:10px;border-top:2px solid var(--rule)}
+.cc-chon{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+@media(max-width:560px){.cc-o{min-height:70px}.cc-chip{font-size:.6rem;padding:2px 2px}.cc-so{width:26px;height:26px;font-size:.9rem}}
+/* Vô ca / kết ca + KPI tháng của giáo viên */
+.cc-hom h3,.cc-kpi h3{margin:0 0 8px;font-size:1rem}
+.cc-hom-ca{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0;border-top:1px solid var(--rule)}
+.cc-hom-ca:first-of-type{border-top:0}
+.cc-hom-ca small{display:block;margin-top:3px;color:var(--graphite)}
+.cc-hom-ca .btn{min-width:104px;min-height:44px}
+.cc-kpi-ds{list-style:none;margin:6px 0 10px;padding:0;display:grid;gap:6px}
+.cc-kpi-ds li{display:flex;justify-content:space-between;gap:10px;padding:8px 10px;border-radius:10px;background:color-mix(in srgb,var(--ink) 6%,transparent)}
+.cc-kpi-ds li.ok span{color:var(--ok)}.cc-kpi-ds li.bad span{color:#e2565e}
+.cc-thanh{height:8px;border-radius:99px;background:color-mix(in srgb,var(--ink) 10%,transparent);overflow:hidden}
+.cc-thanh i{display:block;height:100%;background:#f5c400;border-radius:inherit}
+/* Bảng theo dõi học viên, theo dõi chuyên cần, bảng công: khung cuộn dọc, tiêu đề cột đứng yên — đỡ phải vuốt dài */
+.ql-bang-w,.dw-wrap,.cc-bang-o{max-height:min(68vh,620px);overflow:auto;overscroll-behavior:contain}
+.ql-bang thead th,.dw thead th,.cc-bang thead th{position:sticky;top:0;z-index:2;background:var(--sheet);box-shadow:inset 0 -1px 0 var(--rule)}
+.cc-bang-o{border:1px solid var(--rule);border-radius:var(--r)}
+@media (max-width:760px){
+  .ql-bang-w,.dw-wrap{max-height:70vh;overflow-y:auto;border:1px solid var(--rule);border-radius:14px;padding:6px}
+}
+.cc-hom-nut{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.cc-hom h3 small{font-weight:500;font-size:.8rem;margin-left:6px}.cc-do{color:#e2565e}
