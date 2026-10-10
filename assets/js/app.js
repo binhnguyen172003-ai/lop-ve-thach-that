@@ -1727,11 +1727,12 @@ function capNhatTheKhoa() {
 function moTheKhoa(c) {
   const ten = goc((c.querySelector("h3") || {}).textContent);
   if (khoaDuocCap().includes(ten)) {
-    khoaMuon = ten; lessonId = null;
-    location.hash = "#giao-trinh";
+    khoaMuon = ten; if (lessonId) dongBai(true); lessonId = null; gtLoc = "tat";
+    if (location.hash !== "#giao-trinh") location.hash = "#giao-trinh";
     if (lessons.length) {
       renderLessons();
       if (!lessons.some(l => goc(l.khoa) === ten)) toast(`Khoá ${ten} chưa có bài trên giáo trình, anh chị sẽ cập nhật sớm.`);
+      else { toast(`Đã chuyển sang môn ${ten}.`); setTimeout(() => $("#gt-wrap")?.scrollIntoView({ behavior: "smooth", block: "start" }), 60); }
     }
     return;
   }
@@ -1816,61 +1817,182 @@ function renderLessons() {
   $("#seed-box").hidden = !isAdmin;
   $("#seed-title").textContent = lessons.length ? "Cập nhật giáo trình có sẵn" : "Giáo trình đang trống";
   $("#btn-seed").textContent = lessons.length ? "Cập nhật giáo trình có sẵn" : "Nạp giáo trình có sẵn";
-  const total = hien.length, n = hien.filter(l => myProgress.bai[l.id]).length;
-  $("#gt-prog-text").textContent = `Đã học ${n}/${total} bài`;
-  $("#gt-prog").style.width = total ? (n / total * 100) + "%" : "0";
   if (!cs.length) {
-    $("#course-tabs").innerHTML = ""; $("#lesson-nav").innerHTML = "";
-    $("#lesson").innerHTML = `<p class="muted">Giáo trình chưa có bài nào.${isAdmin ? " Bấm “Nạp giáo trình có sẵn” ở khung bên dưới, hoặc tự thêm bài." : ""}</p>`;
+    $("#course-tabs").innerHTML = ""; $("#gt-td").innerHTML = ""; $("#gt-loc").innerHTML = ""; $("#lesson").hidden = true;
+    $("#gt-ds").innerHTML = `<p class="muted gt-trong">Giáo trình chưa có bài nào.${isAdmin ? " Bấm “Nạp giáo trình có sẵn” ở khung bên dưới, hoặc tự thêm bài." : ""}</p>`;
     return;
   }
   if (!cs.includes(course)) course = cs[0];
-  $("#course-tabs").innerHTML = cs.map(c => `<button class="tab" data-c="${esc(c)}" aria-selected="${c === course}">${esc(c)}</button>`).join("");
-  $("#course-tabs").hidden = cs.length <= 1;   // chỉ có một khoá: bỏ dòng chip, tiêu đề khoá đã nằm trong thẻ bài
-  $$("#course-tabs button").forEach(b => b.onclick = () => { course = b.dataset.c; lessonId = null; renderLessons(); });
-  const list = lessons.filter(l => l.khoa === course);
-  if (!list.find(l => l.id === lessonId)) lessonId = list[0].id;
-  // Thẻ "Lộ trình" đã hiện đầy đủ ở khung bài bên trên, nên không lặp lại trong danh sách; vẫn đổi được bằng mũi tên ‹ ›
-  $("#lesson-nav").innerHTML = list.filter(l => !/^lộ trình/i.test(String(l.ten || ""))).map(l =>
-    `<button data-id="${esc(l.id)}" aria-current="${l.id === lessonId}"><span class="tick ${myProgress.bai[l.id] ? "done" : ""}"></span>${esc(l.ten)}</button>`).join("");
-  $$("#lesson-nav button").forEach(b => b.onclick = () => {
-    lessonId = b.dataset.id; renderLessons();
-    // Trên điện thoại danh sách bài nằm dưới nội dung: bấm bài nào là cuộn lên đúng phần nội dung bài đó.
-    if (innerWidth <= 640) $("#lesson").scrollIntoView({ behavior: "smooth", block: "start" });
-    else { const top = $("#lesson").getBoundingClientRect().top; if (top > innerHeight * 0.5 || top < 0) $("#lesson").scrollIntoView({ behavior: "smooth", block: "start" }); }
-  });
-  const l = list.find(x => x.id === lessonId);
-  const items = Array.isArray(l.buoc) ? l.buoc : [];
-  // Hình minh hoạ (assets/js/hinh-bai.js): tải riêng lần đầu mở giáo trình, xong thì vẽ lại bài đang xem
+  // Hình minh hoạ + ảnh tượng (assets/js/hinh-bai.js): tải riêng lần đầu mở giáo trình, xong thì vẽ lại
   if (!hinhBai && !hinhBaiDang) { hinhBaiDang = true; import("./hinh-bai.js?v=20261010bf").then(m => { hinhBai = m; renderLessons(); }).catch(() => { hinhBaiDang = false; }); }
+  const tenMon = c => goc(c).replace("Màu & bố cục màu", "Màu & Bố cục màu");
+  $("#course-tabs").innerHTML = cs.map(c => { const ds = lessons.filter(l => l.khoa === c && !laLoTrinh(l)), xong = ds.filter(l => myProgress.bai[l.id]).length;
+    return `<button type="button" class="gt-mon-nut" data-c="${esc(c)}" aria-pressed="${c === course}"><b>${esc(tenMon(c))}</b><small class="num">${isTeacher ? ds.length + " bài" : `${xong}/${ds.length} bài`}</small></button>`; }).join("");
+  $("#course-tabs").hidden = cs.length <= 1;
+  $$("#course-tabs button").forEach(b => b.onclick = () => { if (course === b.dataset.c && !lessonId) return; course = b.dataset.c; dongBai(true); gtLoc = "tat"; renderLessons(); });
+  const list = lessons.filter(l => l.khoa === course);
+  const baiSo = list.filter(l => !laLoTrinh(l));                       // bài đánh số (thẻ Lộ trình đứng riêng ở đầu)
+  const trangThai = l => myProgress.bai[l.id] ? "xong" : (myProgress.xem || {})[l.id] ? "dang" : "chua";
+  // Học theo thứ tự: bài trước hoàn thành mới mở bài sau (giáo viên, quản lý xem được hết)
+  const moKhoa = l => { if (isTeacher) return true; const k = baiSo.indexOf(l); return k <= 0 || !!myProgress.bai[l.id] || !!myProgress.bai[baiSo[k - 1].id]; };
+  gtMoKhoa = l => !baiSo.includes(l) || moKhoa(l);
+  // ---- Thẻ tiến độ: số liệu thật từ dữ liệu tiến độ (bấm "Đã hoàn thành" mới tính xong; mở bài chỉ là "đang học")
+  const xong = baiSo.filter(l => trangThai(l) === "xong").length, dang = baiSo.filter(l => trangThai(l) === "dang").length;
+  const pt = baiSo.length ? Math.round(xong / baiSo.length * 100) : 0, tiep = baiSo.find(l => trangThai(l) !== "xong");
+  if (isTeacher) {
+    const hv = roster.filter(x => x.vaiTro !== "giaovien"), tb = hv.length && baiSo.length ? Math.round(hv.reduce((a, x) => a + baiSo.filter(l => progressAll[x.id]?.bai?.[l.id]).length, 0) / (hv.length * baiSo.length) * 100) : 0;
+    $("#gt-td").innerHTML = `<p class="eyebrow">${esc(tenMon(course))}</p><div class="gt-td-so"><b class="num">${baiSo.length}</b><span>bài trong môn</span></div>
+      <p>Lớp <b class="num">${hv.length}</b> học viên · trung bình hoàn thành <b class="num">${tb}%</b></p><div class="gt-bar" role="progressbar" aria-valuenow="${tb}" aria-valuemin="0" aria-valuemax="100"><i style="width:${tb}%"></i></div>
+      <p class="muted">Mỗi thẻ bài ghi số học viên đã hoàn thành.</p>`;
+  } else {
+    $("#gt-td").innerHTML = `<p class="eyebrow">Tiến độ · ${esc(tenMon(course))}</p>
+      <div class="gt-td-so"><b class="num">${xong}/${baiSo.length}</b><span>bài đã hoàn thành</span><b class="num gt-pt">${pt}%</b></div>
+      <div class="gt-bar" role="progressbar" aria-valuenow="${pt}" aria-valuemin="0" aria-valuemax="100" aria-label="Tiến độ môn"><i style="width:${pt}%"></i></div>
+      <ul class="gt-td-ds"><li><span class="gt-dot xong"></span>Hoàn thành <b class="num">${xong}</b></li><li><span class="gt-dot dang"></span>Đang học <b class="num">${dang}</b></li><li><span class="gt-dot chua"></span>Chưa học <b class="num">${baiSo.length - xong - dang}</b></li></ul>
+      ${tiep ? `<button type="button" class="btn primary gt-tiep" data-mo="${esc(tiep.id)}"><small>Bài tiếp theo</small><span>Bài ${pad2b(baiSo.indexOf(tiep) + 1)} · ${esc(tiep.ten.replace(/^(Bài|Chuyên đề)\s*[\d–-]+\s*[–-]\s*/i, ""))} →</span></button>` : `<p class="gt-xong-het">🎉 Em đã hoàn thành cả môn này!</p>`}`;
+  }
+  // ---- Bộ lọc trạng thái
+  const LOC = isTeacher ? [] : [["tat", "Tất cả", baiSo.length], ["dang", "Đang học", dang], ["chua", "Chưa học", baiSo.length - xong - dang], ["xong", "Hoàn thành", xong]];
+  $("#gt-loc").innerHTML = LOC.map(([k, t, n]) => `<button type="button" class="tab" data-loc="${k}" aria-selected="${gtLoc === k}">${t} <span class="num">${n}</span></button>`).join("");
+  $("#gt-loc").hidden = !LOC.length;
+  $$("#gt-loc button").forEach(b => b.onclick = () => { gtLoc = b.dataset.loc; renderLessons(); });
+  // ---- Danh sách thẻ bài
+  const loTrinh = list.filter(laLoTrinh);
+  const hien2 = baiSo.filter(l => gtLoc === "tat" || trangThai(l) === gtLoc);
+  const hvXong = l => roster.filter(x => x.vaiTro !== "giaovien" && progressAll[x.id]?.bai?.[l.id]).length;
+  const TT = { xong: ["Hoàn thành", "✓"], dang: ["Đang học", "◐"], chua: ["Chưa học", "○"] };
+  const the = l => { const k = baiSo.indexOf(l), tt = trangThai(l), khoa = !moKhoa(l);
+    return `<button type="button" class="gt-the tt-${isTeacher ? "gv" : khoa ? "khoa" : tt}" data-mo="${esc(l.id)}"${khoa ? ` aria-disabled="true" data-truoc="${esc(baiSo[k - 1].ten)}"` : ""}>
+      <span class="gt-anh">${anhBai(l)}</span>
+      <span class="gt-noi"><small class="gt-so">Bài ${pad2b(k + 1)}</small><b class="gt-ten">${esc(l.ten)}</b><span class="gt-mota">${esc(moTaBai(l))}</span>
+      <span class="gt-tt">${isTeacher ? `<span class="chip">${hvXong(l)}/${roster.filter(x => x.vaiTro !== "giaovien").length} học viên đã xong</span>` : `${khoa ? `<span class="gt-chip khoa"><i aria-hidden="true">🔒</i>Chưa mở khoá</span>` : `<span class="gt-chip ${tt}"><i aria-hidden="true">${TT[tt][1]}</i>${TT[tt][0]}</span>`}`}</span></span></button>`; };
+  $("#gt-ds").innerHTML = (gtLoc === "tat" && loTrinh.length ? loTrinh.map(l => `<button type="button" class="gt-lt" data-mo="${esc(l.id)}"><span>🗺️</span><span><b>${esc(l.ten)}</b><small class="muted">Xem lộ trình cả khoá trước khi học</small></span><span aria-hidden="true">›</span></button>`).join("") : "")
+    + (hien2.length ? `<div class="gt-luoi">${hien2.map(the).join("")}</div>` : `<p class="muted gt-trong">Không có bài nào ở mục này.</p>`);
+  $$("#gt-ds [data-mo], #gt-td [data-mo]").forEach(b => b.onclick = () => b.dataset.truoc ? toast(`Hoàn thành bài “${b.dataset.truoc}” trước để mở bài này nhé.`) : moBai(b.dataset.mo));
+  // ---- Trang chi tiết bài
+  const dangMo = lessonId && list.find(l => l.id === lessonId && moKhoa(l));
+  $("#gt-wrap").classList.toggle("dang-doc", !!dangMo);
+  $("#lesson").hidden = !dangMo;
+  if (!dangMo) return;
+  const l = dangMo, k = baiSo.indexOf(l), tt = trangThai(l);
   const hinh = hinhBai ? (hinhBai.GAN[l.id] || []).filter(x => hinhBai.HINH[x.h]).map(x => `<figure class="bai-hinh">${hinhBai.HINH[x.h]}<figcaption>${esc(x.chu)}</figcaption></figure>`).join("") : "";
-  // Ảnh tượng lớp tự chụp, xếp từ cơ bản lên nâng cao; bấm ảnh để xem lớn
   const tuongDs = hinhBai && hinhBai.TUONG_BAI && (hinhBai.TUONG_BAI[l.id] || []).map(m => hinhBai.TUONG.find(t => t.ma === m)).filter(Boolean) || [];
   const tnHTML = hinhBai && hinhBai.THUAT_NGU && hinhBai.THUAT_NGU_BAI.includes(l.id) ? `<details class="bai-tn"><summary><b>Bảng dịch thuật ngữ giải phẫu Trung – Việt</b> <small class="muted">· dùng khi đọc sách vẽ tiếng Trung</small></summary>
     <div class="bai-tn-cuon"><table><thead><tr><th>Chữ Trung</th><th>Tiếng Việt</th><th>Khi vẽ, nhìn ở đâu</th></tr></thead><tbody>${hinhBai.THUAT_NGU.map(x => `<tr class="tn-${x.nhom === "Xương" ? "x" : x.nhom === "Cơ" ? "c" : "k"}"><td lang="zh">${esc(x.trung)}</td><td><b>${esc(x.viet)}</b></td><td>${esc(x.ve)}</td></tr>`).join("")}</tbody></table></div></details>` : "";
-  const tuong = tuongDs.length ? `<section class="bai-tuong"><h4>Ảnh tượng của lớp <small class="muted">· xếp từ dễ đến khó · bấm ảnh để xem lớn</small></h4>${tuongDs.map((t, k) =>
-    `<div class="bt-the cap-${t.cap}"><div class="bt-dau"><span class="bt-so num">${k + 1}</span><b>${esc(t.ten)}</b><span class="chip bt-cap">${esc(t.capTen)}</span></div>
-     <p class="muted">${esc(t.meo)}</p><div class="bt-anh">${t.anh.map((a, j) => `<button type="button" data-tuong="${esc(t.ma)}" data-j="${j}" aria-label="Xem lớn ${esc(t.ten)} góc ${j + 1}"><img src="${esc(a)}" alt="${esc(t.ten)} – góc ${j + 1}" loading="lazy" decoding="async" width="387" height="516"></button>`).join("")}</div></div>`).join("")}</section>` : "";
-  const body = (l.noidung ? `<div class="bai-md">${mdHTML(l.noidung)}</div>` : "") + (!items.length ? "" : l.loai === "noi-dung"
-    ? `<ul class="points">${items.map(s => `<li>${esc(s)}</li>`).join("")}</ul>`
-    : `<ol class="steps">${items.map(s => `<li>${esc(s)}</li>`).join("")}</ol>`);
-  const idx = list.findIndex(x => x.id === lessonId);
-  $("#lesson").innerHTML =
-    `<div class="bai-chuyen"><button type="button" data-go="-1" aria-label="Bài trước" ${idx <= 0 ? "disabled" : ""}>‹</button><span class="num">Bài ${idx + 1}/${list.length}</span><button type="button" data-go="1" aria-label="Bài sau" ${idx >= list.length - 1 ? "disabled" : ""}>›</button></div>
-     <p class="eyebrow">${esc(l.khoa)}</p><h3 style="font-size:1.5rem;margin-top:4px">${esc(l.ten)}</h3>
-     ${hinh ? `<div class="bai-hinh-ds">${hinh}</div>` : ""}${body}${tuong}${tnHTML}${l.ghichu ? `<p class="gc"><b>Anh chị dặn:</b> ${esc(l.ghichu)}</p>` : ""}
-     <div class="foot">${isTeacher ? "" : `<button class="btn small" id="mark">${myProgress.bai[l.id] ? "Đã học xong ✓" : "Đánh dấu đã học"}</button>`}
-     ${isAdmin ? `<button class="btn small" id="del-l">Xoá bài này</button>` : ""}</div>`;
+  const tuong = tuongDs.length ? `<section class="bai-tuong"><h4>Ảnh tượng của lớp <small class="muted">· xếp từ dễ đến khó · bấm ảnh để xem lớn</small></h4>${tuongDs.map((t, j) =>
+    `<div class="bt-the cap-${t.cap}"><div class="bt-dau"><span class="bt-so num">${j + 1}</span><b>${esc(t.ten)}</b><span class="chip bt-cap">${esc(t.capTen)}</span></div>
+     <p class="muted">${esc(t.meo)}</p><div class="bt-anh">${t.anh.map((a, q) => `<button type="button" data-tuong="${esc(t.ma)}" data-j="${q}" aria-label="Xem lớn ${esc(t.ten)} góc ${q + 1}"><img src="${esc(a)}" alt="${esc(t.ten)} – góc ${q + 1}" loading="lazy" decoding="async" width="387" height="516"></button>`).join("")}</div></div>`).join("")}</section>` : "";
+  // Sắp các đoạn có sẵn của bài vào đúng phần (không đổi chữ)
+  const P = chiaPhanBai(l.noidung || "");
+  const items = Array.isArray(l.buoc) ? l.buoc : [];
+  if (items.length) (l.loai === "noi-dung" ? P.kienthuc : P.quytrinh).push(l.loai === "noi-dung" ? items.map(x => "- " + x).join("\n") : items.map((x, q) => `${q + 1}. ${x}`).join("\n"));
+  const phan = (icon, ten, noi) => noi ? `<section class="gtb-phan"><h3><span aria-hidden="true">${icon}</span>${ten}</h3>${noi}</section>` : "";
+  const md = a => a.length ? `<div class="bai-md">${a.map(mdHTML).join("")}</div>` : "";
+  const truoc = k > 0 ? baiSo[k - 1] : null, sau = k >= 0 && k < baiSo.length - 1 ? baiSo[k + 1] : null, sauKhoa = sau && !moKhoa(sau);
+  const nutXong = isTeacher ? "" : `<button type="button" class="btn ${tt === "xong" ? "" : "primary"} gtb-xong" id="mark">${tt === "xong" ? "✓ Đã hoàn thành · bấm để bỏ" : "Đánh dấu đã hoàn thành bài này"}</button>`;
+  $("#lesson").innerHTML = `<button type="button" class="gtb-ve" id="gtb-ve">‹ Tất cả bài · ${esc(tenMon(course))}</button>
+    <header class="gtb-dau"><p class="eyebrow">${k >= 0 ? `Bài ${pad2b(k + 1)}/${baiSo.length}` : "Lộ trình"} · ${esc(tenMon(l.khoa))}</p><h2>${esc(l.ten)}</h2>
+      ${isTeacher ? `<span class="chip">${hvXong(l)} học viên đã hoàn thành</span>` : `<span class="gt-chip ${tt}"><i aria-hidden="true">${TT[tt][1]}</i>${TT[tt][0]}</span>`}</header>
+    ${phan("🎯", "Mục tiêu cần đạt", md(P.muctieu))}
+    ${phan("📘", "Kiến thức cần nắm", md(P.kienthuc) + tnHTML)}
+    ${phan("🖼️", "Hình ảnh minh hoạ", (hinh ? `<div class="bai-hinh-ds">${hinh}</div>` : "") + tuong)}
+    ${phan("🪜", "Quy trình thực hiện", md(P.quytrinh))}
+    ${phan("⚠️", "Lỗi thường gặp & cách sửa", md(P.loi))}
+    ${phan("✅", "Yêu cầu hoàn thành", md(P.yeucau) + (l.ghichu ? `<p class="gc"><b>Anh chị dặn:</b> ${esc(l.ghichu)}</p>` : "") + (nutXong ? `<p class="muted gtb-ghichu">Làm xong bài và tự kiểm theo các ý trên rồi mới bấm hoàn thành. Mở bài chỉ được tính là “Đang học”.</p>${nutXong}` : ""))}
+    <nav class="gtb-chuyen" aria-label="Chuyển bài">${truoc ? `<button type="button" data-mo="${esc(truoc.id)}"><small>‹ Bài trước</small><b>${esc(truoc.ten)}</b></button>` : "<span></span>"}${sau ? `<button type="button" data-mo="${esc(sau.id)}" class="sau${sauKhoa ? " khoa" : ""}"${sauKhoa ? ` data-truoc="${esc(l.ten)}"` : ""}><small>${sauKhoa ? "🔒 Hoàn thành bài này để mở" : "Bài tiếp theo ›"}</small><b>${esc(sau.ten)}</b></button>` : "<span></span>"}</nav>
+    ${isAdmin ? `<div class="gtb-ql"><b>Quản lý bài</b><button class="btn small" type="button" id="gtb-sua">Sửa tên, mô tả, ảnh</button><button class="btn small" type="button" id="gtb-len" ${k <= 0 ? "disabled" : ""}>↑ Lên</button><button class="btn small" type="button" id="gtb-xuong" ${k < 0 || k >= baiSo.length - 1 ? "disabled" : ""}>↓ Xuống</button><button class="btn small" type="button" id="del-l">Xoá bài này</button></div>` : ""}`;
+  $("#gtb-ve").onclick = () => dongBai();
+  $$("#lesson [data-mo]").forEach(b => b.onclick = () => b.dataset.truoc ? toast(`Hoàn thành bài “${b.dataset.truoc}” trước để mở bài tiếp theo nhé.`) : moBai(b.dataset.mo));
   if ($("#mark")) $("#mark").onclick = () => toggleProgress("bai", l.id).then(renderLessons);
   $$("#lesson [data-tuong]").forEach(b => b.onclick = () => {
     const t = hinhBai.TUONG.find(x => x.ma === b.dataset.tuong); if (!t) return;
     galList = t.anh.map((a, j) => ({ anh: a, moTa: `${t.ten} · góc ${j + 1}/${t.anh.length} · ${t.capTen}` })); showLb(+b.dataset.j);
   });
-  $$("#lesson [data-go]").forEach(b => b.onclick = () => {
-    const k = idx + Number(b.dataset.go); if (k < 0 || k >= list.length) return;
-    lessonId = list[k].id; renderLessons(); $("#lesson").scrollIntoView({ behavior: "smooth", block: "start" });
+  if (isAdmin) {
+    confirmButton($("#del-l"), () => { ghiDaXoa(l.id); dongBai(true); return deleteDoc(doc(db, "giaotrinh", l.id)); });
+    const doi = d => { const o = baiSo[k + d]; if (!o) return; const a = l.thutu, b = o.thutu; const bt = writeBatch(db);
+      bt.set(doc(db, "giaotrinh", l.id), { thutu: b }, { merge: true }); bt.set(doc(db, "giaotrinh", o.id), { thutu: a === b ? b + d * 0.001 : a }, { merge: true });
+      timed("Đổi thứ tự bài", bt.commit()).then(() => toast("Đã đổi thứ tự ✓"), () => toast("Chưa đổi được thứ tự. Thử lại.", "err")); };
+    $("#gtb-len").onclick = () => doi(-1); $("#gtb-xuong").onclick = () => doi(1);
+    $("#gtb-sua").onclick = () => suaBai(l);
+  }
+}
+const laLoTrinh = l => /^lộ trình/i.test(String(l.ten || ""));
+let gtLoc = "tat", gtTha = null, gtMoKhoa = () => true;
+// Mở một bài: ghi "đang học" (chưa phải hoàn thành), có nút Quay lại để về danh sách
+function moBai(id) {
+  const lb = lessons.find(x => x.id === id); if (lb && !gtMoKhoa(lb)) { toast("Hoàn thành bài trước để mở bài này nhé."); return; }
+  const moi = !lessonId; lessonId = id;
+  if (!isTeacher && approved && !myProgress.bai[id] && !(myProgress.xem || {})[id]) {
+    myProgress.xem = { ...(myProgress.xem || {}), [id]: Date.now() }; saveData(); try { luuTienDo().catch(() => {}); } catch (e) {}
+  }
+  if (moi && !gtTha) gtTha = voiQuayLai(() => { gtTha = null; lessonId = null; renderLessons(); });
+  renderLessons();
+  requestAnimationFrame(() => { const el = $("#lesson"); if (el && !el.hidden) el.scrollIntoView({ block: "start", behavior: "smooth" }); });
+}
+function dongBai(khongVe) {
+  lessonId = null; if (gtTha) { const f = gtTha; gtTha = null; f(); }
+  if (!khongVe) { renderLessons(); requestAnimationFrame(() => $("#gt-wrap")?.scrollIntoView({ block: "start" })); }
+}
+const pad2b = n => String(n).padStart(2, "0");
+// Ảnh minh hoạ của thẻ: ảnh quản lý tự đặt → ảnh tượng của lớp → hình minh hoạ của bài → bài vẽ học viên theo môn
+function anhBai(l) {
+  const img = (src, alt) => `<img src="${esc(src)}" alt="${esc(alt)}" loading="lazy" decoding="async">`;
+  if (l.anh && /^(https:|data:image\/|assets\/)/.test(l.anh)) return img(l.anh, l.ten);
+  if (hinhBai) {
+    const t = (hinhBai.TUONG_BAI[l.id] || [])[0], tu = t && hinhBai.TUONG.find(x => x.ma === t);
+    if (tu) return img(tu.anh[0], tu.ten);
+    const g = (hinhBai.GAN[l.id] || [])[0]; if (g && hinhBai.HINH[g.h]) return `<span class="gt-svg">${hinhBai.HINH[g.h].replace(/id="hb-/g, 'id="t-hb-').replace(/url\(#hb-/g, "url(#t-hb-")}</span>`;
+  }
+  const k = goc(l.khoa), mau = /màu/i.test(k) ? "khang-mau" : /mỹ thuật 2/i.test(k) ? "bao-sac-do" : /người/i.test(k) ? "thuy-chan-dung" : /tượng/i.test(k) ? "bao-tuong" : "nam-sac-do";
+  return img(`assets/img/bai-ve/${mau}.webp`, "Bài vẽ học viên – " + k);
+}
+// Mô tả ngắn: câu đầu tiên của bài (bỏ bảng, tiêu đề, định dạng)
+function moTaBai(l) {
+  if (l.moTa) return l.moTa;
+  const t = String(l.noidung || "").split("\n").filter(x => x.trim() && !/^(#|\||>|-{3})/.test(x.trim())).map(x => x.replace(/\*\*|\*|`/g, "").replace(/^\s*(?:[-*]|\d+\.)\s+/, "").trim())[0]
+    || (Array.isArray(l.buoc) ? l.buoc.slice(0, 3).join(" · ") : "");
+  return t.length > 120 ? t.slice(0, 118).replace(/\s+\S*$/, "") + "…" : t;
+}
+// Chia nội dung bài thành các phần theo nhãn có sẵn trong bài (Em sẽ làm được, Lỗi hay gặp, Tự kiểm tra…)
+function chiaPhanBai(md) {
+  const P = { muctieu: [], kienthuc: [], quytrinh: [], loi: [], yeucau: [] };
+  const loaiNhan = t => /em sẽ làm được|mục tiêu|đọc nhanh/i.test(t) ? "muctieu" : /lỗi/i.test(t) ? "loi" : /tự kiểm|đạt khi|qua cổng|bài về nhà|tự hỏi|yêu cầu/i.test(t) ? "yeucau" : null;
+  const loaiDe = t => /lỗi/i.test(t) ? "loi" : /quy trình|các bước|\d+ bước/i.test(t) ? "quytrinh" : /phiếu tự kiểm|tiến độ của em|các cổng/i.test(t) ? "yeucau" : null;
+  const phan = []; let cur = { de: null, dong: [] };
+  String(md).split("\n").forEach(d => { if (/^#{2,5}\s/.test(d)) { phan.push(cur); cur = { de: d, dong: [] }; } else cur.dong.push(d); });
+  phan.push(cur);
+  phan.forEach(({ de, dong }) => {
+    const ld = de && loaiDe(de.replace(/^#+\s*/, ""));
+    if (ld) { P[ld].push([de, ...dong].join("\n")); return; }
+    const khoi = dong.join("\n").split(/\n\s*\n/).filter(x => x.trim()); const giu = [];
+    for (let q = 0; q < khoi.length; q++) {
+      let b = khoi[q]; const m = b.trim().match(/^\*\*([^*]+?)\*\*/), ln = m && loaiNhan(m[1]);
+      if (ln) { if (/^\*\*[^*]+\*\*\s*$/.test(b.trim()) && khoi[q + 1]) b += "\n\n" + khoi[++q]; P[ln].push(b); } else giu.push(b);
+    }
+    if (giu.length || de) P.kienthuc.push([de, ...giu].filter(Boolean).join("\n\n"));
   });
-  if (isAdmin) confirmButton($("#del-l"), () => { ghiDaXoa(l.id); return deleteDoc(doc(db, "giaotrinh", l.id)); });
+  P.kienthuc = P.kienthuc.filter(x => x.replace(/^#+.*$/m, "").trim() || x.split("\n").length > 1);
+  return P;
+}
+function suaBai(l) {
+  let anh = l.anh || "";
+  const h = moHop(`<h3>Sửa bài</h3><label>Tên bài<input id="sb-ten" maxlength="120" value="${esc(l.ten)}"></label>
+    <label>Mô tả ngắn trên thẻ (để trống = lấy câu đầu của bài)<input id="sb-mt" maxlength="160" value="${esc(l.moTa || "")}"></label>
+    <label class="btn small">🖼️ Chọn ảnh minh hoạ (bài vẽ thật)<input type="file" id="sb-anh" accept="image/*" hidden></label>
+    <label>Hoặc dán link ảnh (https://…)<input id="sb-link" value="${esc(/^https:/.test(anh) ? anh : "")}"></label>
+    <div class="tt-xem" id="sb-xem"></div>
+    <div class="hop-nut"><button class="btn" type="button" data-dong>Huỷ</button><button class="btn primary" type="button" id="sb-luu">Lưu</button></div>`, "Sửa bài");
+  const xem = () => { $("#sb-xem").innerHTML = anh ? `<figure><img src="${esc(anh)}" alt="Ảnh minh hoạ"><button type="button" class="btn small" id="sb-bo">Bỏ ảnh (dùng ảnh mặc định)</button></figure>` : ""; if ($("#sb-bo")) $("#sb-bo").onclick = () => { anh = ""; $("#sb-link").value = ""; xem(); }; };
+  xem();
+  $("#sb-anh").onchange = async e => { try { anh = await nenAnh(e.target.files[0], 900, 300000); xem(); } catch (er) { toast(er.message || "Ảnh lỗi", "err"); } };
+  $("#sb-link").oninput = e => { const v = e.target.value.trim(); if (!v || /^https:\/\/\S+$/.test(v)) { anh = v; xem(); } };
+  $("#sb-luu").onclick = e => {
+    const ten = $("#sb-ten").value.trim(); if (!ten) return toast("Tên bài không được trống.", "err");
+    e.target.disabled = true;
+    timed("Sửa bài", setDoc(doc(db, "giaotrinh", l.id), { ten, moTa: $("#sb-mt").value.trim(), anh }, { merge: true }))
+      .then(() => { toast("Đã lưu bài ✓"); h.dong(); }, () => { e.target.disabled = false; toast("Chưa lưu được. Kiểm tra mạng rồi thử lại.", "err"); });
+  };
 }
 
 /* ---------- Bài tập ---------- */
@@ -1882,7 +2004,7 @@ const daNopLai = (fb, nop) => fb && fb.trangThai === "lamlai" && nopLuc(nop) > (
 const chuaDat = fb => TIEU_CHI.filter(([k]) => fb && fb.tieuChi && fb.tieuChi[k] === false).map(([, t]) => t);
 function nopLai(id) {
   myProgress.baitap[id] = Date.now(); saveData();
-  timed("Nộp lại bài", setDoc(doc(db, "tiendo", mail), { bai: myProgress.bai, baitap: myProgress.baitap, anh: myAvatar || "", capNhat: Date.now() }))
+  timed("Nộp lại bài", luuTienDo())
     .then(() => toast("Đã báo anh chị: em đã nộp lại bài. Cố lên!"))
     .catch(() => alertStatus("Chưa gửi được. Kiểm tra mạng rồi bấm lại."));
   renderHomework(); if (typeof capNhatNhac === "function") capNhatNhac();
@@ -2199,9 +2321,11 @@ $("#f-bt").addEventListener("submit", async ev => {
 });
 
 // Đổi trên màn hình ngay, lưu lên máy chủ ở phía sau; lỗi thì trả lại như cũ.
+// Lưu tiến độ của học viên (bài đã hoàn thành, bài đang học, bài tập đã nộp)
+function luuTienDo() { return setDoc(doc(db, "tiendo", mail), { bai: myProgress.bai, baitap: myProgress.baitap, xem: myProgress.xem || {}, anh: myAvatar || "", capNhat: Date.now() }); }
 function toggleProgress(kind, id) {
   const cu = myProgress[kind][id]; myProgress[kind][id] = cu ? false : Date.now(); saveData(); // lưu thời điểm để tính hạng
-  timed("Lưu tiến độ", setDoc(doc(db, "tiendo", mail), { bai: myProgress.bai, baitap: myProgress.baitap, anh: myAvatar || "", capNhat: Date.now() }))
+  timed("Lưu tiến độ", luuTienDo())
     .catch(() => { myProgress[kind][id] = cu; renderLessons(); renderHomework(); alertStatus("Chưa lưu được tiến độ. Kiểm tra mạng rồi thử lại."); });
   return Promise.resolve();
 }
@@ -2681,7 +2805,7 @@ function luuAvatar(url) {
   const st = $("#av-st");
   if (!db) { if (st) st.textContent = "Đã đổi trên máy này ✓"; return; }
   const viec = [setDoc(doc(db, "anhdaidien", mail), { anh: myAvatar, luc: Date.now() })];
-  if (!isTeacher && approved) viec.push(setDoc(doc(db, "tiendo", mail), { bai: myProgress.bai, baitap: myProgress.baitap, anh: myAvatar, capNhat: Date.now() }));
+  if (!isTeacher && approved) viec.push(luuTienDo());
   timed("Lưu ảnh đại diện", Promise.all(viec))
     .then(() => { if (st) st.textContent = url ? "Đã lưu ảnh mới ✓" : "Đã bỏ ảnh ✓"; setTimeout(() => { if (st) st.textContent = ""; }, 3000); })
     .catch(() => { if (st) st.textContent = "Đã đổi trên máy này. Chưa lưu lên lớp được, thử lại sau."; });
@@ -3585,7 +3709,7 @@ async function onUser(u) {
   }
 
   if (!isTeacher) {
-    if (tdDoc) { myProgress = { bai: tdDoc.bai || {}, baitap: tdDoc.baitap || {} }; if (tdDoc.anh && !avaTuMay) { myAvatar = tdDoc.anh; try { localStorage.setItem(AVA_KEY(mail), myAvatar); } catch (e) {} } }
+    if (tdDoc) { myProgress = { bai: tdDoc.bai || {}, baitap: tdDoc.baitap || {}, xem: tdDoc.xem || {} }; if (tdDoc.anh && !avaTuMay) { myAvatar = tdDoc.anh; try { localStorage.setItem(AVA_KEY(mail), myAvatar); } catch (e) {} } }
     listen(doc(db, "nhanxet", mail), d => { troLyDaTai.diem = true; myFeedback = d.exists() ? d.data() : {}; renderHomework(); renderMyProg(); saveData(); });
     listen(doc(db, "anhbaitap", mail), d => { myAnhBT = d.exists() ? d.data() : {}; renderHomework(); });
     // Điểm danh của chính em (lỗi quyền thì im lặng, panel vẫn hiện hướng dẫn)

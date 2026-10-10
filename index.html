@@ -421,12 +421,23 @@
   <div class="page-head">
     <p class="eyebrow">Dành cho học viên đã được duyệt</p>
     <h1>Giáo trình</h1>
-    <p class="muted">Lộ trình từng khoá và các bài lý thuyết. Học xong bài nào, em bấm "Đánh dấu đã học" để theo dõi tiến độ.</p>
+    <p class="muted">Học theo từng bài, từ cơ bản đến nâng cao. Học xong bài nào, em bấm “Đánh dấu đã hoàn thành” để theo dõi tiến độ.</p>
   </div>
   <div class="lock" data-lock></div>
   <div id="gt-body" hidden>
     <section class="my-prog" id="my-prog" hidden aria-label="Tiến độ của em"></section>
-    <div class="tabs" id="course-tabs" aria-label="Khoá học"></div>
+
+    <div class="gt-wrap" id="gt-wrap">
+      <aside class="gt-side">
+        <div class="gt-mon" id="course-tabs" role="navigation" aria-label="Chọn môn học"></div>
+        <section class="gt-td" id="gt-td" aria-label="Tiến độ môn học"></section>
+      </aside>
+      <div class="gt-main">
+        <div class="tabs nho gt-loc" id="gt-loc" aria-label="Lọc theo trạng thái"></div>
+        <div class="gt-ds" id="gt-ds"></div>
+        <article class="lesson gt-bai" id="lesson" hidden></article>
+      </div>
+    </div>
     <section id="khoa-hoc" aria-labelledby="h-khoa">
       <div class="sec-head">
         <div><p class="eyebrow">Lộ trình</p><h2 id="h-khoa">Các khoá học</h2></div>
@@ -474,12 +485,6 @@
         <div><p class="eyebrow">Sắp khai giảng</p><h3>Lớp luyện thi online</h3><p class="muted">Học trực tiếp với anh chị qua video, gửi bài và nhận nhận xét trên web. Đăng ký để được báo lịch sớm.</p></div>
         <span class="go">Đăng ký nhận lịch →</span></a>
     </section>
-
-    <div class="progress"><span id="gt-prog-text"></span><div class="bar"><i id="gt-prog"></i></div></div>
-    <div class="lesson-grid">
-      <div class="lesson-nav" id="lesson-nav"></div>
-      <article class="lesson" id="lesson"></article>
-    </div>
     <section class="nang-cao" id="nang-cao" aria-labelledby="h-nc">
       <div class="sec-head">
         <div><p class="eyebrow">Khoá học nâng cao</p><h2 id="h-nc">Video chân dung tham khảo</h2></div>
