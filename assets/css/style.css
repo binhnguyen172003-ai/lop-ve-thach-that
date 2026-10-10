@@ -3598,3 +3598,9 @@ table.roster.cc-cp{min-width:0}
 @media (prefers-reduced-motion:reduce){.dash-cot-o i{transition:none}}
 .dash-bd{align-items:start}
 .dash-bd-duong{justify-content:space-between}
+
+/* Bảng theo dõi chuyên cần trên điện thoại: bỏ vạch màu thừa ở ô tên (đè sát chữ), chữ cách viền màu của thẻ */
+@media (max-width:640px){
+  .dw tr.ok td:first-child,.dw tr.warn td:first-child,.dw tr.bad td:first-child{box-shadow:none}
+  .dw tr.ok,.dw tr.warn,.dw tr.bad{padding-left:20px}
+}
