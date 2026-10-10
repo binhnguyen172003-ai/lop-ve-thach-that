@@ -3163,6 +3163,26 @@ function renderDash(show) {
   viTriTab();
 }
 // Thanh dưới đáy: báo cho CSS biết có bao nhiêu nút và nút nào đang mở, để vòng tròn trượt tới đúng chỗ
+// Thanh dưới đáy: rê chuột / kéo ngón tay ngang thanh thì vòng tròn lướt theo; thả tay trên nút nào thì mở nút đó
+{
+  const t = $("#tab-duoi");
+  if (t) {
+    let keo = false, chan = false, dx = 0, x0 = 0;
+    const viTri = e => { const r = t.getBoundingClientRect(), n = t.querySelectorAll("a").length || 1, w = (r.width - 8) / n;
+      return Math.max(0, Math.min(n - 1, (e.clientX - r.left - 4) / w - .5)); };
+    const theo = e => { const v = viTri(e); t.classList.add("luot"); t.style.setProperty("--i", v.toFixed(3));
+      t.querySelectorAll("a").forEach((a, i) => a.classList.toggle("gan", i === Math.round(v))); };
+    const traVe = () => { t.classList.remove("luot"); t.querySelectorAll("a.gan").forEach(a => a.classList.remove("gan")); viTriTab(); };
+    t.addEventListener("pointerdown", e => { keo = true; dx = 0; x0 = e.clientX; });
+    t.addEventListener("pointermove", e => { if (e.pointerType === "mouse" || keo) { dx = Math.max(dx, Math.abs(e.clientX - x0)); theo(e); } }, { passive: true });
+    t.addEventListener("pointerup", e => { if (!keo) return; keo = false;
+      if (dx > 12) { const a = t.querySelectorAll("a")[Math.round(viTri(e))]; traVe(); chan = true; setTimeout(() => chan = false, 400); if (a) a.click(); } else traVe(); });
+    // Kéo xong: chặn cú "click" thật trình duyệt tự bắn ra ở nút bắt đầu kéo, chỉ giữ cú mở nút nơi thả tay
+    t.addEventListener("click", e => { if (chan && e.isTrusted) { e.preventDefault(); e.stopPropagation(); } }, true);
+    t.addEventListener("pointerleave", () => { keo = false; traVe(); });
+    t.addEventListener("pointercancel", () => { keo = false; traVe(); });
+  }
+}
 function viTriTab() {
   const t = $("#tab-duoi"); if (!t) return;
   const ds = [...t.querySelectorAll("a")], i = ds.findIndex(x => x.hasAttribute("aria-current"));

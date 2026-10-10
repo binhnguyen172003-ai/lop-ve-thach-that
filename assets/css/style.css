@@ -3542,3 +3542,15 @@ table.roster.cc-cp{min-width:0}
   nav.roi::after,nav.roi::before{opacity:1}
 }
 @media (prefers-reduced-motion:reduce){.nav-pill{transition:opacity .2s}}
+/* Đang rê / kéo ngang thanh dưới đáy: vòng tròn bám theo nhanh, không nảy */
+@media(max-width:760px){
+  body.co-tab .tab-duoi.luot::before{transition:left .12s ease-out}
+  body.co-tab .tab-duoi{touch-action:pan-y}
+}
+@media(max-width:760px){
+  body.co-tab .tab-duoi.luot a[aria-current="page"]:not(.gan) svg{transform:none;color:var(--graphite);stroke:currentColor}
+  body.co-tab .tab-duoi.luot a[aria-current="page"]:not(.gan) span{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+  body.co-tab .tab-duoi.luot a.gan svg{transform:translateY(-26px);color:#0b0d14;stroke:#0b0d14}
+  body.co-tab .tab-duoi a svg{transition:transform .3s cubic-bezier(.34,1.56,.64,1),color .2s}
+}
+@media(max-width:760px){body.co-tab .tab-duoi.luot a[aria-current="page"]:not(.gan){align-content:center}}
