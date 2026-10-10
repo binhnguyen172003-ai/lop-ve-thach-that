@@ -11,7 +11,7 @@ import { LIEN_HE, NAM_THI, LICH_THI, BO_LOC_TRUONG, CA_HOC, THOI_GIAN_BIEU, BAI_
 const FB = "https://www.gstatic.com/firebasejs/10.12.2/";
 let initializeApp, getAuth, onAuthStateChanged, signOut;
 let createUserWithEmailAndPassword, signInWithEmailAndPassword, sendEmailVerification, sendPasswordResetEmail, updateProfile;
-let getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager, collection, doc, getDoc, setDoc, addDoc, deleteDoc, writeBatch, onSnapshot, query, orderBy, where, runTransaction;
+let getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager, collection, doc, getDoc, setDoc, addDoc, deleteDoc, writeBatch, onSnapshot, query, orderBy, where, runTransaction, limit;
 // Vai trò: isAdmin = quản lý (toàn quyền); isTeacher = giáo viên hoặc quản lý; approved = học viên đã duyệt.
 // Khai báo ở đầu file để các phần trang chủ (bài vẽ, bản tin) biết ai đang xem ngay từ đầu.
 let user = null, mail = "", isAdmin = false, isTeacher = false, approved = false, needVerify = false;
@@ -26,12 +26,58 @@ async function loadFirebase() {
   ({ initializeApp } = a);
   ({ getAuth, onAuthStateChanged, signOut,
      createUserWithEmailAndPassword, signInWithEmailAndPassword, sendEmailVerification, sendPasswordResetEmail, updateProfile } = au);
-  ({ getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager, collection, doc, getDoc, setDoc, addDoc, deleteDoc, writeBatch, onSnapshot, query, orderBy, where, runTransaction } = fs);
+  ({ getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager, collection, doc, getDoc, setDoc, addDoc, deleteDoc, writeBatch, onSnapshot, query, orderBy, where, runTransaction, limit } = fs);
+  bocNhatKy();
+}
+
+/* ---------- Nhật ký sửa: ghi lại ai thêm/sửa/xoá dữ liệu quan trọng, kèm bản trước và sau ----------
+   Chỉ ghi thao tác của giáo viên/quản lý. Quản lý xem và khôi phục ở Vận hành → Nhật ký sửa. */
+const NK_BANG = new Set(["hocvien", "giaovien", "nhanxet", "diemdanh", "baitap", "giaotrinh", "lichnhac", "tiendo", "xephang", "baive", "bantin", "kho", "thongbao",
+  "congviec", "doiten", "caday", "trucnhat", "thithu", "thithubai", "suco", "bangiao", "kiemtra", "doica"]);
+const nkGoc = {};
+const nkCan = ref => isTeacher && ref && ref.parent && !ref.parent.parent && NK_BANG.has(ref.parent.id) && !String(ref.id).startsWith("_");
+const nkJson = d => { try { const t = JSON.stringify(d); return t.length > 600000 ? "(quá lớn)" : t; } catch (e) { return "(quá lớn)"; } };
+async function nkTruoc(ref) { try { const d = await nkGoc.getDoc(ref); return d.exists() ? d.data() : null; } catch (e) { return undefined; } }
+function nkGhi(ref, loai, truoc, sau, gop) {
+  if (truoc === undefined) return; // không đọc được bản trước (thiếu quyền/mạng) thì bỏ qua, không chặn thao tác chính
+  nkGoc.addDoc(nkGoc.collection(db, "nhatky"), { col: ref.parent.id, ma: ref.id, loai, gop: !!gop, truoc: truoc ? nkJson(truoc) : "", sau: sau ? nkJson(sau) : "",
+    ai: mail, ten: (user && user.displayName) || "", luc: Date.now() }).catch(() => {});
+}
+function bocNhatKy() {
+  if (nkGoc.setDoc) return;
+  Object.assign(nkGoc, { setDoc, deleteDoc, addDoc, getDoc, collection, writeBatch });
+  setDoc = async (ref, data, opt) => {
+    if (!nkCan(ref)) return nkGoc.setDoc(ref, data, opt);
+    const truoc = await nkTruoc(ref), kq = await nkGoc.setDoc(ref, data, opt);
+    nkGhi(ref, truoc ? "sua" : "tao", truoc, data, opt && opt.merge); return kq;
+  };
+  deleteDoc = async ref => {
+    if (!nkCan(ref)) return nkGoc.deleteDoc(ref);
+    const truoc = await nkTruoc(ref), kq = await nkGoc.deleteDoc(ref);
+    if (truoc) nkGhi(ref, "xoa", truoc, null); return kq;
+  };
+  addDoc = async (col, data) => { const ref = await nkGoc.addDoc(col, data); if (nkCan(ref)) nkGhi(ref, "tao", null, data); return ref; };
+  writeBatch = d => {
+    const b = nkGoc.writeBatch(d), ops = [];
+    const w = { set(ref, data, opt) { b.set(ref, data, opt); ops.push([ref, data, opt]); return w; },
+      update(ref, data) { b.update(ref, data); ops.push([ref, data, { merge: true }]); return w; },
+      delete(ref) { b.delete(ref); ops.push([ref, null]); return w; },
+      async commit() {
+        const can = ops.filter(o => nkCan(o[0])), truoc = await Promise.all(can.map(o => nkTruoc(o[0])));
+        const kq = await b.commit();
+        can.forEach((o, i) => { if (o[1] === null) { if (truoc[i]) nkGhi(o[0], "xoa", truoc[i], null); } else nkGhi(o[0], truoc[i] ? "sua" : "tao", truoc[i], o[1], o[2] && o[2].merge); });
+        return kq;
+      } };
+    return w;
+  };
 }
 
 const $ = s => document.querySelector(s);
 // Trợ lý (chat + nhắc việc) tải riêng, không làm chậm trang
 const troLyPromise = import("./tro-ly.js?v=20261010bf").catch(e => console.warn("Chưa tải được trợ lý", e));
+// Thi thử + vận hành lớp: chỉ tải khi đã đăng nhập vào học
+let vanHanhP = null, vanHanhM = null;
+const taiVanHanh = () => vanHanhP ||= import("./van-hanh.js?v=20261010bf").then(m => vanHanhM = m).catch(e => { vanHanhP = null; console.warn("Chưa tải được phần vận hành", e); });
 window.__appOk = true;
 document.querySelectorAll(".slow-bar").forEach(el => el.remove());
 
@@ -154,7 +200,7 @@ function copyText(text, statusEl, okMsg, selectEl) {
 }
 
 /* ================= Điều hướng ================= */
-const PAGES = ["giao-trinh", "bai-tap", "tai-khoan", "duyet", "diem-danh", "lam-viec"];
+const PAGES = ["giao-trinh", "bai-tap", "tai-khoan", "duyet", "diem-danh", "lam-viec", "thi-thu", "van-hanh"];
 function route() {
   const h = location.hash.replace("#", "");
   if (h && !PAGES.includes(h)) {
@@ -2114,6 +2160,7 @@ async function checkRules() {
     await setDoc(ref, mau); await deleteDoc(ref);
     const ddRef = doc(db, "diemdanh", "_kiem-tra"); await setDoc(ddRef, { thu: "co" }); await deleteDoc(ddRef);
     const cvRef = doc(db, "congviec", "_kiem-tra"); await setDoc(cvRef, { viec: "thử", cho: "tatca", xong: false, luc: Date.now() }); await deleteDoc(cvRef);
+    const scRef = doc(db, "suco", "_kiem-tra"); await setDoc(scRef, { coSo: "thử", loai: "Khác", moTa: "thử", ai: mail, ten: "", luc: Date.now(), capNhat: Date.now(), trangThai: "moi" }); await deleteDoc(scRef);
     box.className = "sv-status ok"; box.textContent = "✓ Máy chủ hoạt động tốt: học viên gửi phiếu sẽ hiện ngay ở đây.";
   } catch (e) {
     const code = (e && e.code) || "";
@@ -3316,7 +3363,7 @@ $("#f-viec").addEventListener("submit", async e => {
 });
 
 /* ---------- Đăng nhập ---------- */
-function stopListeners() { unsubs.forEach(u => u()); unsubs = []; }
+function stopListeners() { unsubs.forEach(u => u()); unsubs = []; if (vanHanhM) vanHanhM.dung(); }
 function listen(q, fn) {
   const t = performance.now(); let first = true;
   const name = q.path || (q._query && q._query.path && q._query.path.segments && q._query.path.segments.join("/")) || "dữ liệu";
@@ -3509,6 +3556,11 @@ async function onUser(u) {
   }
   lvStart();
   if (!$("#v-lam-viec").hidden) lvOnShow();
+  taiVanHanh().then(m => { if (!m || !user || mail !== (u.email || "").toLowerCase()) return;
+    m.batDau({ db, fs: { collection, doc, getDoc, setDoc, deleteDoc, writeBatch, query, orderBy, where, limit, onSnapshot }, themHuy: f => unsubs.push(f),
+      mail, ten: (!isTeacher && myHv && myHv.ten) || (user && user.displayName) || mail.split("@")[0], isAdmin, isTeacher,
+      toast, moHop, nenAnh, homNay: todayVN, giaoVien: () => teachers, hocVien: () => roster });
+  });
   if (!isAdmin && !isTeacher) listen(query(collection(db, "dondh"), where("mail", "==", mail)), snap => { donCuaToi = snap.docs.map(d => ({ id: d.id, ...d.data() })); renderHvInfo(); });
   if (isAdmin) {
     listen(query(collection(db, "yeucau"), orderBy("guiLuc", "desc")), snap => {

@@ -38,7 +38,7 @@
 <meta name="apple-mobile-web-app-title" content="Vẽ Không Vui">
 <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
 <!-- Học viên đã đăng nhập / đang mở trang học: tải sẵn thư viện ngay. Khách xem giới thiệu thì để sau. -->
-<script>try{var h=location.hash.slice(1),c=JSON.parse(localStorage.getItem("lvkv-phien")||"null");if(/^(giao-trinh|bai-tap|tai-khoan|duyet|diem-danh|lam-viec)$/.test(h)||(c&&c.mail)){["app","auth","firestore"].forEach(function(n){var l=document.createElement("link");l.rel="modulepreload";l.href="https://www.gstatic.com/firebasejs/10.12.2/firebase-"+n+".js";document.head.appendChild(l)})}}catch(e){}</script>
+<script>try{var h=location.hash.slice(1),c=JSON.parse(localStorage.getItem("lvkv-phien")||"null");if(/^(giao-trinh|bai-tap|tai-khoan|duyet|diem-danh|lam-viec|thi-thu|van-hanh)$/.test(h)||(c&&c.mail)){["app","auth","firestore"].forEach(function(n){var l=document.createElement("link");l.rel="modulepreload";l.href="https://www.gstatic.com/firebasejs/10.12.2/firebase-"+n+".js";document.head.appendChild(l)})}}catch(e){}</script>
 <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -160,6 +160,8 @@
     <a href="#tai-khoan" data-acc="tai-khoan"><i aria-hidden="true">🏠</i>Tổng quan</a>
     <a href="#bai-tap" data-acc="bai-tap" data-can="learn"><i aria-hidden="true">📝</i>Bài tập</a>
     <a href="#giao-trinh" data-acc="giao-trinh" data-can="learn"><i aria-hidden="true">📚</i>Giáo trình</a>
+    <a href="#thi-thu" data-acc="thi-thu" data-can="learn"><i aria-hidden="true">⏱️</i>Thi thử</a>
+    <a href="#van-hanh" data-acc="van-hanh" data-can="learn"><i aria-hidden="true">🛠️</i>Vận hành</a>
     <a href="#diem-danh" data-acc="diem-danh" data-can="teacher"><i aria-hidden="true">✅</i>Điểm danh</a>
     <a href="#duyet" data-acc="duyet" data-can="admin"><i aria-hidden="true">⚙️</i>Quản lý <span class="nbadge num" id="acc-duyet-n" hidden></span></a>
   </div>
@@ -829,6 +831,26 @@
 </main>
 
 <!-- ============ ĐIỂM DANH (giáo viên + quản lý) ============ -->
+<main class="wrap" id="v-thi-thu" hidden>
+  <div class="page-head">
+    <p class="eyebrow">Tài khoản</p>
+    <h1>Thi thử</h1>
+    <p class="muted">Làm đề như thi thật: có giờ đếm ngược, nộp ảnh bài, anh chị chấm theo phiếu tiêu chí. Mỗi lần thi được lưu lại để thấy tiến bộ.</p>
+  </div>
+  <div class="lock" data-lock></div>
+  <div id="tt-body"></div>
+</main>
+
+<main class="wrap" id="v-van-hanh" hidden>
+  <div class="page-head">
+    <p class="eyebrow">Tài khoản</p>
+    <h1 id="vh-h1">Vận hành lớp</h1>
+    <p class="muted" id="vh-intro">Ca dạy, bàn giao, báo sự cố, trực nhật.</p>
+  </div>
+  <div class="lock" data-lock></div>
+  <div id="vh-body"></div>
+</main>
+
 <main class="wrap" id="v-diem-danh" hidden>
   <div class="page-head">
     <p class="eyebrow">Dành cho giáo viên</p>

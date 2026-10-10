@@ -265,6 +265,93 @@ service cloud.firestore {
       allow delete: if isAdmin() || (isStaff() && resource.data.tacGia == myEmail());
     }
 
+    // ===== Thi thử =====
+    // Đề: học viên đã duyệt và anh chị đọc; giáo viên/quản lý tạo, sửa; xoá: người tạo hoặc quản lý.
+    match /thithu/{id} {
+      allow read: if isStudent() || isStaff();
+      allow create, update: if isStaff()
+        && request.resource.data.tieuDe is string && request.resource.data.tieuDe.size() > 0 && request.resource.data.tieuDe.size() <= 120
+        && request.resource.data.phut is int && request.resource.data.phut >= 5 && request.resource.data.phut <= 600
+        && request.resource.data.moTu is number && request.resource.data.dongLuc is number
+        && request.resource.data.tieuChi is list && request.resource.data.tieuChi.size() > 0 && request.resource.data.tieuChi.size() <= 10
+        && shortText(request.resource.data, 'deBai', 4000)
+        && (!('anhDe' in request.resource.data) || (request.resource.data.anhDe is string && request.resource.data.anhDe.size() <= 500000));
+      allow delete: if isAdmin() || (isStaff() && resource.data.nguoi == myEmail());
+    }
+    // Bài thi: mã = <mã đề>__<gmail>. Học viên bắt đầu (giờ bắt đầu do máy chủ đối chiếu), nộp một lần; anh chị chấm.
+    match /thithubai/{id} {
+      allow read: if isStaff() || (signedIn() && resource.data.mail == myEmail());
+      allow create: if isStudent()
+        && request.resource.data.mail == myEmail()
+        && id == request.resource.data.thi + '__' + myEmail()
+        && exists(/databases/$(database)/documents/thithu/$(request.resource.data.thi))
+        && request.resource.data.keys().hasOnly(['thi', 'mail', 'ten', 'batDau'])
+        && request.resource.data.batDau is int
+        && request.resource.data.batDau > request.time.toMillis() - 120000
+        && request.resource.data.batDau < request.time.toMillis() + 120000;
+      allow update: if (isStudent() && resource.data.mail == myEmail() && !('nop' in resource.data)
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['nop', 'anh', 'ghiChu'])
+          && request.resource.data.nop is int
+          && request.resource.data.nop > request.time.toMillis() - 120000
+          && request.resource.data.nop < request.time.toMillis() + 120000
+          && request.resource.data.anh is list && request.resource.data.anh.size() > 0 && request.resource.data.anh.size() <= 2
+          && shortText(request.resource.data, 'ghiChu', 500))
+        || (isStaff() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['cham']));
+      allow delete: if isAdmin();
+    }
+
+    // ===== Ca dạy, đổi ca, bàn giao =====
+    match /caday/{id} {
+      allow read: if isStaff();
+      allow write: if isAdmin();
+    }
+    match /doica/{id} {
+      allow read: if isAdmin() || (isStaff() && resource.data.tu == myEmail());
+      allow create: if isStaff() && request.resource.data.tu == myEmail() && request.resource.data.trangThai == 'cho'
+        && shortText(request.resource.data, 'lyDo', 500) && shortText(request.resource.data, 'thay', 80);
+      allow update: if isAdmin() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['trangThai', 'xuLy', 'xuLyLuc'])
+        && request.resource.data.trangThai in ['dongy', 'tuchoi'];
+      allow delete: if isAdmin() || (isStaff() && resource.data.tu == myEmail() && resource.data.trangThai == 'cho');
+    }
+    match /bangiao/{id} {
+      allow read: if isStaff();
+      allow create: if isStaff() && request.resource.data.ai == myEmail()
+        && request.resource.data.hv is list && request.resource.data.hv.size() > 0 && request.resource.data.hv.size() <= 40
+        && shortText(request.resource.data, 'ghiChu', 1000);
+      allow delete: if isAdmin() || (isStaff() && resource.data.ai == myEmail());
+    }
+
+    // ===== Báo thiếu đồ, sự cố =====
+    // Học viên đã duyệt và anh chị gửi; người gửi xem báo cáo của mình; quản lý cập nhật trạng thái.
+    match /suco/{id} {
+      allow read: if isStaff() || (signedIn() && resource.data.ai == myEmail());
+      allow create: if (isStaff() || isStudent()) && request.resource.data.ai == myEmail() && request.resource.data.trangThai == 'moi'
+        && request.resource.data.moTa is string && request.resource.data.moTa.size() > 0 && request.resource.data.moTa.size() <= 1000
+        && (!('anh' in request.resource.data) || (request.resource.data.anh is string && request.resource.data.anh.size() <= 400000));
+      allow update: if isAdmin() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['trangThai', 'capNhat', 'xuLy', 'phanHoi'])
+        && request.resource.data.trangThai in ['moi', 'danhan', 'dangxuly', 'xong'] && shortText(request.resource.data, 'phanHoi', 500);
+      allow delete: if isAdmin();
+    }
+
+    // ===== Trực nhật & kiểm tra cuối buổi =====
+    match /trucnhat/{coSo} {
+      allow read: if isStudent() || isStaff();
+      allow write: if isStaff();
+    }
+    match /kiemtra/{id} {
+      allow read: if isStaff();
+      allow create, update: if isStaff() && request.resource.data.ai == myEmail() && shortText(request.resource.data, 'ghiChu', 300);
+      allow delete: if isAdmin();
+    }
+
+    // ===== Nhật ký sửa: chỉ ghi thêm, không ai sửa/xoá được; quản lý đọc để khôi phục =====
+    match /nhatky/{id} {
+      allow read: if isAdmin();
+      allow create: if isStaff() && request.resource.data.ai == myEmail() && request.resource.data.luc is int
+        && request.resource.data.col is string && request.resource.data.ma is string;
+      allow update, delete: if false;
+    }
+
     match /admins/{mail} {
       allow read: if isMe(mail);
       allow write: if false;
