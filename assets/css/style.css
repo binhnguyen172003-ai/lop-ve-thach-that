@@ -340,6 +340,12 @@ a,button,.btn,.tab,summary,label{touch-action:manipulation;-webkit-tap-highlight
 .sv-status.ok{background:var(--ok-soft);color:var(--ok);font-weight:600}
 .sv-status.bad{background:#fdf0e1;color:#5a3306;border:1px solid var(--warn)}
 .sv-status ol{margin:8px 0 0;padding-left:20px}
+/* Khung cảnh báo luôn nền kem sáng, kể cả ở giao diện tối: nút, liên kết và dòng báo phải dùng màu đậm riêng */
+.sv-status.bad .btn{border-color:#5a3306;color:#5a3306;background:transparent}
+.sv-status.bad .btn.primary,.sv-status.bad .btn:hover{background:#5a3306;border-color:#5a3306;color:#fdf0e1}
+.sv-status.bad a:not(.btn){color:#5a3306;text-decoration:underline}
+.sv-status.bad .status{display:block;margin-top:8px;color:#1f6b3d;font-weight:600}
+.sv-status.bad .status:empty{display:none}
 .pw-tabs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:18px}.pw-tabs .tab{min-height:48px;line-height:1.25;white-space:normal}.pw-tabs .tab[aria-selected="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}#f-new,#f-pw{display:grid;gap:14px}
 .pw-tabs .tab{border-radius:12px;padding:8px 10px}
 
