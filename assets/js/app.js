@@ -1617,7 +1617,7 @@ const configured = !String(firebaseConfig.apiKey || "").startsWith("DAN_");
 let app, auth, db;
 
 let teachers = [], feedbackAll = {}, myFeedback = {};
-let diemdanhAll = {}, myDiemdanh = {}, myHv = null, hvTuMayChu = false, myChucVu = "";
+let diemdanhAll = {}, myDiemdanh = {}, myHv = null, hvTuMayChu = false, myChucVu = "", myGvDoc = null;
 let troLyDaTai = { diemDanh: false, diem: false, bai: false };
 const gradeOpen = new Set(), gradeDraft = {};
 let needRedraw = false;
@@ -2902,6 +2902,7 @@ function buoiToi(coso) {
   return null;
 }
 const icoTab = {
+  cc: '<rect x="4" y="5" width="16" height="16" rx="2"/><path d="M8 3v4M16 3v4M4 10h16M9 15l2 2 4-4"/>',
   tq: '<path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',
   bt: '<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h4"/>',
   gt: '<path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 19V5"/>',
@@ -2934,7 +2935,8 @@ function renderDash(show) {
       <div class="dash-sos">${o("#bai-tap", "vang", canCham, "bài cần chấm")}${o("#bai-tap", "do", chuaNop.size, "bạn chưa nộp (hạn gần)")}${o("#lam-viec", "xanh", viec, isAdmin ? "việc chưa xong" : "việc được giao")}${isAdmin ? o("#duyet", "tim", reqCount, "người chờ duyệt") : ""}</div>`;
     $("#dash-giao").onclick = () => { location.hash = "#bai-tap"; requestAnimationFrame(() => { const c = $("#hw-composer"); if (c) { c.open = true; c.scrollIntoView({ block: "start", behavior: "smooth" }); setTimeout(() => $("#bt-ten")?.focus(), 300); } }); };
     if ($("#dash-viec")) $("#dash-viec").onclick = () => { location.hash = "#lam-viec"; requestAnimationFrame(() => $('#lv-tabs [data-lv="viec"]')?.click()); };
-    tab.innerHTML = nut("#tai-khoan", "tq", "Tổng quan") + nut("#bai-tap", "bt", "Bài tập", canCham) + nut("#diem-danh", "dd", "Điểm danh") + nut("#lam-viec", "td", "Trao đổi", tin + viec);
+    tab.innerHTML = nut("#tai-khoan", "tq", "Tổng quan") + nut("#bai-tap", "bt", "Bài tập", canCham) + nut("#diem-danh", "dd", "Điểm danh") + nut("#van-hanh", "cc", isAdmin ? "Theo dõi GV" : "Chấm công").replace("<a ", '<a data-vh-mo="cc" ') + nut("#lam-viec", "td", "Trao đổi", tin + viec);
+    tab.querySelector("[data-vh-mo]").onclick = () => { try { sessionStorage.setItem("vh-mo", "cc"); } catch (er) {} };
   } else {
     // ---- Học viên: hôm nay em cần làm gì
     const ten = (myHv && myHv.ten) || (user && user.displayName) || "";
@@ -3897,7 +3899,7 @@ async function onUser(u) {
   if (mail !== (u.email || "").toLowerCase() || user !== u) return; // người dùng đã đổi trong lúc chờ
   mark("Kiểm tra vai trò", tr);
   isAdmin = !!isAdm;
-  isTeacher = isAdmin || !!gvDoc; myChucVu = (gvDoc && gvDoc.chucVu) || "";
+  isTeacher = isAdmin || !!gvDoc; myChucVu = (gvDoc && gvDoc.chucVu) || ""; myGvDoc = gvDoc || null;
   approved = !isTeacher && !!hvDoc;
   myHv = hvDoc || null; hvTuMayChu = true;
   // Máy chủ không trả lời (mất mạng, lỗi tải): KHÔNG hạ quyền. Dùng quyền đã lưu trên máy và tự thử lại.
@@ -3995,7 +3997,7 @@ async function onUser(u) {
   taiVanHanh().then(m => { if (!m || !user || mail !== (u.email || "").toLowerCase()) return;
     m.batDau({ db, fs: { collection, doc, getDoc, setDoc, deleteDoc, writeBatch, query, orderBy, where, limit, onSnapshot, deleteField }, themHuy: f => unsubs.push(f),
       mail, ten: (!isTeacher && myHv && myHv.ten) || (user && user.displayName) || mail.split("@")[0], isAdmin, isTeacher,
-      toast, moHop, nenAnh, homNay: todayVN, giaoVien: () => teachers, hocVien: () => roster });
+      toast, moHop, nenAnh, homNay: todayVN, giaoVien: () => teachers, hocVien: () => roster, gvToi: () => myGvDoc, taiCSV });
   });
   if (!isAdmin && !isTeacher) listen(query(collection(db, "dondh"), where("mail", "==", mail)), snap => { donCuaToi = snap.docs.map(d => ({ id: d.id, ...d.data() })); renderHvInfo(); });
   if (isAdmin) {

@@ -325,6 +325,15 @@ service cloud.firestore {
     match /caday/{id} {
       allow read: if isStaff();
       allow write: if isAdmin();
+      // giáo viên tự vô ca / kết ca cho ca của mình: mỗi mốc ghi một lần, giờ phải sát giờ máy chủ (±5 phút) để không khai khống
+      allow update: if isStaff() && resource.data.gv == myEmail()
+        && (vaoRaHopLe('vao') && !('vao' in resource.data)
+          || vaoRaHopLe('ra') && ('vao' in resource.data) && !('ra' in resource.data));
+    }
+    function vaoRaHopLe(k) {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly([k])
+        && request.resource.data[k] is int
+        && math.abs(request.resource.data[k] - request.time.toMillis()) < 300000;
     }
     match /doica/{id} {
       allow read: if isAdmin() || (isStaff() && resource.data.tu == myEmail());
