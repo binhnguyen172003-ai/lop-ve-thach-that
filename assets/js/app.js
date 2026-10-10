@@ -1407,7 +1407,7 @@ $("#dk-zalo").href = ZALO_LINK;
     $$("#hero-schools a").forEach(a => a.addEventListener("click", () => { bvYear = 0; bvSchool = a.dataset.t; bvMore = false; renderHonor(); }));
   }
   const sap = LICH_THI.map(e => ({ ...e, n: daysUntil(e.ngay) })).filter(e => e.n >= 0).sort((a, b) => a.n - b.n)[0];
-  if (sap) datBadgeThi(sap, "đầu tiên");
+  if (sap && !store.get("lvkv-moc-thi", null)) datBadgeThi(sap, "đầu tiên");
 
   // Menu trong suốt khi nằm trên hero, có nền khi cuộn xuống
   const setNavH = () => root.style.setProperty("--nav-h", nav.offsetHeight + "px");
@@ -1588,7 +1588,7 @@ const configured = !String(firebaseConfig.apiKey || "").startsWith("DAN_");
 let app, auth, db;
 
 let teachers = [], feedbackAll = {}, myFeedback = {};
-let diemdanhAll = {}, myDiemdanh = {}, myHv = null;
+let diemdanhAll = {}, myDiemdanh = {}, myHv = null, hvTuMayChu = false;
 let troLyDaTai = { diemDanh: false, diem: false, bai: false };
 const gradeOpen = new Set(), gradeDraft = {};
 let needRedraw = false;
@@ -2484,6 +2484,8 @@ function mocThiCuaToi() {
 // Chữ ở góc trang đầu: nếu học viên đã chọn trường có lịch thi thì hiện theo trường đó
 function capNhatBadgeThi() {
   const el = $("#hero-badge"); if (!el) return;
+  // Học viên đang đăng nhập: chờ hồ sơ thật từ máy chủ (có trường thi) rồi mới đổi, tránh nhảy số qua lại
+  if (mail && !isTeacher && !hvTuMayChu) return;
   const m = mocThiCuaToi();
   if (m) { datBadgeThi(m, m.truong); return; }
   const sap = LICH_THI.map(e => ({ ...e, n: daysUntil(e.ngay) })).filter(e => e.n >= 0).sort((a, b) => a.n - b.n)[0];
@@ -3632,7 +3634,7 @@ function showCachedSession() {
   if (!configured) return;
   const c = cachedSession;
   if (!c || !c.mail) { renderLocks("out"); renderAccount(false); return; }
-  user = { displayName: c.ten, photoURL: c.anh, email: c.mail }; mail = c.mail;
+  user = { displayName: c.ten, photoURL: c.anh, email: c.mail }; mail = c.mail; napAvatarMay(c.mail);
   isAdmin = !!c.isAdmin; isTeacher = !!c.isTeacher; approved = !!c.approved; myHv = c.hv || null;
   renderLocks(isTeacher || approved ? "ok" : "pending");
   renderAccount(c.pending || false);
@@ -3649,7 +3651,7 @@ async function onUser(u) {
   isAdmin = false; isTeacher = false; approved = false; needVerify = false;
   napAvatarMay(mail);
   roster = []; requests = []; teachers = []; progressAll = {}; feedbackAll = {};
-  diemdanhAll = {}; myDiemdanh = {}; myHv = null; troLyDaTai = { diemDanh: false, diem: false, bai: false }; lvReset(); khoMon = {}; khoGD = []; donAll = []; donCuaToi = []; donNhap = []; donTam = {}; khoLoi = ""; khoDaTai = false;
+  diemdanhAll = {}; myDiemdanh = {}; myHv = null; hvTuMayChu = false; troLyDaTai = { diemDanh: false, diem: false, bai: false }; lvReset(); khoMon = {}; khoGD = []; donAll = []; donCuaToi = []; donNhap = []; donTam = {}; khoLoi = ""; khoDaTai = false;
   if (prevMail && prevMail !== mail) try { localStorage.removeItem(DATA_KEY + prevMail); } catch (e) {} // máy dùng chung: xoá dữ liệu người trước
   loadData(mail);
   // Đổi người dùng thì xoá sạch form đăng ký, tránh gửi nhầm thông tin của người trước (máy dùng chung).
@@ -3702,7 +3704,7 @@ async function onUser(u) {
   isAdmin = !!isAdm;
   isTeacher = isAdmin || !!gvDoc;
   approved = !isTeacher && !!hvDoc;
-  myHv = hvDoc || null;
+  myHv = hvDoc || null; hvTuMayChu = true;
   // Máy chủ không trả lời (mất mạng, lỗi tải): KHÔNG hạ quyền. Dùng quyền đã lưu trên máy và tự thử lại.
   const hong = !isAdminMail && !isTeacher && !approved && (gvDoc === undefined || hvDoc === undefined);
   if (hong) {
