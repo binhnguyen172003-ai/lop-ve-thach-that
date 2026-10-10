@@ -3598,3 +3598,69 @@ table.roster.cc-cp{min-width:0}
 @media (prefers-reduced-motion:reduce){.dash-cot-o i{transition:none}}
 .dash-bd{align-items:start}
 .dash-bd-duong{justify-content:space-between}
+
+/* Bảng theo dõi chuyên cần trên điện thoại: bỏ vạch màu thừa ở ô tên (đè sát chữ), chữ cách viền màu của thẻ */
+@media (max-width:640px){
+  .dw tr.ok td:first-child,.dw tr.warn td:first-child,.dw tr.bad td:first-child{box-shadow:none}
+  .dw tr.ok,.dw tr.warn,.dw tr.bad{padding-left:20px}
+}
+
+/* ===== Khoá nhanh bằng vân tay: màn khoá kiểu máy quét (xanh ngọc chờ / quét, xanh lá mở được, đỏ rung khi lỗi) ===== */
+body.vt-khoa{overflow:hidden}
+body.vt-khoa > *:not(.vt-ov){visibility:hidden}
+.vt-ov{--vc:#2ee6e6;position:fixed;inset:0;z-index:300;display:grid;place-items:center;padding:24px;background:radial-gradient(60% 50% at 50% 45%,color-mix(in srgb,var(--vc) 10%,#0b0e14),#07090d)}
+.vt-ov[data-tt="ok"]{--vc:#3ddc5a}.vt-ov[data-tt="loi"]{--vc:#ff4545}
+.vt-the{width:min(320px,100%);display:grid;justify-items:center;gap:18px;padding:34px 22px 26px;border-radius:24px;text-align:center;
+  background:#141a22;border:1px solid color-mix(in srgb,var(--vc) 25%,transparent);box-shadow:0 0 60px -10px color-mix(in srgb,var(--vc) 35%,transparent);transition:border-color .4s,box-shadow .4s}
+.vt-tieude{margin:0;font:800 .95rem var(--f-body);letter-spacing:.12em;color:var(--vc);transition:color .4s}
+.vt-vong{position:relative;display:grid;place-items:center;width:150px;height:150px;border-radius:50%;border:3px solid color-mix(in srgb,var(--vc) 45%,transparent);background:none;color:var(--vc);cursor:pointer;overflow:hidden;
+  transition:border-color .4s,color .4s,box-shadow .4s}
+.vt-vong svg{width:78px;height:78px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round}
+.vt-vong:focus-visible{outline:2px solid #fff;outline-offset:4px}
+.vt-ov[data-tt="cho"] .vt-vong{animation:vt-nhip 2s ease-in-out infinite}
+.vt-quet{position:absolute;left:12%;right:12%;top:18%;height:2px;opacity:0;background:linear-gradient(90deg,transparent,var(--vc),transparent);box-shadow:0 0 10px var(--vc)}
+.vt-ov[data-tt="quet"] .vt-vong{border-color:var(--vc)}
+.vt-ov[data-tt="quet"] .vt-quet{opacity:1;animation:vt-quet 1.4s ease-in-out infinite alternate}
+.vt-ov[data-tt="ok"] .vt-vong{border-color:var(--vc);box-shadow:0 0 40px color-mix(in srgb,var(--vc) 70%,transparent);animation:vt-ok .8s forwards}
+.vt-ov[data-tt="loi"] .vt-vong{border-color:var(--vc);box-shadow:0 0 40px color-mix(in srgb,var(--vc) 70%,transparent);animation:vt-rung .3s 3}
+.vt-loi{margin:0;min-height:2.8em;font-size:.86rem;line-height:1.45;color:color-mix(in srgb,var(--vc) 75%,#fff)}
+.vt-mk{font-size:.82rem;color:#9aa3ad}
+@keyframes vt-nhip{0%,100%{box-shadow:0 0 10px color-mix(in srgb,var(--vc) 35%,transparent)}50%{box-shadow:0 0 30px color-mix(in srgb,var(--vc) 75%,transparent),0 0 44px color-mix(in srgb,var(--vc) 45%,transparent)}}
+@keyframes vt-quet{from{transform:translateY(0)}to{transform:translateY(96px)}}
+@keyframes vt-ok{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+@keyframes vt-rung{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}
+@media (prefers-reduced-motion:reduce){.vt-vong,.vt-quet{animation:none!important}}
+.vt-bat[hidden]{display:none}
+.vt-vong:focus-visible{outline:2px solid color-mix(in srgb,var(--vc) 60%,transparent);outline-offset:6px}
+.vt-mk{justify-self:center}
+
+/* Điểm danh trên điện thoại: dải thẻ vuốt ngang, mỗi lần một học viên, hé thẻ kế tiếp */
+@media (max-width:640px){
+  #dd-list{display:flex;flex-direction:row;gap:10px;overflow-x:auto;overscroll-behavior-x:contain;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;
+    margin-inline:-16px;padding:2px 16px 8px;scroll-padding-inline:16px;scrollbar-width:none}
+  #dd-list::-webkit-scrollbar{display:none}
+  #dd-list > li.dd-hv{flex:0 0 88%;scroll-snap-align:start;scroll-snap-stop:always;align-self:stretch}
+  #dd-list > li.muted{flex:1 1 100%}
+  #dd-list .seg5 button{white-space:nowrap;padding-inline:8px;font-size:.84rem;min-width:0;flex:1 1 auto}
+  #dd-list .seg5{width:100%}
+  .dd-vuot{margin:2px 0 0;text-align:center;font-size:.82rem}
+  .dd-vuot[hidden]{display:none}
+}
+@media (max-width:640px){
+  #dd-list .dd-nut{width:100%;display:grid;gap:8px;justify-items:stretch}
+  #dd-list .dd-nut .linkish{justify-self:start}
+  #dd-list .seg.seg5{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));width:100%;overflow:hidden}
+  #dd-list .seg.seg5 button{padding:0 2px;font-size:clamp(.66rem,3.1vw,.8rem);white-space:nowrap;overflow:hidden;text-overflow:clip}
+}
+@media (max-width:640px){
+  #dd-list > li.dd-hv{padding-right:14px;grid-template-columns:minmax(0,1fr)}
+  #dd-list > li.dd-hv > div:first-child{padding-right:44px}
+}
+
+/* Bảng điều khiển: 3 khung cao bằng nhau, nội dung giãn đều trong khung cho đồng điệu */
+.dash-bd{align-items:stretch}
+.dash-bd > .dash-o{height:100%}
+.dash-bd-ve{flex:1;display:grid;align-content:center}
+.dash-cot-ve{flex:1;height:auto;min-height:150px}
+.dash-bd-lich .dash-lt-thang{flex:1;align-content:space-between}
+@media (min-width:1024px){.dash-bd-ve svg{max-height:100%}}
