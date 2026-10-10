@@ -1118,7 +1118,7 @@ function renderGiaoVien() {
     const t = g.truong ? TRUONG[g.truong] : null;
     return `<article class="gv${g.chinh ? " chinh" : ""}" data-i="${i}" aria-roledescription="thẻ" aria-label="${i + 1} / ${n}: ${esc(g.ten)}">
       <button type="button" class="gv-in" data-i="${i}" tabindex="-1">
-        ${g.anh ? `<img class="gv-bai${g.bai ? " gv-art-full" : ""}" src="${esc(g.bai || IMG + g.anh + "-bai.jpg")}" alt="" loading="lazy" decoding="async" width="348" height="234" draggable="false">`
+        ${g.anh ? `<img class="gv-bai${g.bai ? " gv-art-full" : ""}" src="${esc(g.bai || IMG + g.anh + "-bai.jpg")}" alt="Bài vẽ của ${esc(g.ten)}" loading="lazy" decoding="async" width="348" height="234" draggable="false">`
           : g.chinh ? `<span class="gv-bai gv-bai-trong"><b>6</b><small>năm đứng lớp<br>luyện thi năng khiếu</small></span>`
           : `<span class="gv-bai gv-bai-trong alt"><b>${esc(g.khoi.replace("Khối ", ""))}</b><small>${esc(g.vaiTro)} ${esc(g.khoi)}</small></span>`}
         <span class="gv-ava">${g.anh ? `<img src="${IMG}${esc(g.anh)}.jpg" alt="" loading="lazy" decoding="async" width="96" height="96" draggable="false">` : `<i>${esc(initials(g.ten))}</i>`}</span>
@@ -1339,7 +1339,11 @@ $("#dk-zalo").href = ZALO_LINK;
     const them = (loai, ten, mo, url, chu) => ds.push({ loai, ten, mo, url, k: bo(ten + " " + mo + " " + (chu || "")), kt: bo(ten) });
     $$("#v-home > section[id], #v-home > header[id]").forEach(sec => {
       const h = sec.querySelector("h2, h1"); if (!h) return;
-      them("Mục", h.textContent.trim(), (sec.querySelector(".sec-head p.muted, .cine-lede") || {}).textContent || "", "#" + sec.id, sec.textContent.slice(0, 900));
+      // Bỏ nút hướng dẫn "?" nằm trong tiêu đề, kẻo tên mục trong kết quả tìm kiếm dính dấu "?" thừa;
+      // chèn khoảng trắng giữa các phần của tiêu đề (tiêu đề trang đầu tách dòng nên dễ dính "Học VẽKhông Vui").
+      const tieuDe = h.cloneNode(true); tieuDe.querySelectorAll("button").forEach(x => x.remove());
+      tieuDe.querySelectorAll("*").forEach(x => x.after(" "));
+      them("Mục", tieuDe.textContent.replace(/\s+/g, " ").trim(), (sec.querySelector(".sec-head p.muted, .cine-lede") || {}).textContent || "", "#" + sec.id, sec.textContent.slice(0, 900));
     });
     $$(".course").forEach(c => them("Khoá học", (c.querySelector("h3") || {}).textContent || "", [(c.querySelector(".eyebrow") || {}).textContent, (c.querySelector(".len") || {}).textContent].filter(Boolean).join(" · "), "#khoa-hoc", c.textContent));
     GIAO_VIEN.forEach(g => them("Giáo viên", g.ten, `${g.vaiTro} · ${g.khoi}${g.truong ? " · " + g.truong : ""}`, "#giao-vien", g.nganh));
@@ -1540,6 +1544,8 @@ $("#f-dk").addEventListener("submit", ev => {
   ev.preventDefault();
   const v = id => $(id).value.trim();
   const st = $("#dk-send"); st.classList.remove("err");
+  // Ô họ tên chỉ gõ dấu cách vẫn qua được kiểm tra "bắt buộc" của trình duyệt, nên kiểm tra lại sau khi bỏ khoảng trắng.
+  if (!v("#dk-ten")) { st.textContent = "Em chưa điền họ tên học sinh."; st.classList.add("err"); $("#dk-ten").value = ""; $("#dk-ten").focus(); return; }
   const sdt = String(v("#dk-sdt")).replace(/[\s.\-()]/g, "");
   if (!/^(0|\+84)\d{9,10}$/.test(sdt)) {
     st.textContent = "Số điện thoại chưa đúng. Viết 10 số, bắt đầu bằng số 0."; st.classList.add("err"); $("#dk-sdt").focus(); return;

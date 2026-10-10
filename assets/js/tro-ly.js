@@ -88,7 +88,10 @@ const CAU = [
   { k: ["giao vien", "thay co", "ai day", "tro giang"], t: () => P(`Đội hình anh chị:`) + UL(GIAO_VIEN.map(g => `<b>${esc(g.ten)}</b>${g.vaiTro ? ` · ${esc(g.vaiTro)}` : ""}`)) + P(`Toàn người từng ngồi đúng ghế bạn đang ngồi, đừng hòng giấu bài xấu nha.`) },
   { k: ["rank", "hang", "xp", "len hang", "thanh tuu"], t: () => P(`Cách kiếm XP để leo rank:`) + UL([`Đi học: <b>+10</b>/buổi`, `Nộp bài: <b>+15</b>`, `Bài ≥ 8 điểm: <b>+10</b>`, `Lên Bài vẽ nổi bật: <b>+100</b> (Top 1 thêm +25)`]) + P(`Từ hạng A, mỗi hạng cần thêm <b>2.000 XP</b> — phải cày thật. Bấm vào huy hiệu rank để xem bảng đầy đủ.`) },
   { k: ["lam lai", "nop lai", "chua dat", "bai tap", "nop bai"], t: () => P(`Bài bị trả về là do chưa đạt 1 trong 3 tiêu chí:`) + UL([`Hình cơ bản`, `Sắc độ`, `Tổng thể`]) + P(`Vẽ lại đúng chỗ anh chị nhắc rồi bấm <b>Nộp lại</b> ở mục <a href="#bai-tap">Bài tập</a>.`, `Bị trả bài không xấu, không làm lại mới xấu 😤`) },
-  { k: ["chao", "hello", "hi ", "alo", "xin chao"], t: () => P(`Chào ${esc((nguoi && nguoi.ten) || "đồng chí hoạ sĩ")}! Chì đây.`, `Hỏi gì về lớp, lịch học, khối thi hay hoạ cụ cứ quăng vào. Hỏi xong nhớ đi vẽ nha.`) },
+  // Từ khoá chào có dấu cách đứng trước để chỉ khớp đầu từ ("hi " từng khớp nhầm vào chữ "nhỉ" → "nhi ").
+  { k: [" chao", " hello", " hi ", " hi!", " alo", " hey"], t: () => khach()
+    ? P(`Dạ em chào anh/chị ạ! Em là tư vấn viên của lớp.`, `Anh/chị muốn hỏi về <b>khoá học, lịch học, học phí</b> hay <b>học thử miễn phí</b> ạ?`)
+    : P(`Chào ${esc((nguoi && nguoi.ten) || "đồng chí hoạ sĩ")}! Chì đây.`, `Hỏi gì về lớp, lịch học, khối thi hay hoạ cụ cứ quăng vào. Hỏi xong nhớ đi vẽ nha.`) },
   { k: ["cam on", "thank", "tks"], t: () => P(`Không có chi! Cảm ơn thật lòng thì nộp bài đúng hạn là được rồi 😌`) },
   { k: ["ve dep khong", "ve co dep", "ve xau khong", "co nang khieu khong", "gioi khong", "dinh khong"], t: () => P(`Đẹp hay không Chì chịu, Chì chỉ là cây bút chì thôi chứ có phải giám khảo đâu 😏`) + UL([`Muốn biết thật thì nộp bài cho anh chị chấm — xem nhận xét ở mục <a href="#bai-tap">Bài tập</a>.`, `So bài tuần này với bài tuần trước, thấy khác là đang tiến bộ rồi.`]) + P(`Tự khen không ăn thua, bài đẹp lên theo thời gian mới ăn thua 🎨`) },
   { k: ["chi la ai", "ten chi la gi", "chi la gi", "ai tao ra chi", "chi co phai ai"], t: () => P(`Chì là trợ lý của Lớp Vẽ Thạch Thất nè — cây bút chì biết chat, không biết vẽ 😄`) + P(`Hỏi Chì về lịch học, bài tập, khối thi hay hoạ cụ là đúng bài nhất.`) },
@@ -140,6 +143,11 @@ function traLoiSan(q) {
   // để dành lời mời nhắn anh Bình cho câu hỏi thật sự ngoài tầm Chì.
   const soTu = bo(q).trim().split(/\s+/).filter(Boolean).length;
   const coDauHoi = /\?/.test(q) || /khong|k\b|sao|the nao|lam sao|o dau|bao nhieu|gi\b|ai\b|vi sao/.test(b);
+  // Khách chưa đăng nhập đang nói chuyện với "tư vấn viên" (xưng em), nên không dùng giọng đùa của Bé Chì.
+  if (khach()) {
+    if (soTu <= 3 && !coDauHoi) return P(`Dạ em nghe ạ! Anh/chị muốn hỏi về <b>khoá học, lịch học, học phí</b> hay <b>học thử miễn phí</b> ạ?`);
+    return P(`Câu này em chưa có thông tin chắc chắn nên không dám trả lời bừa ạ.`, `Em trả lời tốt nhất về: <i>khoá học, lịch học, lịch thi, khối H/V, trường thi, học thử</i>.`, `Anh/chị nhắn Zalo <a href="${ZALO_LINK}" target="_blank" rel="noopener"><b>${esc(ZALO_HT)}</b></a> hoặc để lại SĐT ở mục <b>📝 Đăng ký tư vấn</b>, anh chị quản lý sẽ trả lời trực tiếp ạ.`);
+  }
   if (soTu <= 3 && !coDauHoi) {
     const DUA = [
       P(`Ơi gọi gì đó 👀 Chì đây, có chuyện học vẽ gì không?`),
