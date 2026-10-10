@@ -3460,7 +3460,7 @@ function renderKho() {
         <div class="${ll.lai >= 0 ? "lai" : "lo"}"><b>${ll.lai >= 0 ? "+" : ""}${vnd(ll.lai)}</b><span>${ll.lai >= 0 ? "LÃI" : "LỖ"} trên hàng đã bán</span></div><div><b>${vnd(ll.chiNhap)}</b><span>tiền nhập hàng trong tháng</span></div></div>
       <p class="muted kho-note">Dòng tiền tháng (thu bán − chi nhập): <b>${vnd(ll.dongTien)}</b>. Nhập nhiều để dự trữ thì dòng tiền âm là bình thường, lãi thật xem ở ô "LÃI/LỖ".</p>
       ${Object.keys(ll.theoMon).length ? `<div class="kho-bang"><div class="kho-r kho-h"><span>Món bán chạy</span><span>Số lượng</span><span>Doanh thu</span><span>Lãi</span><span></span></div>${Object.entries(ll.theoMon).sort((a, b) => b[1].tien - a[1].tien).map(([t, m]) => `<div class="kho-r"><span><b>${esc(t)}</b></span><span>${m.sl}</span><span>${vnd(m.tien)}</span><span>${vnd(m.lai)}</span><span></span></div>`).join("")}</div>` : `<p class="muted">Tháng này chưa bán món nào.</p>`}
-      <p><button type="button" class="btn small" id="kho-csv-thang">Tải giao dịch tháng (CSV)</button> <button type="button" class="btn small" id="kho-gui">📧 Gửi báo cáo tháng này vào Gmail</button></p>
+      <p class="kho-report-actions"><button type="button" class="btn small" id="kho-csv-thang">Tải giao dịch tháng (CSV)</button> <button type="button" class="btn small" id="kho-gui">📧 Gửi báo cáo tháng này vào Gmail</button></p>
     </div>`;
   body.insertAdjacentHTML("beforeend", `<div class="kho-p" ${khoTab === "don" ? "" : "hidden"}>${donHTML()}</div>`);
   bindDon();

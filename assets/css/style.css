@@ -3369,3 +3369,18 @@ table.roster.cc-cp{min-width:0}
 /* Lịch phân công trên màn hình cảm ứng: nút sửa / gỡ trong ô đủ lớn để bấm bằng ngón tay */
 @media (pointer:coarse){.lpc-gv-nut button{min-width:34px;min-height:34px}.lpc-gv{align-items:center}}
 
+
+/* Bố cục báo cáo, cộng XP, thẻ hạng và lịch phân công */
+.kho-report-actions{display:flex;flex-wrap:wrap;gap:12px;margin-block:16px}
+.kho-report-actions .btn{max-width:100%;white-space:normal;text-align:center;line-height:1.45;padding:10px 16px}
+.xh-f{grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-areas:"student student" "type type" "amount amount" "reason reason" "save save" "status status";gap:14px;align-items:end}
+.xh-f>label:first-child{grid-area:student}.xh-f>.xh-loai{grid-area:type;justify-self:start;border-radius:12px;gap:0}
+.xh-f>.xh-xp,.xh-f>.xh-tt{grid-area:amount;text-align:left}.xh-f>.xh-gc{grid-area:reason}
+.xh-f>.btn{grid-area:save;min-height:44px;justify-self:start;min-width:120px}.xh-f>.status{grid-area:status}
+.xh-f label,.xh-f input,.xh-f select{min-width:0;width:100%}.xh-f .xh-loai button{min-height:44px;flex:1;white-space:normal;line-height:1.35;padding:10px 16px;border-radius:0}
+.rk-stage{height:390px}.rk-stage .rk-card{display:block;grid-column:auto;padding:0;border:0;background:none;box-shadow:none;height:360px;width:280px;margin-left:-140px}
+.rk-stage .rk-in{height:100%;padding:24px 20px;gap:12px;justify-content:center;overflow:hidden;transform:none}
+.rk-stage .rk-in>*{flex-shrink:0;max-width:100%}.rk-stage .rk-card .rk-ten{gap:8px;line-height:1.4}.rk-stage .rk-card .rk-mo{margin:0;line-height:1.5}.rk-stage .rk-card .rk-star,.rk-stage .rk-card .rk-xp{margin:0;line-height:1.4}
+.lpc-bang{min-width:1280px}.lpc-gv{gap:6px;padding:6px}.lpc-gv-ten{flex:1 0 100%;width:100%;overflow-wrap:normal;word-break:normal;white-space:normal}.lpc-gv-nut{margin-left:auto}.lpc-nguoi{max-height:180px;overflow-x:hidden}.lpc-bang tbody th small{white-space:nowrap}
+@media(min-width:760px){.xh-f{grid-template-areas:"student type" "amount reason" "save save" "status status"}}
+@media(max-width:640px){.kho-report-actions .btn{width:100%}.xh-f>.xh-loai{width:100%;justify-self:stretch}.xh-f>.btn{width:100%;justify-self:stretch}.rk-stage{height:398px}.rk-stage .rk-card{width:min(76vw,260px);margin-left:calc(min(76vw,260px) / -2);height:368px}.rk-stage .rk-in{padding:22px 18px;gap:10px}.rk-stage .rk-card .rk-ten{font-size:1.05rem}}
