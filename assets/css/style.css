@@ -2861,3 +2861,28 @@ button:disabled:not(.btn){opacity:.45}
 .gt-the.tt-khoa{opacity:.6;cursor:not-allowed}.gt-the.tt-khoa .gt-anh{filter:grayscale(1)}
 .gt-chip.khoa{color:var(--graphite)}
 .gtb-chuyen button.khoa{opacity:.6;cursor:not-allowed}.gtb-chuyen button.khoa small{color:var(--graphite)}
+
+
+/* ===== Đăng nhập / Tạo tài khoản ===== */
+.pw-chao{display:grid;justify-items:center;text-align:center;gap:4px;margin-bottom:16px}
+.pw-chao img{border-radius:12px;margin-bottom:6px}.pw-chao h3{font-size:1.3rem}.pw-chao p{font-size:.9rem}
+#f-new input:not([type=checkbox]),#f-pw input{padding-left:42px;background-repeat:no-repeat;background-position:13px 50%;background-size:18px}
+#nw-ten{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238b919b' stroke-width='2'%3E%3Ccircle cx='12' cy='8' r='4'/%3E%3Cpath d='M4 21c0-4 4-6 8-6s8 2 8 6'/%3E%3C/svg%3E")}
+#nw-mail,#pw-mail{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238b919b' stroke-width='2'%3E%3Crect x='3' y='5' width='18' height='14' rx='2'/%3E%3Cpath d='m3 7 9 6 9-6'/%3E%3C/svg%3E")}
+#nw-pass,#nw-pass2,#pw-pass{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238b919b' stroke-width='2'%3E%3Crect x='4' y='10' width='16' height='11' rx='2'/%3E%3Cpath d='M8 10V7a4 4 0 0 1 8 0v3'/%3E%3C/svg%3E")}
+.pw-row{position:relative}.pw-row input{padding-right:48px}
+.pw-mat{position:absolute;right:4px;top:50%;transform:translateY(-50%);width:42px;height:42px;display:grid;place-items:center;border:0;border-radius:8px;background:none;color:var(--graphite);cursor:pointer}
+.pw-mat svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2}
+.pw-mat[aria-pressed="true"]{color:var(--ink)}.pw-mat[aria-pressed="true"] svg path{stroke-dasharray:3 2}
+.pw-hoac{display:flex;align-items:center;gap:10px;color:var(--graphite);font-size:.85rem}
+.pw-hoac::before,.pw-hoac::after{content:"";flex:1;height:1px;background:var(--rule)}
+.pw-doi{width:100%;border-color:color-mix(in srgb,#2ec4b6 70%,var(--rule))}
+@media(min-width:640px){#f-reg{grid-template-columns:1fr 1fr;column-gap:16px}
+  #f-reg>details,#f-reg>label:has(textarea),#f-reg>.check,#f-reg>div,#f-reg>.status{grid-column:1/-1}}
+
+/* ===== Bài tập: trạng thái + yêu cầu gạch đầu dòng ===== */
+.hw-tt{display:inline-block;margin-bottom:8px;padding:3px 10px;border-radius:999px;font-size:.74rem;font-weight:700;border:1px solid currentColor}
+.hw-tt.tt-chua{color:#e5484d}.hw-tt.tt-tre{color:var(--graphite)}.hw-tt.tt-nop{color:var(--accent)}.hw-tt.tt-cham{color:var(--ok)}.hw-tt.tt-lamlai{color:var(--warn)}
+.hw ul.desc{grid-column:1/-1;margin:0;padding-left:20px;color:var(--graphite);font-size:.87rem;line-height:1.7;overflow-wrap:anywhere}
+.hw .fb{border-left:3px solid var(--ok)}.hw .fb.lamlai{border-left-color:var(--warn)}
+#f-new>div>.btn.big,#f-pw>div>.btn.big{width:100%}
