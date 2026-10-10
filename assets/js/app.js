@@ -5160,6 +5160,29 @@ function renderQL() {
     catch (e) { moHop(`<h3>Tin nhắn phụ huynh</h3><textarea class="dd-msg" readonly rows="8">${esc(msg)}</textarea>`); } });
   renderTop5();
 }
+// Nén lại ảnh bài vẽ / bản tin đăng từ trước (ảnh lưu thẳng trong dữ liệu dạng data:image, lúc trước cho tới ~850KB)
+const NEN_NGUONG = 380000;
+let nenTT = "", nenDang = false; // trạng thái nén giữ ngoài khung vì khung tự vẽ lại mỗi khi một ảnh lưu xong
+const baoNen = t => { nenTT = t; const e = $("#ql-nen-st"); if (e) e.textContent = t; };
+const anhCanNen = () => [...BAIVE_DONG.map(b => ({ b, ks: "baive" })), ...BANTIN_DONG.map(b => ({ b, ks: "bantin" }))]
+  .filter(({ b }) => b.id && !String(b.id).startsWith("seed-") && typeof b.anh === "string" && b.anh.startsWith("data:image/") && b.anh.length > NEN_NGUONG);
+async function nenLaiAnhCu(nut) {
+  const ds = anhCanNen(); if (!ds.length || nenDang) return toast("Không còn ảnh nào cần nén.");
+  nenDang = true; nut.disabled = true; let xong = 0, loi = 0, bot = 0;
+  for (const [i, { b, ks }] of ds.entries()) {
+    baoNen(`Đang nén ${i + 1}/${ds.length}… đừng đóng trang.`);
+    try {
+      const blob = await (await fetch(b.anh)).blob(), moi = await nenAnh(new File([blob], "anh", { type: blob.type || "image/jpeg" }), ks === "bantin" ? 1100 : 1280, ks === "bantin" ? 300000 : 360000);
+      if (moi.length >= b.anh.length * .9) continue; // nén không nhỏ đi đáng kể thì giữ nguyên
+      await timed("Nén ảnh", setDoc(doc(db, ks, b.id), { anh: moi }, { merge: true }));
+      xong++; bot += b.anh.length - moi.length;
+    } catch (e) { loi++; }
+  }
+  nenDang = false;
+  const kb = Math.round(bot * .75 / 1024);
+  baoNen(`Đã nén ${xong} ảnh, web nhẹ bớt khoảng ${kb >= 1024 ? (kb / 1024).toFixed(1) + " MB" : kb + " KB"}.${loi ? ` ${loi} ảnh chưa nén được (kiểm tra mạng hoặc luật bảo mật), bấm lại để thử tiếp.` : ""}`); try { renderTop5(); } catch (e) {}
+  toast(xong ? `Đã nén lại ${xong} ảnh cũ.` : loi ? "Chưa nén được ảnh nào, thử lại sau." : "Các ảnh đã đủ nhẹ, không cần nén thêm.", loi && !xong ? "err" : undefined);
+}
 function renderTop5() {
   const box = $("#ql-top5"); if (!box || !isAdmin) return;
   const gan = BAIVE_DONG.filter(b => (Date.parse(todayVN()) - Date.parse(b.ngay || "2000-01-01")) / 864e5 <= 45).sort((a, b) => (b.luc || 0) - (a.luc || 0));
@@ -5170,7 +5193,9 @@ function renderTop5() {
     <div class="tq5">${[1, 2, 3, 4, 5].map(k => { const b = o(k); return `<div class="t5-o h${k}">
       <span class="t5-so">TOP ${k}</span>${b ? `<img src="${esc(b.anh)}" alt="">` : `<span class="t5-trong">Trống</span>`}
       <select data-t5="${k}" aria-label="Chọn bài Top ${k}"><option value="">${b ? "— Bỏ khỏi Top —" : "Chọn bài…"}</option>${gan.map(x => `<option value="${esc(x.id)}"${b && b.id === x.id ? " selected" : ""}>${esc(x.hocVien)} · ${esc(x.loai)} · ${ngayVN(x.ngay)}</option>`).join("")}</select></div>`; }).join("")}</div>
-    <p><button type="button" class="btn primary" data-dang-bai>+ Đăng bài vẽ mới</button> <span class="muted">${gan.length} bài anh chị đăng trong 45 ngày qua</span></p>`;
+    <p><button type="button" class="btn primary" data-dang-bai>+ Đăng bài vẽ mới</button> <span class="muted">${gan.length} bài anh chị đăng trong 45 ngày qua</span></p>
+    ${(n => n || nenTT ? `<p class="ql-nen"><button type="button" class="btn small" id="ql-nen-anh"${nenDang || !n ? " disabled" : ""}>🗜️ Nén lại ảnh cũ${n ? ` (${n} ảnh nặng)` : ""}</button><span class="muted" id="ql-nen-st">${esc(nenTT || "Bài vẽ và bản tin đăng trước đây còn ảnh to, làm web tải chậm. Bấm một lần để thu nhỏ, nét vẽ vẫn rõ.")}</span></p>` : "")(anhCanNen().length)}`;
+  const nen = $("#ql-nen-anh"); if (nen) nen.onclick = () => nenLaiAnhCu(nen);
   $$("#ql-top5 [data-t5]").forEach(s => s.onchange = () => {
     const k = Number(s.dataset.t5), cu = o(k), id = s.value;
     (id ? datTop(id, k) : cu ? datTop(cu.id, 0) : Promise.resolve()).then(() => toast(id ? `Đã đặt Top ${k} tuần.` : `Đã bỏ Top ${k}.`)).catch(() => { toast("Chưa lưu được. Kiểm tra mạng hoặc luật bảo mật.", "err"); renderTop5(); });

@@ -3727,3 +3727,4 @@ body.vt-khoa > *:not(.vt-ov){visibility:hidden}
 .lpc-bang td.lpc-trong{vertical-align:top}
 .lpc-bang td.lpc-trong .lpc-them-ngoai{min-height:34px;height:auto;font-size:1.1rem}
 @media (pointer:coarse){.lpc-mon-sua{min-height:30px;font-size:.74rem}}
+.ql-nen{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;margin-top:10px}.ql-nen .muted{font-size:.82rem}
