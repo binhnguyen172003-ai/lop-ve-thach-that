@@ -38,7 +38,7 @@
 <meta name="apple-mobile-web-app-title" content="Vẽ Không Vui">
 <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
 <!-- Học viên đã đăng nhập / đang mở trang học: tải sẵn thư viện ngay. Khách xem giới thiệu thì để sau. -->
-<script>try{var h=location.hash.slice(1),c=JSON.parse(localStorage.getItem("lvkv-phien")||"null");if(/^(giao-trinh|bai-tap|tai-khoan|duyet|diem-danh|lam-viec|thi-thu|van-hanh)$/.test(h)||(c&&c.mail)){["app","auth","firestore"].forEach(function(n){var l=document.createElement("link");l.rel="modulepreload";l.href="https://www.gstatic.com/firebasejs/10.12.2/firebase-"+n+".js";document.head.appendChild(l)})}}catch(e){}</script>
+<script>try{var h=location.hash.slice(1),c=JSON.parse(localStorage.getItem("lvkv-phien")||"null");if(/^(giao-trinh|bai-tap|tai-khoan|duyet|diem-danh|lam-viec|thi-thu|van-hanh|video|ebook)$/.test(h)||(c&&c.mail)){["app","auth","firestore"].forEach(function(n){var l=document.createElement("link");l.rel="modulepreload";l.href="https://www.gstatic.com/firebasejs/10.12.2/firebase-"+n+".js";document.head.appendChild(l)})}}catch(e){}</script>
 <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -427,6 +427,7 @@
     <h1>Giáo trình</h1>
     <p class="muted">Học theo từng bài, từ cơ bản đến nâng cao. Học xong bài nào, em bấm “Đánh dấu đã hoàn thành” để theo dõi tiến độ.</p>
   </div>
+  <div class="hoc-tabs" role="navigation" aria-label="Khu học tập"><a href="#giao-trinh" data-hoc="giao-trinh">📚 Giáo trình</a><a href="#khoa-hoc" data-hoc="khoa-hoc">🎓 Khoá học</a><a href="#ebook" data-hoc="ebook">📘 Ebook</a><a href="#video" data-hoc="video">🎬 Video</a></div>
   <div class="lock" data-lock></div>
   <div id="gt-body" hidden>
     <section class="my-prog" id="my-prog" hidden aria-label="Tiến độ của em"></section>
@@ -442,30 +443,11 @@
         <article class="lesson gt-bai" id="lesson" hidden></article>
       </div>
     </div>
-    <section class="nang-cao" id="nang-cao" aria-labelledby="h-nc">
+    <section class="nang-cao" aria-labelledby="h-nc">
       <div class="sec-head">
         <div><p class="eyebrow">Khoá học nâng cao</p><h2 id="h-nc">Video chân dung tham khảo</h2></div>
-        <p class="muted">Dành cho học viên đã vững hình hoạ cơ bản, muốn luyện chân dung sâu hơn. Các video thuộc kênh YouTube của họa sĩ Vornikow; lớp chỉ giới thiệu để học viên xem thêm, miễn phí. Bấm vào sẽ mở trên YouTube.</p>
+        <p class="muted">17 video chân dung tham khảo đã chuyển sang thư viện <b>Video</b> (danh mục Hình họa chân dung): xem ngay trên web, đánh dấu đã học. <a href="#video">Mở thư viện Video →</a></p>
       </div>
-      <ol class="vid-list">
-          <li><a href="https://youtu.be/vZdFuUTUeJw" target="_blank" rel="noopener">Video 01 · Xem trên YouTube</a></li>
-          <li><a href="https://youtu.be/kcsVYarOj3Q" target="_blank" rel="noopener">Video 02 · Xem trên YouTube</a></li>
-          <li><a href="https://youtu.be/0ugijncV044" target="_blank" rel="noopener">Video 03 · Xem trên YouTube</a></li>
-          <li><a href="https://youtu.be/F0gvbmmmBks" target="_blank" rel="noopener">Video 04 · Xem trên YouTube</a></li>
-          <li><a href="https://youtu.be/wAzToQzLvsI" target="_blank" rel="noopener">Video 05 · Xem trên YouTube</a></li>
-          <li><a href="https://youtu.be/zawPgE4fVyw" target="_blank" rel="noopener">Video 06 · Xem trên YouTube</a></li>
-          <li><a href="https://youtu.be/1n_FuJRkL5E" target="_blank" rel="noopener">Video 07 · Xem trên YouTube</a></li>
-          <li><a href="https://youtu.be/E1liPpUFsNE" target="_blank" rel="noopener">Video 08 · Xem trên YouTube</a></li>
-          <li><a href="https://youtu.be/dtsrRKw5mVI" target="_blank" rel="noopener">Video 09 · Xem trên YouTube</a></li>
-          <li><a href="https://youtu.be/MyBXfdEDKXw" target="_blank" rel="noopener">Video 10 · Xem trên YouTube</a></li>
-          <li><a href="https://youtu.be/bzmE8cv2mGY" target="_blank" rel="noopener">Video 11 · Xem trên YouTube</a></li>
-          <li><a href="https://youtu.be/jvsmtqpkUtA" target="_blank" rel="noopener">Video 12 · Xem trên YouTube</a></li>
-          <li><a href="https://youtu.be/mn4sFkA0Z40" target="_blank" rel="noopener">Video 13 · Xem trên YouTube</a></li>
-          <li><a href="https://youtu.be/g4bWjq8EGlk" target="_blank" rel="noopener">Video 14 · Xem trên YouTube</a></li>
-          <li><a href="https://youtu.be/VJYjfK-1_uA" target="_blank" rel="noopener">Video 15 · Xem trên YouTube</a></li>
-          <li><a href="https://youtu.be/E7_4OQaNIUI" target="_blank" rel="noopener">Video 16 · Xem trên YouTube</a></li>
-          <li><a href="https://youtu.be/rmx5PwAQvMw" target="_blank" rel="noopener">Video 17 · Xem trên YouTube</a></li>
-      </ol>
     </section>
     <div class="teacher" data-admin hidden>
       <div id="seed-box" hidden style="margin-bottom:28px">
@@ -538,6 +520,26 @@
 </main>
 
 <!-- ============ BÀI TẬP ============ -->
+<main class="wrap" id="v-video" hidden>
+  <div class="page-head">
+    <p class="eyebrow">Học tập</p>
+    <h1>Video</h1>
+    <p class="muted">Video học tập trên YouTube theo danh mục: xem ngay trên web, đánh dấu đã học để theo dõi tiến độ.</p>
+  </div>
+  <div class="hoc-tabs" role="navigation" aria-label="Khu học tập"><a href="#giao-trinh" data-hoc="giao-trinh">📚 Giáo trình</a><a href="#khoa-hoc" data-hoc="khoa-hoc">🎓 Khoá học</a><a href="#ebook" data-hoc="ebook">📘 Ebook</a><a href="#video" data-hoc="video">🎬 Video</a></div>
+  <div id="tv-video" class="tv-o" aria-live="polite"></div>
+</main>
+
+<main class="wrap" id="v-ebook" hidden>
+  <div class="page-head">
+    <p class="eyebrow">Học tập</p>
+    <h1>Ebook</h1>
+    <p class="muted">Ebook bài giảng trên Canva theo môn, chủ đề: đọc ngay trên web hoặc mở trên Canva.</p>
+  </div>
+  <div class="hoc-tabs" role="navigation" aria-label="Khu học tập"><a href="#giao-trinh" data-hoc="giao-trinh">📚 Giáo trình</a><a href="#khoa-hoc" data-hoc="khoa-hoc">🎓 Khoá học</a><a href="#ebook" data-hoc="ebook">📘 Ebook</a><a href="#video" data-hoc="video">🎬 Video</a></div>
+  <div id="tv-ebook" class="tv-o" aria-live="polite"></div>
+</main>
+
 <main class="wrap" id="v-bai-tap" hidden>
   <div class="page-head workspace-head">
     <div><p class="eyebrow">Không gian học tập / Bài tập</p><h1>Mỗi bài vẽ,<br><span class="heading-soft">một bước tiến.</span></h1>

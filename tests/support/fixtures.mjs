@@ -17,6 +17,8 @@ export const test = base.extend({
       if (url.hostname === "127.0.0.1" || url.hostname === "localhost") return route.continue();
       if (url.hostname === "www.gstatic.com" && url.pathname.startsWith("/firebasejs/"))
         return route.fulfill({ status: 200, contentType: "text/javascript; charset=utf-8", body: FAKE });
+      // Ảnh thu nhỏ YouTube: trả ảnh giả 1 điểm ảnh để ảnh chụp kiểm thử không hiện biểu tượng ảnh hỏng
+      if (url.hostname === "i.ytimg.com") return route.fulfill({ status: 200, contentType: "image/gif", body: Buffer.from("R0lGODlhAQABAIAAAJmZmQAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw==", "base64") });
       ngoai.push(route.request().method() + " " + url.origin + url.pathname);
       return route.abort("blockedbyclient");
     });
@@ -29,6 +31,7 @@ export const test = base.extend({
     await page.clock.install({ time: GIO_THU });
     await use(async ({ nguoi = null, hash = "", db = duLieuMau(), deny = {} } = {}) => {
       await page.addInitScript(([seed, phien]) => {
+        if (window !== window.top) return; // khung nhúng YouTube/Canva (bị chặn trong kiểm thử): không đụng tới
         window.__FAKE_FB_SEED = seed;
         if (sessionStorage.getItem("__da_nap_seed")) return; // tải lại trang: Firebase giả đọc lại dữ liệu từ sessionStorage
         sessionStorage.setItem("__da_nap_seed", "1");

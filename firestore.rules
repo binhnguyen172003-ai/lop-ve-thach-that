@@ -418,6 +418,108 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
+    // ================= THƯ VIỆN VIDEO (tv_video) & EBOOK (tv_ebook) =================
+    // Ba yếu tố tách riêng: duyet (phê duyệt) · hienThi (hiển thị) · phamViKieu/phamViKhoa/phamViMail (ai xem).
+    // Giáo viên chỉ làm được việc quản lý cấp trong giaovien/<gmail>.quyenTV.<video|ebook>; KHÔNG BAO GIỜ tự duyệt.
+    // Đã xuất bản bắt buộc đã duyệt ít nhất một lần (phienDuyet > 0). Sửa bản đã duyệt đi vào banSua, bản cũ giữ nguyên.
+    // Mỗi lần ghi tăng v đúng 1: hai quản lý cùng bấm thì người sau bị từ chối, không ghi đè.
+    function tvQuyen(loai, k) {
+      return isTeacher() && get(/databases/$(database)/documents/giaovien/$(myEmail())).data.get('quyenTV', {}).get(loai, {}).get(k, false) == true;
+    }
+    function tvNoiDung() { return ['tieuDe', 'moTa', 'danhMuc', 'link', 'anh', 'thoiLuong', 'pdf', 'ytId']; }
+    function tvLinkDung(loai, link) {
+      return link is string && link.size() <= 500 && (loai == 'video'
+        ? link.matches('^https://(www[.])?(youtube[.]com/watch[?]v=|youtu[.]be/)[A-Za-z0-9_-]{11}$')
+        : link.matches('^https://www[.]canva[.]com/design/[A-Za-z0-9_-]+/[A-Za-z0-9_-]+/view$'));
+    }
+    function tvNdHopLe(loai, d) {
+      return d.tieuDe is string && d.tieuDe.size() > 0 && d.tieuDe.size() <= 150
+        && shortText(d, 'moTa', 1000) && shortText(d, 'danhMuc', 80) && shortText(d, 'thoiLuong', 20)
+        && tvLinkDung(loai, d.link)
+        && (!('anh' in d) || d.anh == '' || (d.anh is string && d.anh.size() <= 500 && d.anh.matches('^https://[^ "<>]+$')))
+        && (!('pdf' in d) || d.pdf == '' || (d.pdf is string && d.pdf.size() <= 500 && d.pdf.matches('^https://[^ "<>]+$')))
+        && (loai == 'ebook' || (d.ytId is string && d.link.matches('.*' + d.ytId + '$')));
+    }
+    function tvHopLe(loai, d) {
+      return d.keys().hasOnly(tvNoiDung().concat(['thuTu', 'duyet', 'hienThi', 'phamViKieu', 'phamViKhoa', 'phamViMail', 'phienDuyet', 'banSua', 'lyDo',
+          'nguoiTao', 'tenNguoiTao', 'tao', 'guiLuc', 'xuLyBoi', 'xuLyLuc', 'lichXuatBan', 'capNhat', 'v']))
+        && tvNdHopLe(loai, d)
+        && (d.banSua == null || (d.banSua is map && d.banSua.keys().hasOnly(tvNoiDung()) && tvNdHopLe(loai, d.banSua)))
+        && d.duyet in ['nhap', 'cho', 'sua', 'daduyet', 'tuchoi']
+        && d.hienThi in ['chua', 'xuatban', 'an', 'luutru']
+        && d.phamViKieu in ['congkhai', 'hocvien', 'khoa', 'taikhoan']
+        && d.phamViKhoa is list && d.phamViKhoa.size() <= 50 && d.phamViMail is list && d.phamViMail.size() <= 50
+        && d.phienDuyet is int && d.v is int && d.thuTu is number
+        && shortText(d, 'lyDo', 500)
+        && (d.hienThi != 'xuatban' || d.phienDuyet > 0);
+    }
+    function tvDoc(loai) {
+      return isAdmin()
+        || (isTeacher() && (resource.data.hienThi == 'xuatban' || resource.data.nguoiTao == myEmail()))
+        || (resource.data.hienThi == 'xuatban' && (
+             resource.data.phamViKieu == 'congkhai'
+             || (resource.data.phamViKieu in ['hocvien', 'khoa'] && isStudent())
+             || (resource.data.phamViKieu == 'taikhoan' && signedIn() && myEmail() in resource.data.phamViMail)));
+    }
+    function tvTao(loai) {
+      let d = request.resource.data;
+      return tvHopLe(loai, d) && d.v == 1 && d.nguoiTao == myEmail() && (
+        isAdmin()
+        || (tvQuyen(loai, 'them') && d.duyet in ['nhap', 'cho'] && d.hienThi == 'chua' && d.phienDuyet == 0 && d.banSua == null
+            && d.phamViKieu == 'hocvien' && d.phamViKhoa.size() == 0 && d.phamViMail.size() == 0 && d.xuLyBoi == '' && d.lyDo == ''));
+    }
+    function tvSua(loai) {
+      let d = request.resource.data;
+      let cu = resource.data;
+      let doi = d.diff(cu).affectedKeys();
+      let laChu = cu.nguoiTao == myEmail();
+      return tvHopLe(loai, d) && d.v == cu.v + 1 && d.nguoiTao == cu.nguoiTao && d.tao == cu.tao && (
+        (isAdmin() && d.phienDuyet >= cu.phienDuyet)
+        // Giáo viên soạn / gửi duyệt: không đụng tới duyệt, hiển thị, phạm vi; không tự đặt "đã duyệt"
+        || ((laChu && (tvQuyen(loai, 'them') || tvQuyen(loai, 'sua')) || tvQuyen(loai, 'sua'))
+            && doi.hasOnly(tvNoiDung().concat(['duyet', 'banSua', 'guiLuc', 'lyDo', 'capNhat', 'v']))
+            && (!doi.hasAny(['lyDo']) || d.lyDo == '')
+            && (d.duyet == cu.duyet || d.duyet in ['nhap', 'cho'])
+            && cu.hienThi != 'luutru'
+            && (cu.phienDuyet == 0 || !doi.hasAny(tvNoiDung())))
+        // Sắp xếp: chỉ đổi thứ tự
+        || (tvQuyen(loai, 'sapXep') && doi.hasOnly(['thuTu', 'capNhat', 'v']))
+        // Ẩn: chỉ từ đã xuất bản sang đã ẩn
+        || (tvQuyen(loai, 'an') && doi.hasOnly(['hienThi', 'xuLyBoi', 'xuLyLuc', 'capNhat', 'v'])
+            && cu.hienThi == 'xuatban' && d.hienThi == 'an' && d.xuLyBoi == myEmail()));
+    }
+    match /tv_video/{id} {
+      allow read: if tvDoc('video');
+      allow create: if tvTao('video');
+      allow update: if tvSua('video');
+      allow delete: if isAdmin() && resource.data.hienThi == 'luutru';
+    }
+    match /tv_ebook/{id} {
+      allow read: if tvDoc('ebook');
+      allow create: if tvTao('ebook');
+      allow update: if tvSua('ebook');
+      allow delete: if isAdmin() && resource.data.hienThi == 'luutru';
+    }
+    // Danh mục + cờ "đã nạp 17 video có sẵn": ai cũng đọc; quản lý hoặc giáo viên có quyền danh mục sửa.
+    match /tv_meta/{loai} {
+      allow read: if true;
+      allow write: if loai in ['video', 'ebook'] && (isAdmin() || (tvQuyen(loai, 'danhMuc') && request.resource.data.diff(resource == null ? {} : resource.data).affectedKeys().hasOnly(['danhMuc'])))
+        && (!('danhMuc' in request.resource.data) || (request.resource.data.danhMuc is list && request.resource.data.danhMuc.size() <= 60));
+    }
+    // Lịch sử thao tác: ghi đúng tên mình, không sửa / xoá được. Quản lý đọc tất cả, giáo viên đọc thao tác của mình.
+    match /tv_lichsu/{id} {
+      allow read: if isAdmin() || (isTeacher() && resource.data.ai == myEmail());
+      allow create: if isStaff() && request.resource.data.ai == myEmail() && request.resource.data.thuVien in ['video', 'ebook']
+        && request.resource.data.keys().hasOnly(['thuVien', 'ma', 'hanhDong', 'tu', 'den', 'tieuDe', 'lyDo', 'ai', 'luc'])
+        && shortText(request.resource.data, 'lyDo', 500) && shortText(request.resource.data, 'tieuDe', 150);
+      allow update, delete: if false;
+    }
+    // Tiến độ xem video / đọc ebook: học viên ghi của mình; giáo viên, quản lý xem để thống kê.
+    match /tv_tiendo/{mail} {
+      allow read: if isStaff() || isMe(mail);
+      allow write: if isStudent() && isMe(mail) && request.resource.data.keys().hasOnly(['video', 'ebook', 'capNhat']);
+    }
+
     match /admins/{mail} {
       allow read: if isMe(mail);
       allow write: if false;

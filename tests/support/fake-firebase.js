@@ -159,7 +159,7 @@ export async function getDocs(q) {
 }
 export function onSnapshot(ref, next, err) {
   const isDoc = ref.type === "document";
-  S.log.push({ op: isDoc ? "watch-doc" : "watch", path: ref.path, ai: S.signedIn });
+  S.log.push({ op: isDoc ? "watch-doc" : "watch", path: ref.path, ai: S.signedIn, loc: (ref.cons || []).filter(c => c.kind === "where").map(c => `${c.field}${c.op}${c.value}`) });
   const onNext = typeof next === "function" ? next : next && next.next, onErr = typeof err === "function" ? err : next && next.error;
   try { kiemQuyen(isDoc ? "get" : "list", ref.path); }
   catch (e) { setTimeout(() => onErr && onErr(e), 0); return () => {}; }

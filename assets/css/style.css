@@ -2956,6 +2956,8 @@ button:disabled:not(.btn){opacity:.45}
   .tab-duoi a[aria-current="page"]::before{content:"";position:absolute;top:-4px;left:28%;right:28%;height:3px;border-radius:0 0 3px 3px;background:#f5c400}
   .tab-so{position:absolute;top:4px;left:calc(50% + 4px);min-width:18px;height:18px;padding:0 5px;border-radius:999px;background:#e5484d;color:#fff;font-size:.66rem;display:grid;place-items:center}
   body.co-tab{padding-bottom:calc(66px + env(safe-area-inset-bottom,0px))}
+  /* Trình duyệt tự cuộn tới ô đang nhập / nút được chọn: chừa chỗ cho thanh 4 nút dưới đáy, không để thanh này che mất */
+  html:has(body.co-tab){scroll-padding-bottom:calc(80px + env(safe-area-inset-bottom,0px))}
   body.co-tab #tl-cum{bottom:calc(74px + env(safe-area-inset-bottom,0px))}
   body.co-tab #toast{bottom:calc(74px + env(safe-area-inset-bottom,0px))}
 }
@@ -3194,3 +3196,49 @@ table.roster.cc-cp{min-width:0}
   .cc-bang tfoot th,.cc-bang tfoot td{display:block;padding:0;border:0}
   .cc-bang-o{max-height:70vh}
 }
+
+/* ===== Khu học tập: Giáo trình · Khoá học · Ebook · Video (cùng cấp) ===== */
+.hoc-tabs{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;margin:0 -16px 14px;padding:2px 16px}
+.hoc-tabs::-webkit-scrollbar{display:none}
+.hoc-tabs a{flex:none;display:inline-flex;align-items:center;min-height:44px;padding:8px 16px;border-radius:999px;border:1px solid var(--rule);background:var(--sheet);color:var(--ink);text-decoration:none;font-weight:600;font-size:.92rem}
+.hoc-tabs a[aria-current="page"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+/* ===== Thư viện Video & Ebook: dùng lại thẻ Giáo trình, chỉ thêm phần riêng ===== */
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.tv-che{margin-bottom:12px}
+.tv-tim input{min-height:44px}
+.tv-anh-video{aspect-ratio:16/9;width:96px;align-self:center}
+.tv-khung{position:relative;width:100%;aspect-ratio:16/9;border-radius:12px;overflow:hidden;background:#000;border:1px solid var(--rule)}
+.tv-khung-ebook{aspect-ratio:4/3;background:var(--paper)}
+.tv-khung iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.tv-bai .ctas{display:flex;flex-wrap:wrap;gap:8px}
+.tv-ql{display:grid;gap:12px}
+.tv-tab{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
+.tv-tab .tab{flex:none}
+.tv-ds-ql{display:grid;gap:10px}
+.tv-the{display:grid;grid-template-columns:96px minmax(0,1fr);gap:12px;padding:12px;align-items:start}
+.tv-the-noi{display:grid;gap:6px;min-width:0}
+.tv-the-ten{overflow-wrap:break-word}
+.tv-the-chip{display:flex;flex-wrap:wrap;gap:6px;margin:0}
+.tv-the-nut{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.tv-lydo{margin:0;padding:8px 10px;border-radius:10px;background:color-mix(in srgb,var(--warn,#f5c400) 12%,transparent);font-size:.88rem}
+.tv-them[open]{flex-basis:100%}
+.tv-them summary{list-style:none;cursor:pointer;min-width:44px;min-height:36px;display:grid;place-items:center;border:1px solid var(--rule);border-radius:10px;font-weight:800}
+.tv-them summary::-webkit-details-marker{display:none}
+/* Thao tác phụ mở ngay trong thẻ (không nổi ra ngoài, không bị khung thẻ cắt trên điện thoại) */
+.tv-them summary{display:inline-grid}
+.tv-them-ds{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;padding:8px;border-radius:12px;border:1px dashed var(--rule)}
+.tv-nguy{color:var(--warn,#e5484d)}
+.tv-soan{display:grid;gap:10px;padding:16px}
+.tv-soan h3{margin:0}
+.tv-phu{padding:12px 16px}.tv-phu summary{cursor:pointer;min-height:36px}
+.tv-ls{margin:8px 0 0;padding-left:18px;display:grid;gap:4px;font-size:.88rem}
+.tv-quyen td{text-align:center}.tv-quyen td.hv-o{text-align:left}
+.tv-quyen input{width:22px;height:22px;min-height:0}
+.tv-mau{padding:14px 16px;display:grid;gap:6px}
+.tv-ghi{font-size:.85rem}
+.chip.tv-d-cho,.chip.tv-d-sua{background:color-mix(in srgb,#f5c400 16%,transparent)}
+.chip.tv-d-tuchoi,.chip.tv-h-an{background:color-mix(in srgb,#e5484d 16%,transparent)}
+.chip.tv-d-daduyet,.chip.tv-h-xuatban{background:color-mix(in srgb,#2ec4b6 18%,transparent)}
+@media (max-width:640px){.tv-the{grid-template-columns:72px minmax(0,1fr)}.tv-the .gt-anh{width:72px}}
+.tv-anh-xt{display:flex;align-items:center;gap:10px}.tv-anh-xt:empty{display:none}
+.tv-anh-xt img{width:160px;aspect-ratio:16/9;object-fit:cover;border-radius:10px;border:1px solid var(--rule);background:var(--paper)}

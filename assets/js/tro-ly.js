@@ -613,6 +613,7 @@ function diDen(n) {
   const link = n.link || "#tai-khoan";
   const tim = () => {
     if (n.tab && window.__lvTab) window.__lvTab(n.tab);
+    if (n.mo && typeof window[n.mo] === "function") window[n.mo](...(n.moArg || []));
     if (n.hw && window.__hwView) window.__hwView(n.hw);
     if (!n.dich) return;
     let lan = 0;

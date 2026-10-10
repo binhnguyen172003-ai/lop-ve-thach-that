@@ -80,6 +80,13 @@ const troLyPromise = import("./tro-ly.js?v=20261010bt").catch(e => console.warn(
 // Thi thử + vận hành lớp: chỉ tải khi đã đăng nhập vào học
 let vanHanhP = null, vanHanhM = null;
 const taiVanHanh = () => vanHanhP ||= import("./van-hanh.js?v=20261010bg").then(m => vanHanhM = m).catch(e => { vanHanhP = null; console.warn("Chưa tải được phần vận hành", e); });
+// Thư viện Video & Ebook (assets/js/thu-vien.js): tải khi mở trang #video/#ebook, hoặc ngay khi giáo viên/quản lý đăng nhập (để có Nhắc việc chờ duyệt)
+let tvP = null, tvM = null;
+const tvCtx = () => ({ db, fs: { collection, doc, getDoc, setDoc, deleteDoc, onSnapshot, query, where, runTransaction, writeBatch, deleteField },
+  mail, ten: (user && user.displayName) || (myGvDoc && myGvDoc.ten) || "", isAdmin, isTeacher, approved, khoa: khoaDuocCap(), myGvDoc, giaoVien: teachers,
+  toast, moHop, cuonToi, capNhatNhac: () => { try { capNhatNhac(); } catch (e) {} } });
+const taiTV = () => tvP ||= import("./thu-vien.js?v=20261010bv").then(m => { tvM = m; m.gan(tvCtx); m.doiNguoi(); return m; }).catch(e => { tvP = null; console.warn("Chưa tải được thư viện", e); });
+const tvDoiNguoi = () => { if (tvM) tvM.doiNguoi(); else if (isTeacher) taiTV(); if (tvM && /^#(video|ebook)$/.test(location.hash)) tvM.ve(location.hash.slice(1)); };
 window.__appOk = true;
 document.querySelectorAll(".slow-bar").forEach(el => el.remove());
 
@@ -206,7 +213,7 @@ function copyText(text, statusEl, okMsg, selectEl) {
 }
 
 /* ================= Điều hướng ================= */
-const PAGES = ["giao-trinh", "bai-tap", "tai-khoan", "duyet", "diem-danh", "lam-viec", "thi-thu", "van-hanh"];
+const PAGES = ["giao-trinh", "bai-tap", "tai-khoan", "duyet", "diem-danh", "lam-viec", "thi-thu", "van-hanh", "video", "ebook"];
 // Nhớ vị trí cuộn theo từng bước lịch sử: mở mục mới → lên đầu; bấm quay lại / tiến tới → về đúng chỗ đang xem
 try { history.scrollRestoration = "manual"; } catch (e) {}
 const viTriCuon = {}; let khoaCuon = null;
@@ -242,6 +249,8 @@ window.__cuonToi = cuonToi;
 function route() {
   const kCu = khoaCuon, k = khoaLichSu(), yCu = kCu !== k ? viTriCuon[k] : undefined; khoaCuon = k;
   const h = location.hash.replace("#", "");
+  // 17 video "Khoá học nâng cao" đã chuyển sang thư viện Video: link cũ #nang-cao vẫn tới đúng chỗ
+  if (h === "nang-cao") { history.replaceState(history.state, "", "#video"); return route(); }
   if (h && !PAGES.includes(h)) {
     // Hash không phải trang cấp cao nhất: có thể là link "đi nhanh" tới một mục trong trang đang mở
     // (VD #ql-duyet-h trong Quản lý). Nhảy tới mục đó thay vì coi là trang lạ rồi quay về trang chủ.
@@ -266,6 +275,8 @@ function route() {
     if (on) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current");
   });
   $("#acc-nav").dataset.page = page;
+  $$(".hoc-tabs a").forEach(a => { if (a.dataset.hoc === page) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current"); });
+  if (page === "video" || page === "ebook") taiTV().then(m => m && m.ve(page));
   $$("#tab-duoi a").forEach(x => { if (x.getAttribute("href") === "#" + page) x.setAttribute("aria-current", "page"); else x.removeAttribute("aria-current"); });
   $$("#acc-nav [data-acc]").forEach(a => { if (a.dataset.acc === page) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current"); });
   // Thanh tài khoản cuộn ngang: luôn kéo mục đang mở vào giữa, không để bị cắt nửa chữ
@@ -3593,6 +3604,7 @@ function capNhatNhac() {
       if (tb > 3) ds.push({ id: "tb-more-" + tb, icon: "📣", muc: "", tieuDe: `Còn ${tb - 3} thông báo mới khác`, link: "#lam-viec", tab: "tb", dich: "#lv-tb" });
     }
   } catch (e) { console.warn(e); }
+  try { if (tvM) ds.push(...tvM.nhacViec()); } catch (e) { console.warn(e); }
   t.nhacViec(ds);
 }
 const bo2 = s => String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/đ/g, "d").toLowerCase();
@@ -4001,7 +4013,7 @@ async function onUser(u) {
     gradeOpen.clear(); Object.keys(gradeDraft).forEach(k => delete gradeDraft[k]);
   }
   pendingReq = null;
-  if (!u) { saveSession(null); renderLocks("out"); renderAccount(false); return; }
+  if (!u) { saveSession(null); renderLocks("out"); renderAccount(false); tvDoiNguoi(); return; }
   store.set("lvkv-gmail", mail); // lần sau mở máy này: Gmail điền sẵn ở mục Đăng nhập
   // Tạo tài khoản bằng mật khẩu: phải bấm link xác nhận trong Gmail trước (chống mạo danh Gmail người khác).
   if (!u.emailVerified) {
@@ -4083,6 +4095,7 @@ async function onUser(u) {
   saveSession(pending);
   renderLocks(canLearn ? "ok" : "pending");
   renderAccount(pending);
+  tvDoiNguoi();
   // Theo dõi quyền theo thời gian thực: anh chị vừa duyệt là màn hình học viên tự mở khoá,
   // bị thu hồi thì tự khoá — không phải bấm tải lại.
   const watchRole = (col, has) => unsubs.push(onSnapshot(doc(db, col, mail), d => {
@@ -4152,7 +4165,7 @@ async function onUser(u) {
       doiTen = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (a.luc || 0) - (b.luc || 0)); renderDoiTen();
     });
     listen(query(collection(db, "giaovien"), orderBy("duyetLuc", "desc")), snap => {
-      teachers = snap.docs.map(d => ({ id: d.id, ...d.data() })); renderTeachers(); renderLV();
+      teachers = snap.docs.map(d => ({ id: d.id, ...d.data() })); renderTeachers(); renderLV(); if (tvM) tvM.veLai();
       if (vanHanhM) vanHanhM.capNhatGiaoVien();
     });
   }

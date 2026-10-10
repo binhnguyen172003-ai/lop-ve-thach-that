@@ -34,20 +34,20 @@ test("Khách: menu Học tập → Khoá học mở đúng mục, không bị me
   expect(v.h).toBeLessThan(v.cao);
 });
 
-test("Khách: menu Sản phẩm → Ebook (chưa có link) đưa tới đăng ký, ghi rõ sắp ra mắt", async ({ page, moTrang, isMobile }) => {
+test("Khách: menu Sản phẩm → Ebook mở thư viện Ebook", async ({ page, moTrang, isMobile }) => {
   await moTrang({ hash: "" });
   if (isMobile) await page.locator("#nav-burger").click(); else await page.locator("#sp-dd .dd-t").click();
-  const ebook = page.locator(isMobile ? "#menu-links a" : "#sp-p a", { hasText: "Ebook" });
-  await expect(ebook).toContainText("Sắp ra mắt");
-  await ebook.click();
-  await expect(page.locator("#dang-ky")).toBeInViewport();
+  await page.locator(isMobile ? "#menu-links a" : "#sp-p a", { hasText: "Ebook" }).click();
+  await expect(page).toHaveURL(/#ebook$/);
+  await expect(page.locator("#v-ebook")).toBeVisible();
+  await expect(page.locator("#tv-ebook")).toContainText("Đăng nhập"); // khách: chưa có ebook công khai
 });
 
-test("Khách bấm Khoá học nâng cao (cần đăng nhập): thấy khung khoá rõ ràng, không trang trắng", async ({ page, moTrang }) => {
+test("Link cũ Khoá học nâng cao (#nang-cao) chuyển sang thư viện Video, không trang trắng", async ({ page, moTrang }) => {
   await moTrang({ hash: "nang-cao" });
-  await expect(page.locator("#v-giao-trinh")).toBeVisible();
-  await expect(page.locator("#v-giao-trinh [data-lock]")).toBeVisible();
-  await expect(page.locator("#v-giao-trinh [data-lock]")).not.toBeEmpty();
+  await expect(page).toHaveURL(/#video$/);
+  await expect(page.locator("#v-video")).toBeVisible();
+  await expect(page.locator("#tv-video")).not.toBeEmpty();
 });
 
 /* ---------------- Đăng nhập & phân quyền ---------------- */

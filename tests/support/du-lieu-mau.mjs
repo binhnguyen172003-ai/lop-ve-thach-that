@@ -54,7 +54,8 @@ export function duLieuMau({ soYeuCau = 3, hocVienThem = 0 } = {}) {
   }
 
   const giaovien = {
-    [TK.giaoVien]: { ten: "Giáo Viên Thử", gmail: TK.giaoVien, chucVu: "Giáo viên", mon: "Hình hoạ", coso: "Bình Phú", duyetLuc: luc("2026-08-01"), kpiCong: 12 },
+    [TK.giaoVien]: { ten: "Giáo Viên Thử", gmail: TK.giaoVien, chucVu: "Giáo viên", mon: "Hình hoạ", coso: "Bình Phú", duyetLuc: luc("2026-08-01"), kpiCong: 12,
+      quyenTV: { video: { them: true }, ebook: {} } }, // chỉ được thêm Video, không có quyền Ebook
     [TK.troGiang]: { ten: "Trợ Giảng Thử Có Họ Tên Rất Dài Để Kiểm Tra Tràn Chữ", gmail: TK.troGiang, chucVu: "Trợ giảng", mon: "Màu", coso: "Kim Quan", duyetLuc: luc("2026-08-02") }
   };
 
