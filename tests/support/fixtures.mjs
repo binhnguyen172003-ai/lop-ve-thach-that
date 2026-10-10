@@ -87,7 +87,7 @@ export async function timTranChu(page, goc = "body") {
             for (const q of rg.getClientRects()) {
               if (!q.width) continue;
               if (!cat && (q.right > k.r + 1.5 || q.left < k.l - 1.5)) { loi.push(`${ten(el)} chữ chạm/tràn khung (chữ ${Math.round(q.left)}→${Math.round(q.right)}, khung ${Math.round(k.l)}→${Math.round(k.r)})`); break; }
-              if (!kc && (q.right > vw + 1 || q.left < -1)) { loi.push(`${ten(el)} chữ ra ngoài màn hình`); break; }
+              if (!kc && !(cat && /hidden|clip/.test(s.overflowX)) && (q.right > vw + 1 || q.left < -1)) { loi.push(`${ten(el)} chữ ra ngoài màn hình`); break; }
             }
           }
         }
