@@ -342,7 +342,33 @@ function dung() {
   $("#tl-chat-nut").onclick = () => { if (!vuaKeo) mo(chat); };
   $("#tl-nhac-nut").onclick = () => { if (!vuaKeo) mo(pNhac); };
   ganKeo(w, chat, pNhac);
-  $("#tl-bong").onclick = () => {
+  // Bong bóng nhắc: vuốt sang hai bên hoặc xuống, hoặc bấm ✕ để ẩn (hôm nay không hiện lại cho cùng nhóm việc)
+  const bong = $("#tl-bong"); let keo = null, vuaVuot = false;
+  const anBong = huong => {
+    if (!bong.dataset.hoiBai) store.set("lvtt-nhac-xem", nhacKey());
+    clearTimeout(capNhatDem.h); delete bong.dataset.hoiBai;
+    bong.style.transition = "transform .18s ease-out, opacity .18s"; bong.style.opacity = "0";
+    bong.style.transform = huong === "xuong" ? "translateY(60px)" : `translateX(${huong === "trai" ? -120 : 120}%)`;
+    setTimeout(() => { bong.hidden = true; bong.style.cssText = ""; }, 190);
+  };
+  bong.addEventListener("pointerdown", e => { if (e.target.closest(".tl-bong-x")) return; e.stopPropagation(); keo = { x: e.clientX, y: e.clientY, id: e.pointerId, dx: 0, dy: 0 }; bong.style.transition = "none"; });
+  bong.addEventListener("pointermove", e => {
+    if (!keo || e.pointerId !== keo.id) return;
+    keo.dx = e.clientX - keo.x; keo.dy = Math.max(0, e.clientY - keo.y);
+    if (Math.abs(keo.dx) > 6 || keo.dy > 6) { try { bong.setPointerCapture(keo.id); } catch (er) {} clearTimeout(capNhatDem.h); }
+    bong.style.transform = `translate(${keo.dx}px, ${keo.dy}px)`; bong.style.opacity = String(Math.max(.25, 1 - Math.max(Math.abs(keo.dx), keo.dy) / 220));
+  });
+  const thaTay = () => {
+    if (!keo) return; const { dx, dy } = keo; keo = null;
+    if (Math.abs(dx) > 70) { vuaVuot = true; anBong(dx < 0 ? "trai" : "phai"); }
+    else if (dy > 50) { vuaVuot = true; anBong("xuong"); }
+    else { bong.style.transition = "transform .18s, opacity .18s"; bong.style.transform = ""; bong.style.opacity = ""; if (Math.abs(dx) > 6 || dy > 6) vuaVuot = true; }
+    setTimeout(() => vuaVuot = false, 50);
+  };
+  bong.addEventListener("pointerup", thaTay); bong.addEventListener("pointercancel", thaTay);
+  $("#tl-bong").onclick = e => {
+    if (e.target.closest(".tl-bong-x")) return anBong("phai");
+    if (vuaVuot) return;
     const b = $("#tl-bong"), ten = b.dataset.hoiBai;
     if (!ten) return mo(pNhac);
     b.hidden = true; delete b.dataset.hoiBai;
@@ -594,7 +620,7 @@ function capNhatDem() {
   const k = nhacKey(), daXem = store.get("lvtt-nhac-xem", "");
   if (moi && k !== daXem && $("#tl-nhac").hidden && $("#tl-chat").hidden) {
     const b = $("#tl-bong"), quanTrong = nhac.find(n => n.muc === "gap") || nhac[0];
-    b.innerHTML = `<b>${quanTrong.icon || "🔔"} ${esc(quanTrong.tieuDe)}</b>${moi > 1 ? `<small>và ${moi - 1} việc khác · bấm để xem</small>` : "<small>Bấm để xem</small>"}`;
+    b.innerHTML = `<button type="button" class="tl-bong-x" aria-label="Ẩn nhắc việc này">✕</button><b>${quanTrong.icon || "🔔"} ${esc(quanTrong.tieuDe)}</b>${moi > 1 ? `<small>và ${moi - 1} việc khác · bấm để xem</small>` : "<small>Bấm để xem</small>"}`;
     b.hidden = false; clearTimeout(capNhatDem.h); capNhatDem.h = setTimeout(() => { b.hidden = true; }, 9000);
   }
 }
@@ -617,7 +643,7 @@ window.__troLy = {
   // Khi xem bài vẽ trong khung phóng to: Chì hỏi có muốn hỏi về bài này không
   goiYBai(ten) {
     const b = $("#tl-bong"); if (!b || !nguoi || !$("#tl-chat").hidden || !$("#tl-nhac").hidden) return;
-    b.innerHTML = `<b>✏️ Hỏi Chì về bài này?</b><small>${esc(ten)} · bấm để hỏi</small>`;
+    b.innerHTML = `<button type="button" class="tl-bong-x" aria-label="Ẩn nhắc việc này">✕</button><b>✏️ Hỏi Chì về bài này?</b><small>${esc(ten)} · bấm để hỏi</small>`;
     b.dataset.hoiBai = ten; b.hidden = false;
     clearTimeout(this._h); this._h = setTimeout(() => { b.hidden = true; delete b.dataset.hoiBai; }, 12000);
   },
