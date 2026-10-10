@@ -81,6 +81,9 @@ const troLyPromise = import("./tro-ly.js?v=20261010bt").catch(e => console.warn(
 let vanHanhP = null, vanHanhM = null;
 let tacVuP = null, tacVuM = null;
 const taiTacVu = () => tacVuP ||= import("./tac-vu.js?v=20261010bv").then(m => tacVuM = m).catch(e => { tacVuP = null; console.warn("Chưa tải được phần tác vụ", e); });
+let thuVienP = null, thuVienM = null, phanQuyenP = null, phanQuyenM = null;
+const taiThuVien = () => thuVienP ||= import("./thu-vien.js?v=20261010pq").then(m => thuVienM = m).catch(e => { thuVienP = null; console.warn("Chưa tải được thư viện", e); });
+const taiPhanQuyen = () => phanQuyenP ||= import("./phan-quyen.js?v=20261010pq").then(m => phanQuyenM = m).catch(e => { phanQuyenP = null; console.warn("Chưa tải được phân quyền", e); });
 const taiVanHanh = () => vanHanhP ||= import("./van-hanh.js?v=20261010bg").then(m => vanHanhM = m).catch(e => { vanHanhP = null; console.warn("Chưa tải được phần vận hành", e); });
 window.__appOk = true;
 document.querySelectorAll(".slow-bar").forEach(el => el.remove());
@@ -3923,7 +3926,7 @@ setInterval(() => { try { if (user) capNhatNhac(); } catch (e) {} }, 60000);
 /* ----- Tác vụ: xem assets/js/tac-vu.js (giao việc, trạng thái, bình luận, Kanban) ----- */
 
 /* ---------- Đăng nhập ---------- */
-function stopListeners() { unsubs.forEach(u => u()); unsubs = []; if (vanHanhM) vanHanhM.dung(); if (tacVuM) tacVuM.dung(); }
+function stopListeners() { unsubs.forEach(u => u()); unsubs = []; if (vanHanhM) vanHanhM.dung(); if (tacVuM) tacVuM.dung(); if (thuVienM) thuVienM.dung(); if (phanQuyenM) phanQuyenM.dung(); }
 function listen(q, fn) {
   const t = performance.now(); let first = true;
   const name = q.path || (q._query && q._query.path && q._query.path.segments && q._query.path.segments.join("/")) || "dữ liệu";
@@ -4124,6 +4127,13 @@ async function onUser(u) {
   if (isTeacher) taiTacVu().then(m => { if (!m || !user || mail !== (u.email || "").toLowerCase()) return;
     m.batDau({ db, fs: { collection, doc, getDoc, setDoc, deleteDoc, writeBatch, query, orderBy, where, onSnapshot }, themHuy: f => unsubs.push(f),
       mail, ten: (user && user.displayName) || mail.split("@")[0], isAdmin, isTeacher, toast, moHop, nenAnh, homNay: todayVN, giaoVien: () => teachers, doiSo: () => { updBadges(); try { if ($("#dash") && !$("#dash").hidden) renderDash(true); } catch (e) {} } }); });
+  // Thư viện Video / Ebook: học viên đã duyệt xem bản đã xuất bản; nhân sự soạn – duyệt – xuất bản theo Phân quyền hệ thống
+  if (isTeacher || approved) taiThuVien().then(m => { if (!m || !user || mail !== (u.email || "").toLowerCase()) return;
+    m.batDau({ db, fs: { collection, doc, getDoc, getDocs, setDoc, deleteDoc, writeBatch, query, orderBy, where, onSnapshot }, themHuy: f => unsubs.push(f),
+      mail, isAdmin, isTeacher, coSo: () => (myHv && myHv.coso) || "", toast, moHop, giaoVien: () => teachers }); });
+  if (isAdmin) taiPhanQuyen().then(m => { if (!m || !user || mail !== (u.email || "").toLowerCase()) return;
+    m.batDau({ db, fs: { collection, doc, getDoc, getDocs, setDoc, writeBatch, query, orderBy, where, onSnapshot }, themHuy: f => unsubs.push(f),
+      mail, toast, moHop, giaoVien: () => teachers }); });
   taiVanHanh().then(m => { if (!m || !user || mail !== (u.email || "").toLowerCase()) return;
     m.batDau({ db, fs: { collection, doc, getDoc, setDoc, deleteDoc, writeBatch, query, orderBy, where, limit, onSnapshot, deleteField }, themHuy: f => unsubs.push(f),
       mail, ten: (!isTeacher && myHv && myHv.ten) || (user && user.displayName) || mail.split("@")[0], isAdmin, isTeacher,
@@ -4140,7 +4150,7 @@ async function onUser(u) {
       doiTen = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (a.luc || 0) - (b.luc || 0)); renderDoiTen();
     });
     listen(query(collection(db, "giaovien"), orderBy("duyetLuc", "desc")), snap => {
-      teachers = snap.docs.map(d => ({ id: d.id, ...d.data() })); renderTeachers(); renderLV();
+      teachers = snap.docs.map(d => ({ id: d.id, ...d.data() })); renderTeachers(); renderLV(); if (phanQuyenM) phanQuyenM.ve(); if (thuVienM) thuVienM.ve();
       if (vanHanhM) vanHanhM.capNhatGiaoVien();
     });
   }

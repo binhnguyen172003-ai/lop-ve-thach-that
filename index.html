@@ -442,6 +442,7 @@
         <article class="lesson gt-bai" id="lesson" hidden></article>
       </div>
     </div>
+    <section class="thu-vien" id="thu-vien" aria-labelledby="h-tl"></section>
     <section class="nang-cao" id="nang-cao" aria-labelledby="h-nc">
       <div class="sec-head">
         <div><p class="eyebrow">Khoá học nâng cao</p><h2 id="h-nc">Video chân dung tham khảo</h2></div>
@@ -888,7 +889,7 @@
     <p class="eyebrow">Dành cho quản lý</p>
     <h1>Quản lý lớp</h1>
     <p class="muted">Học viên đi học, tiến độ, % đỗ dự báo, Top 5 bài nổi bật và duyệt tài khoản — tất cả ở một trang.</p>
-    <div class="ql-nhay" role="navigation" aria-label="Đi nhanh"><a href="#ql-tong">Học viên &amp; % đỗ</a><a href="#ql-top5">Top 5 tuần</a><a href="#ql-duyet-h">Duyệt tài khoản</a><a href="#ql-gv-h">Quyền giáo viên</a></div>
+    <div class="ql-nhay" role="navigation" aria-label="Đi nhanh"><a href="#ql-tong">Học viên &amp; % đỗ</a><a href="#ql-top5">Top 5 tuần</a><a href="#ql-duyet-h">Duyệt tài khoản</a><a href="#ql-gv-h">Quyền giáo viên</a><a href="#ql-pq-h">Phân quyền hệ thống</a></div>
   </div>
   <div class="lock" id="duyet-lock"><h3>Trang dành cho quản lý</h3><p class="muted">Chỉ Gmail quản lý lớp mới mở được trang này.</p><div class="ctas"><a class="btn primary" href="#tai-khoan">Đăng nhập</a></div></div>
   <div class="teacher" data-admin hidden id="duyet-body">
@@ -910,6 +911,10 @@
     <h3 style="margin-top:32px" id="ql-gv-h">Trao / gỡ quyền giáo viên</h3>
     <p class="muted" style="margin-bottom:12px">Giáo viên được điểm danh, giao và chấm bài, đăng bài vẽ, bản tin, xem Vận hành lớp. Gỡ quyền thì Gmail đó không còn quyền giáo viên (học viên vẫn giữ nguyên hồ sơ học). Muốn trao quyền: gõ tên hoặc Gmail vào <a href="#ql-duyet-h">ô tìm kiếm đầu phần Duyệt tài khoản</a>, chọn chức vụ rồi bấm <b>Trao quyền</b>.</p>
     <div class="roster-wrap"><table class="roster" id="teachers"></table></div>
+
+    <h3 style="margin-top:32px" id="ql-pq-h">Phân quyền hệ thống <small class="muted">· Video, Ebook, Giáo trình, Khoá học</small></h3>
+    <p class="muted" style="margin-bottom:12px">Tách riêng người <b>tạo</b>, người <b>phê duyệt</b>, người <b>xuất bản</b> và người <b>quản lý quyền xem</b>. Không ai được tự duyệt phiên bản do chính mình soạn.</p>
+    <div id="pq-goc" class="pq-goc"></div>
 
     <h3 style="margin-top:32px">Duyệt trực tiếp một Gmail</h3>
     <form id="f-hv">
