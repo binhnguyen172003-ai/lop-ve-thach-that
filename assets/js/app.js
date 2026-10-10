@@ -370,7 +370,7 @@ function renderGallery() {
   const count = t => all.filter(b => b.loai === t).length;
   $("#gal-filters").hidden = !has;
   if (has) $("#gal-filters").innerHTML = [`<button class="tab" data-g="all" aria-selected="${galFilter === "all"}">Tất cả <span class="num">${all.length}</span></button>`]
-    .concat(LOAI_BAI.map(l => `<button class="tab" data-g="${esc(l.ten)}" aria-selected="${galFilter === l.ten}">${esc(l.ten)} <span class="num">${count(l.ten)}</span></button>`)).join("");
+    .concat(LOAI_BAI.filter(l => count(l.ten) || isTeacher || galFilter === l.ten).map(l => `<button class="tab" data-g="${esc(l.ten)}" aria-selected="${galFilter === l.ten}">${esc(l.ten)} <span class="num">${count(l.ten)}</span></button>`)).join("");
   $$("#gal-filters .tab").forEach(b => b.onclick = () => { galFilter = b.dataset.g; renderGallery(); });
   // Quản lý: nút dọn bài đăng trùng (giữ bản chuyển tự động "seed-…", xoá bản đăng tay trùng; bấm 2 lần mới xoá)
   if (false && isAdmin && has) { // tạm tắt nút dọn bài trùng: không tự xoá bài của quản lý
@@ -906,7 +906,7 @@ const GHI_CHU = {
   Object.entries(GHI_CHU).forEach(([id, nd]) => {
     const h = document.getElementById(id); if (!h || h.querySelector(".gc")) return;
     const w = document.createElement("span"); w.className = "gc";
-    w.innerHTML = `<button type="button" class="gc-i" aria-label="Giải thích mục này" aria-expanded="false">!</button>`;
+    w.innerHTML = `<button type="button" class="gc-i" aria-label="Hướng dẫn mục này" aria-expanded="false">?</button>`;
     h.append(w);
     const b = w.querySelector(".gc-i"); b.dataset.gc = nd;
     b.addEventListener("click", e => { e.stopPropagation(); dang === b ? dong() : mo(b); });
@@ -1442,6 +1442,7 @@ $("#f-dk").addEventListener("submit", ev => {
   const lines = ["Chào anh chị, em muốn đăng ký học thử / tư vấn:",
     "- Học sinh: " + v("#dk-ten"), "- SĐT phụ huynh: " + sdt, "- Đang học: " + v("#dk-lop"),
     "- Muốn học: " + v("#dk-khoi"), "- Hình thức: " + v("#dk-hinh")];
+  if (v("#dk-ranh")) lines.push("- Lúc rảnh để học thử: " + v("#dk-ranh"));
   if (v("#dk-truong")) lines.push("- Trường muốn thi: " + v("#dk-truong"));
   if (v("#dk-ghichu")) lines.push("- Câu hỏi: " + v("#dk-ghichu"));
   const text = lines.join("\n");
@@ -1461,7 +1462,7 @@ $("#f-dk").addEventListener("submit", ev => {
     method: "POST", signal: huy.signal, headers: { "Content-Type": "application/json", "Accept": "application/json" },
     body: JSON.stringify({ _subject: `Đăng ký học thử: ${v("#dk-ten")} · ${sdt}`, _template: "table", _captcha: "false",
       "Học sinh": v("#dk-ten"), "SĐT phụ huynh": sdt, "Đang học": v("#dk-lop"), "Muốn học": v("#dk-khoi"),
-      "Hình thức": v("#dk-hinh"), "Trường muốn thi": v("#dk-truong"), "Câu hỏi": v("#dk-ghichu") })
+      "Hình thức": v("#dk-hinh"), "Lúc rảnh": v("#dk-ranh"), "Trường muốn thi": v("#dk-truong"), "Câu hỏi": v("#dk-ghichu") })
   }).then(r => { if (!r.ok) throw 0; }).then(() => {
     dkSent = text; dropDraft("nhap-hocthu");
     xong("Đã gửi cho anh chị! Anh chị sẽ gọi lại cho bố mẹ em sớm. Cần gấp thì gọi hoặc nhắn Zalo ngay bên dưới.", true);
