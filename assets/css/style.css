@@ -3482,3 +3482,15 @@ table.roster.cc-cp{min-width:0}
 @media (max-width:640px){.hop{border-radius:24px 24px 0 0}}
 @keyframes hop-len{from{opacity:0;transform:translateY(24px) scale(.98)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:no-preference){.hop{animation:hop-len .35s cubic-bezier(.22,1,.36,1)}}
+
+/* Chấm công tháng: dải lọc giáo viên vuốt ngang, tên nằm trên một dòng (không bị bẻ dọc từng chữ) */
+.cc-loc{display:flex;gap:6px;overflow-x:auto;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;padding-bottom:2px;scroll-snap-type:x proximity}
+.cc-loc .tab{flex:0 0 auto;white-space:nowrap;min-height:38px;padding:6px 14px;scroll-snap-align:start}
+/* Chip ca trong ô ngày: trên điện thoại cho xuống 2 dòng thay vì cắt "KQu…" */
+@media (max-width:640px){
+  .cc-o{padding-inline:2px}
+  .cc-chip{white-space:normal;overflow:visible;text-overflow:clip;border-radius:8px;padding:3px 2px;font-size:.62rem;line-height:1.2;word-break:normal;overflow-wrap:anywhere}
+}
+.cc{min-width:0}.cc > *{min-width:0}
+.cc-dau{min-width:0}
+.cc-loc{flex:1 1 100%;min-width:0;max-width:100%}
