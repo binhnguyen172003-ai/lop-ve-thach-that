@@ -3748,3 +3748,40 @@ body.vt-khoa > *:not(.vt-ov){visibility:hidden}
 .lpc-bang td.lpc-trong .lpc-them-ngoai{min-height:34px;height:auto;font-size:1.1rem}
 @media (pointer:coarse){.lpc-mon-sua{min-height:30px;font-size:.74rem}}
 .ql-nen{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;margin-top:10px}.ql-nen .muted{font-size:.82rem}
+
+/* Rank: logo gọn, chữ không tràn trên điện thoại */
+.rk-badge{width:52px;height:58px}
+.rk-badge b{font-size:.82rem;letter-spacing:-.04em;margin-top:-5px}
+.rk-badge.sm{width:44px;height:50px}
+.rk-badge.sm b{font-size:.64rem}
+.rk-stage .rk-card .rk-badge.sm{width:52px;height:58px}
+.rk-stage .rk-card .rk-badge.sm b{font-size:.76rem}
+.rk-stage .rk-card .rk-top{gap:12px;min-height:60px}
+.rk-stage .rk-card .xh-ma{font-size:2rem;line-height:1.15}
+.rk-stage .rk-in{gap:12px}
+.rk-stage .rk-card .rk-ten{gap:8px 12px;line-height:1.45}
+.rk-stage .rk-card .rk-mo{line-height:1.5;margin:0}
+.rk-stage .rk-card .rk-star{line-height:1.4;letter-spacing:.03em}
+.rk-stage .rk-card .rk-xp{line-height:1.4}
+.xh-hv{min-width:0;gap:12px}
+.xh-hv > div{min-width:0;max-width:100%;box-sizing:border-box;grid-template-columns:48px minmax(0,1fr);grid-template-rows:auto auto auto;gap:5px 12px;padding:12px 14px}
+.xh-hv > div > .rk-badge{grid-column:1;grid-row:1 / span 3;width:44px;height:50px;align-self:center}
+.xh-hv > div > b{grid-column:2;min-width:0;line-height:1.4;overflow-wrap:anywhere}
+.xh-hv > div > span:not(.rk-badge){grid-column:2;min-width:0;line-height:1.5;overflow-wrap:anywhere}
+.xh-hv .xh-tt{margin-top:3px;flex-wrap:wrap;gap:6px}
+.cc-kpi .cc-dau{margin-bottom:14px}
+.cc-kpi h3{display:flex;flex-wrap:wrap;align-items:center;gap:8px;line-height:1.5;margin-bottom:12px}
+.cc-kpi h3 .chip{margin:0;line-height:1.4}
+.lpc-tuan:has(.cc-thang){gap:12px;align-items:center;flex-wrap:wrap}
+.cc-thang{min-width:0;line-height:1.4}
+@media(max-width:640px){
+  .xh-hv > div{width:100%}
+  .rk-stage .rk-in{gap:10px;padding:20px 16px}
+  .rk-stage .rk-card .rk-ten{flex-direction:column;font-size:1rem;gap:6px}
+  .rk-stage .rk-card .xh-kim{font-size:.64rem;padding:5px 12px}
+  .rk-stage .rk-card .rk-star{font-size:1rem;letter-spacing:0}
+  .rk-stage .rk-card .rk-badge.sm{width:46px;height:52px}
+  .rk-stage .rk-card .rk-badge.sm b{font-size:.66rem}
+  .cc-thang{font-size:1.1rem}
+  .lpc-tuan:has(.cc-thang){gap:10px}
+}
