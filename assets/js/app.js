@@ -1487,10 +1487,23 @@ $("#dk-zalo").href = ZALO_LINK;
     const wrap = nav.querySelector(".wrap"), pill = document.createElement("span");
     pill.className = "nav-pill"; pill.setAttribute("aria-hidden", "true"); wrap.prepend(pill);
     const muc = () => [...wrap.querySelectorAll(".dd-t, a.link.solo, .nav-search")].filter(x => x.offsetParent);
-    const dat = el => { const r = el.getBoundingClientRect(), w = wrap.getBoundingClientRect();
-      pill.style.cssText = `left:${r.left - w.left + wrap.scrollLeft - 12}px;top:${r.top - w.top + (r.height - 36) / 2}px;width:${r.width + 24}px`; pill.classList.add("on"); };
+    let hovered = null;
+    const dat = el => {
+      hovered = el;
+      const r = el.getBoundingClientRect(), w = wrap.getBoundingClientRect();
+      const pad = el.classList.contains("nav-search") ? 2 : 8;
+      const left = Math.max(wrap.scrollLeft + 2, r.left - w.left + wrap.scrollLeft - pad);
+      const right = Math.min(wrap.scrollLeft + wrap.clientWidth - 2, r.right - w.left + wrap.scrollLeft + pad);
+      const height = r.height + 4;
+      pill.style.cssText = `left:${left}px;top:${r.top - w.top - 2}px;width:${Math.max(0, right - left)}px;height:${height}px`;
+      pill.classList.add("on");
+    };
+    const alignPill = () => { if (hovered && pill.classList.contains("on")) dat(hovered); };
+    addEventListener("resize", alignPill, { passive: true });
+    wrap.addEventListener("scroll", alignPill, { passive: true });
+    if (document.fonts) document.fonts.ready.then(alignPill);
     wrap.addEventListener("pointerover", e => { const el = muc().find(x => x.contains(e.target)); if (el) dat(el); });
-    wrap.addEventListener("pointerleave", () => pill.classList.remove("on"));
+    wrap.addEventListener("pointerleave", () => { hovered = null; pill.classList.remove("on"); });
     nav.addEventListener("pointermove", e => { const r = nav.getBoundingClientRect(); nav.style.setProperty("--mx", (e.clientX - r.left) + "px"); nav.classList.add("roi"); }, { passive: true });
     nav.addEventListener("pointerleave", () => nav.classList.remove("roi"));
   }
