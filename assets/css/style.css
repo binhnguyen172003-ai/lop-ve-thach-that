@@ -3695,8 +3695,8 @@ body.vt-khoa > *:not(.vt-ov){visibility:hidden}
 /* Thẻ ảnh tràn khung + khung hạng: tấm kính nằm gọn dưới thanh ngang của khung hạng, khung hạng luôn nổi trên cùng */
 .nb-stage .nb-card.nb-tran .kt{z-index:3}
 .nb-stage .nb-card.nb-tran img{height:calc(100% - 118px)}
-.nb-stage .nb-card.nb-tran .kt-thanh{top:calc(100% - 144px)}
-.nb-stage .nb-card.nb-tran figcaption{top:calc(100% - 104px);bottom:10px;min-height:0;padding:8px 14px 10px;align-content:center;gap:4px;overflow:hidden}
+.nb-stage .nb-card.nb-tran .kt-thanh{top:calc(100% - 112px)}
+.nb-stage .nb-card.nb-tran figcaption{top:calc(100% - 104px);bottom:10px;min-height:0;padding:20px 14px 10px;align-content:center;gap:4px;overflow:hidden}
 .nb-stage .nb-card.nb-tran:not(:has(.kt)) figcaption{top:auto}
 
 /* Công tắc kính ba chế độ: sáng, tối, theo giao diện của máy. */
