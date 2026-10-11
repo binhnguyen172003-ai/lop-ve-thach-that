@@ -1495,7 +1495,7 @@ $("#dk-zalo").href = ZALO_LINK;
       const left = Math.max(wrap.scrollLeft + 2, r.left - w.left + wrap.scrollLeft - pad);
       const right = Math.min(wrap.scrollLeft + wrap.clientWidth - 2, r.right - w.left + wrap.scrollLeft + pad);
       const height = r.height + 4;
-      const lift = el.classList.contains("nav-search") ? 6 : 2;
+      const lift = 2;
       pill.style.cssText = `left:${left}px;top:${r.top - w.top - lift}px;width:${Math.max(0, right - left)}px;height:${height}px`;
       pill.classList.add("on");
     };
