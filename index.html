@@ -48,7 +48,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Be+Vietnam+Pro:wght@400;500;600&family=Playfair+Display:ital,wght@1,500;1,600&display=swap" media="print" onload="this.media='all'">
 <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Be+Vietnam+Pro:wght@400;500;600&family=Playfair+Display:ital,wght@1,500;1,600&display=swap"></noscript>
 <link rel="stylesheet" href="assets/css/style.css?v=20261011birthday">
-<link rel="modulepreload" href="assets/js/app.js?v=20261011profileedit">
+<link rel="modulepreload" href="assets/js/app.js?v=20261011birthdaynotice">
 <link rel="modulepreload" href="config/firebase-config.js?v=20261009b">
 <link rel="modulepreload" href="data/noi-dung.js?v=20261011birthday">
 <script nomodule>document.addEventListener("DOMContentLoaded",function(){var d=document.createElement("div");d.className="slow-bar";d.innerHTML="Trình duyệt này đã quá cũ nên web chạy không đủ. Hãy cập nhật Chrome hoặc Safari rồi mở lại.";document.body.insertBefore(d,document.body.firstChild)})</script>
@@ -748,7 +748,7 @@
     <form id="f-reg">
       <label for="rg-vt">Em là<select id="rg-vt"><option value="hocvien">Học sinh</option><option value="giaovien">Trợ giảng / Giáo viên của lớp</option></select></label>
       <label for="rg-ten"><span>Họ và tên <span class="req">*</span></span><input id="rg-ten" required maxlength="80" autocomplete="name" placeholder="VD: Nguyễn Văn An"></label>
-      <label for="rg-nam" class="chi-hv"><span>Ngày tháng năm sinh <span class="req">*</span></span><input id="rg-nam" type="date" required autocomplete="bday" aria-label="Ngày tháng năm sinh"><small class="muted">Chọn đầy đủ ngày, tháng và năm sinh.</small></label>
+      <label for="rg-nam" class="chi-hv"><span>Ngày sinh <span class="req">*</span></span><input id="rg-nam" type="date" required autocomplete="bday" aria-label="Ngày sinh"><small class="muted">Chọn đầy đủ ngày, tháng và năm sinh.</small></label>
       <label for="rg-sdtph" class="chi-hv"><span>Số điện thoại bố hoặc mẹ <span class="req">*</span></span><input id="rg-sdtph" type="tel" inputmode="tel" required maxlength="15" placeholder="VD: 0912 345 678"></label>
       <label for="rg-sdtgv" class="chi-gv"><span>Số điện thoại của anh/chị <span class="req">*</span></span><input id="rg-sdtgv" type="tel" inputmode="tel" required maxlength="15" placeholder="VD: 0912 345 678"></label>
       <label for="rg-cs"><span>Học ở cơ sở nào <span class="req">*</span></span><select id="rg-cs" required><option value="">Chọn cơ sở</option><option>Bình Phú</option><option>Kim Quan</option><option>Online</option></select></label>
@@ -973,7 +973,7 @@
     setTheme(root.dataset.theme,true);
   })();
 </script>
-<script type="module" src="assets/js/app.js?v=20261011profileedit"></script>
+<script type="module" src="assets/js/app.js?v=20261011birthdaynotice"></script>
 <script type="module" src="assets/js/morph-icons.js?v=20261011a"></script>
 </body>
 </html>
