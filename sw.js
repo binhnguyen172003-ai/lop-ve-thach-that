@@ -5,7 +5,12 @@ const TRANG = "lvkv-trang-" + V;      // file của web (theo phiên bản)
 const THU_VIEN = "lvkv-thu-vien";     // thư viện Firebase + phông chữ (không bao giờ đổi)
 
 self.addEventListener("install", e => {
-  e.waitUntil(caches.open(TRANG).then(c => c.add("./")).catch(() => {}));
+  e.waitUntil(caches.open(TRANG).then(async c => {
+    // Trang mất mạng phải có sẵn trước khi worker bắt đầu điều hướng.
+    await c.add("./offline.html");
+    await c.add("./assets/img/bia-1280.jpg");
+    await c.add("./").catch(() => {});
+  }));
   self.skipWaiting();
 });
 self.addEventListener("activate", e => {
@@ -31,11 +36,12 @@ self.addEventListener("fetch", e => {
   // Trang chính: lấy bản mới nhất; mạng yếu quá 0,8 giây hoặc mất mạng thì mở bản đã lưu.
   if (req.mode === "navigate" && url.origin === self.location.origin) {
     e.respondWith((async () => {
+      const matMang = async () => (await caches.match("./offline.html")) || (await caches.match("./"));
       const mang = fetch(req, { cache: "no-cache" }).then(res => { if (res.ok) { const c = res.clone(); caches.open(TRANG).then(x => x.put("./", c)); } return res; });
       const cu = await caches.match("./");
-      if (!cu) return mang;
+      if (!cu) return mang.catch(matMang);
       const cho = new Promise(r => setTimeout(() => r(cu), 800));
-      return Promise.race([mang.catch(() => cu), cho]);
+      return Promise.race([mang.catch(matMang), cho]);
     })());
     return;
   }
