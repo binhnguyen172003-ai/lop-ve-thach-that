@@ -3835,3 +3835,6 @@ nav.on-hero .acct{box-shadow:none;background:rgba(12,14,18,.85);border-color:rgb
   nav .nav-search{min-width:180px;width:auto;padding-inline:18px;gap:10px;flex-shrink:0;justify-content:center;box-sizing:border-box}
   nav .nav-search kbd{margin-left:4px}
 }
+
+/* Câu trong checklist luôn nằm trong một cột, kể cả chữ đậm/nghiêng. */
+.bai-md li.ck .ck-text{display:block;flex:1;min-width:0;overflow-wrap:break-word;text-align:left}
