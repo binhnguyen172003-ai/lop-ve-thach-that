@@ -2720,7 +2720,18 @@ function renderHvInfo() {
     const capNhat = { sdt, truongThi, khoi };
     if (ngaySinh) { capNhat.ngaySinh = ngaySinh; capNhat.namSinh = Number(ngaySinh.slice(0, 4)); }
     const b = writeBatch(db); b.update(doc(db, "hocvien", mail), capNhat);
-    timed("Lưu thông tin học viên", b.commit()).then(() => { myHv = { ...myHv, ...capNhat }; saveSession(pendingReq); st.textContent = "Đã lưu."; toast("Đã lưu thông tin của em."); renderHvInfo(); })
+    timed("Lưu thông tin học viên", b.commit()).then(() => { myHv = { ...myHv, ...capNhat }; saveSession(pendingReq); st.textContent = "Đã lưu."; toast("Đã lưu thông tin của em.");
+      if (document.activeElement && box.contains(document.activeElement)) document.activeElement.blur();
+      renderHvInfo();
+      $("#hv-edit-info")?.focus({ preventScroll: true });
+      requestAnimationFrame(() => {
+        if (location.hash !== "#tai-khoan") return;
+        const thongTin = box.querySelector(".hv-dl");
+        if (!thongTin) return;
+        const chanMenu = Math.max(0, ...[$("nav"), $("#acc-nav")].filter(el => el && !el.hidden).map(el => el.getBoundingClientRect().bottom));
+        window.scrollTo({ top: Math.max(0, window.scrollY + thongTin.getBoundingClientRect().top - chanMenu - 16), behavior: "instant" });
+      });
+    })
       .catch(e => { st.textContent = e && e.code === "permission-denied"
         ? "Máy chủ chưa cho lưu: nhờ anh chị quản lý dán luật bảo mật mới (firestore.rules) một lần."
         : "Chưa lưu được. Kiểm tra mạng rồi bấm lại."; });
