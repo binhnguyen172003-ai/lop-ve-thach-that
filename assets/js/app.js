@@ -2633,15 +2633,17 @@ function renderRequests() {
 const TRUONG_THI = ["HAU", "MTCN", "HUCE", "SIS", "NUAE", "Khác"];
 let doiTen = [], doiTenCuaToi = null, doiTenDaTai = "";
 // Ngày thi theo TRƯỜNG THI DỰ KIẾN học viên đã chọn (lấy từ lịch thi LICH_THI).
-// Trường chưa có lịch trên web (HUCE, SIS, NUAE, Khác) hoặc chưa chọn → null, dùng mốc chung theo khối.
+// Hồ sơ dùng HUCE/SIS/NUAE; lịch thi dùng XD/QG/SP. Quy đổi trước khi đối chiếu.
+// Trường Khác hoặc chưa chọn → null, dùng mốc chung theo khối.
 function mocThiCuaToi() {
   const tt = myHv && !isTeacher && myHv.truongThi;
   if (!tt) return null;
   const kh = khoiOf(myHv);
+  const maTruong = ({ HUCE: "XD", SIS: "QG", NUAE: "SP" })[tt] || tt;
   const ds = LICH_THI.map(e => ({ ...e, n: daysUntil(e.ngay) }))
-    .filter(e => e.truong === tt && e.n >= 0).sort((a, b) => a.n - b.n);
+    .filter(e => e.truong === maTruong && e.n >= 0).sort((a, b) => a.n - b.n);
   const hop = ds.find(e => kh && e.dot.includes(kh)) || ds[0];
-  return hop || null;
+  return hop ? { ...hop, truong: ({ XD: "HUCE", QG: "SIS", SP: "NUAE" })[hop.truong] || hop.truong } : null;
 }
 // Chữ ở góc trang đầu: nếu học viên đã chọn trường có lịch thi thì hiện theo trường đó
 function capNhatBadgeThi() {
