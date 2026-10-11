@@ -2,7 +2,48 @@
 
 ## Nguồn và phạm vi
 
-Áp dụng cho HTML/CSS/JavaScript hiện có. Dùng Awesome DESIGN.md (VoltAgent) để tham khảo phân nhóm và bề mặt; UI UX Pro Max để rà điều hướng, accessibility và responsive. Giữ nhận diện B1 và hệ màu/font hiện có; các nguồn tham khảo không thay thế quy tắc dự án.
+Áp dụng cho HTML/CSS/JavaScript hiện có. Cấu trúc tài liệu theo [Awesome DESIGN.md](https://github.com/VoltAgent/awesome-design-md); tham khảo [mẫu Pinterest](https://github.com/VoltAgent/awesome-design-md/blob/main/design-md/pinterest/DESIGN.md) về cách để hình ảnh dẫn dắt, bề mặt trung tính, nhịp khoảng cách và phân cấp thành phần. UI UX Pro Max hỗ trợ rà điều hướng, accessibility và responsive. Giữ nhận diện B1, màu xanh ultramarine, nền giấy và font tiếng Việt của lớp.
+
+## Chủ đề và cảm giác
+
+Trang giới thiệu như một cuốn sổ phác thảo sáng, tập trung vào bài vẽ thật và kết quả học tập. Khu học tập giữ mật độ thông tin đủ để thao tác nhanh. Ảnh bài vẽ là nội dung chính; khung, bóng và hiệu ứng chỉ giúp đọc hoặc phân biệt trạng thái.
+
+## Bảng màu và vai trò
+
+| Vai trò | Sáng | Tối | Cách dùng |
+| --- | --- | --- | --- |
+| Nền giấy `--paper` | `#f4f5f2` | `#15171b` | Nền trang |
+| Mặt thẻ `--sheet` | `#ffffff` | `#1d2025` | Thẻ, biểu mẫu, bảng |
+| Chữ chính `--ink` | `#1f2226` | `#eceef1` | Tiêu đề và nội dung |
+| Chữ phụ `--graphite` | `#5b6068` | `#a3a8b1` | Chú giải, mô tả |
+| Đường viền `--rule` | `#d9dcd6` | `#30343b` | Phân cách, viền thẻ |
+| Điểm nhấn `--accent` | `#2c43b0` | `#93a5ff` | Link, trạng thái chọn, focus |
+| Nền trưng bày `--art-stage` | `#101319` | Như sáng | Đặt bài vẽ trên nền ổn định |
+| Chú thích ảnh `--art-caption` | `#1b2028` | Như sáng | Tên tác giả và thông tin bài |
+
+Màu trạng thái `--ok` và `--warn` chỉ dùng cho thông báo kết quả tương ứng. Ảnh và nhãn hạng có màu riêng vì đó là nội dung, không phải màu nền chung.
+
+## Chữ và nhịp bố cục
+
+- `--f-display` dùng cho tiêu đề; `--f-body` dùng cho nội dung, biểu mẫu và điều khiển. Tiêu đề lớn dùng `clamp()` để xuống dòng tự nhiên; tránh `line-height` quá chặt làm chạm dấu tiếng Việt.
+- Chữ nội dung mặc định 16px với `line-height: 1.6`. Chú giải nhỏ vẫn cần đọc được; không dùng chữ hoa dày đặc trong đoạn dài.
+- Khoảng cách cơ sở là 8px; ưu tiên các bước 8, 16, 24, 32 và 56px. Khu trưng bày ảnh có khoảng cách gọn hơn đoạn giới thiệu để người xem tập trung vào bài vẽ.
+- Bề rộng nội dung chuẩn là 1080px qua `.wrap`. Trên màn hình nhỏ, giảm số cột trước khi giảm kích thước chữ.
+
+## Thành phần, chiều sâu và ảnh
+
+- Nút chính nổi bật bằng tương phản chữ/nền; nút phụ có viền. Trạng thái hover, focus và disabled cần phân biệt được; vùng bấm chính ít nhất 44px.
+- Thẻ thông tin dùng `--sheet` và viền `--rule`. Bóng mạnh chỉ dành cho lớp phủ hoặc thành phần đang nổi; thẻ nội dung mặc định dựa vào viền và khoảng trắng.
+- Ảnh bài vẽ nổi bật dùng `object-fit: contain` trên nền `--art-stage`, giữ nguyên tỷ lệ. Chú thích dùng mặt đặc `--art-caption` để đọc rõ mà không làm mờ hay phủ lớp kính lên tác phẩm.
+- Ảnh trong lưới dùng khung tỷ lệ ổn định để tránh nhảy bố cục lúc tải. Nút quản lý và nhãn xếp hạng không che phần quan trọng của ảnh.
+- Bán kính tiêu chuẩn: 10–12px cho điều khiển nhỏ, 18px cho thẻ ảnh, hình viên thuốc cho nút hoặc chip cần phân biệt. Không tăng bán kính chỉ để trang trông trang trí hơn.
+
+## Responsive và giới hạn thiết kế
+
+- Desktop giữ thanh điều hướng đầy đủ. Tablet thu gọn nhóm phụ. Mobile dùng menu và các khu nội dung một hoặc hai cột theo độ rộng thật của nội dung.
+- Kiểm tra tối thiểu ở 320px, 390px, 768px và 1280px; không để tràn ngang, che nút hoặc cắt dấu tiếng Việt.
+- Ưu tiên nội dung thật, tương phản đọc được và ảnh nguyên tỷ lệ. Không thêm gradient, bóng sáng, blur hoặc chuyển động lặp để lấp khoảng trống.
+- Giữ tiêu đề, nhãn và thông báo bằng tiếng Việt rõ nghĩa ở mọi vai trò học viên, giáo viên và quản trị viên.
 
 ## Token và thành phần dùng chung
 
