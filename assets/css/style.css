@@ -3852,3 +3852,15 @@ nav.on-hero .acct{box-shadow:none;background:rgba(12,14,18,.85);border-color:rgb
   .sec-head .eyebrow,.page-head .eyebrow{letter-spacing:.06em;margin-bottom:4px}
   .sec-head h2{font-size:clamp(1.9rem,7.8vw,2.4rem)}
 }
+
+/* Chữ nghiêng và lịch học: khoảng dòng thống nhất, không dính nhãn vào giờ. */
+.cine-stat{gap:8px;align-content:start}
+.cine-stat b{line-height:1.28;letter-spacing:.005em;padding-block:.03em}
+.cine-stat span{line-height:1.45;word-break:normal;text-wrap:balance}
+.sd{grid-template-columns:minmax(76px,96px) minmax(0,1fr)}
+.sd > div{min-width:0;gap:10px}
+.sd-ca{display:grid;grid-template-columns:74px minmax(0,1fr);gap:8px;align-items:start;line-height:1.45}
+.sd-ca .slot{box-sizing:border-box;display:block;margin:0;text-align:center;padding-inline:6px}
+.sd-time{display:flex;flex-direction:column;gap:2px;min-width:0}
+.sd-time .num{white-space:nowrap;font-size:.88rem;letter-spacing:0}
+@media(max-width:380px){.sd{grid-template-columns:76px minmax(0,1fr);padding-inline:10px;gap:8px}.sd-ca{grid-template-columns:68px minmax(0,1fr);gap:6px}.sd-time .num{font-size:.8rem}}
