@@ -8,7 +8,7 @@ import { GIAO_TRINH_MAU as GT_LO_TRINH } from "../../data/giao-trinh-mau.js?v=20
 import { soSanhTenHocVien } from "./ten-hoc-vien.js?v=20261010bs";
 import { GO_KHOI_CA, thuocDanhSachCa } from "./danh-sach-ca.js?v=20261010bs";
 import * as vanTay from "./van-tay.js?v=20261011vt";
-import { LIEN_HE, NAM_THI, LICH_THI, BO_LOC_TRUONG, CA_HOC, THOI_GIAN_BIEU, BAI_VE, BANG_VANG, TRUONG, MUC_TIEU, GIAO_VIEN, VIDEO_BIA, BAI_NOI_BAT, THANH_TUU_TRAO, XP_THUONG, AVATAR, SO_DU_THI, HOA_CU, TON_DAU_KY, BAN_TIN, SAN_PHAM, LICH_THI_CAP_NHAT, DO_MANG, MANG_XA_HOI } from "../../data/noi-dung.js?v=20261010bh";
+import { LIEN_HE, NAM_THI, LICH_THI, BO_LOC_TRUONG, CA_HOC, THOI_GIAN_BIEU, BAI_VE, BANG_VANG, TRUONG, MUC_TIEU, GIAO_VIEN, VIDEO_BIA, BAI_NOI_BAT, THANH_TUU_TRAO, XP_THUONG, AVATAR, SO_DU_THI, HOA_CU, TON_DAU_KY, BAN_TIN, SAN_PHAM, LICH_THI_CAP_NHAT, DO_MANG, MANG_XA_HOI } from "../../data/noi-dung.js?v=20261011pagesplit";
 
 // Firebase được tải riêng, để phần giới thiệu vẫn chạy kể cả khi mạng chậm hoặc chưa cấu hình.
 const FB = "https://www.gstatic.com/firebasejs/10.12.2/";
@@ -211,7 +211,7 @@ function copyText(text, statusEl, okMsg, selectEl) {
 }
 
 /* ================= Điều hướng ================= */
-const PAGES = ["giao-trinh", "bai-tap", "tai-khoan", "duyet", "diem-danh", "lam-viec", "thi-thu", "van-hanh"];
+const PAGES = ["tong-quan", "khoa-hoc", "ebook", "giao-trinh", "bai-tap", "tai-khoan", "duyet", "diem-danh", "lam-viec", "thi-thu", "van-hanh"];
 // Nhớ vị trí cuộn theo từng bước lịch sử: mở mục mới → lên đầu; bấm quay lại / tiến tới → về đúng chỗ đang xem
 try { history.scrollRestoration = "manual"; } catch (e) {}
 const viTriCuon = {}; let khoaCuon = null;
@@ -258,7 +258,7 @@ function route() {
     const el = document.getElementById(h);
     const trongTrangDangMo = el && el.closest("main[id^='v-']") && !el.closest("main[id^='v-']").hidden;
     if (trongTrangDangMo) { cuonToi(el); return; }
-    // Mục nằm trong một trang khác (VD #nang-cao trong Giáo trình): mở trang đó rồi cuộn tới mục
+    // Mục nằm trong một trang khác (VD #nang-cao trong Khóa học): mở trang đó rồi cuộn tới mục
     const trang = el && el.closest("main[id^='v-']");
     if (trang && trang.id !== "v-home" && PAGES.includes(trang.id.slice(2))) {
       history.replaceState(history.state, "", "#" + trang.id.slice(2)); route();
@@ -1167,8 +1167,8 @@ const GHI_CHU = {
 
 /* Khoá học: biến 6 thẻ khoá học thành vòng xoay giống phần Giáo viên */
 (function khoaHocXoay() {
-  const box = $("#khoa-hoc .courses"); if (!box) return;
-  const cards = $$("#khoa-hoc .courses > .course"); if (cards.length < 3) return;
+  const box = $("#lo-trinh-khoa-hoc .courses"); if (!box) return;
+  const cards = $$("#lo-trinh-khoa-hoc .courses > .course"); if (cards.length < 3) return;
   const stage = document.createElement("div"); stage.className = "gv-stage cs-stage";
   cards.forEach((c, i) => { c.dataset.i = i; stage.appendChild(c); });
   box.className = "gv-ring cs-ring"; box.setAttribute("aria-roledescription", "vòng xoay"); box.setAttribute("aria-label", "Các khoá học");
@@ -1533,6 +1533,14 @@ $("#dk-zalo").href = ZALO_LINK;
       return `<a class="link" href="${esc(p.link || "#dang-ky")}"${ngoai ? ' target="_blank" rel="noopener"' : ""}><b>${esc(p.ten)}</b><small>${esc(coLink ? p.moTa : "Sắp ra mắt · hỏi anh chị")}</small></a>`;
     }).join(""); }
 
+  // eBook có trang riêng; chỉ hiện nút mở khi đã có đường dẫn tài liệu.
+  { const box = $("#ebook-list"), books = SAN_PHAM.filter(p => /ebook|e-book/i.test(p.ten));
+    if (box) box.innerHTML = books.map(p => {
+      const link = linkAnToan(p.taiLieu);
+      return link ? `<a class="acc-tile" href="${esc(link)}" target="_blank" rel="noopener"><b>${esc(p.ten)}</b><span class="muted">${esc(p.moTa)}</span><i aria-hidden="true">↗</i></a>`
+        : `<article class="card"><h2>${esc(p.ten)}</h2><p class="muted">${esc(p.moTa)}</p><p>Tài liệu đang được cập nhật.</p></article>`;
+    }).join("") || '<p class="muted">Chưa có eBook được đăng.</p>'; }
+
   // Menu toàn màn hình trên điện thoại
   const ov = $("#menu-ov"), burger = $("#nav-burger");
   // Menu điện thoại: chia 3 nhóm, mỗi mục một ô gọn (tên + mô tả nhỏ), dễ nhìn, dễ bấm
@@ -1567,7 +1575,7 @@ $("#dk-zalo").href = ZALO_LINK;
   addEventListener("keydown", e => { if (e.key === "Escape") dong(); });
 
   // Hình trang trí mờ hai bên cho các phần khác (giống phần "Về lớp")
-  const DECO = { "khoa-hoc": ["deco/khoi.svg", "deco/captoc.svg"], "bang-vang": [null, "deco/cup.svg"], "giao-vien": ["hinh-hoa-nguoi.png", null],
+  const DECO = { "lo-trinh-khoa-hoc": ["deco/khoi.svg", "deco/captoc.svg"], "bang-vang": [null, "deco/cup.svg"], "giao-vien": ["hinh-hoa-nguoi.png", null],
     "bai-ve": [null, "deco/mau.svg"], "lich-thi": ["deco/captoc-lich-thi.svg", null], "lich-hoc": [null, "deco/khoi.svg"], "khoi": ["hinh-hoa-tuong.png", null], "dang-ky": [null, "deco/mt2.svg"] };
   Object.entries(DECO).forEach(([id, [l, r]]) => {
     const sec = document.getElementById(id); if (!sec) return;
@@ -1724,6 +1732,7 @@ function renderLocks(state) {
       <div class="ctas"><a class="btn primary" href="#tai-khoan">Đăng nhập / Đăng ký</a><a class="btn" href="#dang-ky">Chưa là học viên? Đăng ký học</a></div>`}`;
   });
   $("#gt-body").hidden = state !== "ok";
+  $("#khoa-body").hidden = state !== "ok";
   // Đã được duyệt: ẩn 3 bước hướng dẫn, chỉ giữ thẻ tài khoản gọn. Chưa duyệt thì vẫn hiện đầy đủ.
   const daDuyet = state === "ok";
   $("#stepper").hidden = daDuyet;
@@ -1828,7 +1837,7 @@ const oChonKhoa = (id, chon) => `<div class="khoa-cap" data-kc="${esc(id)}">${KH
 const khoaDaChon = id => $$(`[data-kc="${CSS.escape(id)}"] input:checked`).map(i => i.value);
 function capNhatTheKhoa() {
   const cap = khoaDuocCap(), daVao = !!user && !needVerify;
-  $$("#khoa-hoc .course").forEach(c => {
+  $$("#lo-trinh-khoa-hoc .course").forEach(c => {
     const vao = cap.includes(goc((c.querySelector("h3") || {}).textContent));
     c.dataset.cta = vao ? "Vào học →" : approved ? "Nhắn anh chị để học thêm khoá này →" : daVao ? "Xem tình trạng duyệt tài khoản →" : "Đăng ký học thử →";
     c.classList.toggle("vao", vao);
@@ -3223,7 +3232,7 @@ function renderDash(show) {
     ganBieuDoDash(box);
     $("#dash-giao").onclick = () => { location.hash = "#bai-tap"; requestAnimationFrame(() => { const c = $("#hw-composer"); if (c) { c.open = true; c.scrollIntoView({ block: "start", behavior: "smooth" }); setTimeout(() => $("#bt-ten")?.focus(), 300); } }); };
     if ($("#dash-viec")) $("#dash-viec").onclick = () => { location.hash = "#lam-viec"; requestAnimationFrame(() => $('#lv-tabs [data-lv="viec"]')?.click()); };
-    tab.innerHTML = nut("#tai-khoan", "tq", "Tổng quan") + nut("#bai-tap", "bt", "Bài tập", canCham) + nut("#diem-danh", "dd", "Điểm danh") + nut("#van-hanh", "cc", isAdmin ? "Theo dõi GV" : "Chấm công").replace("<a ", '<a data-vh-mo="cc" ') + nut("#lam-viec", "td", "Trao đổi", tin + viec);
+    tab.innerHTML = nut("#tong-quan", "tq", "Tổng quan") + nut("#bai-tap", "bt", "Bài tập", canCham) + nut("#diem-danh", "dd", "Điểm danh") + nut("#van-hanh", "cc", isAdmin ? "Theo dõi GV" : "Chấm công").replace("<a ", '<a data-vh-mo="cc" ') + nut("#lam-viec", "td", "Trao đổi", tin + viec);
     tab.querySelector("[data-vh-mo]").onclick = () => { try { sessionStorage.setItem("vh-mo", "cc"); } catch (er) {} };
   } else {
     // ---- Học viên: hôm nay em cần làm gì
@@ -3267,7 +3276,7 @@ function renderDash(show) {
     $$("#dash [data-dtiep]").forEach(x => x.onclick = () => { const l = lessons.find(y => y.id === x.dataset.dtiep); if (!l) return; khoaMuon = goc(l.khoa); lessonId = null; location.hash = "#giao-trinh"; requestAnimationFrame(() => { renderLessons(); moBai(l.id); }); });
     $$("#dash [data-dmon]").forEach(x => x.onclick = () => { khoaMuon = x.dataset.dmon; if (lessonId) dongBai(true); lessonId = null; gtLoc = "tat"; location.hash = "#giao-trinh"; requestAnimationFrame(() => { renderLessons(); $("#gt-wrap")?.scrollIntoView({ block: "start" }); }); });
     $$("#dash [data-dcham]").forEach(x => x.onclick = () => requestAnimationFrame(() => $('#hw-filter [data-h="cham"]')?.click()));
-    tab.innerHTML = nut("#tai-khoan", "tq", "Tổng quan") + nut("#bai-tap", "bt", "Bài tập", can.length) + nut("#giao-trinh", "gt", "Giáo trình") + nut("#lam-viec", "td", "Trao đổi", tin);
+    tab.innerHTML = nut("#tong-quan", "tq", "Tổng quan") + nut("#bai-tap", "bt", "Bài tập", can.length) + nut("#giao-trinh", "gt", "Giáo trình") + nut("#lam-viec", "td", "Trao đổi", tin);
   }
   const h = location.hash.slice(1); $$("#tab-duoi a").forEach(x => { if (x.getAttribute("href") === "#" + h) x.setAttribute("aria-current", "page"); });
   viTriTab();
@@ -3321,7 +3330,7 @@ function renderTiles() {
       wa.innerHTML = khungAvatar(t.r, t.i, ten, myAvatar, "lg") + `<span class="ava-sua" aria-hidden="true">✎</span>`; } } }
   { const wr = $("#who-rank"); if (wr) { const hv = show && !isTeacher; wr.hidden = !hv;
     if (hv) { const av = $("#who-avatar"); if (av) av.hidden = true; const ten = (myHv && myHv.ten) || (user && user.displayName), t = tinhRank(myDiemdanh, myProgress, myFeedback, ten), tt = tinhThanhTuu(myDiemdanh, myProgress, myFeedback, ten, homework);
-      wr.innerHTML = `${huyHieu(t.r, t.i, "xs", ten)}<span class="muted"><b class="num">${t.xp} XP</b> · ${tt.filter(a => a.cap).length}/${tt.length} thành tựu</span><a href="#xep-hang">Xem hạng & thành tựu ↓</a>`; } } }
+      wr.innerHTML = `${huyHieu(t.r, t.i, "xs", ten)}<span class="muted"><b class="num">${t.xp} XP</b> · ${tt.filter(a => a.cap).length}/${tt.length} thành tựu</span><a href="#xep-hang">Xem hạng & thành tựu →</a>`; } } }
   capNhatVaiTro();
   { const av = $("#av-doi"); if (av) av.hidden = !user; }
   baoTroLy(show); try { renderXHQL(); renderKho(); } catch (e) {}
@@ -3336,6 +3345,9 @@ function renderTiles() {
     isAdmin && { href: "#duyet", t: "Quản lý học viên", n: reqCount, d: `${roster.length} học viên · % đỗ · Top 5 tuần` + (reqCount ? ` · ${reqCount} chờ duyệt` : "") },
     isTeacher && { href: "#diem-danh", t: "Điểm danh", d: "Điểm danh buổi hôm nay" },
     { href: "#bai-tap", t: isTeacher ? "Giao & chấm bài tập" : "Bài tập", d: moBai ? `${moBai} bài đang mở` : "Chưa có bài đang mở" },
+    { href: "#tai-khoan", t: "Tài khoản", d: "Thông tin cá nhân, ảnh đại diện và đăng xuất" },
+    { href: "#khoa-hoc", t: "Khóa học", d: "Lộ trình học và video tham khảo" },
+    { href: "#ebook", t: "eBook", d: "Sách và tài liệu học vẽ" },
     { href: "#giao-trinh", t: isTeacher ? "Xem giáo trình" : "Giáo trình", d: isTeacher ? `${lessons.length} bài trong giáo trình` : `Đã học ${daHoc}/${lessons.length} bài` },
     isTeacher && { href: "#bai-ve", t: "Đăng bài vẽ học viên", d: "Chụp bài, chọn loại bài, đăng lên web" },
     isTeacher && { href: "#ban-tin", t: "Đăng bản tin", d: "Tin nổi bật tuần, hoạ cụ, lý thuyết" },

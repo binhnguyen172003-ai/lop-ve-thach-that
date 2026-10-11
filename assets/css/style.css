@@ -2497,8 +2497,8 @@ body.hop-mo{overflow:hidden}
 #v-tai-khoan .hv-dl{grid-template-columns:repeat(auto-fit,minmax(180px,1fr))}
 #v-tai-khoan .hv-form{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
 /* Khoảng cách giữa khung tài khoản và các mục dưới cho đều nhau */
-#v-tai-khoan .acc-tiles{margin-block:20px}
-#v-tai-khoan .acc-xh{margin-top:20px;padding-top:24px}
+#v-tong-quan .acc-tiles{margin-block:20px}
+#v-tong-quan .acc-xh{margin-top:20px;padding-top:24px}
 
 /* ================= Lịch thi: dòng thời gian NẰM NGANG (điện thoại và máy tính đều dễ nhìn) ================= */
 .months.lth{display:block;margin-top:22px}
@@ -2979,7 +2979,7 @@ button:disabled:not(.btn){opacity:.45}
    Trang con luôn cao ít nhất một màn hình: nội dung tải sau không kéo chân trang nhảy lên xuống trước mắt người xem */
 main.wrap[id^="v-"]:not(#v-home){min-height:calc(100svh - var(--nav-h,57px))}
 /* Phần nặng nằm dưới màn hình (xếp hạng, thành tựu, kho, các mục dài trang chủ): chỉ dựng khi cuộn tới → bấm chuyển trang nhanh hơn */
-#acc-tiles,#xep-hang,#kho,#bang-vang,#giao-vien,#bai-ve,#lich-thi,#lich-hoc,#khoi,#nang-cao,#khoa-hoc{content-visibility:auto;contain-intrinsic-size:auto 900px}
+#acc-tiles,#xep-hang,#kho,#bang-vang,#giao-vien,#bai-ve,#lich-thi,#lich-hoc,#khoi,#nang-cao,#lo-trinh-khoa-hoc{content-visibility:auto;contain-intrinsic-size:auto 900px}
 
 /* Điện thoại: nút nổi nhỏ gọn hơn, tự né khi cuộn */
 @media(max-width:760px){

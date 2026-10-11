@@ -40,17 +40,17 @@
 <meta name="apple-mobile-web-app-title" content="Vẽ Không Vui">
 <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
 <!-- Học viên đã đăng nhập / đang mở trang học: tải sẵn thư viện ngay. Khách xem giới thiệu thì để sau. -->
-<script>try{var h=location.hash.slice(1),c=JSON.parse(localStorage.getItem("lvkv-phien")||"null");if(/^(giao-trinh|bai-tap|tai-khoan|duyet|diem-danh|lam-viec|thi-thu|van-hanh)$/.test(h)||(c&&c.mail)){["app","auth","firestore"].forEach(function(n){var l=document.createElement("link");l.rel="modulepreload";l.href="https://www.gstatic.com/firebasejs/10.12.2/firebase-"+n+".js";document.head.appendChild(l)})}}catch(e){}</script>
+<script>try{var h=location.hash.slice(1),c=JSON.parse(localStorage.getItem("lvkv-phien")||"null");if(/^(tong-quan|khoa-hoc|ebook|giao-trinh|bai-tap|tai-khoan|duyet|diem-danh|lam-viec|thi-thu|van-hanh)$/.test(h)||(c&&c.mail)){["app","auth","firestore"].forEach(function(n){var l=document.createElement("link");l.rel="modulepreload";l.href="https://www.gstatic.com/firebasejs/10.12.2/firebase-"+n+".js";document.head.appendChild(l)})}}catch(e){}</script>
 <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <!-- Phông chữ tải sau, không bắt người xem chờ trắng màn hình -->
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Be+Vietnam+Pro:wght@400;500;600&family=Playfair+Display:ital,wght@1,500;1,600&display=swap" media="print" onload="this.media='all'">
 <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Be+Vietnam+Pro:wght@400;500;600&family=Playfair+Display:ital,wght@1,500;1,600&display=swap"></noscript>
-<link rel="stylesheet" href="assets/css/style.css?v=20261011searchwide">
-<link rel="modulepreload" href="assets/js/app.js?v=20261011searchalign">
+<link rel="stylesheet" href="assets/css/style.css?v=20261011pagesplit">
+<link rel="modulepreload" href="assets/js/app.js?v=20261011pagesplit">
 <link rel="modulepreload" href="config/firebase-config.js?v=20261009b">
-<link rel="modulepreload" href="data/noi-dung.js?v=20261010bh">
+<link rel="modulepreload" href="data/noi-dung.js?v=20261011pagesplit">
 <script nomodule>document.addEventListener("DOMContentLoaded",function(){var d=document.createElement("div");d.className="slow-bar";d.innerHTML="Trình duyệt này đã quá cũ nên web chạy không đủ. Hãy cập nhật Chrome hoặc Safari rồi mở lại.";document.body.insertBefore(d,document.body.firstChild)})</script>
 <script>document.documentElement.classList.add("js-fx");setTimeout(function(){document.querySelectorAll(".fx,.cine-h1").forEach(function(e){e.classList.add("in")})},2600);</script>
 <script>setTimeout(function(){if(window.__appOk)return;var d=document.createElement("div");d.className="slow-bar";d.innerHTML='Mạng đang chậm, trang chưa tải xong. <button type="button" onclick="location.reload()">Tải lại</button>';document.body.insertBefore(d,document.body.firstChild)},12000)</script>
@@ -104,7 +104,7 @@
     <div class="dd">
       <button type="button" class="dd-t" aria-expanded="false">Học tập <svg class="chev" viewBox="0 0 8 5" aria-hidden="true"><path d="M1 1l3 3 3-3"/></svg></button>
       <div class="dd-p">
-        <a class="link" href="#khoa-hoc" data-nav="home"><b>Khoá học</b><small>6 khoá từ cơ bản đến luyện đề</small></a>
+        <a class="link" href="#khoa-hoc" data-nav="khoa-hoc"><b>Khoá học</b><small>6 khoá từ cơ bản đến luyện đề</small></a>
         <a class="link" href="#lo-trinh" data-nav="home"><b>Lộ trình học</b><small>Tuần nào học gì, từng môn</small></a>
         <a class="link" href="#lich-hoc" data-nav="home"><b>Lịch học</b><small>Bình Phú · Kim Quan</small></a>
         <a class="link" href="#lich-thi" data-nav="home"><b>Lịch thi 2027</b><small>Đếm ngày tới kỳ thi</small></a>
@@ -164,9 +164,12 @@
 <div class="acc-nav" id="acc-nav" hidden>
   <div class="wrap" role="tablist" aria-label="Khu tài khoản">
     <a href="#lam-viec" data-acc="lam-viec" data-can="learn"><i aria-hidden="true">💬</i>Trao đổi <span class="nbadge num" id="acc-lv-n" hidden></span></a>
-    <a href="#tai-khoan" data-acc="tai-khoan"><i aria-hidden="true">🏠</i>Tổng quan</a>
+    <a href="#tong-quan" data-acc="tong-quan" data-can="learn"><i aria-hidden="true">🏠</i>Tổng quan</a>
+    <a href="#tai-khoan" data-acc="tai-khoan"><i aria-hidden="true">👤</i>Tài khoản</a>
     <a href="#bai-tap" data-acc="bai-tap" data-can="learn"><i aria-hidden="true">📝</i>Bài tập</a>
     <a href="#giao-trinh" data-acc="giao-trinh" data-can="learn"><i aria-hidden="true">📚</i>Giáo trình</a>
+    <a href="#khoa-hoc" data-acc="khoa-hoc"><i aria-hidden="true">🎨</i>Khóa học</a>
+    <a href="#ebook" data-acc="ebook"><i aria-hidden="true">📖</i>eBook</a>
     <a href="#thi-thu" data-acc="thi-thu" data-can="learn"><i aria-hidden="true">⏱️</i>Thi thử</a>
     <a href="#van-hanh" data-acc="van-hanh" data-can="learn"><i aria-hidden="true">🛠️</i>Vận hành</a>
     <a href="#diem-danh" data-acc="diem-danh" data-can="teacher"><i aria-hidden="true">✅</i>Điểm danh</a>
@@ -446,31 +449,6 @@
         <article class="lesson gt-bai" id="lesson" hidden></article>
       </div>
     </div>
-    <section class="nang-cao" id="nang-cao" aria-labelledby="h-nc">
-      <div class="sec-head">
-        <div><p class="eyebrow">Khoá học nâng cao</p><h2 id="h-nc">Video chân dung tham khảo</h2></div>
-        <p class="muted">Dành cho học viên đã vững hình hoạ cơ bản, muốn luyện chân dung sâu hơn. Các video thuộc kênh YouTube của họa sĩ Vornikow; lớp chỉ giới thiệu để học viên xem thêm, miễn phí. Bấm vào sẽ mở trên YouTube.</p>
-      </div>
-      <ol class="vid-list">
-          <li><a href="https://youtu.be/vZdFuUTUeJw" target="_blank" rel="noopener">Video 01 · Xem trên YouTube</a></li>
-          <li><a href="https://youtu.be/kcsVYarOj3Q" target="_blank" rel="noopener">Video 02 · Xem trên YouTube</a></li>
-          <li><a href="https://youtu.be/0ugijncV044" target="_blank" rel="noopener">Video 03 · Xem trên YouTube</a></li>
-          <li><a href="https://youtu.be/F0gvbmmmBks" target="_blank" rel="noopener">Video 04 · Xem trên YouTube</a></li>
-          <li><a href="https://youtu.be/wAzToQzLvsI" target="_blank" rel="noopener">Video 05 · Xem trên YouTube</a></li>
-          <li><a href="https://youtu.be/zawPgE4fVyw" target="_blank" rel="noopener">Video 06 · Xem trên YouTube</a></li>
-          <li><a href="https://youtu.be/1n_FuJRkL5E" target="_blank" rel="noopener">Video 07 · Xem trên YouTube</a></li>
-          <li><a href="https://youtu.be/E1liPpUFsNE" target="_blank" rel="noopener">Video 08 · Xem trên YouTube</a></li>
-          <li><a href="https://youtu.be/dtsrRKw5mVI" target="_blank" rel="noopener">Video 09 · Xem trên YouTube</a></li>
-          <li><a href="https://youtu.be/MyBXfdEDKXw" target="_blank" rel="noopener">Video 10 · Xem trên YouTube</a></li>
-          <li><a href="https://youtu.be/bzmE8cv2mGY" target="_blank" rel="noopener">Video 11 · Xem trên YouTube</a></li>
-          <li><a href="https://youtu.be/jvsmtqpkUtA" target="_blank" rel="noopener">Video 12 · Xem trên YouTube</a></li>
-          <li><a href="https://youtu.be/mn4sFkA0Z40" target="_blank" rel="noopener">Video 13 · Xem trên YouTube</a></li>
-          <li><a href="https://youtu.be/g4bWjq8EGlk" target="_blank" rel="noopener">Video 14 · Xem trên YouTube</a></li>
-          <li><a href="https://youtu.be/VJYjfK-1_uA" target="_blank" rel="noopener">Video 15 · Xem trên YouTube</a></li>
-          <li><a href="https://youtu.be/E7_4OQaNIUI" target="_blank" rel="noopener">Video 16 · Xem trên YouTube</a></li>
-          <li><a href="https://youtu.be/rmx5PwAQvMw" target="_blank" rel="noopener">Video 17 · Xem trên YouTube</a></li>
-      </ol>
-    </section>
     <div class="teacher" data-admin hidden>
       <div id="seed-box" hidden style="margin-bottom:28px">
       <h3 id="seed-title">Giáo trình đang trống</h3>
@@ -491,11 +469,15 @@
       </form>
     </div>
   </div>
-  <!-- Các khoá học: ai cũng xem được (menu chính có link "Khoá học"), nằm ngoài phần khoá của học viên -->
-  <section id="khoa-hoc" aria-labelledby="h-khoa">
+</main>
+
+<!-- ============ KHÓA HỌC ============ -->
+<main class="wrap" id="v-khoa-hoc" hidden>
+  <div class="page-head"><p class="eyebrow">Không gian học tập / Khóa học</p><h1>Khóa học</h1><p class="muted">Xem lộ trình học và video tham khảo tại đây. Nội dung từng bài nằm trong Giáo trình.</p></div>
+  <section id="lo-trinh-khoa-hoc" aria-labelledby="h-khoa">
     <div class="sec-head">
-      <div><p class="eyebrow">Lộ trình</p><h2 id="h-khoa">Các khoá học</h2></div>
-      <p class="muted">Bấm vào một khoá để xem lộ trình và các bài học của khoá đó ngay bên dưới.</p>
+      <div><p class="eyebrow">Lộ trình</p><h2 id="h-khoa">Lộ trình các khóa học</h2></div>
+      <p class="muted">Bấm vào một khoá để xem lộ trình trong Giáo trình.</p>
     </div>
     <div class="courses">
       <article class="course">
@@ -539,6 +521,40 @@
       <div><p class="eyebrow">Sắp khai giảng</p><h3>Lớp luyện thi online</h3><p class="muted">Học trực tiếp với anh chị qua video, gửi bài và nhận nhận xét trên web. Đăng ký để được báo lịch sớm.</p></div>
       <span class="go">Đăng ký nhận lịch →</span></a>
   </section>
+  <div class="lock" data-lock></div>
+  <div id="khoa-body" hidden>
+    <section class="nang-cao" id="nang-cao" aria-labelledby="h-nc">
+      <div class="sec-head">
+        <div><p class="eyebrow">Khoá học nâng cao</p><h2 id="h-nc">Video chân dung tham khảo</h2></div>
+        <p class="muted">Dành cho học viên đã vững hình hoạ cơ bản, muốn luyện chân dung sâu hơn. Các video thuộc kênh YouTube của họa sĩ Vornikow; lớp chỉ giới thiệu để học viên xem thêm, miễn phí. Bấm vào sẽ mở trên YouTube.</p>
+      </div>
+      <ol class="vid-list">
+          <li><a href="https://youtu.be/vZdFuUTUeJw" target="_blank" rel="noopener">Video 01 · Xem trên YouTube</a></li>
+          <li><a href="https://youtu.be/kcsVYarOj3Q" target="_blank" rel="noopener">Video 02 · Xem trên YouTube</a></li>
+          <li><a href="https://youtu.be/0ugijncV044" target="_blank" rel="noopener">Video 03 · Xem trên YouTube</a></li>
+          <li><a href="https://youtu.be/F0gvbmmmBks" target="_blank" rel="noopener">Video 04 · Xem trên YouTube</a></li>
+          <li><a href="https://youtu.be/wAzToQzLvsI" target="_blank" rel="noopener">Video 05 · Xem trên YouTube</a></li>
+          <li><a href="https://youtu.be/zawPgE4fVyw" target="_blank" rel="noopener">Video 06 · Xem trên YouTube</a></li>
+          <li><a href="https://youtu.be/1n_FuJRkL5E" target="_blank" rel="noopener">Video 07 · Xem trên YouTube</a></li>
+          <li><a href="https://youtu.be/E1liPpUFsNE" target="_blank" rel="noopener">Video 08 · Xem trên YouTube</a></li>
+          <li><a href="https://youtu.be/dtsrRKw5mVI" target="_blank" rel="noopener">Video 09 · Xem trên YouTube</a></li>
+          <li><a href="https://youtu.be/MyBXfdEDKXw" target="_blank" rel="noopener">Video 10 · Xem trên YouTube</a></li>
+          <li><a href="https://youtu.be/bzmE8cv2mGY" target="_blank" rel="noopener">Video 11 · Xem trên YouTube</a></li>
+          <li><a href="https://youtu.be/jvsmtqpkUtA" target="_blank" rel="noopener">Video 12 · Xem trên YouTube</a></li>
+          <li><a href="https://youtu.be/mn4sFkA0Z40" target="_blank" rel="noopener">Video 13 · Xem trên YouTube</a></li>
+          <li><a href="https://youtu.be/g4bWjq8EGlk" target="_blank" rel="noopener">Video 14 · Xem trên YouTube</a></li>
+          <li><a href="https://youtu.be/VJYjfK-1_uA" target="_blank" rel="noopener">Video 15 · Xem trên YouTube</a></li>
+          <li><a href="https://youtu.be/E7_4OQaNIUI" target="_blank" rel="noopener">Video 16 · Xem trên YouTube</a></li>
+          <li><a href="https://youtu.be/rmx5PwAQvMw" target="_blank" rel="noopener">Video 17 · Xem trên YouTube</a></li>
+      </ol>
+    </section>
+  </div>
+</main>
+
+<!-- ============ EBOOK ============ -->
+<main class="wrap" id="v-ebook" hidden>
+  <div class="page-head"><p class="eyebrow">Không gian học tập / eBook</p><h1>eBook</h1><p class="muted">Sách và tài liệu học vẽ của lớp.</p></div>
+  <div id="ebook-list" class="acc-tiles"></div>
 </main>
 
 <!-- ============ BÀI TẬP ============ -->
@@ -604,10 +620,38 @@
   </div>
 </main>
 
+<!-- ============ TỔNG QUAN ============ -->
+<main class="wrap" id="v-tong-quan" hidden>
+  <div class="lock" data-lock></div>
+  <section class="dash" id="dash" hidden aria-label="Việc hôm nay"></section>
+  <!-- Đã vào lớp: các ô đi nhanh tới từng phần -->
+  <div class="acc-tiles" id="acc-tiles" hidden></div>
+
+  <!-- Bảng xếp hạng & thành tựu: chỉ hiện trong Tổng quan -->
+  <!-- Kho hoạ cụ: chỉ quản lý thấy -->
+  <section class="kho" id="kho" aria-labelledby="h-kho" hidden>
+    <div class="sec-head"><div><p class="eyebrow">Quản lý</p><h2 id="h-kho">Kho hoạ cụ</h2></div>
+      <p class="muted keep">Nhập hàng, bán cho học viên, xem tồn kho và lãi lỗ từng tháng. Đầu mỗi tháng web tự gửi báo cáo lãi lỗ tháng trước vào Gmail của anh chị.</p></div>
+    <div id="kho-body"></div>
+  </section>
+  <section class="acc-xh" id="xep-hang" aria-labelledby="h-xh" hidden>
+    <div class="sec-head">
+      <div><p class="eyebrow">Hạng & thành tựu</p><h2 id="h-xh">Bảng xếp hạng &amp; cách leo hạng</h2></div>
+      <p class="muted keep">Đi học đều, làm bài đầy đủ, có bài lên Top nổi bật là leo hạng. Bấm vào huy hiệu bất kỳ để xem ghi chú.</p>
+    </div>
+    <div class="xh-grid">
+      <div class="xh-bang" id="xh-bang" role="table" aria-label="Các hạng"></div>
+      <div class="xh-cach" id="xh-cach"></div>
+    </div>
+    <div class="xh-ql" id="xh-ql" hidden></div>
+    <div class="xh-top" id="xh-top"></div>
+    <div class="xh-thanhtuu" id="xh-thanhtuu"></div>
+  </section>
+
+</main>
+
 <!-- ============ TÀI KHOẢN ============ -->
 <main class="wrap" id="v-tai-khoan" hidden>
-  <!-- Tổng quan đã vào lớp: việc cần làm hôm nay (học viên) / việc cần xử lý (anh chị) -->
-  <section class="dash" id="dash" hidden aria-label="Việc hôm nay"></section>
   <div class="page-head">
     <p class="eyebrow">Tài khoản</p>
     <h1>Vào lớp học</h1>
@@ -683,30 +727,6 @@
       </form>
     </div>
   </div>
-
-  <!-- Đã vào lớp: các ô đi nhanh tới từng phần -->
-  <div class="acc-tiles" id="acc-tiles" hidden></div>
-
-  <!-- Bảng xếp hạng & thành tựu: chỉ hiện trong Tài khoản -->
-  <!-- Kho hoạ cụ: chỉ quản lý thấy -->
-  <section class="kho" id="kho" aria-labelledby="h-kho" hidden>
-    <div class="sec-head"><div><p class="eyebrow">Quản lý</p><h2 id="h-kho">Kho hoạ cụ</h2></div>
-      <p class="muted keep">Nhập hàng, bán cho học viên, xem tồn kho và lãi lỗ từng tháng. Đầu mỗi tháng web tự gửi báo cáo lãi lỗ tháng trước vào Gmail của anh chị.</p></div>
-    <div id="kho-body"></div>
-  </section>
-  <section class="acc-xh" id="xep-hang" aria-labelledby="h-xh" hidden>
-    <div class="sec-head">
-      <div><p class="eyebrow">Hạng & thành tựu</p><h2 id="h-xh">Bảng xếp hạng &amp; cách leo hạng</h2></div>
-      <p class="muted keep">Đi học đều, làm bài đầy đủ, có bài lên Top nổi bật là leo hạng. Bấm vào huy hiệu bất kỳ để xem ghi chú.</p>
-    </div>
-    <div class="xh-grid">
-      <div class="xh-bang" id="xh-bang" role="table" aria-label="Các hạng"></div>
-      <div class="xh-cach" id="xh-cach"></div>
-    </div>
-    <div class="xh-ql" id="xh-ql" hidden></div>
-    <div class="xh-top" id="xh-top"></div>
-    <div class="xh-thanhtuu" id="xh-thanhtuu"></div>
-  </section>
 
   <!-- Đăng ký bằng mật khẩu: xác nhận Gmail là của em -->
   <div class="card step-card" id="card-verify" hidden>
@@ -952,7 +972,7 @@
     setTheme(root.dataset.theme,true);
   })();
 </script>
-<script type="module" src="assets/js/app.js?v=20261011searchalign"></script>
+<script type="module" src="assets/js/app.js?v=20261011pagesplit"></script>
 <script type="module" src="assets/js/morph-icons.js?v=20261011a"></script>
 </body>
 </html>
