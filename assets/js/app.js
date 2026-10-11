@@ -2708,7 +2708,7 @@ function renderHvInfo() {
     const capNhat = { sdt, truongThi, khoi };
     if (ngaySinh) { capNhat.ngaySinh = ngaySinh; capNhat.namSinh = Number(ngaySinh.slice(0, 4)); }
     const b = writeBatch(db); b.update(doc(db, "hocvien", mail), capNhat);
-    timed("Lưu thông tin học viên", b.commit()).then(() => { myHv = { ...myHv, ...capNhat }; st.textContent = "Đã lưu."; toast("Đã lưu thông tin của em."); renderHvInfo(); })
+    timed("Lưu thông tin học viên", b.commit()).then(() => { myHv = { ...myHv, ...capNhat }; saveSession(pendingReq); st.textContent = "Đã lưu."; toast("Đã lưu thông tin của em."); renderHvInfo(); })
       .catch(e => { st.textContent = e && e.code === "permission-denied"
         ? "Máy chủ chưa cho lưu: nhờ anh chị quản lý dán luật bảo mật mới (firestore.rules) một lần."
         : "Chưa lưu được. Kiểm tra mạng rồi bấm lại."; });
@@ -4149,7 +4149,7 @@ function loadData(m) {
 const cachedSession = store.get(SESSION_KEY, null);
 function saveSession(pending) {
   store.set(SESSION_KEY, user ? { mail, ten: user.displayName || "", anh: user.photoURL || "", isAdmin, isTeacher, approved, cv: myChucVu,
-    hv: myHv ? { ten: myHv.ten || "", chuongTrinh: myHv.chuongTrinh || "", lop: myHv.lop || "", coso: myHv.coso || "", khoaHoc: Array.isArray(myHv.khoaHoc) ? myHv.khoaHoc : null } : null,
+    hv: myHv ? { ten: myHv.ten || "", chuongTrinh: myHv.chuongTrinh || "", lop: myHv.lop || "", coso: myHv.coso || "", ngaySinh: myHv.ngaySinh || "", namSinh: myHv.namSinh || null, khoi: myHv.khoi || "", truongThi: myHv.truongThi || "", sdt: myHv.sdt || "", khoaHoc: Array.isArray(myHv.khoaHoc) ? myHv.khoaHoc : null } : null,
     pending: pending ? { guiLuc: pending.guiLuc || Date.now() } : null } : null);
 }
 function showCachedSession() {
@@ -4161,6 +4161,7 @@ function showCachedSession() {
   const coDL = (isTeacher || approved) && loadData(c.mail); // nạp dữ liệu trên máy trước để các ô số liệu không hiện "0"
   renderLocks(isTeacher || approved ? "ok" : "pending");
   renderAccount(c.pending || false);
+  renderHvInfo();
   if (coDL) { renderLessons(); renderHomework(); return; }
   $("#lesson").innerHTML = `<p class="muted">Đang tải giáo trình…</p>`;
   $("#hw-list").innerHTML = `<div class="empty">Đang tải bài tập…</div>`;
@@ -4237,6 +4238,13 @@ async function onUser(u) {
     saveSession(false); renderLocks("ok"); renderAccount(false);
   } else if (!(cachedSession && cachedSession.mail === mail)) {
     renderLocks("pending"); renderAccount(false);
+  }
+  // Giữ hồ sơ của đúng tài khoản trong lúc xác minh dữ liệu mới từ máy chủ.
+  const phienCu = store.get(SESSION_KEY, null);
+  if (!isAdminMail && phienCu && phienCu.mail === mail && phienCu.approved && !phienCu.isTeacher) {
+    approved = true;
+    myHv = phienCu.hv || null;
+    renderHvInfo();
   }
   // Máy chủ không trả lời trong 8 giây thì coi như chưa hỏi được (để dùng quyền đã lưu và tự thử lại), không để treo mãi
   const hanTuoi = p => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej({ code: "timeout" }), 8000))]);
