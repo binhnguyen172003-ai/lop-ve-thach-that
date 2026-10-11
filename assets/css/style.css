@@ -3820,3 +3820,9 @@ nav.on-hero .lg-t s{color:#b7bbc4}
 .theme-track button:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
 nav .acct{box-shadow:none;background:var(--sheet);border-color:var(--rule);color:var(--ink)}
 nav.on-hero .acct{box-shadow:none;background:rgba(12,14,18,.85);border-color:rgba(255,255,255,.4);color:#fff}
+
+/* Nới khung tìm kiếm trên máy tính */
+@media(min-width:1101px){
+  nav .nav-search{min-width:180px;width:auto;padding-inline:18px;gap:10px;flex-shrink:0;justify-content:center;box-sizing:border-box}
+  nav .nav-search kbd{margin-left:4px}
+}
