@@ -1,3 +1,4 @@
+import { ngayVietNam, ngaySinhHopLe, hienNgaySinh } from "./sinh-nhat.js?v=20261011birthday";
 // =====================================================================
 //  LOGIC CỦA WEB — thường không cần sửa file này.
 //  Nội dung (liên hệ, lịch thi, thời gian biểu, ảnh) nằm ở data/noi-dung.js
@@ -2593,7 +2594,7 @@ function renderRequests() {
       ${r.ghiChu ? `<p class="req-nhan">“${esc(r.ghiChu)}”</p>` : ""}
       <details class="req-them"><summary>Xem đầy đủ</summary>
         <div class="req-body">
-          ${line("Gmail", r.gmail)}${line("Năm sinh", r.namSinh)}${line("Cơ sở", r.coso)}${line("Lớp vẽ", r.chuongTrinh)}
+          ${line("Gmail", r.gmail)}${line("Ngày sinh", r.ngaySinh ? hienNgaySinh(r.ngaySinh) : r.namSinh && "Năm " + r.namSinh)}${line("Trường thi dự kiến", r.truongThi)}${line("Cơ sở", r.coso)}${line("Lớp vẽ", r.chuongTrinh)}
           ${line(gv ? "Điện thoại" : "SĐT của em", r.sdt)}${line("SĐT bố mẹ", r.sdtPh)}
           ${line("Trường", [r.truong, r.lopHoc].filter(Boolean).join(" · "))}${line("Nhà ở", r.khuVuc)}
           ${line("Mục tiêu", [r.khoi, r.namThi, r.mucTieu].filter(Boolean).join(" · "))}${line("Lời nhắn", r.ghiChu)}
@@ -2671,8 +2672,9 @@ function renderHvInfo() {
       <div><dt>Lớp vẽ</dt><dd>${esc(myHv.chuongTrinh || myHv.lop || "—")}</dd></div>
     </dl>
     <form class="hv-form" id="f-hv-info" novalidate>
+      <label>Ngày tháng năm sinh<input id="hv-ngaysinh" type="date" autocomplete="bday" max="${ngayVietNam()}" value="${esc(myHv.ngaySinh || "")}"><small class="muted">${myHv.ngaySinh ? "" : myHv.namSinh ? "Đã có năm sinh " + esc(myHv.namSinh) + ". Em bổ sung ngày và tháng để nhận lời chúc sinh nhật nhé." : "Em bổ sung ngày sinh để nhận lời chúc sinh nhật nhé."}</small></label>
       <label>Số điện thoại của em<input id="hv-sdt" inputmode="tel" maxlength="15" autocomplete="tel" value="${esc(myHv.sdt || "")}" placeholder="VD: 0912345678"></label>
-      <label>Khối học<select id="hv-khoi"><option value="">Chưa chọn</option>${["Khối H", "Khối V", "Cơ bản"].map(k => `<option${k === (myHv.khoi || "") ? " selected" : ""}>${k}</option>`).join("")}</select></label>
+      <label>Khối học<select id="hv-khoi"><option value="">Chưa chọn</option>${["Khối H", "Khối V", "Cả H và V", "Cơ bản"].map(k => `<option${k === (myHv.khoi || "") ? " selected" : ""}>${k}</option>`).join("")}</select></label>
       <label>Trường thi dự kiến<select id="hv-truong-thi"><option value="">Chưa chọn</option>${TRUONG_THI.map(t => `<option${t === tt ? " selected" : ""}>${esc(t)}</option>`).join("")}</select></label>
       <div><button class="btn primary" type="submit">Lưu thông tin</button> <span class="status" id="hv-info-st" role="status"></span></div>
     </form>
@@ -2688,8 +2690,11 @@ function renderHvInfo() {
     const sdt = cleanPhone($("#hv-sdt").value), truongThi = $("#hv-truong-thi").value, khoi = $("#hv-khoi").value, st = $("#hv-info-st");
     if (sdt && !/^\d{9,11}$/.test(sdt)) { st.textContent = "Số điện thoại chưa đúng (9–11 số)."; return; }
     st.textContent = "Đang lưu…";
-    const capNhat = { sdt, truongThi };
-    if (khoi) capNhat.khoi = khoi; // chỉ ghi khi học viên chọn khối; chưa chọn thì giữ khối cũ
+    const ngaySinh = $("#hv-ngaysinh").value;
+    if (ngaySinh && !ngaySinhHopLe(ngaySinh)) { st.textContent = "Ngày sinh chưa hợp lệ hoặc nằm trong tương lai."; return; }
+    if (myHv.ngaySinh && !ngaySinh) { st.textContent = "Em cần điền đầy đủ ngày tháng năm sinh."; return; }
+    const capNhat = { sdt, truongThi, khoi };
+    if (ngaySinh) { capNhat.ngaySinh = ngaySinh; capNhat.namSinh = Number(ngaySinh.slice(0, 4)); }
     const b = writeBatch(db); b.update(doc(db, "hocvien", mail), capNhat);
     timed("Lưu thông tin học viên", b.commit()).then(() => { myHv = { ...myHv, ...capNhat }; st.textContent = "Đã lưu."; toast("Đã lưu thông tin của em."); renderHvInfo(); })
       .catch(e => { st.textContent = e && e.code === "permission-denied"
@@ -2734,7 +2739,7 @@ function renderRoster() {
     roster.map(r => {
       const p = progressAll[r.id]; const n = p && p.bai ? lessons.filter(l => p.bai[l.id]).length : 0;
       // Tên ở trên, Gmail + năm sinh ở dưới (một cột, tên không bị xuống dòng từng chữ)
-      return `<tr class="hv-dong"><td class="hv-o"><b>${esc(r.ten || "(chưa có tên)")}</b><small>${esc(r.gmail || r.id)}</small>${r.namSinh ? `<small class="num">Sinh năm ${esc(r.namSinh)}</small>` : ""}</td><td data-l="Chương trình">${esc(r.chuongTrinh || r.lop)}${(() => { const k = khoaCuaHv(r); return `<details class="kc-gon"><summary><b class="num">${k.length}/${KHOA_GOC.length}</b> khoá${k.length ? ": " + esc(k.join(", ")) : ""} <span class="linkish">Sửa</span></summary>${oChonKhoa(r.id, k)}</details>`; })()}</td><td data-l="Cơ sở">${esc(r.coso)}</td>
+      return `<tr class="hv-dong"><td class="hv-o"><b>${esc(r.ten || "(chưa có tên)")}</b><small>${esc(r.gmail || r.id)}</small>${r.ngaySinh ? `<small class="num">Sinh ngày ${esc(hienNgaySinh(r.ngaySinh))}</small>` : r.namSinh ? `<small class="num">Sinh năm ${esc(r.namSinh)}</small>` : ""}</td><td data-l="Chương trình">${esc(r.chuongTrinh || r.lop)}${(() => { const k = khoaCuaHv(r); return `<details class="kc-gon"><summary><b class="num">${k.length}/${KHOA_GOC.length}</b> khoá${k.length ? ": " + esc(k.join(", ")) : ""} <span class="linkish">Sửa</span></summary>${oChonKhoa(r.id, k)}</details>`; })()}</td><td data-l="Cơ sở">${esc(r.coso)}</td>
         <td data-l="Điện thoại" class="num">${r.sdt ? "HV: " + esc(r.sdt) : ""}${r.sdtPh ? "<br>PH: " + esc(r.sdtPh) : ""}</td>
         <td data-l="Đã học" class="num">${n}/${total}</td><td data-l="Ngày duyệt" class="num">${fmtDate(r.duyetLuc)}</td>
         <td class="hv-nut"><button class="btn small" data-rm="${esc(r.id)}">Thu hồi</button>${teachers.some(t => t.id === r.id) ? `<span class="chip ok">Đang là GV</span>` : `<button class="btn small" data-lengv="${esc(r.id)}">Trao quyền GV</button>`}</td></tr>`;
@@ -3833,7 +3838,12 @@ function listenLV(q, fn) {
 function lvStart() {
   listenLV(collection(db, "lichnhac"), snap => { lichNhac = snap.docs.map(d => ({ id: d.id, ...d.data() })); renderLichNhac(); capNhatNhac(); });
   if (isTeacher) listenLV(collection(db, "thongbao"), snap => { lvTB = snap.docs.map(d => ({ id: d.id, ...d.data() })); renderLV(); });
-  else listenLV(query(collection(db, "thongbao"), where("gui", "==", "tatca")), snap => { lvTB = snap.docs.map(d => ({ id: d.id, ...d.data() })); renderLV(); });
+  else {
+    let chung = [], rieng = [];
+    const capNhatTB = () => { lvTB = [...chung, ...rieng]; renderLV(); };
+    listenLV(query(collection(db, "thongbao"), where("gui", "==", "tatca")), snap => { chung = snap.docs.map(d => ({ id: d.id, ...d.data() })); capNhatTB(); });
+    listenLV(query(collection(db, "thongbao"), where("gui", "==", mail)), snap => { rieng = snap.docs.map(d => ({ id: d.id, ...d.data() })); capNhatTB(); });
+  }
   if (isAdmin) listenLV(collection(db, "traodoi"), snap => { lvKenh = snap.docs.map(d => ({ id: d.id, ...d.data() })); renderLV(); });
   else if (isTeacher) listenLV(query(collection(db, "traodoi"), where("vaiTro", "==", "hocvien")), snap => { lvKenh = snap.docs.map(d => ({ id: d.id, ...d.data() })); renderLV(); });
   if (!isAdmin) listenLV(doc(db, "traodoi", mail), d => { lvMine = d.exists() ? { id: d.id, ...d.data() } : null; renderLV(); });
@@ -4625,17 +4635,17 @@ $("#f-reg").addEventListener("submit", async ev => {
   st.classList.remove("err");
   const bad = (msg, id) => { st.textContent = msg; st.classList.add("err"); if (id) $(id).focus(); };
   if (!v("#rg-ten")) return bad("Em chưa điền họ và tên.", "#rg-ten");
-  if (!gv && !/^(19|20)\d{2}$/.test(v("#rg-nam"))) return bad("Em chọn năm sinh nhé.", "#rg-nam");
+  if (!gv && !ngaySinhHopLe(v("#rg-nam"))) return bad("Em điền đầy đủ ngày tháng năm sinh hợp lệ, không nằm trong tương lai nhé.", "#rg-nam");
   if (gv && !okPhone(v("#rg-sdtgv"))) return bad("Số điện thoại chưa đúng. Viết 10 số, bắt đầu bằng số 0.", "#rg-sdtgv");
   if (!gv && !okPhone(v("#rg-sdtph"))) return bad("Số điện thoại bố mẹ chưa đúng. Viết 10 số, bắt đầu bằng số 0.", "#rg-sdtph");
   if (!gv && v("#rg-sdt") && !okPhone(v("#rg-sdt"))) { $("#f-reg details").open = true; return bad("Số điện thoại của em chưa đúng. Viết 10 số, hoặc để trống.", "#rg-sdt"); }
   const data = gv
     ? { vaiTro: "giaovien", gmail: mail, ten: v("#rg-ten"), sdt: cleanPhone(v("#rg-sdtgv")), coso: v("#rg-cs"), ghiChu: v("#rg-gc"), guiLuc: Date.now() }
     : {
-      vaiTro: "hocvien", gmail: mail, ten: v("#rg-ten"), namSinh: Number(v("#rg-nam")),
+      vaiTro: "hocvien", gmail: mail, ten: v("#rg-ten"), ngaySinh: v("#rg-nam"), namSinh: Number(v("#rg-nam").slice(0, 4)),
       sdt: cleanPhone(v("#rg-sdt")), sdtPh: cleanPhone(v("#rg-sdtph")),
       truong: v("#rg-truong"), lopHoc: v("#rg-lophoc"), khuVuc: v("#rg-kv"), coso: v("#rg-cs"),
-      chuongTrinh: v("#rg-ct"), khoi: v("#rg-khoi"), namThi: v("#rg-namthi"), mucTieu: v("#rg-mt"), ghiChu: v("#rg-gc"),
+      chuongTrinh: v("#rg-ct"), khoi: v("#rg-khoi"), truongThi: v("#rg-truongthi"), namThi: v("#rg-namthi"), mucTieu: v("#rg-mt"), ghiChu: v("#rg-gc"),
       guiLuc: Date.now()
     };
   const nut = $("#rg-btn"); if (nut.disabled) return; // đang gửi: bỏ qua lần bấm thứ hai
@@ -4691,13 +4701,14 @@ $$("#f-reg label.chi-hv > input[required], #f-reg label.chi-hv > select[required
 $("#rg-vt").onchange = applyRoleFields;
 keepDraft($("#f-reg"), () => mail ? "nhap-tk-" + mail : null);
 applyRoleFields();
+$("#rg-nam").max = ngayVietNam();
 
 // Sửa thông tin đã gửi: điền lại form từ yêu cầu cũ.
 $("#btn-edit").onclick = () => {
   const r = pendingReq || {}; editingReq = true;
   const set = (id, val) => { if (val !== undefined && val !== null) $(id).value = val; };
   set("#rg-vt", r.vaiTro || "hocvien"); applyRoleFields();
-  set("#rg-ten", r.ten); set("#rg-nam", r.namSinh); set("#rg-sdtph", r.sdtPh); set("#rg-cs", r.coso); set("#rg-ct", r.chuongTrinh);
+  set("#rg-ten", r.ten); set("#rg-nam", r.ngaySinh || ""); set("#rg-truongthi", r.truongThi || ""); set("#rg-sdtph", r.sdtPh); set("#rg-cs", r.coso); set("#rg-ct", r.chuongTrinh);
   set("#rg-sdt", r.vaiTro === "giaovien" ? "" : r.sdt); set("#rg-sdtgv", r.vaiTro === "giaovien" ? r.sdt : "");
   set("#rg-truong", r.truong); set("#rg-lophoc", r.lopHoc); set("#rg-kv", r.khuVuc); set("#rg-khoi", r.khoi);
   set("#rg-namthi", r.namThi); set("#rg-mt", r.mucTieu); set("#rg-gc", r.ghiChu);
@@ -4721,7 +4732,7 @@ function guiEmailThongBao(d, canhBao) {
       _subject: `${canhBao && canhBao.startsWith("PHIẾU CHƯA") ? "[CHƯA LƯU ĐƯỢC] " : ""}Yêu cầu duyệt ${d.vaiTro === "giaovien" ? "GIÁO VIÊN" : "học viên"}: ${d.ten}${d.chuongTrinh ? " (" + d.chuongTrinh + ")" : ""}`,
       _template: "table", _captcha: "false",
       "Vai trò": d.vaiTro === "giaovien" ? "Giáo viên" : "Học viên",
-      "Họ tên": d.ten, "Năm sinh": d.namSinh || "", "Gmail": d.gmail,
+      "Họ tên": d.ten, "Ngày sinh": d.ngaySinh ? hienNgaySinh(d.ngaySinh) : d.namSinh || "", "Trường thi dự kiến": d.truongThi || "", "Gmail": d.gmail,
       "Số điện thoại": d.sdt, "SĐT phụ huynh": d.sdtPh || "",
       "Trường": d.truong || "", "Lớp": d.lopHoc || "", "Khu vực": d.khuVuc || "",
       "Cơ sở": d.coso, "Chương trình": d.chuongTrinh || "",

@@ -47,10 +47,10 @@
 <!-- Phông chữ tải sau, không bắt người xem chờ trắng màn hình -->
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Be+Vietnam+Pro:wght@400;500;600&family=Playfair+Display:ital,wght@1,500;1,600&display=swap" media="print" onload="this.media='all'">
 <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Be+Vietnam+Pro:wght@400;500;600&family=Playfair+Display:ital,wght@1,500;1,600&display=swap"></noscript>
-<link rel="stylesheet" href="assets/css/style.css?v=20261011pagesplit">
-<link rel="modulepreload" href="assets/js/app.js?v=20261011pagesplit">
+<link rel="stylesheet" href="assets/css/style.css?v=20261011birthday">
+<link rel="modulepreload" href="assets/js/app.js?v=20261011birthday">
 <link rel="modulepreload" href="config/firebase-config.js?v=20261009b">
-<link rel="modulepreload" href="data/noi-dung.js?v=20261011pagesplit">
+<link rel="modulepreload" href="data/noi-dung.js?v=20261011birthday">
 <script nomodule>document.addEventListener("DOMContentLoaded",function(){var d=document.createElement("div");d.className="slow-bar";d.innerHTML="Trình duyệt này đã quá cũ nên web chạy không đủ. Hãy cập nhật Chrome hoặc Safari rồi mở lại.";document.body.insertBefore(d,document.body.firstChild)})</script>
 <script>document.documentElement.classList.add("js-fx");setTimeout(function(){document.querySelectorAll(".fx,.cine-h1").forEach(function(e){e.classList.add("in")})},2600);</script>
 <script>setTimeout(function(){if(window.__appOk)return;var d=document.createElement("div");d.className="slow-bar";d.innerHTML='Mạng đang chậm, trang chưa tải xong. <button type="button" onclick="location.reload()">Tải lại</button>';document.body.insertBefore(d,document.body.firstChild)},12000)</script>
@@ -748,11 +748,13 @@
     <form id="f-reg">
       <label for="rg-vt">Em là<select id="rg-vt"><option value="hocvien">Học sinh</option><option value="giaovien">Trợ giảng / Giáo viên của lớp</option></select></label>
       <label for="rg-ten"><span>Họ và tên <span class="req">*</span></span><input id="rg-ten" required maxlength="80" autocomplete="name" placeholder="VD: Nguyễn Văn An"></label>
-      <label for="rg-nam" class="chi-hv"><span>Năm sinh <span class="req">*</span></span><select id="rg-nam" required><option value="">Chọn năm sinh</option><option>2016</option><option>2015</option><option>2014</option><option>2013</option><option>2012</option><option>2011</option><option>2010</option><option>2009</option><option>2008</option><option>2007</option><option>2006</option><option>2005</option><option>2004</option><option>2003</option></select></label>
+      <label for="rg-nam" class="chi-hv"><span>Ngày tháng năm sinh <span class="req">*</span></span><input id="rg-nam" type="date" required autocomplete="bday" aria-label="Ngày tháng năm sinh"><small class="muted">Chọn đầy đủ ngày, tháng và năm sinh.</small></label>
       <label for="rg-sdtph" class="chi-hv"><span>Số điện thoại bố hoặc mẹ <span class="req">*</span></span><input id="rg-sdtph" type="tel" inputmode="tel" required maxlength="15" placeholder="VD: 0912 345 678"></label>
       <label for="rg-sdtgv" class="chi-gv"><span>Số điện thoại của anh/chị <span class="req">*</span></span><input id="rg-sdtgv" type="tel" inputmode="tel" required maxlength="15" placeholder="VD: 0912 345 678"></label>
       <label for="rg-cs"><span>Học ở cơ sở nào <span class="req">*</span></span><select id="rg-cs" required><option value="">Chọn cơ sở</option><option>Bình Phú</option><option>Kim Quan</option><option>Online</option></select></label>
       <label for="rg-ct" class="chi-hv"><span>Em đang học lớp vẽ nào <span class="req">*</span></span><select id="rg-ct" required><option value="">Chọn lớp vẽ</option><option>Vẽ cơ bản</option><option>Luyện thi Khối H</option><option>Luyện thi Khối V</option><option>Ôn thi cấp tốc</option><option>Học online</option><option>Chưa rõ, nhờ anh chị xếp</option></select></label>
+      <label for="rg-khoi" class="chi-hv">Khối học<select id="rg-khoi"><option value="">Chưa xác định</option><option>Khối H</option><option>Khối V</option><option>Cả H và V</option><option>Cơ bản</option></select></label>
+      <label for="rg-truongthi" class="chi-hv">Trường thi dự kiến<select id="rg-truongthi"><option value="">Chưa xác định</option><option>HAU</option><option>MTCN</option><option>HUCE</option><option>SIS</option><option>NUAE</option><option>Khác</option></select></label>
       <details class="more chi-hv">
         <summary>Thêm thông tin (không bắt buộc)</summary>
         <div class="fgrid" style="margin-top:12px">
@@ -760,7 +762,6 @@
           <label for="rg-truong">Trường đang học<input id="rg-truong" maxlength="80" placeholder="VD: THCS Bình Phú"></label>
           <label for="rg-lophoc">Lớp ở trường<select id="rg-lophoc"><option value="">Chọn lớp</option><option>Lớp 6</option><option>Lớp 7</option><option>Lớp 8</option><option>Lớp 9</option><option>Lớp 10</option><option>Lớp 11</option><option>Lớp 12</option><option>Đã tốt nghiệp</option></select></label>
           <label for="rg-kv">Nhà ở đâu<input id="rg-kv" maxlength="80" placeholder="VD: Bình Phú, Thạch Thất"></label>
-          <label for="rg-khoi">Muốn thi khối<select id="rg-khoi"><option value="">Chưa biết</option><option>Khối H</option><option>Khối V</option><option>Cả H và V</option></select></label>
           <label for="rg-namthi">Năm thi đại học<select id="rg-namthi"><option value="">Chưa biết</option><option>2027</option><option>2028</option><option>2029</option><option>2030</option><option>2031</option><option>2032</option></select></label>
         </div>
         <label for="rg-mt" style="margin-top:12px">Trường hoặc ngành muốn vào<input id="rg-mt" maxlength="120" placeholder="VD: ĐH Kiến trúc HN"></label>
@@ -972,7 +973,7 @@
     setTheme(root.dataset.theme,true);
   })();
 </script>
-<script type="module" src="assets/js/app.js?v=20261011pagesplit"></script>
+<script type="module" src="assets/js/app.js?v=20261011birthday"></script>
 <script type="module" src="assets/js/morph-icons.js?v=20261011a"></script>
 </body>
 </html>

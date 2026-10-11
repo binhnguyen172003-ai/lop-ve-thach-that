@@ -37,6 +37,22 @@ service cloud.firestore {
     function shortText(d, k, n) {
       return !(k in d) || (d[k] is string && d[k].size() <= n);
     }
+    // Kiểm tra lịch thật và ngày hiện tại theo giờ Việt Nam.
+    function ngaySinhLich(s, nam) {
+      let thang = int(s[5:7]);
+      let ngay = int(s[8:10]);
+      let nhuan = nam % 4 == 0 && (nam % 100 != 0 || nam % 400 == 0);
+      let soNgay = thang == 2 ? (nhuan ? 29 : 28) : (thang in [4, 6, 9, 11] ? 30 : 31);
+      return s[0:4] == string(nam) && ngay <= soNgay
+        && timestamp.date(nam, thang, ngay) <= (request.time + duration.value(7, 'h')).date();
+    }
+    // Hồ sơ cũ chỉ có năm sinh vẫn được giữ nguyên.
+    function ngaySinhDung(d) {
+      return !('ngaySinh' in d) || (d.ngaySinh is string
+        && d.ngaySinh.matches('^(19|20)[0-9]{2}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$')
+        && d.namSinh is int && d.namSinh >= 1900
+        && ngaySinhLich(d.ngaySinh, d.namSinh));
+    }
     function hvDaDuyet(mail) {
       return exists(/databases/$(database)/documents/hocvien/$(mail));
     }
@@ -76,9 +92,10 @@ service cloud.firestore {
       allow create, delete: if isAdmin();
       // Học viên tự sửa SĐT và trường thi của mình; quản lý sửa mọi thứ; giáo viên chỉ đổi tên khi quản lý/giáo viên duyệt yêu cầu
       allow update: if isAdmin()
-        || (isMe(mail) && isStudent() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['sdt', 'truongThi', 'khoi'])
+        || (isMe(mail) && isStudent() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['sdt', 'truongThi', 'khoi', 'ngaySinh', 'namSinh'])
             && shortText(request.resource.data, 'sdt', 15) && shortText(request.resource.data, 'truongThi', 20)
-            && (!('khoi' in request.resource.data) || request.resource.data.khoi in ['Khối H', 'Khối V', 'Cơ bản']))
+            && (!('khoi' in request.resource.data) || request.resource.data.khoi in ['', 'Khối H', 'Khối V', 'Cả H và V', 'Cơ bản', 'Chưa xác định'])
+            && ngaySinhDung(request.resource.data))
         || (isStaff() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['ten'])
             && request.resource.data.ten is string && request.resource.data.ten.size() > 0 && request.resource.data.ten.size() <= 80);
     }
@@ -121,7 +138,7 @@ service cloud.firestore {
       allow create, update: if isMe(mail)
         && request.resource.data.gmail == mail
         && request.resource.data.vaiTro in ['hocvien', 'giaovien']
-        && request.resource.data.keys().hasOnly(['vaiTro', 'gmail', 'ten', 'namSinh', 'sdt', 'sdtPh', 'truong', 'lopHoc',
+        && request.resource.data.keys().hasOnly(['vaiTro', 'gmail', 'ten', 'namSinh', 'ngaySinh', 'truongThi', 'sdt', 'sdtPh', 'truong', 'lopHoc',
              'khuVuc', 'coso', 'chuongTrinh', 'khoi', 'namThi', 'mucTieu', 'ghiChu', 'guiLuc'])
         && request.resource.data.ten is string && request.resource.data.ten.size() > 0 && request.resource.data.ten.size() <= 80
         && shortText(request.resource.data, 'sdt', 15)
@@ -130,7 +147,9 @@ service cloud.firestore {
         && shortText(request.resource.data, 'khuVuc', 80)
         && shortText(request.resource.data, 'mucTieu', 120)
         && shortText(request.resource.data, 'ghiChu', 300)
-        && (!('namSinh' in request.resource.data) || request.resource.data.namSinh is int);
+        && (!('namSinh' in request.resource.data) || request.resource.data.namSinh is int)
+        && shortText(request.resource.data, 'truongThi', 20)
+        && ngaySinhDung(request.resource.data);
       allow delete: if isAdmin();
     }
 
@@ -171,7 +190,7 @@ service cloud.firestore {
     }
 
     match /thongbao/{id} {
-      allow read: if isStaff() || (isStudent() && resource.data.gui == 'tatca');
+      allow read: if isStaff() || (isStudent() && resource.data.gui in ['tatca', myEmail()]);
       allow create: if isStaff()
         && request.resource.data.tacGia == myEmail()
         && request.resource.data.gui in ['tatca', 'giaovien']

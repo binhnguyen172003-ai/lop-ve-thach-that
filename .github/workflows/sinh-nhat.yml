@@ -1,0 +1,40 @@
+name: Chúc mừng sinh nhật học viên
+on:
+  schedule:
+    # Chạy mỗi giờ để thử lại nếu GitHub hoặc Firebase chậm; dùng ngày Việt Nam.
+    - cron: '17 * * * *'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: sinh-nhat-hoc-vien
+  cancel-in-progress: false
+jobs:
+  birthdays:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+    steps:
+      - name: Kiểm tra cấu hình Firebase
+        if: env.SA == ''
+        run: |
+          echo '::error::Thiếu secret FIREBASE_SERVICE_ACCOUNT. Dùng cùng tài khoản dịch vụ của workflow đưa luật Firebase.'
+          exit 1
+      - uses: actions/checkout@v4
+        if: env.SA != ''
+      - uses: actions/setup-node@v4
+        if: env.SA != ''
+        with:
+          node-version: '22'
+      - name: Tạo lời chúc riêng, không gửi trùng
+        if: env.SA != ''
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/sinh-nhat-sa.json
+        run: |
+          umask 077
+          printf '%s' "$SA" > "$GOOGLE_APPLICATION_CREDENTIALS"
+          node scripts/sinh-nhat.mjs
+      - name: Xoá khoá tạm
+        if: always()
+        run: rm -f "$RUNNER_TEMP/sinh-nhat-sa.json"

@@ -186,3 +186,14 @@ Khi xóa bài, hệ thống xóa tài liệu kèm theo. Nếu mạng hoặc quy�
 - Mỗi khoá có từng bài riêng (Bài 0, Bài 1, … / Chuyên đề 0–11 / Sổ tay), nội dung lấy từ Sách học viên Pro Max: bảng, mẹo, thử thách, tự kiểm tra.
 - Quản lý chỉ cần **mở web bằng tài khoản quản lý một lần**: web tự đưa bài học mới lên (không cần bấm nút). Có bản mới (file `data/bai-hoc.js` đổi mã BAN) thì lần mở sau tự cập nhật.
 - Bài nào quản lý xoá trên web sẽ không bị thêm lại.
+
+
+## Ngày sinh và thông báo sinh nhật
+
+- Đơn đăng ký và hồ sơ lưu `ngaySinh` theo `YYYY-MM-DD`, giữ `namSinh` để tương thích dữ liệu cũ. Không tự điền ngày/tháng cho người chỉ có năm sinh.
+- Workflow **Chúc mừng sinh nhật học viên** chạy mỗi giờ (phút 17), tính ngày theo giờ Việt Nam. Không cần học viên hoặc quản lý mở web. GitHub có thể chạy trễ; workflow lần sau thử lại.
+- Dùng secret `FIREBASE_SERVICE_ACCOUNT` của workflow triển khai luật Firebase. Tài khoản dịch vụ phải có quyền đọc/ghi Firestore trong dự án `lop-ve-thach-that`. Thiếu secret sẽ báo lỗi rõ ràng.
+- Thông báo gửi riêng qua `thongbao`, trường `gui` là Gmail học viên; học viên khác không đọc được. Giáo viên và quản lý vẫn đọc theo quyền hiện có.
+- Sổ `sinhnhat_da_gui` chỉ cho máy chủ truy cập, chống gửi trùng mỗi năm kể cả khi xoá thông báo. Ngày 29/02 được chúc vào 28/02 trong năm thường. Hồ sơ đã xoá, đánh dấu `nghiHoc: true` hoặc `trangThai: "nghi"` được bỏ qua.
+- GitHub tự tắt lịch ở repository công khai không có hoạt động 60 ngày: vào Actions bật lại khi cần.
+- Kiểm thử logic: `npm run test:unit`. Không chạy workflow thủ công để thử với dữ liệu học viên thật.
