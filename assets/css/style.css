@@ -3857,3 +3857,6 @@ nav.on-hero .acct{box-shadow:none;background:rgba(12,14,18,.85);border-color:rgb
 .lb{overflow:hidden;overscroll-behavior:contain}
 .lb #lb-img{touch-action:none;user-select:none;-webkit-user-select:none;transform-origin:center;transition:none;will-change:transform}
 .lb .lb-bar{z-index:3}
+
+/* Dòng thông báo trống dùng toàn bộ chiều rộng danh sách đơn. */
+.kho-gd li.muted{display:block;grid-column:1/-1;width:100%;min-width:0;white-space:normal;word-break:normal;overflow-wrap:break-word;line-height:1.5}
