@@ -48,7 +48,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Be+Vietnam+Pro:wght@400;500;600&family=Playfair+Display:ital,wght@1,500;1,600&display=swap" media="print" onload="this.media='all'">
 <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Be+Vietnam+Pro:wght@400;500;600&family=Playfair+Display:ital,wght@1,500;1,600&display=swap"></noscript>
 <link rel="stylesheet" href="assets/css/style.css?v=20261011birthday">
-<link rel="modulepreload" href="assets/js/app.js?v=20261011profilefast">
+<link rel="modulepreload" href="assets/js/app.js?v=20261011instantprofile">
 <link rel="modulepreload" href="config/firebase-config.js?v=20261009b">
 <link rel="modulepreload" href="data/noi-dung.js?v=20261011birthday">
 <script nomodule>document.addEventListener("DOMContentLoaded",function(){var d=document.createElement("div");d.className="slow-bar";d.innerHTML="Trình duyệt này đã quá cũ nên web chạy không đủ. Hãy cập nhật Chrome hoặc Safari rồi mở lại.";document.body.insertBefore(d,document.body.firstChild)})</script>
@@ -973,7 +973,30 @@
     setTheme(root.dataset.theme,true);
   })();
 </script>
-<script type="module" src="assets/js/app.js?v=20261011profilefast"></script>
+<script>
+(function(){
+  try {
+    if(location.hash !== "#tai-khoan") return;
+    var c=JSON.parse(localStorage.getItem("lvkv-phien")||"null");
+    if(!c||!c.mail||!c.approved||c.isTeacher||!c.hv) return;
+    var h=c.hv,box=document.getElementById("hv-info");
+    document.getElementById("v-home").hidden=true;
+    document.getElementById("v-tai-khoan").hidden=false;
+    document.getElementById("who-name").textContent=h.ten||c.ten||"Tài khoản của em";
+    document.getElementById("who-mail").textContent=c.mail;
+    box.hidden=false;
+    var dl=document.createElement("dl");dl.className="hv-dl";
+    var birth=/^\d{4}-\d{2}-\d{2}$/.test(h.ngaySinh||"")?h.ngaySinh.split("-").reverse().join("/"):"Chưa bổ sung";
+    [["Khối",h.khoi||"Chưa chọn"],["Cơ sở",h.coso||"—"],["Lớp vẽ",h.chuongTrinh||h.lop||"—"],["Ngày sinh",birth],["Trường thi dự kiến",h.truongThi||"Chưa chọn"]].forEach(function(row){
+      var div=document.createElement("div"),dt=document.createElement("dt"),dd=document.createElement("dd");
+      dt.textContent=row[0];dd.textContent=row[1];div.append(dt,dd);dl.appendChild(div);
+    });
+    box.replaceChildren(dl);
+    var p=document.createElement("p");p.className="muted";p.textContent="Đang đồng bộ thông tin mới…";box.appendChild(p);
+  }catch(e){}
+})();
+</script>
+<script type="module" src="assets/js/app.js?v=20261011instantprofile"></script>
 <script type="module" src="assets/js/morph-icons.js?v=20261011a"></script>
 </body>
 </html>
