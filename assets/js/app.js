@@ -1894,7 +1894,7 @@ function mdHTML(md) {
       while (i < L.length && /^\s*(?:[-*]|\d+\.)\s/.test(L[i])) {
         const t = L[i++].replace(/^\s*(?:[-*]|\d+\.)\s/, ""), con = /^\s{2,}/.test(L[i - 1]);
         const ck = t.match(/^\[( |x)\]\s*(.*)/i);
-        it.push(`<li${con ? ' class="con"' : ""}${ck ? ' class="ck"' : ""}>${ck ? `<span class="o${ck[1].trim() ? " x" : ""}"></span>${inl(ck[2])}` : inl(t)}</li>`);
+        it.push(`<li${con || ck ? ` class="${[con && "con", ck && "ck"].filter(Boolean).join(" ")}"` : ""}>${ck ? `<span class="o${ck[1].trim() ? " x" : ""}"></span><span class="ck-text">${inl(ck[2])}</span>` : inl(t)}</li>`);
       }
       out.push(so ? `<ol>${it.join("")}</ol>` : `<ul>${it.join("")}</ul>`); continue;
     }
