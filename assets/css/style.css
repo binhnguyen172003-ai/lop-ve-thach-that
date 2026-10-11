@@ -3852,3 +3852,8 @@ nav.on-hero .acct{box-shadow:none;background:rgba(12,14,18,.85);border-color:rgb
   .gtb-chuyen>span{display:none}
   .gtb-chuyen button{width:100%;padding:12px 14px;gap:6px}
 }
+
+/* Giữ thao tác zoom trong ảnh, chỉ cập nhật transform. */
+.lb{overflow:hidden;overscroll-behavior:contain}
+.lb #lb-img{touch-action:none;user-select:none;-webkit-user-select:none;transform-origin:center;transition:none;will-change:transform}
+.lb .lb-bar{z-index:3}
