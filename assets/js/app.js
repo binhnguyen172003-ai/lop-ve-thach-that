@@ -1,4 +1,4 @@
-import { ngayVietNam, ngaySinhHopLe, hienNgaySinh } from "./sinh-nhat.js?v=20261011birthday";
+import { ngayVietNam, ngaySinhHopLe, hienNgaySinh, denSinhNhat } from "./sinh-nhat.js?v=20261011birthday";
 // =====================================================================
 //  LOGIC CỦA WEB — thường không cần sửa file này.
 //  Nội dung (liên hệ, lịch thi, thời gian biểu, ảnh) nằm ở data/noi-dung.js
@@ -2672,13 +2672,13 @@ function renderHvInfo() {
       <div><dt>Khối</dt><dd>${esc(khoiOf(myHv) || "Chưa xếp khối")}</dd></div>
       <div><dt>Cơ sở</dt><dd>${esc(myHv.coso || "—")}</dd></div>
       <div><dt>Lớp vẽ</dt><dd>${esc(myHv.chuongTrinh || myHv.lop || "—")}</dd></div>
-      <div><dt>Ngày tháng năm sinh</dt><dd>${esc(myHv.ngaySinh ? hienNgaySinh(myHv.ngaySinh) : "Chưa bổ sung")}</dd></div>
+      <div><dt>Ngày sinh</dt><dd>${esc(myHv.ngaySinh ? hienNgaySinh(myHv.ngaySinh) : "Chưa bổ sung")}</dd></div>
       <div><dt>Trường thi dự kiến</dt><dd>${esc(tt || "Chưa chọn")}</dd></div>
     </dl>
     <div class="ctas"><button class="btn primary" type="button" id="hv-edit-info" aria-expanded="false" aria-controls="f-hv-info">Chỉnh sửa thông tin đã gửi</button></div>
     <form class="hv-form" id="f-hv-info" novalidate hidden>
       <h3>Chỉnh sửa thông tin đã gửi</h3>
-      <label>Ngày tháng năm sinh<input id="hv-ngaysinh" type="date" autocomplete="bday" max="${ngayVietNam()}" value="${esc(myHv.ngaySinh || "")}"><small class="muted">${myHv.ngaySinh ? "" : myHv.namSinh ? "Đã có năm sinh " + esc(myHv.namSinh) + ". Em bổ sung ngày và tháng để nhận lời chúc sinh nhật nhé." : "Em bổ sung ngày sinh để nhận lời chúc sinh nhật nhé."}</small></label>
+      <label>Ngày sinh<input id="hv-ngaysinh" type="date" autocomplete="bday" max="${ngayVietNam()}" value="${esc(myHv.ngaySinh || "")}"><small class="muted">${myHv.ngaySinh ? "" : myHv.namSinh ? "Đã có năm sinh " + esc(myHv.namSinh) + ". Em bổ sung ngày và tháng để nhận lời chúc sinh nhật nhé." : "Em bổ sung ngày sinh để nhận lời chúc sinh nhật nhé."}</small></label>
       <label>Số điện thoại của em<input id="hv-sdt" inputmode="tel" maxlength="15" autocomplete="tel" value="${esc(myHv.sdt || "")}" placeholder="VD: 0912345678"></label>
       <label>Khối học<select id="hv-khoi"><option value="">Chưa chọn</option>${["Khối H", "Khối V", "Cả H và V", "Cơ bản"].map(k => `<option${k === (myHv.khoi || "") ? " selected" : ""}>${k}</option>`).join("")}</select></label>
       <label>Trường thi dự kiến<select id="hv-truong-thi"><option value="">Chưa chọn</option>${TRUONG_THI.map(t => `<option${t === tt ? " selected" : ""}>${esc(t)}</option>`).join("")}</select></label>
@@ -3779,6 +3779,17 @@ function capNhatNhac() {
       const dau = "lichbao-" + x.id + "-" + x.lanHen;
       if (!lichDaBao.has(dau)) { lichDaBao.add(dau); toast(`⏰ ${x.ten || "Nhắc việc"}${x.nd ? ": " + x.nd : ""}`); }
     });
+    // Lời chúc riêng trong ngày sinh nhật, theo giờ Việt Nam.
+    if (!isTeacher && myHv && denSinhNhat(myHv.ngaySinh)) {
+      const ngay = ngayVietNam();
+      const loiChuc = "Dreamers chúc em tuổi mới nhiều niềm vui, vẽ ngày càng tiến bộ và đạt được mục tiêu của mình nhé!";
+      ds.unshift({ id: "sinhnhat-" + mail + "-" + ngay, icon: "🎂", muc: "", tieuDe: "Chúc mừng sinh nhật em!", nd: loiChuc, link: "#tai-khoan", dich: "#hv-info" });
+      const khoa = "lvkv-sinhnhat-bao-" + mail;
+      if (store.get(khoa, "") !== ngay) {
+        store.set(khoa, ngay);
+        toast("🎂 Chúc mừng sinh nhật em! " + loiChuc);
+      }
+    }
     // Mỗi ngày một nhắc: còn bao nhiêu ngày đến kỳ thi (theo khối của học viên)
     if (!isTeacher && myHv) {
       const mocTT = mocThiCuaToi();
