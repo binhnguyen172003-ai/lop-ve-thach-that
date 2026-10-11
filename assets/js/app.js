@@ -1743,7 +1743,8 @@ function setStep(n) {
   });
 }
 function renderAccount(pending) {
-  $("#menu-ov .menu-cta").forEach(el => el.hidden = !!user);
+  const trialButton = $("#menu-ov .menu-cta");
+  if (trialButton) trialButton.hidden = !!user;
   if (typeof pending === "object") pendingReq = pending; else if (pending === false) pendingReq = null;
   $$("[data-teacher]").forEach(el => el.hidden = !isTeacher);
   $$("[data-admin]").forEach(el => el.hidden = !isAdmin);
