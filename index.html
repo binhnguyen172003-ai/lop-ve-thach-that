@@ -38,13 +38,6 @@
 <link rel="apple-touch-icon" href="assets/img/icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Vẽ Không Vui">
-<!-- Tải ảnh bài giáo viên sớm, trước khi JavaScript dựng vòng xoay. -->
-<link rel="preload" as="image" href="assets/img/giao-vien/can-hai-an-bai.jpg" fetchpriority="low">
-<link rel="preload" as="image" href="assets/img/giao-vien/do-huu-truong-bai.jpg" fetchpriority="low">
-<link rel="preload" as="image" href="assets/img/giao-vien/bui-anh-duc-bai.jpg" fetchpriority="low">
-<link rel="preload" as="image" href="assets/img/bai-ve/huyen-linh-mau.webp" fetchpriority="low">
-<link rel="preload" as="image" href="assets/img/giao-vien/nguyen-duy-cuong-bai.jpg" fetchpriority="low">
-<link rel="preload" as="image" href="assets/img/giao-vien/nguyen-ngan-thuong-bai.jpg" fetchpriority="low">
 <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
 <!-- Học viên đã đăng nhập / đang mở trang học: tải sẵn thư viện ngay. Khách xem giới thiệu thì để sau. -->
 <script>try{var h=location.hash.slice(1),c=JSON.parse(localStorage.getItem("lvkv-phien")||"null");if(/^(tong-quan|khoa-hoc|ebook|giao-trinh|bai-tap|tai-khoan|duyet|diem-danh|lam-viec|thi-thu|van-hanh)$/.test(h)||(c&&c.mail)){["app","auth","firestore"].forEach(function(n){var l=document.createElement("link");l.rel="modulepreload";l.href="https://www.gstatic.com/firebasejs/10.12.2/firebase-"+n+".js";document.head.appendChild(l)})}}catch(e){}</script>
@@ -54,12 +47,11 @@
 <!-- Phông chữ tải sau, không bắt người xem chờ trắng màn hình -->
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Be+Vietnam+Pro:wght@400;500;600&family=Playfair+Display:ital,wght@1,500;1,600&display=swap" media="print" onload="this.media='all'">
 <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Be+Vietnam+Pro:wght@400;500;600&family=Playfair+Display:ital,wght@1,500;1,600&display=swap"></noscript>
-<link rel="stylesheet" href="assets/css/style.css?v=20261012headings">
-<link rel="modulepreload" href="assets/js/app.js?v=20261012smoothzoom">
+<link rel="stylesheet" href="assets/css/style.css?v=20261012vitals">
+<link rel="modulepreload" href="assets/js/app.js?v=20261012vitals">
 <link rel="modulepreload" href="config/firebase-config.js?v=20261009b">
 <link rel="modulepreload" href="data/noi-dung.js?v=20261011birthday">
 <script nomodule>document.addEventListener("DOMContentLoaded",function(){var d=document.createElement("div");d.className="slow-bar";d.innerHTML="Trình duyệt này đã quá cũ nên web chạy không đủ. Hãy cập nhật Chrome hoặc Safari rồi mở lại.";document.body.insertBefore(d,document.body.firstChild)})</script>
-<script>document.documentElement.classList.add("js-fx");setTimeout(function(){document.querySelectorAll(".fx,.cine-h1").forEach(function(e){e.classList.add("in")})},2600);</script>
 <script>setTimeout(function(){if(window.__appOk)return;var d=document.createElement("div");d.className="slow-bar";d.innerHTML='Mạng đang chậm, trang chưa tải xong. <button type="button" onclick="location.reload()">Tải lại</button>';document.body.insertBefore(d,document.body.firstChild)},12000)</script>
 </head>
 <body>
@@ -190,7 +182,7 @@
     <div class="cine-bg" aria-hidden="true">
       <picture>
         <source media="(max-width:640px)" srcset="assets/img/bia-doc.jpg">
-        <img class="cover-img" src="assets/img/bia-1280.jpg" srcset="assets/img/bia-800.jpg 800w, assets/img/bia-1280.jpg 1280w" sizes="100vw" width="1280" height="960" fetchpriority="low" decoding="async" alt="">
+        <img class="cover-img" src="assets/img/bia-1280.jpg" srcset="assets/img/bia-800.jpg 800w, assets/img/bia-1280.jpg 1280w" sizes="100vw" width="1280" height="960" fetchpriority="high" decoding="async" alt="">
       </picture>
       <i class="cine-grade"></i>
     </div>
@@ -215,7 +207,6 @@
       <div class="cine-schools" id="hero-schools"><a href="#bang-vang">MTCN</a><a href="#bang-vang">HAU</a><a href="#bang-vang">HUCE</a><a href="#bang-vang">SIS</a><a href="#bang-vang">NUAE</a></div>
     </div>
   </header>
-  <script>(function(){var h=document.getElementById("hero-h1");if(!h)return;var i=0,out=[];h.childNodes.forEach(function(n){if(n.nodeType===3){n.textContent.split(/\s+/).forEach(function(w){if(w)out.push('<span class="w" aria-hidden="true" style="--i:'+(i++)+'">'+w+'</span>')})}else if(n.classList&&n.classList.contains("ln")){out.push(n.outerHTML)}else{out.push('<span class="w" aria-hidden="true" style="--i:'+(i++)+'">'+n.outerHTML+'</span>')}});h.innerHTML=out.join("");requestAnimationFrame(function(){h.classList.add("in");document.querySelectorAll("#gioi-thieu .fx").forEach(function(e){e.classList.add("in")})})})();</script>
 
   <section id="noi-bat" aria-labelledby="h-nb" class="nb">
     <div class="sec-head">
@@ -490,7 +481,7 @@
             <label for="dk-truong">Trường muốn thi<select id="dk-truong"><option value="">Chưa chọn (tính kỳ thi gần nhất)</option></select></label>
           </div>
           <label for="dk-ghichu">Câu hỏi thêm<textarea id="dk-ghichu"></textarea></label>
-          <div class="copyline"><button class="btn primary big" type="submit" id="dk-btn">Gửi đăng ký cho anh chị</button><span class="status" id="dk-send"></span></div>
+          <div class="copyline"><button class="btn primary big" type="submit" id="dk-btn">Gửi đăng ký cho anh chị</button><span class="status" id="dk-send" role="status" aria-live="polite"></span></div>
           <p class="muted dk-rieng">Thông tin chỉ dùng để lớp gọi lại tư vấn và xếp lịch học thử, không chia sẻ cho ai khác.</p>
         </form>
         <div id="dk-out" hidden>
@@ -1013,7 +1004,7 @@
   }catch(e){}
 })();
 </script>
-<script type="module" src="assets/js/app.js?v=20261012smoothzoom"></script>
+<script type="module" src="assets/js/app.js?v=20261012vitals"></script>
 <script type="module" src="assets/js/morph-icons.js?v=20261011a"></script>
 </body>
 </html>

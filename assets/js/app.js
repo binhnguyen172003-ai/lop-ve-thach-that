@@ -132,7 +132,7 @@ addEventListener("error", e => {
 });
 /* ---------- Mở tức thì ở lần sau + dùng được khi mạng yếu ---------- */
 if ("serviceWorker" in navigator && (location.protocol === "https:" || ["localhost", "127.0.0.1"].includes(location.hostname)) && !/[?&]khongcache/.test(location.search))
-  addEventListener("load", () => navigator.serviceWorker.register("sw.js?v=20261011resources").catch(() => {}));
+  addEventListener("load", () => navigator.serviceWorker.register("sw.js?v=20261012vitals").catch(() => {}));
 
 /* ---------- Đo tốc độ: mở web kèm ?chandoan=1 để xem từng bước mất bao lâu ---------- */
 const DIAG = /[?&]chandoan/.test(location.search);
@@ -287,7 +287,7 @@ function route() {
   if (window.__lvReady) { renderAccNav(); if (page === "lam-viec") lvOnShow(); }
   if (yCu !== undefined) requestAnimationFrame(() => window.scrollTo(0, yCu));
   else if (page !== "home") window.scrollTo(0, 0);
-  else if (h) { const el = document.getElementById(h); if (el) el.scrollIntoView(); }
+  else if (h) { const el = document.getElementById(h); if (el) cuonToi(el); }
 }
 addEventListener("hashchange", route);
 route();
@@ -686,6 +686,7 @@ renderGallery();
 function vongXoay(box, st, cards, dots, prev, next, onCenter) {
   const n = cards.length;
   let cur = 0, timer = 0, paused = false, inView = false;
+  const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
   const draw = () => {
     const mob = innerWidth < 640;
     cards.forEach((c, i) => {
@@ -693,14 +694,13 @@ function vongXoay(box, st, cards, dots, prev, next, onCenter) {
       const a = Math.abs(d);
       c.style.transform = `translateX(${d * (mob ? 62 : 72)}%) translateZ(${-a * (mob ? 140 : 180)}px) rotateY(${-d * 28}deg)`;
       c.style.opacity = a > 2 ? 0 : a === 2 ? .45 : a === 1 ? .85 : 1;
-      c.style.filter = a === 0 ? "" : `blur(${a === 1 ? 1.5 : 3}px) brightness(${a === 1 ? .75 : .55})`; // thẻ càng xa càng mờ, tối (kiểu băng chuyền kính)
       c.style.zIndex = 10 - a; c.style.pointerEvents = a > 2 ? "none" : "";
       c.classList.toggle("on", d === 0); c.setAttribute("aria-hidden", a > 2);
     });
     dots.forEach((d, i) => d.setAttribute("aria-current", i === cur));
   };
   const go = i => { cur = (i + n) % n; draw(); };
-  const tick = () => { clearTimeout(timer); if (!paused && inView && !document.hidden) timer = setTimeout(() => { go(cur + 1); tick(); }, 3500); };
+  const tick = () => { clearTimeout(timer); if (!reducedMotion.matches && !paused && inView && !document.hidden) timer = setTimeout(() => { go(cur + 1); tick(); }, 3500); };
   const pause = p => { paused = p; tick(); };
   prev.onclick = () => { go(cur - 1); tick(); };
   next.onclick = () => { go(cur + 1); tick(); };
@@ -723,7 +723,6 @@ function vongXoay(box, st, cards, dots, prev, next, onCenter) {
     if (cards.some(c => c.contains(e.target))) return;
     const o = theDuoiChuot(e.clientX, e.clientY); if (o) o.c.click();
   });
-  st.addEventListener("mousemove", e => { const o = theDuoiChuot(e.clientX, e.clientY); st.style.cursor = o && o.i !== cur ? "pointer" : ""; });
   st.addEventListener("dragstart", e => e.preventDefault());
   box.addEventListener("mouseenter", () => pause(true)); box.addEventListener("mouseleave", () => pause(false));
   box.addEventListener("focusin", () => pause(true)); box.addEventListener("focusout", () => pause(false));
@@ -1204,10 +1203,10 @@ const GHI_CHU = {
     const k = [ky, !!user && isTeacher, isAdmin, XP_DONG.length, TT_DONG.length, ...ds.map(b => [b.id || "", b.luc || 0, b.anh ? b.anh.length : 0, b.top, b.hocVien, b.loai, b.ghiChu, b.chucVu, b.biDanh, biDanhCua(b), b.mau, b.hang].join("~"))].join("|");
     if (k === sig) return; sig = k;
     if (!ds.length && !coThem()) { box.innerHTML = `<p class="nb-rong">Chưa có bài nổi bật ${TEN[ky]}. ${ky === "tuan" ? "Anh chị sẽ cập nhật bài đẹp mỗi tuần." : `Bài tuần trước tự chuyển sang đây khi ${ky === "thang" ? "qua 1 tuần" : "qua 1 tháng"}.`}</p>`; return; }
-    box.innerHTML = `<div class="gv-stage nb-stage">${ds.map((b, i) => `<figure class="nb-card nb-tran${b.nv ? " nb-nv nv-" + nhanVienLop(b) : ""}" data-i="${i}" style="--anh:url(&quot;${esc((u => { try { return new URL(u, location.href).href; } catch (e) { return ""; } })(String(b.anh || "")).replace(/["\\\n]/g, ""))}&quot;)">
+    box.innerHTML = `<div class="gv-stage nb-stage">${ds.map((b, i) => `<figure class="nb-card nb-tran${b.nv ? " nb-nv nv-" + nhanVienLop(b) : ""}" data-i="${i}">
         ${b.nv ? `<span class="nb-nv-tag">${esc(nhanVienTen(b))}</span>` : ""}
         ${isAdmin && b.id ? `<button type="button" class="nb-more" data-mn="${esc(b.id)}" aria-label="Tuỳ chọn: sửa link, xoá bài">⋮</button>` : ""}
-        <img src="${esc(b.anh)}" alt="${esc((b.loai || "Bài vẽ") + " · " + (b.hocVien || ""))}" ${i < 2 || b.nv ? 'loading="eager" fetchpriority="high"' : 'loading="eager" fetchpriority="low"'} decoding="async" draggable="false">
+        <img src="${esc(b.anh)}" alt="${esc((b.loai || "Bài vẽ") + " · " + (b.hocVien || ""))}" ${i < 2 ? 'loading="eager" fetchpriority="low"' : 'loading="lazy"'} decoding="async" draggable="false">
         ${b.top ? `<span class="nb-medal h${b.top}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 2h4l1 5-3 1zM17 2h-4l-1 5 3 1z" class="rb"/><circle cx="12" cy="15" r="6.5" class="md"/><text x="12" y="18.2" text-anchor="middle">${b.top}</text></svg><b>TOP ${b.top}</b><i>${TEN[ky]}</i></span>` : ""}
         ${b.tg ? "" : (m => m.length ? (a => `<span class="nb-tt" data-rk="${esc(b.hocVien)}" role="button" tabindex="0" title="${esc(a.ten)} · ${CAP[a.cap].ten} — ${esc(a.mo)}">${huyHieuTT(a, a.cap, "sm")}<span class="nb-ttx"><b>${esc(a.ten)}</b><small>${a.n} ${esc(a.dv)} · ${CAP[a.cap].ten}</small></span></span>`)(m[0]) : "")(ttNoiNhat(b.hocVien))}
         ${b.tg ? "" : (t => khungThe(t.r, t.i))(tinhRank(null, null, null, b.hocVien))}
@@ -1734,7 +1733,8 @@ $("#f-dk").addEventListener("submit", ev => {
   const btn = $("#dk-btn"), xong = (msg, ok) => {
     btn.disabled = false; btn.textContent = "Gửi đăng ký cho anh chị";
     $("#dk-ok").textContent = msg; $("#dk-ok").classList.toggle("err", !ok);
-    $("#dk-out").hidden = false; $("#dk-out").scrollIntoView({ behavior: "smooth", block: "nearest" });
+    st.textContent = msg; st.classList.toggle("err", !ok);
+    $("#dk-out").hidden = false;
   };
   if (dkSent === text) { xong("Đăng ký này đã gửi rồi, anh chị sẽ gọi lại sớm. Cần gấp thì gọi hoặc nhắn Zalo bên dưới.", true); return; } // bấm 2 lần không gửi trùng
   if (!EMAIL_NHAN_THONG_BAO) { xong("Bấm Gọi quản lý hoặc Nhắn Zalo (dán tin nhắn bên dưới) để gửi đăng ký cho anh chị nhé.", true); return; }
@@ -2794,13 +2794,6 @@ function renderHvInfo() {
       if (document.activeElement && box.contains(document.activeElement)) document.activeElement.blur();
       renderHvInfo();
       $("#hv-edit-info")?.focus({ preventScroll: true });
-      requestAnimationFrame(() => {
-        if (location.hash !== "#tai-khoan") return;
-        const thongTin = box.querySelector(".hv-dl");
-        if (!thongTin) return;
-        const chanMenu = Math.max(0, ...[$("nav"), $("#acc-nav")].filter(el => el && !el.hidden).map(el => el.getBoundingClientRect().bottom));
-        window.scrollTo({ top: Math.max(0, window.scrollY + thongTin.getBoundingClientRect().top - chanMenu - 16), behavior: "instant" });
-      });
     })
       .catch(e => { st.textContent = e && e.code === "permission-denied"
         ? "Máy chủ chưa cho lưu: nhờ anh chị quản lý dán luật bảo mật mới (firestore.rules) một lần."
@@ -4781,7 +4774,7 @@ $("#f-reg").addEventListener("submit", async ev => {
   st.textContent = "Đang gửi cho anh chị…"; nut.disabled = true;
   const t = performance.now();
   const gui = setDoc(doc(db, "yeucau", mail), data);
-  const daNhan = () => { if (mail !== forMail) return; editingReq = false; renderAccount(data); saveSession(data); window.scrollTo({ top: 0, behavior: "smooth" }); };
+  const daNhan = () => { if (mail !== forMail) return; editingReq = false; renderAccount(data); saveSession(data); };
   choXacNhan(gui).then(kq => { if (kq === "cho" && mail === forMail) { st.textContent = CHO_MANG; st.classList.add("err"); } }, () => {});
   gui.finally(() => { nut.disabled = false; }).catch(() => {});
   gui.then(() => {

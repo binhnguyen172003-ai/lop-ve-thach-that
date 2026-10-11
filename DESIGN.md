@@ -4,6 +4,20 @@
 
 Áp dụng cho HTML/CSS/JavaScript hiện có. Dùng Awesome DESIGN.md (VoltAgent) để tham khảo phân nhóm và bề mặt; UI UX Pro Max để rà điều hướng, accessibility và responsive. Giữ nhận diện B1 và hệ màu/font hiện có; các nguồn tham khảo không thay thế quy tắc dự án.
 
+## Token và thành phần dùng chung
+
+- Nguồn màu nằm trong `assets/css/style.css`: nền `--paper`, mặt thẻ `--sheet`, chữ `--ink`, chữ phụ `--graphite`, đường phân cách `--rule`, điểm nhấn `--accent`. Mỗi token có biến thể sáng/tối; thành phần mới không tự tạo bảng màu khác.
+- Chữ hiển thị dùng `--f-display`; chữ nội dung và biểu mẫu dùng `--f-body`. Chữ tiếng Việt cần dòng đủ cao để dấu không bị cắt, tiêu đề dài được xuống dòng tự nhiên.
+- Nút và ô tương tác chính cao ít nhất 44px; trạng thái focus luôn nhìn thấy. Giữ nhãn rõ nghĩa bên cạnh icon.
+- Ảnh bài vẽ dùng `object-fit: contain` khi cần thấy trọn bài; luôn khai báo kích thước hoặc khung có tỷ lệ để tránh bố cục nhảy lúc tải.
+
+## Chuyển động và tải trang
+
+- Nội dung đầu màn hình phải hiện ngay; ảnh bìa được ưu tiên tải. Ảnh ở xa màn hình không tranh băng thông với ảnh bìa.
+- Chuyển động chỉ hỗ trợ nhận biết trạng thái; không dùng blur hoặc hiệu ứng lặp trên nhiều ảnh lớn. Khi thiết bị chọn giảm chuyển động, vòng xoay không tự chạy.
+- Lưu biểu mẫu báo kết quả ngay tại nơi bấm và giữ vị trí đọc. Điều hướng tới mục cần chừa khoảng cho menu cố định.
+- Chỉ thêm GSAP nếu một tương tác có nhu cầu cụ thể mà CSS/JavaScript sẵn có không đáp ứng; đo lại trước và sau khi thêm thư viện.
+
 ## Các trang độc lập
 
 | URL | Nội dung |
