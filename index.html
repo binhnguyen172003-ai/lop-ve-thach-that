@@ -38,6 +38,13 @@
 <link rel="apple-touch-icon" href="assets/img/icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Vẽ Không Vui">
+<!-- Tải ảnh bài giáo viên sớm, trước khi JavaScript dựng vòng xoay. -->
+<link rel="preload" as="image" href="assets/img/giao-vien/can-hai-an-bai.jpg" fetchpriority="low">
+<link rel="preload" as="image" href="assets/img/giao-vien/do-huu-truong-bai.jpg" fetchpriority="low">
+<link rel="preload" as="image" href="assets/img/giao-vien/bui-anh-duc-bai.jpg" fetchpriority="low">
+<link rel="preload" as="image" href="assets/img/bai-ve/huyen-linh-mau.webp" fetchpriority="low">
+<link rel="preload" as="image" href="assets/img/giao-vien/nguyen-duy-cuong-bai.jpg" fetchpriority="low">
+<link rel="preload" as="image" href="assets/img/giao-vien/nguyen-ngan-thuong-bai.jpg" fetchpriority="low">
 <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
 <!-- Học viên đã đăng nhập / đang mở trang học: tải sẵn thư viện ngay. Khách xem giới thiệu thì để sau. -->
 <script>try{var h=location.hash.slice(1),c=JSON.parse(localStorage.getItem("lvkv-phien")||"null");if(/^(tong-quan|khoa-hoc|ebook|giao-trinh|bai-tap|tai-khoan|duyet|diem-danh|lam-viec|thi-thu|van-hanh)$/.test(h)||(c&&c.mail)){["app","auth","firestore"].forEach(function(n){var l=document.createElement("link");l.rel="modulepreload";l.href="https://www.gstatic.com/firebasejs/10.12.2/firebase-"+n+".js";document.head.appendChild(l)})}}catch(e){}</script>
