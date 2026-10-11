@@ -587,7 +587,72 @@ function renderGallery() {
   });
   $$("#gallery [data-xbv]").forEach(b => confirmButton(b, () => deleteDoc(doc(db, "baive", b.dataset.xbv)), "Xoá?"));
 }
+
+/* Zoom riêng trong khung ảnh: không phóng cả trang khi dùng hai ngón. */
+const lbZoom = (() => {
+  const img = $("#lb-img"), points = new Map();
+  let scale = 1, x = 0, y = 0, frame = 0, start = null;
+  const paint = () => {
+    if (frame) return;
+    frame = requestAnimationFrame(() => {
+      frame = 0;
+      img.style.transform = `translate3d(${x}px,${y}px,0) scale(${scale})`;
+    });
+  };
+  const snapshot = () => {
+    const p = [...points.values()], rect = img.getBoundingClientRect();
+    const center = p.length > 1
+      ? { x: (p[0].x + p[1].x) / 2, y: (p[0].y + p[1].y) / 2 } : p[0];
+    start = center ? { center, scale, x, y,
+      origin: { x: rect.left + rect.width / 2 - x, y: rect.top + rect.height / 2 - y },
+      distance: p.length > 1 ? Math.hypot(p[1].x-p[0].x,p[1].y-p[0].y) : 0 } : null;
+  };
+  const reset = () => {
+    points.clear(); start = null; scale = 1; x = y = 0;
+    if (frame) cancelAnimationFrame(frame);
+    frame = 0; img.style.transform = "";
+  };
+  img.draggable = false;
+  img.addEventListener("pointerdown", e => {
+    if (e.pointerType === "mouse" && e.button !== 0) return;
+    if (points.size >= 2) return;
+    // Flush the pending transform before measuring the gesture origin.
+    if (frame) { cancelAnimationFrame(frame); frame = 0;
+      img.style.transform = `translate3d(${x}px,${y}px,0) scale(${scale})`; }
+    points.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    img.setPointerCapture(e.pointerId); snapshot(); e.preventDefault();
+  });
+  img.addEventListener("pointermove", e => {
+    if (!points.has(e.pointerId) || !start) return;
+    points.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    const p = [...points.values()];
+    if (p.length > 1 && start.distance > 0) {
+      const center = { x: (p[0].x+p[1].x)/2, y: (p[0].y+p[1].y)/2 };
+      scale = Math.max(1, Math.min(5, start.scale *
+        Math.hypot(p[1].x-p[0].x,p[1].y-p[0].y) / start.distance));
+      const ratio = scale / start.scale;
+      x = center.x-start.origin.x-(start.center.x-start.origin.x-start.x)*ratio;
+      y = center.y-start.origin.y-(start.center.y-start.origin.y-start.y)*ratio;
+    } else if (scale > 1) {
+      x = start.x + p[0].x-start.center.x;
+      y = start.y + p[0].y-start.center.y;
+    }
+    if (scale === 1) x = y = 0;
+    paint(); e.preventDefault();
+  });
+  const end = e => {
+    if (!points.delete(e.pointerId)) return;
+    if (frame) { cancelAnimationFrame(frame); frame = 0;
+      img.style.transform = `translate3d(${x}px,${y}px,0) scale(${scale})`; }
+    snapshot();
+  };
+  ["pointerup","pointercancel","lostpointercapture"].forEach(name => img.addEventListener(name,end));
+  img.addEventListener("dblclick", reset);
+  return { reset };
+})();
+
 function showLb(i) {
+  lbZoom.reset();
   galCur = (i + galList.length) % galList.length; const b = galList[galCur];
   $("#lb-img").src = b.anh; $("#lb-img").alt = b.moTa || "";
   $("#lb-mota").textContent = b.moTa || ""; $("#lb-mota").hidden = !b.moTa;
@@ -599,7 +664,7 @@ function showLb(i) {
 $("#lb-prev").onclick = () => showLb(galCur - 1);
 $("#lb-next").onclick = () => showLb(galCur + 1);
 let lbTha = null;
-const dongLb = () => { $("#lb").hidden = true; document.body.classList.remove("lb-mo"); window.__troLy?.anGoiYBai(); if (lbTha) { const f = lbTha; lbTha = null; f(); } };
+const dongLb = () => { lbZoom.reset(); $("#lb").hidden = true; document.body.classList.remove("lb-mo"); window.__troLy?.anGoiYBai(); if (lbTha) { const f = lbTha; lbTha = null; f(); } };
 $("#lb-close").onclick = dongLb;
 $("#lb").addEventListener("click", e => { if (e.target === $("#lb")) dongLb(); });
 document.addEventListener("keydown", e => {
