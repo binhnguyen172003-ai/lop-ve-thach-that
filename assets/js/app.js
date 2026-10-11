@@ -3096,7 +3096,7 @@ function renderAccNav() {
   let shown = 0;
   $$("#acc-nav [data-acc]").forEach(a => { const ok = !a.dataset.can || can[a.dataset.can]; a.hidden = !ok; if (ok) shown++; });
   const page = $("#acc-nav").dataset.page || "home";
-  $("#acc-nav").hidden = page === "home" || shown < 2;
+  $("#acc-nav").hidden = !user || page === "home" || shown < 2;
 }
 function updBadges() {
   try { capNhatNhac(); } catch (e) {}
