@@ -862,15 +862,6 @@ nav.on-hero .burger i{background:#fff}
   .cine-h1{margin-top:18px}
 }
 
-/* Chữ hiện dần: từng chữ của tiêu đề, các khối khác mờ → rõ + trượt lên */
-.js-fx .cine-h1 .w{display:inline-block;margin-right:.24em;filter:blur(10px);opacity:0;transform:translateY(40px)}
-.js-fx .cine-h1 .w:last-child{margin-right:0}
-.js-fx .cine-h1.in .w{animation:word-in .7s ease-out forwards;animation-delay:calc(var(--i) * .1s + .45s)}
-@keyframes word-in{0%{filter:blur(10px);opacity:0;transform:translateY(40px)}50%{filter:blur(5px);opacity:.5;transform:translateY(-5px)}100%{filter:blur(0);opacity:1;transform:none}}
-.js-fx .fx{filter:blur(10px);opacity:0;transform:translateY(20px)}
-.js-fx .fx.in{animation:fx-in .8s ease-out forwards;animation-delay:var(--d,0s)}
-@keyframes fx-in{to{filter:blur(0);opacity:1;transform:none}}
-@media (prefers-reduced-motion:reduce){.js-fx .fx,.js-fx .cine-h1 .w{filter:none!important;opacity:1!important;transform:none!important;animation:none!important}}
 
 /* Tiêu đề các phần: chữ nghiêng có chân, gọn và sang hơn */
 section h2{font:italic 600 clamp(1.9rem,5.4vw,2.8rem)/1.05 var(--f-serif);letter-spacing:-.02em}
@@ -1099,8 +1090,6 @@ nav.on-hero .dd-t:hover,nav.on-hero .dd-t[aria-expanded="true"]{color:#fff}
   transition:transform .9s cubic-bezier(.22,1,.36,1),opacity .9s}
 .deco-l{right:calc(100% - 20px)}
 .deco-r{left:calc(100% - 20px)}
-.js-fx .deco-l:not(.in){transform:translateX(-80px);opacity:0}
-.js-fx .deco-r:not(.in){transform:translateX(80px);opacity:0}
 @media (max-width:1180px){.deco-l{right:auto;left:-10px;top:-10px}.deco-r{left:auto;right:-10px;top:-10px}}
 @media (max-width:640px){.deco{width:80px;opacity:.16}}
 
@@ -1286,7 +1275,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
 @media(min-width:1100px){.hw-compose{position:sticky;top:144px}}
 @media(max-width:900px){.hw-workspace.staff{grid-template-columns:minmax(0,1fr)}.hw-compose{grid-row:1}.hw-compose .fgrid{grid-template-columns:repeat(2,minmax(0,1fr))}.workspace-head{padding-top:32px}}
 @media(max-width:600px){.workspace-head{align-items:flex-start;flex-direction:column;gap:16px}.workspace-head h1{font-size:2.65rem}.workspace-head>.btn{width:100%;justify-content:center;gap:8px}.hw-overview article{padding:14px 12px}.hw-overview b{font-size:1.55rem}.hw-overview span{font-size:.67rem}.hw-overview small{font-size:.62rem}.hw-search-row{grid-template-columns:minmax(0,1fr)}.hw{padding:19px}.hw-compose .fgrid{grid-template-columns:minmax(0,1fr)}.hw .acts{gap:8px}.hw .acts .chip{font-size:.68rem}.hw .acts [data-grade]{flex:1}.hw-compose summary{padding:19px}.hw-compose form{padding:0 19px 19px}.compose-note{padding:0 19px 18px}}
-@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-delay:0s!important;transition-duration:.01ms!important}.js-fx .fx,.js-fx .cine-h1 .w{opacity:1;transform:none;filter:none}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-delay:0s!important;transition-duration:.01ms!important}}
 
 /* Original B1 mark and uncropped student artwork. */
 .brand .lg-mark{width:40px;height:40px;padding:0;object-fit:contain;background:#000;border-radius:8px;box-shadow:none;flex-shrink:0}
@@ -2312,12 +2301,6 @@ body.hop-mo{overflow:hidden}
 /* ----- Tiêu đề bìa: hai dòng căn giữa thẳng hàng, giữ kiểu chữ trắng nghiêng cũ ----- */
 .cine-h1 .ln{display:block;text-align:center}
 .cine-h1 .hv-2{margin-top:.04em}
-@media (prefers-reduced-motion:no-preference){
-  .js-fx .cine-h1 .ln{opacity:0;transform:translateY(22px);filter:blur(8px)}
-  .js-fx .cine-h1.in .hv-1{animation:word-in .8s ease-out forwards}
-  .js-fx .cine-h1.in .hv-2{animation:word-in .8s ease-out .35s forwards}
-}
-@media (prefers-reduced-motion:reduce){.js-fx .cine-h1 .ln{opacity:1!important;transform:none!important;filter:none!important}}
 
 /* ----- Các hạng trên trang Xếp hạng: cửa sổ xoay thẻ ----- */
 .xh-bang.rk-box{border:0;background:none;overflow:visible}
