@@ -5,7 +5,7 @@
 // =====================================================================
 import { CA_HOC, THOI_GIAN_BIEU, VIEC_CUOI_BUOI, TIEU_CHI_THI } from "../../data/noi-dung.js?v=20261010bh";
 
-let tuanLich = 0, csLich = "", thangCC = 0, gvCC = "", viewCC = "hom"; // chấm công: tháng đang xem (0 = tháng này), giáo viên đang xem // lịch phân công dạy: tuần đang xem (0 = tuần này), cơ sở đang xem
+let tuanLich = 0, csLich = "", thangCC = 0, gvCC = "", viewCC = "hom", tkbSeq = 0; // chấm công: tháng đang xem (0 = tháng này), giáo viên đang xem // lịch phân công dạy: tuần đang xem (0 = tuần này), cơ sở đang xem
 let C = null, huy = [], dongHo = 0, anhThi = [], tabVH = "", locSC = "mo", timBG = "", locNK = "", chiCaToi = false;
 const D = { thi: [], bai: [], ca: [], doica: [], bg: [], suco: [], truc: {}, kt: [], nk: [], bl: [], dc: [], sua: [], loi: "" };
 
@@ -443,12 +443,15 @@ async function luuTKBO(sel) {
   if (v === "__moi") { v = (prompt("Tên môn mới:") || "").trim().slice(0, 30); if (!v) return ve(); }
   const cu = ((THOI_GIAN_BIEU[cs] || {})[ca] || {})[d] || "";
   if (v === cu) return;
-  const tatCa = Object.fromEntries(Object.entries(THOI_GIAN_BIEU).map(([k, x]) => [k, Object.fromEntries(CA_HOC.map(c => [c.ma, { ...(x[c.ma] || {}) }]))]));
+  const truoc = Object.fromEntries(Object.entries(THOI_GIAN_BIEU).map(([k, x]) => [k, Object.fromEntries(CA_HOC.map(c => [c.ma, { ...(x[c.ma] || {}) }]))]));
+  const tatCa = structuredClone(truoc);
   if (v) tatCa[cs][ca][d] = v; else delete tatCa[cs][ca][d];
   const { db, fs: { doc, setDoc } } = C; sel.disabled = true;
+  const lan = ++tkbSeq;
+  C.apTKB(tatCa, true);
   try { await setDoc(doc(db, "cauhinh", "thoigianbieu"), { tkb: tatCa, luc: Date.now(), nguoi: C.mail });
     C.toast(`${TEN_THU[d]} · ca ${tenCa(ca).toLowerCase()} · ${csLich}: ${v ? (cu ? cu + " → " : "thêm ") + v : "đã bỏ " + cu} (áp dụng mọi tuần).`); }
-  catch (e) { C.toast(e && e.code === "permission-denied" ? "Máy chủ chưa cho lưu: cần đưa luật bảo mật mới (firestore.rules) lên Firebase." : "Chưa lưu được, kiểm tra mạng rồi thử lại.", "err"); ve(); }
+  catch (e) { if (lan === tkbSeq) C.apTKB(truoc, true); C.toast(e && e.code === "permission-denied" ? "Máy chủ chưa cho lưu: cần đưa luật bảo mật mới (firestore.rules) lên Firebase." : "Chưa lưu được, kiểm tra mạng rồi thử lại.", "err"); ve(); }
   finally { sel.disabled = false; }
 }
 function lichPhanCong() {

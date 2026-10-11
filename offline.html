@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#1c2336">
+<meta name="robots" content="noindex">
+<title>Mất kết nối · Lớp Vẽ Không Vui</title>
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;min-height:100svh;background:linear-gradient(155deg,#637087,#232c43 62%,#171d30);color:#fff;font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;padding:24px}
+  main{width:min(100%,840px);margin:clamp(16px,6vh,70px) auto;text-align:center}
+  .brand{font-size:12px;font-weight:800;letter-spacing:.19em;text-transform:uppercase;color:#d6dded}
+  h1{font-size:clamp(27px,5vw,46px);line-height:1.1;letter-spacing:-.04em;margin:14px 0 7px}
+  .sub{margin:0 0 28px;color:#dce3f0}
+  .window{overflow:hidden;border:1px solid #ffffff70;border-radius:16px;box-shadow:0 26px 60px #0c122a75;background:#1b2232}
+  .window-top{height:42px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;background:#f1f2f4;color:#414956}
+  .window-top span{display:flex;gap:5px}.window-top i{width:7px;height:7px;border-radius:50%;background:#9aa5b6}
+  .window-top b{font-size:12px;letter-spacing:.06em}
+  .cover{position:relative;min-height:clamp(320px,50vw,480px);display:grid;place-items:center;isolation:isolate;background:#252d3d}
+  .cover::before{content:"";position:absolute;inset:0;z-index:-2;background:url("assets/img/bia-1280.jpg") center 48%/cover no-repeat}
+  .cover::after{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(180deg,#11192c77,#0d1422aa 55%,#0d1422e6)}
+  .message{padding:32px 16px;text-shadow:0 3px 16px #000a}
+  .code{display:block;font-size:clamp(72px,16vw,154px);font-weight:900;line-height:.95;letter-spacing:-.1em;padding-right:.1em}
+  h2{font-size:clamp(24px,5vw,40px);letter-spacing:-.035em;margin:12px 0 8px}
+  .message p{max-width:430px;margin:0 auto 26px;color:#e9edf5}
+  .actions{display:flex;justify-content:center;gap:10px;flex-wrap:wrap}
+  button,a{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:10px 20px;border:1px solid #ffffffac;border-radius:999px;background:#ffffffea;color:#172238;text-decoration:none;font:700 14px/1.2 inherit;cursor:pointer;text-shadow:none}
+  a{background:#17223899;color:#fff}.actions :is(button,a):hover,.actions :is(button,a):focus-visible{outline:2px solid #fff;outline-offset:2px}
+  #status{min-height:1.5em;margin:14px 0 0;font-size:13px;color:#dce3f0}
+  @media(max-width:500px){body{padding:14px}main{margin:12px auto}.sub{margin-bottom:20px}.window-top{height:34px}.message{padding:25px 15px}.cover{min-height:440px}}
+</style>
+</head>
+<body>
+<main>
+  <div class="brand">Lớp Vẽ Không Vui</div>
+  <h1>Hẹn gặp lại khi có mạng</h1>
+  <p class="sub">Trang lớp đang chờ kết nối Internet</p>
+  <div class="window">
+    <div class="window-top" aria-hidden="true"><span><i></i><i></i><i></i></span><b>lop-ve-thach-that</b><span>⌕</span></div>
+    <div class="cover">
+      <div class="message">
+        <span class="code" aria-hidden="true">404</span>
+        <h2>Trang đang mất mạng</h2>
+        <p>Bật Wi-Fi hoặc dữ liệu di động rồi bấm thử lại để tiếp tục xem lớp vẽ.</p>
+        <div class="actions"><button id="retry" type="button">Thử lại →</button><a href="./">Về trang chủ</a></div>
+        <div id="status" role="status" aria-live="polite"></div>
+      </div>
+    </div>
+  </div>
+</main>
+<script>
+  document.getElementById("retry").addEventListener("click", function(){ location.reload(); });
+  addEventListener("online", function(){ document.getElementById("status").textContent="Đã có mạng lại. Đang mở trang lớp…"; location.replace("./"); });
+</script>
+</body>
+</html>

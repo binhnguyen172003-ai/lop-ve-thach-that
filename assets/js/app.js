@@ -84,7 +84,7 @@ const troLyPromise = import("./tro-ly.js?v=20261010bt").catch(e => console.warn(
 let vanHanhP = null, vanHanhM = null;
 let tacVuP = null, tacVuM = null;
 const taiTacVu = () => tacVuP ||= import("./tac-vu.js?v=20261010bv").then(m => tacVuM = m).catch(e => { tacVuP = null; console.warn("Chưa tải được phần tác vụ", e); });
-const taiVanHanh = () => vanHanhP ||= import("./van-hanh.js?v=20261010bg").then(m => vanHanhM = m).catch(e => { vanHanhP = null; console.warn("Chưa tải được phần vận hành", e); });
+const taiVanHanh = () => vanHanhP ||= import("./van-hanh.js?v=20261011fix").then(m => vanHanhM = m).catch(e => { vanHanhP = null; console.warn("Chưa tải được phần vận hành", e); });
 window.__appOk = true;
 document.querySelectorAll(".slow-bar").forEach(el => el.remove());
 
@@ -129,8 +129,8 @@ addEventListener("error", e => {
   $("#toast").onclick = () => location.reload();
 });
 /* ---------- Mở tức thì ở lần sau + dùng được khi mạng yếu ---------- */
-if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost") && !/[?&]khongcache/.test(location.search))
-  addEventListener("load", () => navigator.serviceWorker.register("sw.js?v=20261010bu").catch(() => {}));
+if ("serviceWorker" in navigator && (location.protocol === "https:" || ["localhost", "127.0.0.1"].includes(location.hostname)) && !/[?&]khongcache/.test(location.search))
+  addEventListener("load", () => navigator.serviceWorker.register("sw.js?v=20261011offline").catch(() => {}));
 
 /* ---------- Đo tốc độ: mở web kèm ?chandoan=1 để xem từng bước mất bao lâu ---------- */
 const DIAG = /[?&]chandoan/.test(location.search);
@@ -2503,11 +2503,15 @@ async function checkRules() {
     khuVuc: "", coso: "Bình Phú", chuongTrinh: "Vẽ cơ bản", khoi: "", namThi: "", mucTieu: "", ghiChu: "", guiLuc: Date.now() };
   let buoc = "Phiếu đăng ký";
   try {
-    await setDoc(ref, mau); await deleteDoc(ref);
+    // Đừng ghi đè rồi xoá phiếu thật của quản lý nếu đang có một phiếu chờ duyệt.
+    const phieuCu = await getDoc(ref);
+    if (!phieuCu.exists()) { await setDoc(ref, mau); await deleteDoc(ref); }
     buoc = "Điểm danh";
     const ddRef = doc(db, "diemdanh", "_kiem-tra"); await setDoc(ddRef, { thu: "co" }); await deleteDoc(ddRef);
     buoc = "Việc cần làm";
-    const cvRef = doc(db, "congviec", "_kiem-tra"); await setDoc(cvRef, { viec: "thử", cho: "tatca", xong: false, luc: Date.now() }); await deleteDoc(cvRef);
+    const cvRef = doc(db, "congviec", "_kiem-tra");
+    await setDoc(cvRef, { ten: "Kiểm tra kết nối", nguoi: ["tatca"], trangThai: "chua", uuTien: "tb", luc: Date.now() });
+    await deleteDoc(cvRef);
     buoc = "Báo sự cố";
     // Phiếu thử của lần kiểm tra trước có thể còn sót (đóng trang giữa chừng): dọn trước, nếu không lần ghi này bị tính là "sửa" và bị chặn oan
     const scRef = doc(db, "suco", "_kiem-tra"); await deleteDoc(scRef).catch(() => {}); await setDoc(scRef, { coSo: "thử", loai: "Khác", moTa: "thử", ai: mail, ten: "", luc: Date.now(), capNhat: Date.now(), trangThai: "moi" }); await deleteDoc(scRef);
@@ -2516,7 +2520,7 @@ async function checkRules() {
     const code = (e && e.code) || "";
     box.className = "sv-status bad";
     box.innerHTML = code === "permission-denied"
-      ? `<b>⚠ Luật bảo mật trên Firebase đang là bản CŨ</b>, nên phiếu học viên gửi bị máy chủ chặn (anh chị vẫn nhận email nhưng danh sách trống).
+      ? `<b>⚠ Firebase từ chối thao tác kiểm tra</b>. Hãy kiểm tra tài khoản quản lý và luật đã Publish cho đúng dự án Firebase.
          <ol><li>Bấm <b>Sao chép luật mới</b>.</li><li>Bấm <b>Mở trang dán luật</b> → xoá hết chữ cũ trong khung → dán vào → bấm <b>Publish</b>.</li><li>Quay lại đây, bấm <b>Kiểm tra lại</b>.</li></ol><small>Bước bị chặn: ${esc(buoc)}.</small>
          <div class="ctas" style="margin-top:8px"><button class="btn primary small" type="button" id="sv-copy">Sao chép luật mới</button>
          <a class="btn small" target="_blank" rel="noopener" href="https://console.firebase.google.com/project/${esc(firebaseConfig.projectId)}/firestore/databases/-default-/rules">Mở trang dán luật</a>
@@ -4300,7 +4304,7 @@ async function onUser(u) {
   taiVanHanh().then(m => { if (!m || !user || mail !== (u.email || "").toLowerCase()) return;
     m.batDau({ db, fs: { collection, doc, getDoc, setDoc, deleteDoc, writeBatch, query, orderBy, where, limit, onSnapshot, deleteField }, themHuy: f => unsubs.push(f),
       mail, ten: (!isTeacher && myHv && myHv.ten) || (user && user.displayName) || mail.split("@")[0], isAdmin, isTeacher,
-      toast, moHop, nenAnh, homNay: todayVN, giaoVien: () => teachers, hocVien: () => roster, gvToi: () => myGvDoc, taiCSV, ddCa, ddNgay, doiCa: renderAttend });
+      toast, moHop, nenAnh, homNay: todayVN, giaoVien: () => teachers, hocVien: () => roster, gvToi: () => myGvDoc, taiCSV, ddCa, ddNgay, doiCa: renderAttend, apTKB });
   });
   if (!isAdmin && !isTeacher) listen(query(collection(db, "dondh"), where("mail", "==", mail)), snap => { donCuaToi = snap.docs.map(d => ({ id: d.id, ...d.data() })); renderHvInfo(); });
   if (isAdmin) {
@@ -4327,8 +4331,8 @@ function fbGate() {
   return new Promise(go => {
     addEventListener("hashchange", () => { if (PAGES.includes(location.hash.slice(1))) go(); });
     document.addEventListener("pointerdown", e => { if (e.target.closest && e.target.closest('a[href="#tai-khoan"],a[href="#giao-trinh"],a[href="#bai-tap"]')) go(); }, true);
-    const idle = () => window.requestIdleCallback ? requestIdleCallback(go, { timeout: 2500 }) : setTimeout(go, 1200);
-    if (document.readyState === "complete") idle(); else addEventListener("load", idle);
+    // Ảnh nổi bật và thời gian biểu dùng Firestore: khởi động sớm sau lượt vẽ đầu.
+    if (window.requestIdleCallback) requestIdleCallback(go, { timeout: 500 }); else setTimeout(go, 100);
   });
 }
 async function startFirebase() {
@@ -4361,8 +4365,8 @@ async function startFirebase() {
     // Bài vẽ anh chị đăng + Top 5 quản lý chọn: ai cũng xem được trên trang chủ
     onSnapshot(collection(db, "baive"), snap => {
       BAIVE_DONG = snap.docs.map(d => ({ id: d.id, ...d.data() })).map(b => ({ ...b, hang: Number(b.hang) || 0 })); baiVeLoi = false;
-      // Gom các lần dữ liệu thay đổi liên tiếp (ví dụ khi đang chuyển bài) thành một lần vẽ lại, tránh ảnh chớp
-      clearTimeout(baiHen); baiHen = setTimeout(() => { renderGallery(); veTopRank(); dispatchEvent(new Event("baive-doi")); }, 250);
+      // Gộp các snapshot cùng khung hình, rồi cập nhật ngay khi trình duyệt sẵn sàng vẽ.
+      cancelAnimationFrame(baiHen); baiHen = requestAnimationFrame(() => { renderGallery(); veTopRank(); dispatchEvent(new Event("baive-doi")); });
       try { renderTop5(); renderTiles(); } catch (e) {}    }, () => { baiVeLoi = true; try { renderTop5(); } catch (e) {} });
     // Thời gian biểu quản lý sửa trên web (ai cũng đọc được)
     onSnapshot(doc(db, "cauhinh", "thoigianbieu"), d => { if (d.exists()) apTKB((d.data() || {}).tkb, true); }, () => {});
