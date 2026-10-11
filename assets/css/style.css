@@ -3843,7 +3843,7 @@ nav.on-hero .acct{box-shadow:none;background:rgba(12,14,18,.85);border-color:rgb
 .sec-head > div{flex:1 1 320px;min-width:0;max-width:100%}
 .sec-head > p{flex:1 1 320px;margin:0}
 .sec-head .eyebrow,.page-head .eyebrow{margin:0 0 4px;line-height:1.4;letter-spacing:.08em;word-spacing:normal;overflow-wrap:break-word}
-.sec-head h2,.page-head h1{max-width:100%;line-height:1.18;letter-spacing:0;word-spacing:normal;white-space:normal;word-break:normal;overflow-wrap:break-word;text-wrap:pretty;padding-block:.03em}
+.sec-head h2,.page-head h1{max-width:100%;line-height:1.28;letter-spacing:.005em;word-spacing:.025em;white-space:normal;word-break:normal;overflow-wrap:break-word;text-wrap:balance;padding-block:.03em}
 .sec-head h2{font-size:clamp(1.9rem,4.8vw,3rem)}
 :root[data-theme="dark"] .sec-head h2{background:none;-webkit-text-fill-color:currentColor;color:var(--ink);padding-inline:0;margin-inline:0}
 .sec-head h2 .gc{margin-inline-start:.35em;vertical-align:baseline;white-space:nowrap;letter-spacing:0;-webkit-text-fill-color:initial}
