@@ -604,6 +604,7 @@ const lbZoom = (() => {
     const center = p.length > 1
       ? { x: (p[0].x + p[1].x) / 2, y: (p[0].y + p[1].y) / 2 } : p[0];
     start = center ? { center, scale, x, y,
+      width: rect.width / scale, height: rect.height / scale,
       origin: { x: rect.left + rect.width / 2 - x, y: rect.top + rect.height / 2 - y },
       distance: p.length > 1 ? Math.hypot(p[1].x-p[0].x,p[1].y-p[0].y) : 0 } : null;
   };
@@ -637,7 +638,11 @@ const lbZoom = (() => {
       x = start.x + p[0].x-start.center.x;
       y = start.y + p[0].y-start.center.y;
     }
-    if (scale === 1) x = y = 0;
+    // Co giới hạn kéo liên tục theo tỷ lệ zoom, tránh nhảy tâm ở mức 1x.
+    const limitX = start.width * (scale - 1) / 2;
+    const limitY = start.height * (scale - 1) / 2;
+    x = Math.max(-limitX, Math.min(limitX, x));
+    y = Math.max(-limitY, Math.min(limitY, y));
     paint(); e.preventDefault();
   });
   const end = e => {
