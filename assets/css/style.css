@@ -3860,3 +3860,15 @@ nav.on-hero .acct{box-shadow:none;background:rgba(12,14,18,.85);border-color:rgb
 
 /* Dòng thông báo trống dùng toàn bộ chiều rộng danh sách đơn. */
 .kho-gd li.muted{display:block;grid-column:1/-1;width:100%;min-width:0;white-space:normal;word-break:normal;overflow-wrap:break-word;line-height:1.5}
+
+/* Bản tin: tiêu đề, bộ lọc và nút đăng dùng chung mép nội dung. */
+#ban-tin .sec-head>div{min-width:0;max-width:100%}
+#ban-tin .sec-head h2{max-width:100%;white-space:normal;overflow-wrap:break-word}
+#ban-tin .tn-bar{min-width:0;align-items:flex-start}
+#ban-tin .tn-bar .filters{min-width:0;max-width:100%;margin:0;padding:0;box-sizing:border-box}
+@media(max-width:640px){
+  #ban-tin .tn-bar{display:grid;grid-template-columns:minmax(0,1fr);justify-items:start;gap:12px}
+  #ban-tin .tn-bar .filters{width:100%;flex-wrap:nowrap;overflow-x:auto;margin-inline:0;padding-inline:0}
+  #ban-tin #tn-them{justify-self:start;margin:0;max-width:100%}
+  #ban-tin .tb-noi{padding:12px;margin-top:16px}
+}
