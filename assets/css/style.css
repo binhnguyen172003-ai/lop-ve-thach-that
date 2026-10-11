@@ -2866,6 +2866,15 @@ button:disabled:not(.btn){opacity:.45}
 .gtb-chuyen button.sau{text-align:right}
 .gtb-chuyen small{color:var(--accent);font-weight:700;font-size:.78rem}.gtb-chuyen b{font-size:.88rem;line-height:1.3;overflow-wrap:anywhere}
 .gtb-ql{display:flex;flex-wrap:wrap;gap:8px;align-items:center;border-top:1px dashed var(--rule);padding-top:12px}
+.resource-workspace .rw-actions{display:flex;justify-content:flex-end;margin-bottom:4px}
+.resource-workspace .rw-editor{display:grid;gap:12px;padding:20px;border:1px solid var(--rule);border-radius:16px;background:var(--sheet)}
+.resource-workspace .rw-editor h3{margin:0}
+.resource-workspace .rw-editor label{display:grid;gap:5px}
+.resource-workspace .rw-editor textarea{min-height:120px}
+.resource-workspace .rw-hidden{margin-top:12px;padding:12px;border:1px dashed var(--rule);border-radius:12px}
+.resource-workspace .rw-hidden summary{cursor:pointer;font-weight:700}
+.resource-workspace .rw-hidden > div{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0;border-top:1px solid var(--rule)}
+.resource-workspace .rw-hidden > div:first-of-type{margin-top:10px}
 /* Máy tính: cột môn học bên trái, thẻ bài 2 cột */
 @media (min-width:1000px){
   .gt-wrap{grid-template-columns:270px minmax(0,1fr);gap:22px;align-items:start}

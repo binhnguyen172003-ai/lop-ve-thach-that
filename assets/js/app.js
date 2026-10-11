@@ -6,6 +6,7 @@ import { ngayVietNam, ngaySinhHopLe, hienNgaySinh, denSinhNhat } from "./sinh-nh
 import { firebaseConfig, ADMIN_EMAIL, EMAIL_NHAN_THONG_BAO } from "../../config/firebase-config.js?v=20261009b";
 import { FILE_LIMITS, FILE_TYPES, fileExt, fileSize, validateFiles, attachmentStorage, uploadError, validAttachmentPath } from "./attachments.js?v=20261009b";
 import { GIAO_TRINH_MAU as GT_LO_TRINH } from "../../data/giao-trinh-mau.js?v=20261010bf";
+import { createResourceWorkspace, ADVANCED_SEEDS } from "./resource-workspace.js?v=20261011resources";
 import { soSanhTenHocVien } from "./ten-hoc-vien.js?v=20261010bs";
 import { GO_KHOI_CA, thuocDanhSachCa } from "./danh-sach-ca.js?v=20261010bs";
 import * as vanTay from "./van-tay.js?v=20261011vt";
@@ -131,7 +132,7 @@ addEventListener("error", e => {
 });
 /* ---------- Mở tức thì ở lần sau + dùng được khi mạng yếu ---------- */
 if ("serviceWorker" in navigator && (location.protocol === "https:" || ["localhost", "127.0.0.1"].includes(location.hostname)) && !/[?&]khongcache/.test(location.search))
-  addEventListener("load", () => navigator.serviceWorker.register("sw.js?v=20261011offline").catch(() => {}));
+  addEventListener("load", () => navigator.serviceWorker.register("sw.js?v=20261011resources").catch(() => {}));
 
 /* ---------- Đo tốc độ: mở web kèm ?chandoan=1 để xem từng bước mất bao lâu ---------- */
 const DIAG = /[?&]chandoan/.test(location.search);
@@ -1534,14 +1535,6 @@ $("#dk-zalo").href = ZALO_LINK;
       return `<a class="link" href="${esc(p.link || "#dang-ky")}"${ngoai ? ' target="_blank" rel="noopener"' : ""}><b>${esc(p.ten)}</b><small>${esc(coLink ? p.moTa : "Sắp ra mắt · hỏi anh chị")}</small></a>`;
     }).join(""); }
 
-  // eBook có trang riêng; chỉ hiện nút mở khi đã có đường dẫn tài liệu.
-  { const box = $("#ebook-list"), books = SAN_PHAM.filter(p => /ebook|e-book/i.test(p.ten));
-    if (box) box.innerHTML = books.map(p => {
-      const link = linkAnToan(p.taiLieu);
-      return link ? `<a class="acc-tile" href="${esc(link)}" target="_blank" rel="noopener"><b>${esc(p.ten)}</b><span class="muted">${esc(p.moTa)}</span><i aria-hidden="true">↗</i></a>`
-        : `<article class="card"><h2>${esc(p.ten)}</h2><p class="muted">${esc(p.moTa)}</p><p>Tài liệu đang được cập nhật.</p></article>`;
-    }).join("") || '<p class="muted">Chưa có eBook được đăng.</p>'; }
-
   // Menu toàn màn hình trên điện thoại
   const ov = $("#menu-ov"), burger = $("#nav-burger");
   // Menu điện thoại: chia 3 nhóm, mỗi mục một ô gọn (tên + mô tả nhỏ), dễ nhìn, dễ bấm
@@ -1718,6 +1711,23 @@ let lvTB = [], lvCV = [], lvKenh = [], lvMine = null, lvErr = "", lvTab = "tin",
 let cvView = "mo", chatFilter = "hocvien", reqCount = 0;
 window.__lvReady = true;
 
+let resourceDocs = [];
+const saveResource = (id, data) => {
+  if (!isAdmin || !db) return Promise.reject(new Error("Chỉ quản lý được sửa nội dung."));
+  return id ? setDoc(doc(db, "giaotrinh", id), data, { merge: true }) : addDoc(collection(db, "giaotrinh"), data);
+};
+const resourceOptions = (phan, ebook) => ({ phan, ebook, seeds: ebook ? [] : ADVANCED_SEEDS,
+  save: (id, data) => saveResource(id, { ...(phan === "nang-cao" ? ADVANCED_SEEDS.find(row => row.id === id) : null), phan, ...data }),
+  markdown: mdHTML, notify: toast,
+  mark: async id => { if (!approved || isTeacher) return; await toggleProgress("bai", id); renderResources(); }
+});
+const advancedWorkspace = createResourceWorkspace($("#nang-cao"), resourceOptions("nang-cao", false));
+const ebookWorkspace = createResourceWorkspace($("#ebook-list"), resourceOptions("ebook", true));
+function renderResources() {
+  const state = { rows: resourceDocs, marks: myProgress.bai || {}, canManage: isAdmin, staff: isTeacher };
+  advancedWorkspace.update(state); ebookWorkspace.update(state);
+}
+
 function renderLocks(state) {
   const msg = {
     checking: ["Đang kiểm tra tài khoản…", "Chờ một chút nhé."],
@@ -1734,6 +1744,8 @@ function renderLocks(state) {
   });
   $("#gt-body").hidden = state !== "ok";
   $("#khoa-body").hidden = state !== "ok";
+  $("#ebook-body").hidden = state !== "ok";
+  if (state === "ok") renderResources();
   // Đã được duyệt: ẩn 3 bước hướng dẫn, chỉ giữ thẻ tài khoản gọn. Chưa duyệt thì vẫn hiện đầy đủ.
   const daDuyet = state === "ok";
   $("#stepper").hidden = daDuyet;
@@ -2514,7 +2526,7 @@ function luuTienDo(thay) { return setDoc(doc(db, "tiendo", mail), { ...(thay || 
 function toggleProgress(kind, id) {
   const cu = myProgress[kind][id], moi = cu ? false : Date.now(); myProgress[kind][id] = moi; saveData(); // lưu thời điểm để tính hạng
   timed("Lưu tiến độ", luuTienDo({ [kind]: { [id]: moi } }))
-    .catch(() => { if (myProgress[kind][id] === moi) { myProgress[kind][id] = cu; renderLessons(); renderHomework(); } alertStatus("Chưa lưu được tiến độ. Kiểm tra mạng rồi thử lại."); });
+    .catch(() => { if (myProgress[kind][id] === moi) { myProgress[kind][id] = cu; renderLessons(); renderResources(); renderHomework(); } alertStatus("Chưa lưu được tiến độ. Kiểm tra mạng rồi thử lại."); });
   return Promise.resolve();
 }
 function alertStatus(t) { toast(t, "err"); }
@@ -4225,7 +4237,7 @@ async function onUser(u) {
     gradeOpen.clear(); Object.keys(gradeDraft).forEach(k => delete gradeDraft[k]);
   }
   pendingReq = null;
-  if (!u) { saveSession(null); renderLocks("out"); renderAccount(false); return; }
+  if (!u) { resourceDocs = []; saveSession(null); renderLocks("out"); renderAccount(false); return; }
   store.set("lvkv-gmail", mail); // lần sau mở máy này: Gmail điền sẵn ở mục Đăng nhập
   // Tạo tài khoản bằng mật khẩu: phải bấm link xác nhận trong Gmail trước (chống mạo danh Gmail người khác).
   if (!u.emailVerified) {
@@ -4336,7 +4348,7 @@ async function onUser(u) {
     if (tdDoc) { myProgress = { bai: tdDoc.bai || {}, baitap: tdDoc.baitap || {}, xem: tdDoc.xem || {} }; if (tdDoc.anh && !avaTuMay) { myAvatar = tdDoc.anh; try { localStorage.setItem(AVA_KEY(mail), myAvatar); } catch (e) {} } }
     // Tiến độ đồng bộ trực tiếp: học trên điện thoại thì máy tính cũng thấy ngay, không ghi đè lẫn nhau
     listen(doc(db, "tiendo", mail), d => { if (!d.exists()) return; const x = d.data();
-      myProgress = { bai: x.bai || {}, baitap: x.baitap || {}, xem: x.xem || {} }; saveData(); renderLessons(); renderHomework(); renderTiles(); });
+      myProgress = { bai: x.bai || {}, baitap: x.baitap || {}, xem: x.xem || {} }; saveData(); renderLessons(); renderResources(); renderHomework(); renderTiles(); });
     listen(doc(db, "nhanxet", mail), d => { troLyDaTai.diem = true; myFeedback = d.exists() ? d.data() : {}; renderHomework(); renderMyProg(); saveData(); });
     listen(doc(db, "anhbaitap", mail), d => { myAnhBT = d.exists() ? d.data() : {}; renderHomework(); });
     // Điểm danh của chính em (lỗi quyền thì im lặng, panel vẫn hiện hướng dẫn)
@@ -4344,7 +4356,10 @@ async function onUser(u) {
     renderMyProg();
   }
   listen(query(collection(db, "giaotrinh"), orderBy("thutu")), snap => {
-    lessons = snap.docs.filter(d => !d.id.startsWith("_")).map(d => ({ id: d.id, ...d.data() })); renderLessons(); if (isAdmin) { renderRoster(); dongBoBaiHoc(); } saveData(); renderTiles();
+    const all = snap.docs.filter(d => !d.id.startsWith("_")).map(d => ({ id: d.id, ...d.data() }));
+    lessons = all.filter(row => !["nang-cao", "ebook"].includes(row.phan));
+    resourceDocs = all.filter(row => ["nang-cao", "ebook"].includes(row.phan));
+    renderLessons(); renderResources(); if (isAdmin) { renderRoster(); dongBoBaiHoc(); } saveData(); renderTiles();
   });
   listen(query(collection(db, "baitap"), orderBy("han")), snap => {
     troLyDaTai.bai = true; homework = snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(h => isTeacher || giaoCho(h, { id: mail, coso: (myHv && myHv.coso) || "" })); renderHomework(); saveData(); renderTiles(); if (isAdmin) renderQL();
