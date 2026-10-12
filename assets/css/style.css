@@ -3864,3 +3864,17 @@ nav.on-hero .acct{box-shadow:none;background:rgba(12,14,18,.85);border-color:rgb
 .sd-time{display:flex;flex-direction:column;gap:2px;min-width:0}
 .sd-time .num{white-space:nowrap;font-size:.88rem;letter-spacing:0}
 @media(max-width:380px){.sd{grid-template-columns:76px minmax(0,1fr);padding-inline:10px;gap:8px}.sd-ca{grid-template-columns:68px minmax(0,1fr);gap:6px}.sd-time .num{font-size:.8rem}}
+
+/* Chừa biên cho nét nghiêng; hình trang trí nằm dưới chữ. */
+#v-home > section .sec-head{position:relative;z-index:2}
+.sec-head > div{box-sizing:border-box;padding-inline:8px}
+.sec-head h2{overflow:visible;transform:none;filter:none;will-change:auto}
+.sec-head h2.noi{filter:none}
+#v-home > section .deco{z-index:0;pointer-events:none}
+.cine-stat{overflow:visible;box-sizing:border-box}
+.cine-stat b{padding-inline:.12em}
+@media(max-width:760px){
+  html{scroll-padding-bottom:110px}
+  body.co-tab{padding-bottom:calc(100px + env(safe-area-inset-bottom))}
+  .sec-head > div{padding-inline:6px}
+}
