@@ -300,6 +300,14 @@ function daysUntil(iso) {
   // Cùng mốc 7h sáng giờ Việt Nam như đồng hồ trong form đăng ký.
   return Math.floor((Date.UTC(y, m - 1, d) - Date.now()) / 86400000);
 }
+function updateExamClock() {
+  const clock = document.querySelector(".exam-clock"); if (!clock) return;
+  const seconds = Math.floor(Math.max(0, Number(clock.dataset.examTarget) - Date.now()) / 1000);
+  const d = Math.floor(seconds / 86400), values = [Math.floor(seconds % 86400 / 3600), Math.floor(seconds % 3600 / 60), seconds % 60];
+  ["h", "m", "s"].forEach((k, i) => { clock.querySelector("[data-exam-" + k + "]").textContent = String(values[i]).padStart(2, "0"); });
+  const days = document.querySelector("[data-exam-days]"); if (days) days.textContent = d;
+}
+setInterval(() => { if (!document.hidden) updateExamClock(); }, 1000);
 let examFilter = "all";
 let lichGon = true;
 function renderExams() {
@@ -313,14 +321,16 @@ function renderExams() {
        <p class="eyebrow">${examFilter === "all" ? "Kỳ thi năng khiếu gần nhất" : "Kỳ thi gần nhất của trường này"}</p>
        <h3>${esc(next.truong)}</h3><span class="chip">${esc(next.dot)}</span>
        <div class="exam-time-points">
-         <div><span>Thời gian còn lại</span><b class="exam-days">${next.n}<small> ngày</small></b></div>
+         <div><span>Thời gian còn lại</span><b class="exam-days"><em data-exam-days>${next.n}</em><small> ngày</small></b></div>
          <div><span>Ngày thi ${next.ct ? "chính thức" : "dự kiến"}</span><b class="exam-date">${esc(next.hien)}/${NAM_THI}</b><small>Mốc đếm ngược: 7h sáng</small></div>
        </div>
+       <div class="exam-clock" data-exam-target="${Date.parse(next.ngay + "T07:00:00+07:00")}" role="timer" aria-label="Thời gian còn lại đến kỳ thi"><div><b data-exam-h>00</b><span>Giờ</span></div><div><b data-exam-m>00</b><span>Phút</span></div><div><b data-exam-s>00</b><span>Giây</span></div></div>
        <p class="exam-practice">≈ <b>${w * 4} buổi luyện</b> trong ${w} tuần, nếu học 4 buổi mỗi tuần.</p></div>`;
   } else {
     $("#cd-lead").innerHTML = `<p>Mùa thi này đã kết thúc. Lớp sẽ cập nhật lịch năm sau.</p>`;
   }
 
+  updateExamClock();
   const MA = { XD: "HUCE", QG: "SIS", SP: "NUAE", MTCN: "MTCN", HAU: "HAU" };
   const mau = t => t === "THPT" ? "#8a919c" : (TRUONG[MA[t]] || {}).mau || "#5b6068";
   const tenGon = s => s.replace("ĐHQG Hà Nội · Trường KH Liên ngành & Nghệ thuật", "ĐHQG Hà Nội · KH Liên ngành & Nghệ thuật");
