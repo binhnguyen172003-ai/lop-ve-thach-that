@@ -1287,11 +1287,12 @@ const GHI_CHU = {
   const theThem = i => `<figure class="nb-card nb-add" data-i="${i}" data-add="1"><div class="nb-add-in"><span class="nb-plus" aria-hidden="true">+</span><b>Thêm bài vẽ</b><small>Đăng ảnh bài học viên${isAdmin ? "<br>Chọn Top 5 ở trang Quản lý" : ""}</small></div></figure>`;
   let sig = "";
   const ve = () => {
-    const ds = locNoiBat(ky);
+    const ds = locNoiBat(ky).slice(0, 10);
     // Khoá so sánh nhẹ: không ghép cả chuỗi ảnh base64 (rất nặng) mỗi lần tải lại, chỉ dùng độ dài + thời điểm đăng
     const k = [ky, !!user && isTeacher, isAdmin, XP_DONG.length, TT_DONG.length, ...ds.map(b => [b.id || "", b.luc || 0, b.anh ? b.anh.length : 0, b.top, b.hocVien, b.loai, b.ghiChu, b.chucVu, b.biDanh, biDanhCua(b), b.mau, b.hang].join("~"))].join("|");
     if (k === sig) return; sig = k;
     if (!ds.length && !coThem()) { box.innerHTML = `<p class="nb-rong">Chưa có bài nổi bật ${TEN[ky]}. ${ky === "tuan" ? "Anh chị sẽ cập nhật bài đẹp mỗi tuần." : `Bài tuần trước tự chuyển sang đây khi ${ky === "thang" ? "qua 1 tuần" : "qua 1 tháng"}.`}</p>`; return; }
+    if (!ds.length) { box.__vongCleanup?.(); box.innerHTML = '<button type="button" class="btn nb-add-outside">+ Thêm bài vẽ</button>'; box.querySelector("button").onclick = () => moDangBai(); return; }
     box.innerHTML = `<div class="gv-stage nb-stage">${ds.map((b, i) => `<figure class="nb-card nb-tran${b.nv ? " nb-nv nv-" + nhanVienLop(b) : ""}" data-i="${i}">
         ${b.nv ? `<span class="nb-nv-tag">${esc(nhanVienTen(b))}</span>` : ""}
         ${isAdmin && b.id ? `<button type="button" class="nb-more" data-mn="${esc(b.id)}" aria-label="Tuỳ chọn: sửa link, xoá bài">⋮</button>` : ""}
@@ -1299,10 +1300,11 @@ const GHI_CHU = {
         ${b.top ? `<span class="nb-medal h${b.top}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 2h4l1 5-3 1zM17 2h-4l-1 5 3 1z" class="rb"/><circle cx="12" cy="15" r="6.5" class="md"/><text x="12" y="18.2" text-anchor="middle">${b.top}</text></svg><b>TOP ${b.top}</b><i>${TEN[ky]}</i></span>` : ""}
         ${b.tg ? "" : (m => m.length ? (a => `<span class="nb-tt" data-rk="${esc(b.hocVien)}" role="button" tabindex="0" title="${esc(a.ten)} · ${CAP[a.cap].ten} — ${esc(a.mo)}">${huyHieuTT(a, a.cap, "sm")}<span class="nb-ttx"><b>${esc(a.ten)}</b><small>${a.n} ${esc(a.dv)} · ${CAP[a.cap].ten}</small></span></span>`)(m[0]) : "")(ttNoiNhat(b.hocVien))}
         ${b.tg ? "" : (t => khungThe(t.r, t.i))(tinhRank(null, null, null, b.hocVien))}
-        <figcaption><b>${esc(b.hocVien || "")} ${b.tg ? "" : (t => huyHieu(t.r, t.i, "xs", b.hocVien))(tinhRank(null, null, null, b.hocVien))}</b>${b.nv && biDanhCua(b) ? `<em class="nb-bd">${esc(biDanhCua(b))}</em>` : ""}<span>${esc([b.loai, b.ghiChu].filter(Boolean).join(" · "))}</span></figcaption></figure>`).join("")}${coThem() ? theThem(ds.length) : ""}</div>
+        <figcaption><b>${esc(b.hocVien || "")} ${b.tg ? "" : (t => huyHieu(t.r, t.i, "xs", b.hocVien))(tinhRank(null, null, null, b.hocVien))}</b>${b.nv && biDanhCua(b) ? `<em class="nb-bd">${esc(biDanhCua(b))}</em>` : ""}<span>${esc([b.loai, b.ghiChu].filter(Boolean).join(" · "))}</span></figcaption></figure>`).join("")}</div>${coThem() ? '<div class="ctas" style="justify-content:center"><button type="button" class="btn small nb-add-outside">+ Thêm bài vẽ</button></div>' : ""}
       <div class="gv-ctl"><button type="button" class="gv-nav" aria-label="Bài trước">‹</button>
-        <div class="gv-dots">${ds.map((b, i) => `<button type="button" data-i="${i}" aria-label="Bài ${i + 1}"></button>`).join("")}${coThem() ? `<button type="button" data-i="${ds.length}" aria-label="Thêm bài vẽ"></button>` : ""}</div>
+        <div class="gv-dots">${ds.map((b, i) => `<button type="button" data-i="${i}" aria-label="Bài ${i + 1}"></button>`).join("")}</div>
         <button type="button" class="gv-nav" aria-label="Bài sau">›</button></div>`;
+    box.querySelector(".nb-add-outside")?.addEventListener("click", () => moDangBai());
     const [p, n] = box.querySelectorAll(".gv-nav");
     // Nút ⋮ (chỉ quản lý thấy): sửa link/thông tin hoặc xoá bài; bấm ⋮ không được kéo hay mở ảnh
     box.querySelectorAll(".nb-more").forEach(bt => {
