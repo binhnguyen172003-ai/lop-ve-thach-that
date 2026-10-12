@@ -9,7 +9,7 @@ import { GIAO_TRINH_MAU as GT_LO_TRINH } from "../../data/giao-trinh-mau.js?v=20
 import { createResourceWorkspace, ADVANCED_SEEDS } from "./resource-workspace.js?v=20261012audit";
 import { soSanhTenHocVien } from "./ten-hoc-vien.js?v=20261010bs";
 import { GO_KHOI_CA, thuocDanhSachCa } from "./danh-sach-ca.js?v=20261010bs";
-import * as vanTay from "./van-tay.js?v=20261011vt";
+import * as vanTay from "./van-tay.js?v=20261013removed";
 import { LIEN_HE, NAM_THI, LICH_THI, BO_LOC_TRUONG, CA_HOC, THOI_GIAN_BIEU, BAI_VE, BANG_VANG, TRUONG, MUC_TIEU, GIAO_VIEN, VIDEO_BIA, BAI_NOI_BAT, THANH_TUU_TRAO, XP_THUONG, AVATAR, SO_DU_THI, HOA_CU, TON_DAU_KY, BAN_TIN, SAN_PHAM, LICH_THI_CAP_NHAT, DO_MANG, MANG_XA_HOI } from "../../data/noi-dung.js?v=20261011pagesplit";
 
 // Firebase được tải riêng, để phần giới thiệu vẫn chạy kể cả khi mạng chậm hoặc chưa cấu hình.
@@ -4403,7 +4403,7 @@ function nutPin(u) {
 }
 // Nút bật / tắt mở khoá bằng vân tay trên máy này (chỉ hiện khi máy có cảm biến vân tay / Face ID)
 async function nutVanTay(u) {
-  nutPin(u);
+
   const b = $("#vt-bat"); if (!b) return;
   if (!u || !(await vanTay.hoTro())) { b.hidden = true; return; }
   const ve = () => { const on = vanTay.daBat(u.uid); b.hidden = false; b.setAttribute("aria-pressed", on);
@@ -4421,7 +4421,7 @@ async function onUser(u) {
   stopListeners();
   const prevMail = mail;
   user = u; mail = u ? String(u.email || "").toLowerCase() : "";
-  vanTay.khiDangNhap(u); nutVanTay(u);
+  vanTay.khiDangNhap(u);
   isAdmin = false; isTeacher = false; approved = false; needVerify = false;
   napAvatarMay(mail);
   roster = []; requests = []; teachers = []; progressAll = {}; feedbackAll = {};
