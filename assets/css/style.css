@@ -1121,7 +1121,7 @@ nav.on-hero .dd-t:hover,nav.on-hero .dd-t[aria-expanded="true"]{color:#fff}
 .dk-cd-n div:first-child{padding-left:0;border-left:0}
 .dk-cd-n b{font:italic 600 clamp(2rem,6vw,2.7rem)/1 var(--f-serif);letter-spacing:-.03em;
   background:linear-gradient(180deg,#9aa3ad 0%,#f2f6f8 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;padding-right:.04em}
-.dk-cd-n div:first-child b{font-size:clamp(2.4rem,9vw,3.4rem)}
+.dk-cd-n b{font-variant-numeric:lining-nums tabular-nums;font-feature-settings:"lnum" 1,"tnum" 1;line-height:1.2;letter-spacing:0}
 .dk-cd-n div{align-content:end}
 @media (max-width:400px){.dk-cd-n div{padding-inline:8px}.dk-cd-n b{font-size:1.8rem}}
 .dk-cd-n span{font-size:.68rem;text-transform:uppercase;letter-spacing:.12em;color:var(--graphite)}
