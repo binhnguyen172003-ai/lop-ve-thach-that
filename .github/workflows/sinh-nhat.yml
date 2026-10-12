@@ -19,8 +19,7 @@ jobs:
       - name: Kiểm tra cấu hình Firebase
         if: env.SA == ''
         run: |
-          echo '::error::Thiếu secret FIREBASE_SERVICE_ACCOUNT. Dùng cùng tài khoản dịch vụ của workflow đưa luật Firebase.'
-          exit 1
+          echo '::notice::Chưa cấu hình gửi lời chúc qua máy chủ. Lời chúc vẫn hiển thị trong Nhắc việc khi đăng nhập đúng ngày sinh nhật.'
       - uses: actions/checkout@v4
         if: env.SA != ''
       - uses: actions/setup-node@v4
