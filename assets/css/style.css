@@ -4101,3 +4101,10 @@ nav.on-hero .acct{box-shadow:none;background:rgba(12,14,18,.85);border-color:rgb
 /* Status messages remain readable above mobile floating controls. */
 #toast{box-sizing:border-box;width:max-content;max-width:min(calc(100vw - 32px),460px);white-space:normal;overflow-wrap:anywhere;z-index:10000}
 @media(max-width:640px){#toast,body.co-tab #toast{bottom:calc(110px + env(safe-area-inset-bottom,0px))}}
+
+/* Compact connection status and avoid overlapping temporary reminders. */
+#server-issue{margin-inline:0;padding:8px 12px;font-size:.8rem;line-height:1.4;align-items:center;color:var(--ink)}
+#server-issue span{min-width:0;overflow-wrap:anywhere}
+#server-issue button{flex:0 0 36px;min-height:36px;color:inherit}
+body:has(#toast:not([hidden])) .tl-bong,body:has(#server-issue:not([hidden])) .tl-bong{display:none}
+#toast{max-height:30dvh;overflow-y:auto;font-size:.85rem;padding:10px 14px}
