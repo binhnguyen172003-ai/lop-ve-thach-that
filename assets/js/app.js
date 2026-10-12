@@ -6,7 +6,7 @@ import { ngayVietNam, ngaySinhHopLe, hienNgaySinh, denSinhNhat } from "./sinh-nh
 import { firebaseConfig, ADMIN_EMAIL, EMAIL_NHAN_THONG_BAO } from "../../config/firebase-config.js?v=20261009b";
 import { FILE_LIMITS, FILE_TYPES, fileExt, fileSize, validateFiles, attachmentStorage, uploadError, validAttachmentPath } from "./attachments.js?v=20261009b";
 import { GIAO_TRINH_MAU as GT_LO_TRINH } from "../../data/giao-trinh-mau.js?v=20261010bf";
-import { createResourceWorkspace, ADVANCED_SEEDS } from "./resource-workspace.js?v=20261011resources";
+import { createResourceWorkspace, ADVANCED_SEEDS } from "./resource-workspace.js?v=20261012progressaccess";
 import { soSanhTenHocVien } from "./ten-hoc-vien.js?v=20261010bs";
 import { GO_KHOI_CA, thuocDanhSachCa } from "./danh-sach-ca.js?v=20261010bs";
 import * as vanTay from "./van-tay.js?v=20261011vt";
@@ -1905,12 +1905,19 @@ const saveResource = (id, data) => {
 const resourceOptions = (phan, ebook) => ({ phan, ebook, seeds: ebook ? [] : ADVANCED_SEEDS,
   save: (id, data) => saveResource(id, { ...(phan === "nang-cao" ? ADVANCED_SEEDS.find(row => row.id === id) : null), phan, ...data }),
   markdown: mdHTML, notify: toast,
+  markSeen: id => {
+    if (!approved || isTeacher || myProgress.xem?.[id]) return;
+    myProgress.xem ||= {}; myProgress.xem[id] = Date.now();
+    saveData();
+    if (db && mail) setDoc(doc(db, "tiendo", mail), { xem: { [id]: myProgress.xem[id] } }, { merge: true }).catch(() => toast("Chưa đồng bộ trạng thái đang học.", "err"));
+    renderResources();
+  },
   mark: async id => { if (!approved || isTeacher) return; await toggleProgress("bai", id); renderResources(); }
 });
 const advancedWorkspace = createResourceWorkspace($("#nang-cao"), resourceOptions("nang-cao", false));
 const ebookWorkspace = createResourceWorkspace($("#ebook-list"), resourceOptions("ebook", true));
 function renderResources() {
-  const state = { rows: resourceDocs, marks: myProgress.bai || {}, canManage: isAdmin, staff: isTeacher };
+  const state = { rows: resourceDocs, marks: myProgress.bai || {}, canManage: isAdmin, staff: isTeacher, mail, seen: myProgress.xem || {}, viewers: roster };
   advancedWorkspace.update(state); ebookWorkspace.update(state);
 }
 
