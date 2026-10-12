@@ -296,11 +296,9 @@ route();
 const MONTH = {};
 [...new Set(LICH_THI.map(e => e.ngay.slice(5, 7)))].sort().forEach(m => MONTH[m] = "Tháng " + Number(m));
 function daysUntil(iso) {
-  const now = new Date();
-  const vn = new Date(now.getTime() + (now.getTimezoneOffset() + 420) * 60000);
-  const today = Date.UTC(vn.getFullYear(), vn.getMonth(), vn.getDate());
   const [y, m, d] = String(iso).split("-").map(Number);
-  return Math.round((Date.UTC(y, m - 1, d) - today) / 86400000);
+  // Cùng mốc 7h sáng giờ Việt Nam như đồng hồ trong form đăng ký.
+  return Math.floor((Date.UTC(y, m - 1, d) - Date.now()) / 86400000);
 }
 let examFilter = "all";
 let lichGon = true;
@@ -311,11 +309,14 @@ function renderExams() {
   if (next) {
     const w = Math.floor(next.n / 7);
     $("#cd-lead").innerHTML =
-      `<div class="cd-big">${next.n}<small>ngày</small></div>
-       <div><p class="eyebrow">${examFilter === "all" ? "Kỳ thi năng khiếu gần nhất" : "Kỳ thi gần nhất của trường này"}</p>
-       <h3>${esc(next.truong)} <span class="chip">${esc(next.dot)}</span></h3>
-       <p class="muted">Ngày thi ${next.ct ? "chính thức" : "dự kiến"} ${esc(next.hien)}/${NAM_THI}</p>
-       <p style="margin-top:8px">Còn khoảng <b class="num">${w}</b> tuần. Nếu học 4 buổi mỗi tuần, em còn khoảng <b class="num">${w * 4}</b> buổi để luyện.</p></div>`;
+      `<div class="exam-time-summary">
+       <p class="eyebrow">${examFilter === "all" ? "Kỳ thi năng khiếu gần nhất" : "Kỳ thi gần nhất của trường này"}</p>
+       <h3>${esc(next.truong)}</h3><span class="chip">${esc(next.dot)}</span>
+       <div class="exam-time-points">
+         <div><span>Thời gian còn lại</span><b class="exam-days">${next.n}<small> ngày</small></b></div>
+         <div><span>Ngày thi ${next.ct ? "chính thức" : "dự kiến"}</span><b class="exam-date">${esc(next.hien)}/${NAM_THI}</b><small>Mốc đếm ngược: 7h sáng</small></div>
+       </div>
+       <p class="exam-practice">≈ <b>${w * 4} buổi luyện</b> trong ${w} tuần, nếu học 4 buổi mỗi tuần.</p></div>`;
   } else {
     $("#cd-lead").innerHTML = `<p>Mùa thi này đã kết thúc. Lớp sẽ cập nhật lịch năm sau.</p>`;
   }
