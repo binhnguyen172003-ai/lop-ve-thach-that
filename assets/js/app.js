@@ -578,15 +578,15 @@ function renderEmptyGallery(types) {
     : '<div class="gal-b gal-them" style="cursor:default">'}
     <span class="gal-plus" aria-hidden="true">+</span><b>${canAdd ? "Thêm ảnh" : "Chưa có ảnh"}</b><small>${esc(l.ten)}</small>
     ${canAdd ? "</button>" : "</div>"}</div>`).join("");
-  $("#gallery [data-empty-type]").forEach(button => button.onclick = () => {
+  $$("#gallery [data-empty-type]").forEach(button => button.onclick = () => {
     moDangBai();
-    $('input[name="bv-loai"]').forEach(input => { input.checked = input.value === button.dataset.emptyType; });
+    $$('input[name="bv-loai"]').forEach(input => { input.checked = input.value === button.dataset.emptyType; });
   });
 }
 
 function scrollArtworkPage(direction) {
   const gallery = $("#gallery");
-  gallery.scrollBy({left: direction * (gallery.clientWidth + 12), behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth"});
+  gallery.scrollBy({top: direction * (gallery.clientHeight * .85), behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth"});
 }
 $("#gallery-prev").onclick = () => scrollArtworkPage(-1);
 $("#gallery-next").onclick = () => scrollArtworkPage(1);
