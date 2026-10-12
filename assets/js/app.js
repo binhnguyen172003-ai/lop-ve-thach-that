@@ -1519,7 +1519,7 @@ function renderHonor() {
       <ol class="mg-rows ${bvMore ? "" : "gon"}">${rest.map((x, i) => `<li class="${i >= 6 ? "them" : ""}"><details>
         <summary><span class="mg-rk num">${x.top ? rankOf.get(x) : "–"}</span>
           <span class="mg-tr">${x.truongs.map(k => `<i style="--c:${esc(tr(k).mau)}">${esc(k)}</i>`).join("")}</span>
-          <b class="mg-nm">${esc(x.ten)}${x.top ? thoSan(x.top.d, "sm") : ""}</b>
+          <b class="mg-nm">${esc(x.ten)}</b><span class="mg-award">${x.top ? thoSan(x.top.d, "sm") : ""}</span>
           <span class="mg-sub">${x.top ? `${esc(x.top.m)} · ${esc(x.top.tr)}${nhanNam(x)}` : `Đỗ ${esc(x.truongs.join(", "))}${nhanNam(x)}`}</span>
           <span class="mg-sc"><b class="num">${x.top ? fmtDiem(x.top.d) : "–"}</b><small>Đ</small></span></summary>
         <ul class="kq">${chiTiet(x)}</ul></details></li>`).join("")}</ol>
