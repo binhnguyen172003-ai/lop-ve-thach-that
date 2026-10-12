@@ -4087,3 +4087,11 @@ nav.on-hero .acct{box-shadow:none;background:rgba(12,14,18,.85);border-color:rgb
 .gallery-pager button{width:44px;height:44px;border:1px solid var(--rule);border-radius:50%;background:var(--sheet);color:var(--ink);font-size:1.6rem;cursor:pointer}
 .gallery-pager span{font-size:.8rem;color:var(--graphite)}
 @media(max-width:640px){#gallery.gallery{grid-auto-columns:calc((100% - 12px)/2)}}
+
+/* Nét gạch đặt theo hộp chữ, hiệu ứng chỉ đổi độ dài. */
+.hero.cine #hero-h1 .strike{display:inline-block;line-height:1}
+.hero.cine #hero-h1 .strike::after{left:-2%;right:-2%;top:57%;height:.055em;transform:translateY(-50%) rotate(-3deg);transform-origin:center}
+@keyframes hero-title-stroke{
+  from{transform:translateY(-50%) rotate(-3deg) scaleX(0)}
+  to{transform:translateY(-50%) rotate(-3deg) scaleX(1)}
+}
