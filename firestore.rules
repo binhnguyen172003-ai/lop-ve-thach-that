@@ -471,6 +471,11 @@ service cloud.firestore {
     // Cấu hình chung do quản lý sửa trên web (hiện có: thời gian biểu các cơ sở). Ai cũng đọc được để hiện lịch học.
     match /cauhinh/{id} {
       allow read: if true;
+      // Danh sách thẻ giới thiệu giáo viên: chỉ quản lý được lưu.
+      allow create, update: if isAdmin() && id == 'doingu'
+        && request.resource.data.keys().hasOnly(['ds', 'luc', 'nguoi'])
+        && request.resource.data.ds is list && request.resource.data.ds.size() <= 100
+        && request.resource.data.luc is int && request.resource.data.nguoi == myEmail();
       allow write: if isAdmin() && id == 'thoigianbieu'
         && request.resource.data.keys().hasOnly(['tkb', 'luc', 'nguoi'])
         && request.resource.data.tkb is map && request.resource.data.tkb.size() <= 10
