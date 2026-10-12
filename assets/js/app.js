@@ -1287,10 +1287,44 @@ const GHI_CHU = {
   vongXoay(box, stage, cards, [...ctl.querySelectorAll(".gv-dots button")], prev, next, c => moTheKhoa(c));
 })();
 
+
+async function luuDoiNgu(ds) {
+  if (!isAdmin || !db) throw new Error("permission-denied");
+  await setDoc(doc(db, "cauhinh", "doingu"), { ds, luc: Date.now(), nguoi: mail });
+}
+function suaTheGiaoVien(index) {
+  if (!isAdmin) return;
+  const g = index === undefined ? {} : GIAO_VIEN[index];
+  const { el, dong } = moHop(`<h3>${index === undefined ? "Thêm giáo viên" : "Sửa giáo viên"}</h3><form id="gv-profile">
+    <label>Họ tên<input name="ten" required maxlength="80" value="${esc(g.ten || "")}"></label>
+    <label>Vai trò<input name="vaiTro" maxlength="80" value="${esc(g.vaiTro || "Giáo viên")}"></label>
+    <label>Khối / môn phụ trách<input name="khoi" maxlength="80" value="${esc(g.khoi || "")}"></label>
+    <label>Trường<input name="truong" maxlength="80" value="${esc(g.truong || "")}"></label>
+    <label>Ngành / giới thiệu<input name="nganh" maxlength="200" value="${esc(g.nganh || "")}"></label>
+    <label>Link ảnh đại diện<input name="avatar" type="url" value="${esc(g.avatar || "")}"></label>
+    <label>Link ảnh bài vẽ<input name="bai" type="url" value="${esc(g.bai || "")}"></label>
+    <p class="muted">Thẻ giới thiệu trên web. Quyền tài khoản được quản lý trong mục Quản lý lớp.</p>
+    <button type="submit" class="btn primary">Lưu giáo viên</button><p class="status" role="status"></p></form>`, "Thông tin giáo viên");
+  el.querySelector("form").onsubmit = async e => {
+    e.preventDefault(); const form = e.target, data = Object.fromEntries(new FormData(form));
+    data.ten = data.ten.trim(); if (!data.ten) return;
+    for (const k of ["avatar", "bai"]) if (data[k] && !/^https?:\/\//i.test(data[k])) { form.querySelector(".status").textContent = "Ảnh cần link http hoặc https."; return; }
+    const next = { ...g, ...data, anh: g.anh || (data.avatar || data.bai ? "custom" : "") };
+    const ds = [...GIAO_VIEN]; if (index === undefined) ds.push(next); else ds[index] = next;
+    const btn = form.querySelector("button"); btn.disabled = true;
+    try { await luuDoiNgu(ds); dong(); toast("Đã lưu đội ngũ giáo viên."); }
+    catch (err) { form.querySelector(".status").textContent = err.code === "permission-denied" ? "Cần cập nhật luật Firestore cho mục đội ngũ giáo viên." : "Chưa lưu được, vui lòng thử lại."; }
+    finally { btn.disabled = false; }
+  };
+}
+
 /* ================= Đội ngũ giáo viên ================= */
 function renderGiaoVien() {
   const box = $("#gv-grid"); if (!box) return;
-  if (!GIAO_VIEN.length) { $("#giao-vien").hidden = true; return; }
+  $("#giao-vien").hidden = false;
+  $("#gv-manage")?.remove();
+  if (isAdmin) { box.insertAdjacentHTML("beforebegin", '<div id="gv-manage" class="ctas"><button type="button" class="btn primary" id="gv-add">+ Thêm giáo viên</button></div>'); $("#gv-add").onclick = () => suaTheGiaoVien(); }
+  if (!GIAO_VIEN.length) { box.innerHTML = '<p class="muted">Chưa có giáo viên trong đội ngũ.</p>'; return; }
   const IMG = "assets/img/giao-vien/", n = GIAO_VIEN.length;
   box.innerHTML = `<div class="gv-stage" id="gv-stage">${GIAO_VIEN.map((g, i) => {
     const t = g.truong ? TRUONG[g.truong] : null;
@@ -1299,13 +1333,13 @@ function renderGiaoVien() {
         ${g.anh ? `<img class="gv-bai${g.bai ? " gv-art-full" : ""}" src="${esc(g.bai || IMG + g.anh + "-bai.jpg")}" alt="Bài vẽ của ${esc(g.ten)}" loading="eager" decoding="async" width="348" height="234" draggable="false">`
           : g.chinh ? `<span class="gv-bai gv-bai-trong"><b>6</b><small>năm đứng lớp<br>luyện thi năng khiếu</small></span>`
           : `<span class="gv-bai gv-bai-trong alt"><b>${esc(g.khoi.replace("Khối ", ""))}</b><small>${esc(g.vaiTro)} ${esc(g.khoi)}</small></span>`}
-        <span class="gv-ava">${g.anh ? `<img src="${IMG}${esc(g.anh)}.jpg" alt="" loading="eager" decoding="async" width="96" height="96" draggable="false">` : `<i>${esc(initials(g.ten))}</i>`}</span>
+        <span class="gv-ava">${g.anh ? `<img src="${esc(g.avatar || IMG + g.anh + ".jpg")}" alt="" loading="eager" decoding="async" width="96" height="96" draggable="false">` : `<i>${esc(initials(g.ten))}</i>`}</span>
         <span class="gv-txt">
           <span class="gv-vt">${esc(g.vaiTro)} · ${esc(g.khoi)}</span>
           <b class="gv-ten">${esc(g.ten)}</b>
           <span class="gv-ng">${t ? `<i class="gv-tr" style="--c:${esc(t.mau)}" title="${esc(t.ten)}">${esc(g.truong)}</i>` : ""}${esc(g.nganh)}</span>
         </span>
-      </button></article>`;
+      </button>${isAdmin ? `<div class="gv-edit-tools"><button type="button" class="btn small" data-gv-edit="${i}">Sửa</button><button type="button" class="btn small" data-gv-remove="${i}" aria-label="Gỡ ${esc(g.ten)} khỏi đội ngũ">×</button></div>` : ""}</article>`;
   }).join("")}</div>
   <div class="gv-ctl">
     <button type="button" class="gv-nav" id="gv-prev" aria-label="Anh chị trước">‹</button>
@@ -1313,6 +1347,8 @@ function renderGiaoVien() {
     <button type="button" class="gv-nav" id="gv-next" aria-label="Anh chị sau">›</button>
   </div>`;
 
+  $("#gv-grid [data-gv-edit]").forEach(b => b.onclick = e => { e.stopPropagation(); suaTheGiaoVien(Number(b.dataset.gvEdit)); });
+  $("#gv-grid [data-gv-remove]").forEach(b => confirmButton(b, () => luuDoiNgu(GIAO_VIEN.filter((g, i) => i !== Number(b.dataset.gvRemove))), "Gỡ?"));
   const ds = GIAO_VIEN.filter(g => g.anh);
   const vx = vongXoay(box, $("#gv-stage"), $$("#gv-stage .gv"), $$("#gv-dots button"), $("#gv-prev"), $("#gv-next"), (c) => {
     const g = GIAO_VIEN[Number(c.dataset.i)]; if (!g.anh) return;   // bấm thẻ giữa: xem cả tấm thẻ + bài vẽ
@@ -2890,6 +2926,7 @@ function renderRoster() {
 }
 
 function renderTeachers() {
+  renderGiaoVien();
   renderRoster(); // cập nhật nút Trao quyền GV / chữ "Đang là GV" trong bảng học viên
   if (!teachers.length) { $("#teachers").innerHTML = `<tbody><tr><td class="muted">Chưa có giáo viên nào. Quản lý luôn có toàn quyền.</td></tr></tbody>`; return; }
   // tên trên, Gmail + SĐT dưới; điện thoại: mỗi người một thẻ, 2 ô chọn nằm cạnh nhau
@@ -4562,6 +4599,7 @@ async function startFirebase() {
       // Gộp các snapshot cùng khung hình, rồi cập nhật ngay khi trình duyệt sẵn sàng vẽ.
       cancelAnimationFrame(baiHen); baiHen = requestAnimationFrame(() => { renderGallery(); veTopRank(); dispatchEvent(new Event("baive-doi")); });
       try { renderTop5(); renderTiles(); } catch (e) {}    }, () => { baiVeLoi = true; try { renderTop5(); } catch (e) {} });
+    onSnapshot(doc(db, "cauhinh", "doingu"), d => { if (d.exists() && Array.isArray(d.data().ds)) { GIAO_VIEN.splice(0, GIAO_VIEN.length, ...d.data().ds); renderGiaoVien(); } }, () => {});
     // Thời gian biểu quản lý sửa trên web (ai cũng đọc được)
     onSnapshot(doc(db, "cauhinh", "thoigianbieu"), d => { if (d.exists()) apTKB((d.data() || {}).tkb, true); }, () => {});
     // Bản tin nổi bật
