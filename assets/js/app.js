@@ -6,7 +6,7 @@ import { ngayVietNam, ngaySinhHopLe, hienNgaySinh, denSinhNhat } from "./sinh-nh
 import { firebaseConfig, ADMIN_EMAIL, EMAIL_NHAN_THONG_BAO } from "../../config/firebase-config.js?v=20261009b";
 import { FILE_LIMITS, FILE_TYPES, fileExt, fileSize, validateFiles, attachmentStorage, uploadError, validAttachmentPath } from "./attachments.js?v=20261009b";
 import { GIAO_TRINH_MAU as GT_LO_TRINH } from "../../data/giao-trinh-mau.js?v=20261010bf";
-import { createResourceWorkspace, ADVANCED_SEEDS } from "./resource-workspace.js?v=20261012progressaccess";
+import { createResourceWorkspace, ADVANCED_SEEDS } from "./resource-workspace.js?v=20261012audit";
 import { soSanhTenHocVien } from "./ten-hoc-vien.js?v=20261010bs";
 import { GO_KHOI_CA, thuocDanhSachCa } from "./danh-sach-ca.js?v=20261010bs";
 import * as vanTay from "./van-tay.js?v=20261011vt";
@@ -1761,7 +1761,7 @@ $("#dk-zalo").href = ZALO_LINK;
     const mo = v => { clearTimeout(hide); if (v) dong(d); d.classList.toggle("open", v); t.setAttribute("aria-expanded", v); };
     d.addEventListener("mouseenter", () => { if (matchMedia("(hover:hover)").matches) mo(true); });
     d.addEventListener("mouseleave", () => { hide = setTimeout(() => mo(false), 160); });
-    t.addEventListener("click", () => mo(!d.classList.contains("open")));
+    t.addEventListener("click", e => mo(e.detail > 0 && matchMedia("(hover:hover)").matches ? true : !d.classList.contains("open")));
     d.querySelectorAll("a").forEach(a => a.addEventListener("click", () => mo(false)));
   });
   document.addEventListener("click", e => { if (!e.target.closest("nav .dd")) dong(); });
@@ -4571,7 +4571,7 @@ async function onUser(u) {
   if (isTeacher) {
     window.__rosterReady = false;
     listen(query(collection(db, "hocvien"), orderBy("duyetLuc", "desc")), snap => {
-      roster = snap.docs.map(d => ({ id: d.id, ...d.data() })); renderHomework(); if (isAdmin) renderRoster(); renderAttend(); renderLV(); window.__rosterReady = true;
+      roster = snap.docs.map(d => ({ id: d.id, ...d.data() })); renderHomework(); if (isAdmin) { renderRoster(); renderResources(); } renderAttend(); renderLV(); window.__rosterReady = true;
     });
     listen(collection(db, "diemdanh"), snap => {
       diemdanhAll = {}; snap.docs.forEach(d => diemdanhAll[d.id] = d.data()); renderAttend(); if (vanHanhM) vanHanhM.veLai();
