@@ -3878,3 +3878,7 @@ nav.on-hero .acct{box-shadow:none;background:rgba(12,14,18,.85);border-color:rgb
   body.co-tab{padding-bottom:calc(100px + env(safe-area-inset-bottom))}
   .sec-head > div{padding-inline:6px}
 }
+
+/* Bỏ họa tiết người phía sau nhãn Về lớp và Đội ngũ. */
+#v-home > section:has(#h-ve-lop) > .deco,
+#giao-vien > .deco{display:none}
