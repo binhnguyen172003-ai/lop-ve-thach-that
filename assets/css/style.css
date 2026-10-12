@@ -3932,3 +3932,28 @@ nav.on-hero .acct{box-shadow:none;background:rgba(12,14,18,.85);border-color:rgb
   .mg-rows .mg-nm .tsd{width:22px;min-width:22px}
   .mg-rows .mg-sc{justify-self:end}
 }
+
+/* Họa tiết ở rìa mục gây cắt hình và lẫn vào chữ. */
+.deco{display:none}
+
+/* Ba thẻ thành tích cùng cỡ chữ và trục căn. */
+.cine-stats{align-items:stretch}
+.cine-stat{grid-template-rows:auto 1fr;justify-items:center;text-align:center;gap:8px}
+.cine-stat b{font-size:clamp(1.7rem,5vw,2.3rem);line-height:1.28;padding-inline:0;margin:0;white-space:nowrap}
+.cine-stat > span{display:block;align-self:start;width:100%;min-height:2.8em;font-size:.78rem;line-height:1.4;text-wrap:balance}
+
+/* Khung đếm ngày: cột nội dung được co, nhãn kỳ thi xuống dòng riêng. */
+.cd-lead{grid-template-columns:auto minmax(0,1fr);gap:20px}
+.cd-lead > div{min-width:0}
+.cd-lead .eyebrow{white-space:normal;overflow-wrap:break-word;line-height:1.5}
+.cd-lead h3{display:flex;flex-direction:column;align-items:flex-start;gap:8px;line-height:1.4;overflow-wrap:break-word}
+.cd-lead h3 .chip{max-width:100%;white-space:normal;line-height:1.4;margin:0}
+.cd-big{line-height:1.15;letter-spacing:0}
+@media(max-width:640px){
+  .cine-stat{padding:12px 8px;gap:6px}
+  .cine-stat b{font-size:clamp(1.5rem,6.5vw,1.9rem)}
+  .cine-stat > span{font-size:clamp(.65rem,2.7vw,.75rem);line-height:1.4}
+  .cd-lead{display:grid;grid-template-columns:minmax(0,1fr);gap:14px;padding:20px}
+  .cd-lead h3{font-size:1.1rem}
+  .cd-lead .eyebrow{font-size:.68rem;letter-spacing:.06em}
+}
