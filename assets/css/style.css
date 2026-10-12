@@ -3985,3 +3985,19 @@ nav.on-hero .acct{box-shadow:none;background:rgba(12,14,18,.85);border-color:rgb
   .hero.cine #hero-h1 .ln{animation:none;opacity:1;filter:none;transform:none}
   .hero.cine #hero-h1 .strike::after{animation:none}
 }
+
+/* Lịch thi: tách các mốc quan trọng để đọc nhanh trên điện thoại. */
+.cd-lead{display:block}
+.exam-time-summary{min-width:0}
+.exam-time-summary h3{font-size:1.2rem;line-height:1.4;margin:6px 0 10px}
+.exam-time-summary>.chip{display:inline-block;margin:0 0 18px}
+.exam-time-points{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.exam-time-points>div{display:flex;flex-direction:column;gap:8px;min-width:0}
+.exam-time-points>div+div{border-left:1px solid var(--rule);padding-left:18px}
+.exam-time-points span,.exam-time-points small{font-family:var(--f-body);font-style:normal;font-size:.8rem;line-height:1.45;color:var(--graphite)}
+.exam-time-points b{display:block;color:var(--ink);line-height:1.2}
+.exam-time-points .exam-days{font:italic 600 clamp(2rem,6vw,2.7rem)/1.2 var(--f-serif);font-variant-numeric:lining-nums tabular-nums}
+.exam-time-points .exam-days small{margin-left:4px}
+.exam-time-points .exam-date{font-family:var(--f-body);font-size:1.15rem;font-weight:700;white-space:nowrap}
+.exam-practice{margin-top:20px;padding-top:16px;border-top:1px solid var(--rule);line-height:1.6}
+@media(max-width:380px){.exam-time-points{gap:10px}.exam-time-points>div+div{padding-left:10px}.exam-time-points .exam-date{font-size:1rem}}
