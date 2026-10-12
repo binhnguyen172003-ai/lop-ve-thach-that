@@ -1332,7 +1332,7 @@ function renderGiaoVien() {
       <button type="button" class="gv-in" data-i="${i}" tabindex="-1">
         ${g.anh ? `<img class="gv-bai${g.bai ? " gv-art-full" : ""}" src="${esc(g.bai || IMG + g.anh + "-bai.jpg")}" alt="Bài vẽ của ${esc(g.ten)}" loading="eager" decoding="async" width="348" height="234" draggable="false">`
           : g.chinh ? `<span class="gv-bai gv-bai-trong"><b>6</b><small>năm đứng lớp<br>luyện thi năng khiếu</small></span>`
-          : `<span class="gv-bai gv-bai-trong alt"><b>${esc(g.khoi.replace("Khối ", ""))}</b><small>${esc(g.vaiTro)} ${esc(g.khoi)}</small></span>`}
+          : `<span class="gv-bai gv-bai-trong alt"><b>${esc(String(g.khoi || "").replace("Khối ", ""))}</b><small>${esc(g.vaiTro)} ${esc(g.khoi)}</small></span>`}
         <span class="gv-ava">${g.anh ? `<img src="${esc(g.avatar || IMG + g.anh + ".jpg")}" alt="" loading="eager" decoding="async" width="96" height="96" draggable="false">` : `<i>${esc(initials(g.ten))}</i>`}</span>
         <span class="gv-txt">
           <span class="gv-vt">${esc(g.vaiTro)} · ${esc(g.khoi)}</span>
@@ -1347,8 +1347,8 @@ function renderGiaoVien() {
     <button type="button" class="gv-nav" id="gv-next" aria-label="Anh chị sau">›</button>
   </div>`;
 
-  $("#gv-grid [data-gv-edit]").forEach(b => b.onclick = e => { e.stopPropagation(); suaTheGiaoVien(Number(b.dataset.gvEdit)); });
-  $("#gv-grid [data-gv-remove]").forEach(b => confirmButton(b, () => luuDoiNgu(GIAO_VIEN.filter((g, i) => i !== Number(b.dataset.gvRemove))), "Gỡ?"));
+  $$("#gv-grid [data-gv-edit]").forEach(b => b.onclick = e => { e.stopPropagation(); suaTheGiaoVien(Number(b.dataset.gvEdit)); });
+  $$("#gv-grid [data-gv-remove]").forEach(b => confirmButton(b, () => luuDoiNgu(GIAO_VIEN.filter((g, i) => i !== Number(b.dataset.gvRemove))), "Gỡ?"));
   const ds = GIAO_VIEN.filter(g => g.anh);
   const vx = vongXoay(box, $("#gv-stage"), $$("#gv-stage .gv"), $$("#gv-dots button"), $("#gv-prev"), $("#gv-next"), (c) => {
     const g = GIAO_VIEN[Number(c.dataset.i)]; if (!g.anh) return;   // bấm thẻ giữa: xem cả tấm thẻ + bài vẽ
