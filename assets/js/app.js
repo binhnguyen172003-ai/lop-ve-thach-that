@@ -81,7 +81,7 @@ const $ = s => document.querySelector(s);
 // Máy đã bật khoá vân tay: che nội dung ngay khi web mở, trước khi dữ liệu đã lưu kịp hiện ra
 vanTay.khoiDong({ dangXuat: () => document.getElementById("btn-switch")?.click() });
 // Trợ lý (chat + nhắc việc) tải riêng, không làm chậm trang
-const troLyPromise = import("./tro-ly.js?v=20261010bt").catch(e => console.warn("Chưa tải được trợ lý", e));
+const troLyPromise = import("./tro-ly.js?v=20261012itemprice").catch(e => console.warn("Chưa tải được trợ lý", e));
 // Thi thử + vận hành lớp: chỉ tải khi đã đăng nhập vào học
 let vanHanhP = null, vanHanhM = null;
 let tacVuP = null, tacVuM = null;
