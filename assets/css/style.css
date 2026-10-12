@@ -3961,8 +3961,8 @@ nav.on-hero .acct{box-shadow:none;background:rgba(12,14,18,.85);border-color:rgb
 /* Số cùng chiều cao thay vì kiểu số có nét lên xuống của font serif. */
 .cine-stat b{font-variant-numeric:lining-nums tabular-nums;font-feature-settings:"lnum" 1,"tnum" 1;font-weight:600}
 
-/* Cùng font đứng để cả ba giá trị có chiều cao nhìn đồng nhất. */
-.cine-stats .cine-stat > b{font-family:var(--f-body);font-style:normal;font-weight:600;font-size:2rem;line-height:1.25;letter-spacing:0;font-variant-numeric:lining-nums tabular-nums;font-feature-settings:normal}
+/* Giữ phông nghiêng có chân cũ, cùng cỡ và căn giữa cả ba giá trị. */
+.cine-stats .cine-stat > b{font-family:var(--f-serif);font-style:italic;font-weight:600;font-size:2rem;line-height:1.25;letter-spacing:0;font-variant-numeric:lining-nums tabular-nums;font-feature-settings:normal}
 @media(max-width:640px){.cine-stats .cine-stat > b{font-size:clamp(1.4rem,6.5vw,1.9rem)}}
 
 /* Chữ lớn đầu trang hiện theo hai dòng, không chờ Firebase hay JavaScript. */
