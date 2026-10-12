@@ -718,6 +718,8 @@ renderGallery();
    Thẻ giữa to nhất, hai bên xoay nghiêng và lùi ra sau, tự quay mỗi 3,5 giây.
    Dừng khi người xem chạm / để chuột / đang xem ảnh; vuốt hoặc bấm mũi tên để chuyển. */
 function vongXoay(box, st, cards, dots, prev, next, onCenter) {
+  box.__vongCleanup?.();
+  const lifecycle = new AbortController();
   const n = cards.length;
   let cur = 0, timer = 0, paused = false, inView = false;
   const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
@@ -758,17 +760,19 @@ function vongXoay(box, st, cards, dots, prev, next, onCenter) {
     const o = theDuoiChuot(e.clientX, e.clientY); if (o) o.c.click();
   });
   st.addEventListener("dragstart", e => e.preventDefault());
-  box.addEventListener("mouseenter", () => pause(true)); box.addEventListener("mouseleave", () => pause(false));
-  box.addEventListener("focusin", () => pause(true)); box.addEventListener("focusout", () => pause(false));
+  box.addEventListener("mouseenter", () => pause(true), { signal: lifecycle.signal }); box.addEventListener("mouseleave", () => pause(false), { signal: lifecycle.signal });
+  box.addEventListener("focusin", () => pause(true), { signal: lifecycle.signal }); box.addEventListener("focusout", () => pause(false), { signal: lifecycle.signal });
   box.tabIndex = 0;
   box.addEventListener("keydown", e => {
     if (e.key === "ArrowRight") { go(cur + 1); e.preventDefault(); }
     if (e.key === "ArrowLeft") { go(cur - 1); e.preventDefault(); }
     if (e.key === "Enter" && e.target === box) cards[cur].click();
-  });
-  document.addEventListener("visibilitychange", tick);
-  addEventListener("resize", draw, { passive: true });
-  new IntersectionObserver(es => { inView = es[0].isIntersecting; tick(); }, { threshold: .3 }).observe(box);
+  }, { signal: lifecycle.signal });
+  document.addEventListener("visibilitychange", tick, { signal: lifecycle.signal });
+  addEventListener("resize", draw, { passive: true, signal: lifecycle.signal });
+  const observer = new IntersectionObserver(es => { inView = es[0].isIntersecting; tick(); }, { threshold: .3 });
+  observer.observe(box);
+  box.__vongCleanup = () => { paused = true; clearTimeout(timer); lifecycle.abort(); observer.disconnect(); };
   draw();
   return { pause, go };
 }
@@ -4419,7 +4423,7 @@ async function onUser(u) {
     }
   };
   // Đã xác nhận email nhưng token trên máy còn cũ (chưa có claim email_verified): làm mới token trước khi đọc dữ liệu.
-  if (!u.__thuLai && u.emailVerified) { try { await hanTuoi(u.getIdToken(true)); } catch (e) {} }
+  if (!u.__thuLai && u.emailVerified) { try { await hanTuoi(u.getIdToken()); } catch (e) {} }
   const tr = performance.now();
   // Ảnh đại diện riêng của tài khoản này (giáo viên, quản lý, học viên đều có)
   let avaTuMay = false;
@@ -4587,7 +4591,7 @@ async function startFirebase() {
     try { db = initializeFirestore(app, { experimentalAutoDetectLongPolling: true }); }
     catch (e) { db = getFirestore(app); }
     // Mở sẵn kết nối tới máy chủ ngay khi vào trang, để lúc đăng nhập không phải chờ.
-    getDoc(doc(db, "admins", "_mo-ket-noi")).catch(() => {});
+    // Public listeners below establish the connection without an extra restricted read.
     // XP thưởng & thành tựu anh chị trao trên web: ai cũng xem được (hiện ở Top rank)
     onSnapshot(collection(db, "xephang"), snap => {
       const all = snap.docs.map(d => ({ id: d.id, ...d.data() }));
