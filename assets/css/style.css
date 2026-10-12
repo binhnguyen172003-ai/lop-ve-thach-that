@@ -3919,3 +3919,16 @@ nav.on-hero .acct{box-shadow:none;background:rgba(12,14,18,.85);border-color:rgb
   #v-khoa-hoc .rw-actions{display:grid;grid-template-columns:minmax(0,1fr);margin:0}
   #v-khoa-hoc .rw-actions > button{width:100%;justify-content:center;text-align:center;white-space:normal;line-height:1.4;min-height:46px;padding:12px 16px}
 }
+
+/* Bảng vàng: tên dài không đẩy huy hiệu thành dòng riêng. */
+.mg-rows summary{grid-template-columns:42px auto minmax(0,1fr) auto;row-gap:5px}
+.mg-rows .mg-nm{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:8px;min-width:0;line-height:1.4;overflow-wrap:break-word}
+.mg-rows .mg-nm .tsd{margin:0;justify-self:end;align-self:center}
+.mg-rows .mg-sub{min-width:0;line-height:1.5;overflow-wrap:break-word}
+@media(max-width:640px){
+  .mg-rows summary{grid-template-columns:26px 42px minmax(0,1fr) 58px;column-gap:8px;padding:12px 10px}
+  .mg-rows .mg-tr{min-width:0}
+  .mg-rows .mg-nm{font-size:.85rem;letter-spacing:0;gap:5px}
+  .mg-rows .mg-nm .tsd{width:22px;min-width:22px}
+  .mg-rows .mg-sc{justify-self:end}
+}
