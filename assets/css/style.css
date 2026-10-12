@@ -3893,3 +3893,6 @@ nav.on-hero .acct{box-shadow:none;background:rgba(12,14,18,.85);border-color:rgb
 .sd-time > span:first-child{font-size:.85rem}
 .sd-time .num{font-size:.85rem}
 @media(max-width:380px){.sd{grid-template-columns:66px minmax(0,1fr);gap:8px;padding:10px}.sd-ca{grid-template-columns:68px minmax(0,1fr);gap:6px}.sd-time > span:first-child,.sd-time .num{font-size:.8rem}}
+
+/* Nhãn Hôm nay cùng mép trái với tên thứ. */
+.sd > b .chip{padding:0;margin:4px 0 0;border:0;background:none;text-align:left;white-space:nowrap;line-height:1.4}
