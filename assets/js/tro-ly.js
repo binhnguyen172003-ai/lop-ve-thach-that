@@ -439,7 +439,7 @@ function datKhung(el) {
   // Nút phóng to / thu nhỏ: vẽ bằng hình (ký tự ⤢ trên Android hiện rất bé)
   const MO = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6M20 4l-7 7M10 20H4v-6M4 20l7-7"/></svg>';
   const THU = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 11h-6V5M13 11l7-7M5 13h6v6M11 13l-7 7"/></svg>';
-  el.querySelectorAll("[data-to]").forEach(b => { if (el.id === "tl-nhac" && nguoi?.vaiTro === "ql") { b.textContent = "Viết tin"; b.setAttribute("aria-label", "Viết thông báo lớp"); b.classList.add("tl-write-notice"); return; } b.classList.remove("tl-write-notice"); b.innerHTML = to ? THU : MO; b.setAttribute("aria-label", to ? "Thu nhỏ" : "Phóng to"); });
+  el.querySelectorAll("[data-to]").forEach(b => { if (el.id === "tl-nhac" && ["ql", "gv"].includes(nguoi?.vaiTro)) { b.textContent = "Viết tin"; b.setAttribute("aria-label", "Viết thông báo lớp"); b.classList.add("tl-write-notice"); return; } b.classList.remove("tl-write-notice"); b.innerHTML = to ? THU : MO; b.setAttribute("aria-label", to ? "Thu nhỏ" : "Phóng to"); });
   if (to) { Object.assign(el.style, { left: v.x + 8 + "px", top: v.y + 8 + "px", width: v.w - 16 + "px", height: v.h - 16 + "px" }); return; }
   const dt = v.w <= 640, laNhac = el.id === "tl-nhac";
   // Khung Nhắc việc: cao vừa đủ nội dung (ít việc thì khung gọn, không để một khoảng trống lớn)
@@ -477,7 +477,7 @@ function ganKeo(cum, ...khung) {
       di(dx, dy) { const v = vp(), r = k.getBoundingClientRect(); k.style.left = kep(kx + dx, v.x + 4, v.x + v.w - r.width - 4) + "px"; k.style.top = kep(ky + dy, v.y + 4, v.y + v.h - r.height - 4) + "px"; },
       tha() { const v = vp(), r = k.getBoundingClientRect(); k.classList.remove("keo"); store.set("lvtt-tl-khung", { x: (r.left - v.x) / v.w, y: (r.top - v.y) / v.h }); },
     });
-    k.querySelector("[data-to]").onclick = () => { if (k.id === "tl-nhac" && nguoi?.vaiTro === "ql") { k.hidden = true; $("#tl-nhac-nut").setAttribute("aria-expanded", "false"); window.__vietThongBaoLop?.(); return; } store.set("lvtt-tl-to", !store.get("lvtt-tl-to", false)); datKhung(k); };
+    k.querySelector("[data-to]").onclick = () => { if (k.id === "tl-nhac" && ["ql", "gv"].includes(nguoi?.vaiTro)) { k.hidden = true; $("#tl-nhac-nut").setAttribute("aria-expanded", "false"); window.__vietThongBaoLop?.(); return; } store.set("lvtt-tl-to", !store.get("lvtt-tl-to", false)); datKhung(k); };
   });
   const lai = () => { datCum(cum); khung.forEach(k => { if (!k.hidden) datKhung(k); }); };
   addEventListener("resize", lai);
