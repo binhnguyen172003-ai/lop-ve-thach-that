@@ -1622,7 +1622,7 @@ $("#dk-zalo").href = ZALO_LINK;
     const o = (href, t, d) => `<a href="${esc(href)}" style="--i:${i++}"><b>${esc(t)}</b>${d ? `<small>${esc(d)}</small>` : ""}</a>`;
     $("#menu-links").innerHTML = $$("nav .dd").map(dd => `<div class="mn-g"><h4>${esc(dd.querySelector(".dd-t").textContent.trim())}</h4><div class="mn-ds">${
       [...dd.querySelectorAll("a.link")].map(a => o(a.getAttribute("href"), (a.querySelector("b") || a).textContent.trim(), (a.querySelector("small") || {}).textContent || "")).join("")}</div></div>`).join("")
-      + `<div class="mn-g"><h4>Khác</h4><div class="mn-ds">${o("#tai-khoan", "Tài khoản", "Học viên · Giáo viên")}${o("#dang-ky", "Liên hệ", "Gọi · Zalo · chỉ đường")}</div></div>`; }
+      + `<div class="mn-g"><h4>Khác</h4><div class="mn-ds">${o("#tai-khoan", "Tài khoản", "Học viên · Giáo viên")}${o(ZALO_LINK, "Liên hệ", "Nhắn Zalo cho lớp")}</div></div>`; }
   let menuTha = null;
   const setMenu = (open, diLink) => {
     if (open && !ov.classList.contains("open")) menuTha = voiQuayLai(() => { menuTha = null; setMenu(false); });
