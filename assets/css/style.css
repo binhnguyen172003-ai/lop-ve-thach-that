@@ -4090,7 +4090,7 @@ nav.on-hero .acct{box-shadow:none;background:rgba(12,14,18,.85);border-color:rgb
 
 /* Nét gạch đặt theo hộp chữ, hiệu ứng chỉ đổi độ dài. */
 .hero.cine #hero-h1 .strike{display:inline-block;line-height:1}
-.hero.cine #hero-h1 .strike::after{left:-2%;right:-2%;top:57%;height:.055em;transform:translateY(-50%) rotate(-5deg);transform-origin:center center}
+.hero.cine #hero-h1 .strike::after{left:-2%;right:-2%;top:60%;height:.055em;transform:translateY(-50%) rotate(-5deg);transform-origin:center center}
 @keyframes hero-title-stroke{
   from{transform:translateY(-50%) rotate(-3deg) scaleX(0)}
   to{transform:translateY(-50%) rotate(-3deg) scaleX(1)}
