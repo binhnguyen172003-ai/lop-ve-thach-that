@@ -163,7 +163,7 @@ function serverIssue(e) {
   else if (code === "unavailable" || /offline|network/i.test(code + msg))
     text = "Mạng đang chập chờn nên chưa lưu được. Kiểm tra wifi/4G rồi thử lại.";
   else if (code === "timeout")
-    text = "Máy chủ đang phản hồi chậm. Web sẽ tự thử lại; anh chị có thể kiểm tra mạng nếu vẫn chưa thấy dữ liệu.";
+    text = "Kết nối dữ liệu chậm · Web đang tự thử lại.";
   else if (code === "failed-precondition")
     text = "Máy chủ chưa sẵn sàng. Anh chị kiểm tra Firestore Database đã được tạo chưa.";
   else text = "Có lỗi khi kết nối máy chủ" + (code ? " (mã: " + code + ")" : "") + ". Tải lại trang rồi thử lại.";
@@ -4441,7 +4441,7 @@ async function onUser(u) {
     if (u.__thuLai <= 20) setTimeout(() => { if (user === u) onUser(u); }, Math.min(5000 * u.__thuLai, 30000));
     if (cu && cu.mail === mail && (cu.isTeacher || cu.approved)) {
       isAdmin = !!cu.isAdmin; isTeacher = !!cu.isTeacher; approved = !!cu.approved; myHv = cu.hv || null;
-      if (u.__thuLai === 1) toast("Máy chủ chưa trả lời. Em vẫn vào học được bằng quyền đã lưu trên máy, web sẽ tự thử lại.", "err");
+      if (u.__thuLai === 1 && !tuChoiQuyen) serverIssue({ code: "timeout" });
     } else if (tuChoiQuyen) {
       // Bị từ chối quyền đọc: không để "đang kiểm tra" mãi. Hiện rõ hướng xử lý, vẫn tự thử lại ngầm.
       renderLocks("pending"); renderAccount(false);
@@ -4456,7 +4456,11 @@ async function onUser(u) {
       if (u.__thuLai === 1) toast("Chưa kiểm tra được tài khoản (mạng hoặc máy chủ chậm). Web đang tự thử lại…", "err");
       return;
     }
-  } else u.__thuLai = 0;
+  } else {
+    u.__thuLai = 0;
+    const issue = document.getElementById("server-issue");
+    if (issue && !tuLoi && !tuChoiQuyen) issue.hidden = true;
+  }
   let pending = !isTeacher && !approved && ycDoc ? ycDoc : false;
   // Phiếu lần trước bị máy chủ từ chối: tự gửi lại khi học viên mở web.
   const unsent = !isTeacher && !approved && !ycDoc ? store.get(UNSENT + mail, null) : null;
