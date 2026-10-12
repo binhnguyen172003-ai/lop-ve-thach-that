@@ -81,7 +81,7 @@ const $ = s => document.querySelector(s);
 // Máy đã bật khoá vân tay: che nội dung ngay khi web mở, trước khi dữ liệu đã lưu kịp hiện ra
 vanTay.khoiDong({ dangXuat: () => document.getElementById("btn-switch")?.click() });
 // Trợ lý (chat + nhắc việc) tải riêng, không làm chậm trang
-const troLyPromise = import("./tro-ly.js?v=20261012itemprice").catch(e => console.warn("Chưa tải được trợ lý", e));
+const troLyPromise = import("./tro-ly.js?v=20261013notice").catch(e => console.warn("Chưa tải được trợ lý", e));
 // Thi thử + vận hành lớp: chỉ tải khi đã đăng nhập vào học
 let vanHanhP = null, vanHanhM = null;
 let tacVuP = null, tacVuM = null;
@@ -4251,6 +4251,8 @@ function renderTB() {
 }
 // Mẫu thông báo có sẵn: chọn mẫu sẽ điền tiêu đề và nội dung, người viết sửa phần trong [ ]
 const MAU_TB = {
+  hanhocphi: ["Nhắc hạn nộp học phí", "Các bạn hoàn thành học phí tháng [tháng] trước ngày [ngày/tháng]. Nộp xong gửi bill cho anh nhé."],
+  hocphi: ["Thông báo học phí tháng [tháng]", "Học phí tháng [tháng]: [số tiền]. Hạn nộp: [ngày/tháng]. Các bạn kiểm tra thông tin và gửi bill sau khi chuyển khoản nhé."],
   top: ["🏆 Top bài vẽ tuần [số tuần]", "Chúc mừng các em [tên 1], [tên 2], [tên 3], [tên 4], [tên 5].\nXem bài và nhận xét của anh chị trong mục Bài nổi bật."],
   xuatsac: ["⭐ Bài tập [tên bài] được chấm Xuất sắc", "Bài của em [tên học viên] đã được đăng lên Bài vẽ học viên.\nCác em xem để học cách bố cục và xử lý sắc độ."],
   tintuc: ["📢 [Tiêu đề tin]", "[Một hai câu tóm tắt tin].\nBấm Xem chi tiết trong mục Tin nổi bật để đọc đầy đủ."],
@@ -4258,6 +4260,30 @@ const MAU_TB = {
   baitap: ["✏️ Bài tập mới: [tên bài]", "Hạn nộp: [ngày giờ].\nCác em chụp bài (tối đa 3 ảnh) và nộp trong mục Bài tập."],
   online: ["🎨 Mở đăng ký lớp online", "Lớp luyện thi online của Dreamers sắp khai giảng [tháng].\nĐăng ký nhận lịch sớm ngay tại trang chủ."]
 };
+
+window.__vietThongBaoLop = () => {
+  if (!isAdmin || !user || !db) return;
+  const { el, dong } = moHop(`<h3>Viết thông báo lớp</h3><form id="quick-class-notice">
+    <label>Mẫu thông báo<select name="mau"><option value="">Viết tự do</option><option value="hanhocphi">Nhắc hạn học phí</option><option value="hocphi">Thông báo học phí</option><option value="lichhoc">Thay đổi lịch học</option><option value="baitap">Nhắc nộp bài tập</option></select></label>
+    <label>Tiêu đề<input name="tieuDe" required maxlength="120"></label>
+    <label>Nội dung<textarea name="nd" required maxlength="2000" rows="6"></textarea></label>
+    <label>Gửi tới<select name="gui"><option value="tatca">Tất cả học viên và giáo viên</option><option value="giaovien">Chỉ giáo viên</option></select></label>
+    <button type="submit" class="btn primary">Đăng thông báo</button><p class="status" role="status"></p>
+  </form>`, "Viết thông báo lớp");
+  const form = el.querySelector("form");
+  form.elements.mau.onchange = () => { const m = MAU_TB[form.elements.mau.value]; if (m) { form.elements.tieuDe.value = m[0]; form.elements.nd.value = m[1]; } };
+  form.onsubmit = async e => {
+    e.preventDefault(); if (!isAdmin) return;
+    const tieuDe = form.elements.tieuDe.value.trim(), nd = form.elements.nd.value.trim(), st = form.querySelector(".status"), btn = form.querySelector("button");
+    if (!tieuDe || !nd) { st.textContent = "Điền tiêu đề và nội dung."; return; }
+    if (/\[[^\]]+\]/.test(tieuDe + nd)) { st.textContent = "Thay các phần trong ngoặc [ ] bằng thông tin thật trước khi đăng."; return; }
+    btn.disabled = true; st.textContent = "Đang đăng…";
+    try { await addDoc(collection(db, "thongbao"), { tieuDe, nd, gui: form.elements.gui.value, tacGia: mail, ten: tenToi(), luc: Date.now() }); dong(); toast("Đã đăng thông báo lớp."); }
+    catch (err) { st.textContent = "Chưa đăng được. Kiểm tra mạng hoặc quyền tài khoản."; }
+    finally { btn.disabled = false; }
+  };
+};
+
 $("#tb-mau").addEventListener("change", e => {
   const m = MAU_TB[e.target.value]; if (!m) return;
   $("#tb-tieude").value = m[0]; $("#tb-nd").value = m[1]; $("#tb-nd").focus();
