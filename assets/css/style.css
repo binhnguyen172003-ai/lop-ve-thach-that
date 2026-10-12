@@ -4097,3 +4097,7 @@ nav.on-hero .acct{box-shadow:none;background:rgba(12,14,18,.85);border-color:rgb
 }
 
 .gv-edit-tools{position:absolute;top:10px;right:10px;z-index:8;display:flex;gap:6px}.gv-edit-tools button{min-width:44px;min-height:44px;background:var(--sheet);color:var(--ink);border:1px solid var(--rule)}#gv-manage{justify-content:flex-end;margin-bottom:16px}
+
+/* Status messages remain readable above mobile floating controls. */
+#toast{box-sizing:border-box;width:max-content;max-width:min(calc(100vw - 32px),460px);white-space:normal;overflow-wrap:anywhere;z-index:10000}
+@media(max-width:640px){#toast,body.co-tab #toast{bottom:calc(110px + env(safe-area-inset-bottom,0px))}}
