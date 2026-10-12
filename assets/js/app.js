@@ -188,6 +188,27 @@ const store = {
   get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
   set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
 };
+/* Public content renders from the last snapshot while Firebase connects. */
+const PUBLIC_CACHE_KEY = "lvkv-public-content-v1";
+const publicCached = store.get(PUBLIC_CACHE_KEY, null);
+if (publicCached && Date.now() - publicCached.luc < 86400000) {
+  if (Array.isArray(publicCached.baive)) BAIVE_DONG = publicCached.baive;
+  if (Array.isArray(publicCached.bantin)) BANTIN_DONG = publicCached.bantin;
+  if (Array.isArray(publicCached.doingu)) GIAO_VIEN.splice(0, GIAO_VIEN.length, ...publicCached.doingu);
+}
+let publicCacheTimer = 0, publicTeamLoaded = false;
+function savePublicContent() {
+  clearTimeout(publicCacheTimer);
+  publicCacheTimer = setTimeout(() => {
+    const payload = { luc: Date.now(), baive: BAIVE_DONG, bantin: BANTIN_DONG,
+      doingu: publicTeamLoaded ? GIAO_VIEN : publicCached?.doingu };
+    try {
+      const json = JSON.stringify(payload);
+      if (json.length < 1500000) localStorage.setItem(PUBLIC_CACHE_KEY, json);
+    } catch (e) {}
+  }, 300);
+}
+
 /* ---------- Tự lưu nháp biểu mẫu: lỡ tắt trang, mất mạng hay chuyển ứng dụng cũng không mất chữ đã gõ ---------- */
 const formFields = form => Array.from(form.querySelectorAll("input[id], select[id], textarea[id]")).filter(i => i.type !== "checkbox" && i.type !== "hidden" && i.type !== "file");
 const formValues = form => Object.fromEntries(formFields(form).map(i => [i.id, i.value]));
@@ -4603,15 +4624,15 @@ async function startFirebase() {
     }, () => { xhLoi = true; try { renderXHQL(); } catch (e) {} });
     // Bài vẽ anh chị đăng + Top 5 quản lý chọn: ai cũng xem được trên trang chủ
     onSnapshot(collection(db, "baive"), snap => {
-      BAIVE_DONG = snap.docs.map(d => ({ id: d.id, ...d.data() })).map(b => ({ ...b, hang: Number(b.hang) || 0 })); baiVeLoi = false;
+      BAIVE_DONG = snap.docs.map(d => ({ id: d.id, ...d.data() })).map(b => ({ ...b, hang: Number(b.hang) || 0 })); baiVeLoi = false; savePublicContent();
       // Gộp các snapshot cùng khung hình, rồi cập nhật ngay khi trình duyệt sẵn sàng vẽ.
       cancelAnimationFrame(baiHen); baiHen = requestAnimationFrame(() => { renderGallery(); veTopRank(); dispatchEvent(new Event("baive-doi")); });
       try { renderTop5(); renderTiles(); } catch (e) {}    }, () => { baiVeLoi = true; try { renderTop5(); } catch (e) {} });
-    onSnapshot(doc(db, "cauhinh", "doingu"), d => { if (d.exists() && Array.isArray(d.data().ds)) { GIAO_VIEN.splice(0, GIAO_VIEN.length, ...d.data().ds); renderGiaoVien(); } }, () => {});
+    onSnapshot(doc(db, "cauhinh", "doingu"), d => { if (d.exists() && Array.isArray(d.data().ds)) { GIAO_VIEN.splice(0, GIAO_VIEN.length, ...d.data().ds); publicTeamLoaded = true; savePublicContent(); renderGiaoVien(); } }, () => {});
     // Thời gian biểu quản lý sửa trên web (ai cũng đọc được)
     onSnapshot(doc(db, "cauhinh", "thoigianbieu"), d => { if (d.exists()) apTKB((d.data() || {}).tkb, true); }, () => {});
     // Bản tin nổi bật
-    onSnapshot(collection(db, "bantin"), snap => { BANTIN_DONG = snap.docs.map(d => ({ id: d.id, ...d.data() })); banTinLoi = false; renderBanTin(); },
+    onSnapshot(collection(db, "bantin"), snap => { BANTIN_DONG = snap.docs.map(d => ({ id: d.id, ...d.data() })); banTinLoi = false; savePublicContent(); renderBanTin(); },
       () => { banTinLoi = true; });
   } catch (e) {
     // Đã có quyền lưu trên máy: không chặn bài học, chỉ báo nhẹ. Chưa có quyền thì hiện khung báo mạng yếu.
