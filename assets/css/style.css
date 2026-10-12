@@ -4074,3 +4074,16 @@ nav.on-hero .acct{box-shadow:none;background:rgba(12,14,18,.85);border-color:rgb
 .dk-cd-n>div:nth-child(2){border-left:0}
 .dk-cd-n>div>b{padding:0;margin:0;white-space:nowrap}
 .dk-cd-n>div:first-child>span{font-weight:600}
+
+/* Bài vẽ: hai hàng, xem tiếp theo chiều ngang. */
+#gallery.gallery{display:grid;grid-template-columns:none;grid-template-rows:repeat(2,auto);grid-auto-flow:column;grid-auto-columns:calc((100% - 24px)/3);gap:12px;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;scroll-padding-inline:0;padding:0 0 12px;margin:0 0 12px;scrollbar-width:thin;scrollbar-color:var(--graphite) var(--sheet)}
+#gallery.gallery>.gal-o{min-width:0;scroll-snap-align:start}
+#gallery.gallery .gal-them{box-sizing:border-box;margin:0}
+#gallery.gallery .gal-them small{color:var(--graphite);font-size:.78rem}
+#gallery.gallery::-webkit-scrollbar{height:7px}
+#gallery.gallery::-webkit-scrollbar-thumb{background:var(--graphite);border-radius:8px}
+#gallery.gallery::-webkit-scrollbar-track{background:var(--sheet)}
+.gallery-pager{display:flex;justify-content:center;align-items:center;gap:14px;margin:8px 0 20px}
+.gallery-pager button{width:44px;height:44px;border:1px solid var(--rule);border-radius:50%;background:var(--sheet);color:var(--ink);font-size:1.6rem;cursor:pointer}
+.gallery-pager span{font-size:.8rem;color:var(--graphite)}
+@media(max-width:640px){#gallery.gallery{grid-auto-columns:calc((100% - 12px)/2)}}
