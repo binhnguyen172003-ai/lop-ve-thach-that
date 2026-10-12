@@ -3838,6 +3838,19 @@ function capNhatNhac() {
   const t = window.__troLy; if (!t || !user) return;
   capNhatHocTapTroLy();
   const ds = [], hom = todayVN(), thu = THU[new Date(hom + "T12:00:00").getDay()];
+  // Sinh nhật được tạo trước các nhắc học tập, không phụ thuộc tác vụ máy chủ.
+    // Lời chúc riêng trong ngày sinh nhật, theo giờ Việt Nam.
+    const hoSoSinhNhat = myHv || myGvDoc;
+    if (hoSoSinhNhat && denSinhNhat(hoSoSinhNhat.ngaySinh)) {
+      const ngay = ngayVietNam();
+      const loiChuc = "Dreamers chúc em tuổi mới nhiều niềm vui, vẽ ngày càng tiến bộ và đạt được mục tiêu của mình nhé!";
+      ds.unshift({ id: "sinhnhat-" + mail + "-" + ngay, icon: "🎂", muc: "", tieuDe: `Chúc mừng sinh nhật ${hoSoSinhNhat.ten || "em"}!`, nd: loiChuc, link: "#tai-khoan", dich: "#hv-info" });
+      const khoa = "lvkv-sinhnhat-bao-" + mail;
+      if (store.get(khoa, "") !== ngay) {
+        store.set(khoa, ngay);
+        toast("🎂 Chúc mừng sinh nhật em! " + loiChuc);
+      }
+    }
   try {
     if (!isTeacher) {
       const cs = String((myHv && myHv.coso) || "");
@@ -3865,17 +3878,6 @@ function capNhatNhac() {
       const dau = "lichbao-" + x.id + "-" + x.lanHen;
       if (!lichDaBao.has(dau)) { lichDaBao.add(dau); toast(`⏰ ${x.ten || "Nhắc việc"}${x.nd ? ": " + x.nd : ""}`); }
     });
-    // Lời chúc riêng trong ngày sinh nhật, theo giờ Việt Nam.
-    if (!isTeacher && myHv && denSinhNhat(myHv.ngaySinh)) {
-      const ngay = ngayVietNam();
-      const loiChuc = "Dreamers chúc em tuổi mới nhiều niềm vui, vẽ ngày càng tiến bộ và đạt được mục tiêu của mình nhé!";
-      ds.unshift({ id: "sinhnhat-" + mail + "-" + ngay, icon: "🎂", muc: "", tieuDe: "Chúc mừng sinh nhật em!", nd: loiChuc, link: "#tai-khoan", dich: "#hv-info" });
-      const khoa = "lvkv-sinhnhat-bao-" + mail;
-      if (store.get(khoa, "") !== ngay) {
-        store.set(khoa, ngay);
-        toast("🎂 Chúc mừng sinh nhật em! " + loiChuc);
-      }
-    }
     // Mỗi ngày một nhắc: còn bao nhiêu ngày đến kỳ thi (theo khối của học viên)
     if (!isTeacher && myHv) {
       const mocTT = mocThiCuaToi();
