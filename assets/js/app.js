@@ -1150,7 +1150,7 @@ const GHI_CHU = {
     if (!e.isIntersecting) return; const b = e.target.querySelector(".gc-i"), key = e.target.dataset.gcKey;
     if (!b || daXem[key]) return; io.unobserve(e.target); daXem[key] = 1; try { sessionStorage.setItem("lvtt-gc", JSON.stringify(daXem)); } catch (x) {}
     // Điện thoại: chỉ nhấp nháy dấu ?, không tự bật hộp che nội dung; máy tính mới tự mở gợi ý một lần
-    if (matchMedia("(min-width: 900px)").matches) setTimeout(() => { if (!dang) mo(b, true); }, 350);
+    // Chỉ mở hướng dẫn khi bấm hoặc rê chuột; không tự bật che chữ khi cuộn.
   }), { threshold: 0.5, rootMargin: "-15% 0px -25% 0px" }) : null;
   Object.entries(GHI_CHU).forEach(([id, nd]) => {
     const h = document.getElementById(id); if (!h || h.querySelector(".gc")) return;
