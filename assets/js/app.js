@@ -5162,7 +5162,7 @@ const MUC_TIN = { tuyensinh: "Tuyển sinh", tinlop: "Thông báo lớp", hoacu:
 let tnLoc = "all";
 function banTinTatCa() {
   const t = x => x.luc || Date.parse((x.ngay || "1970-01-01") + "T08:00:00+07:00") || 0;
-  return [...BANTIN_DONG.filter(t => !String(t.id).startsWith("seed-")), ...BAN_TIN.map((x, i) => ({ ...x, id: "", codinh: i }))].sort((a, b) => (b.ghim ? 1 : 0) - (a.ghim ? 1 : 0) || t(b) - t(a));
+  return [...BANTIN_DONG.filter(t => !String(t.id).startsWith("seed-")), ...BAN_TIN.map((x, i) => ({ ...x, id: "", codinh: i })).filter(x => !BANTIN_DONG.some(t => t.id === "seed-hidden-tin-" + x.codinh))].sort((a, b) => (b.ghim ? 1 : 0) - (a.ghim ? 1 : 0) || t(b) - t(a));
 }
 // "Tin nổi bật" ngay dưới mục Về lớp: vòng xoay tin tuyển sinh, thông báo, bài đăng (bấm thẻ giữa để mở link)
 // Bản tin nổi bật: một mục duy nhất, hiển thị dạng vòng xoay như dải tin cũ.
@@ -5184,6 +5184,7 @@ function renderBanTin() {
   const the = (x, i) => `<figure class="nb-card tb-the${x.anh ? " co-anh" : ""}" data-i="${i}">
       ${x.anh ? `<img src="${esc(x.anh)}" alt="" loading="lazy" decoding="async" draggable="false">` : `<span class="tb-nen m-${esc(x.muc || "tinlop")}" aria-hidden="true"></span>`}
       ${isAdmin && x.id ? `<button type="button" class="nb-more" data-mt="${esc(x.id)}" aria-label="Tuỳ chọn: sửa hoặc xoá bản tin">⋮</button>` : ""}
+      ${isAdmin ? `<button type="button" class="tn-delete" data-xt="${i}" aria-label="Xoá bản tin: ${esc(x.tieuDe || "")}" title="Xoá bản tin">×</button>` : ""}
       <div class="tb-the-nd"><span class="tb-chip"><span class="tn-muc m-${esc(x.muc || "tinlop")}">${esc(MUC_TIN[x.muc] || "Tin của lớp")}</span>${x.ghim ? `<span class="tn-ghim">📌 Ghim</span>` : ""}</span>
         <b>${esc(x.tieuDe || "")}</b><small>${esc(String(x.nd || "").split(/\n/)[0].slice(0, 120))}${String(x.nd || "").length > 120 ? "…" : ""}</small>
         <span class="tb-mo">${"Xem chi tiết →"} <em class="num">${ngayCua(x)}</em></span></div></figure>`;
@@ -5195,6 +5196,28 @@ function renderBanTin() {
   if (!n) return;
 
   const ring = box.querySelector(".tb-ring"), [p2, n2] = ring.querySelectorAll(".gv-nav");
+  ring.querySelectorAll(".tn-delete").forEach(bt => {
+    bt.addEventListener("pointerdown", e => e.stopPropagation());
+    bt.addEventListener("click", e => {
+      e.preventDefault(); e.stopPropagation();
+      if (!(user && isAdmin && db)) return;
+      const tin = ds[Number(bt.dataset.xt)]; if (!tin) return;
+      const { el, dong } = moHop(`<h3>Xoá bản tin?</h3><p>${esc(tin.tieuDe || "")}</p><p class="muted">Tin này sẽ được gỡ khỏi Bản tin nổi bật.</p><div class="hop-nut"><button type="button" class="btn danger" data-xoa-tin>Xoá bản tin</button><button type="button" class="btn" data-dong>Huỷ</button></div>`, "Xoá bản tin");
+      const nut = el.querySelector("[data-xoa-tin]");
+      nut.onclick = async () => {
+        if (!(user && isAdmin && db)) return;
+        nut.disabled = true; nut.textContent = "Đang xoá…";
+        try {
+          if (tin.id) await timed("Xoá bản tin", deleteDoc(doc(db, "bantin", tin.id)));
+          else await timed("Gỡ bản tin có sẵn", setDoc(doc(db, "bantin", "seed-hidden-tin-" + tin.codinh), {
+            muc: tin.muc || "tinlop", tieuDe: tin.tieuDe || "Bản tin có sẵn", nd: "Bản tin có sẵn đã được quản lý gỡ khỏi trang.",
+            tacGia: user.email.toLowerCase(), ghim: false, luc: Date.now()
+          }));
+          dong(); toast("Đã xoá bản tin.");
+        } catch (e) { nut.disabled = false; nut.textContent = "Xoá bản tin"; toast("Chưa xoá được. Kiểm tra quyền hoặc kết nối rồi thử lại.", "err"); }
+      };
+    });
+  });
   ring.querySelectorAll(".nb-more[data-mt]").forEach(bt => {
     bt.addEventListener("pointerdown", e => e.stopPropagation());
     bt.addEventListener("click", e => { e.stopPropagation(); e.preventDefault(); moMenuBai(bt, BANTIN_DONG.find(y => y.id === bt.dataset.mt), "tin"); });
