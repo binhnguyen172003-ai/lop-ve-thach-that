@@ -26,3 +26,10 @@ test("giữ đủ 17 video với mã bài ổn định", () => {
   assert.equal(new Set(ADVANCED_SEEDS.map(r => r.id)).size, 17);
   assert.equal(ADVANCED_SEEDS[0].ten, "Kỹ thuật nét, sắc độ, khối và quy luật sáng tối");
 });
+
+import { resourceLessons } from "../assets/js/resource-workspace.js";
+test("khóa mới không bị tính là bài học và không lẫn bài giữa các khóa", () => {
+ const rows = [{id:"k",loai:"khoa",khoa:"Màu"},{id:"a",loai:"video",khoa:"Màu"},{id:"b",loai:"video",khoa:"Chân dung"},{id:"c",loai:"video",khoa:"Màu",an:true}];
+ assert.deepEqual(resourceLessons(rows,"Màu").map(x=>x.id),["a"]);
+ assert.deepEqual(resourceLessons([rows[0]],"Màu"),[]);
+});
