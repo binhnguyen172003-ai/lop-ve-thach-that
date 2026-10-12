@@ -3907,3 +3907,15 @@ nav.on-hero .acct{box-shadow:none;background:rgba(12,14,18,.85);border-color:rgb
   #v-ebook .rw-actions > button{width:100%;max-width:100%;justify-content:center;white-space:normal;text-align:center;line-height:1.4;min-height:46px;padding:12px 16px}
   #v-ebook .gt-trong{margin:0;padding:18px 14px}
 }
+
+/* Khóa học: bỏ tiêu đề lặp, căn các thao tác và thẻ cùng khung. */
+#lo-trinh-khoa-hoc{padding-top:0;border-top:0}
+#lo-trinh-khoa-hoc > .sec-head,#lo-trinh-khoa-hoc > .deco{display:none}
+.resource-workspace .rw-actions{flex-wrap:wrap;gap:10px}
+@media(max-width:760px){
+  #v-khoa-hoc > .page-head{padding-block:24px 18px}
+  #v-khoa-hoc .page-head > .muted{margin-bottom:0;line-height:1.5}
+  #v-khoa-hoc .gt-wrap,#v-khoa-hoc .gt-side,#v-khoa-hoc .gt-main{gap:14px}
+  #v-khoa-hoc .rw-actions{display:grid;grid-template-columns:minmax(0,1fr);margin:0}
+  #v-khoa-hoc .rw-actions > button{width:100%;justify-content:center;text-align:center;white-space:normal;line-height:1.4;min-height:46px;padding:12px 16px}
+}
