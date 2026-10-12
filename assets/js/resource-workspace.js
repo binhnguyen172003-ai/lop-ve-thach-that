@@ -47,14 +47,27 @@ export function resourceLessons(rows, category) {
   return rows.filter(row => !row.an && row.loai !== "khoa" && row.khoa === category);
 }
 
-export function createResourceWorkspace(root, { phan, seeds = [], ebook = false, save, mark, markdown, notify }) {
-  let state = { rows: [], marks: {}, canManage: false }, category = "", opened = "", editing = null, addingCourse = false;
+export function createResourceWorkspace(root, { phan, seeds = [], ebook = false, save, mark, markdown, notify, markSeen }) {
+  let state = { rows: [], marks: {}, canManage: false }, category = "", opened = "", editing = null, addingCourse = false, accessEditing = false;
   const q = selector => root.querySelector(selector);
   const qa = selector => [...root.querySelectorAll(selector)];
   const label = ebook ? "sách" : "khóa";
   const unit = ebook ? "chương / tài liệu" : "bài học";
   const activeRows = () => resourceRows(state.rows, seeds, phan);
   const categories = rows => [...new Set(rows.filter(row => !row.an).map(row => row.khoa || (ebook ? "eBook" : "Khóa nâng cao")))];
+  const accessRow = (rows, name) => rows.find(row => row.loai === "khoa" && row.khoa === name);
+  const canView = (rows, name) => {
+    const meta = accessRow(rows, name);
+    return !!state.staff || !meta || meta.access !== "selected" || (meta.viewers || []).includes(state.mail);
+  };
+  const accessForm = rows => {
+    const meta = accessRow(rows, category);
+    return `<form class="rw-editor teacher" data-access-form><h3>Quyền xem · ${esc(category)}</h3>
+      <label>Ai được xem<select name="access"><option value="all">Tất cả học viên đã duyệt</option><option value="selected"${meta?.access === "selected" ? " selected" : ""}>Chỉ người được chọn</option></select></label>
+      <p class="muted">Quản lý và giáo viên luôn được xem. Chọn học viên bên dưới.</p>
+      ${(state.viewers || []).map(person => `<label class="check"><input type="checkbox" name="viewer" value="${esc(person.id)}"${(meta?.viewers || []).includes(person.id) ? " checked" : ""}><span>${esc(person.ten || person.id)} · ${esc(person.id)}</span></label>`).join("")}
+      <p class="status" data-access-status></p><div class="hop-nut"><button type="button" class="btn" data-access-cancel>Huỷ</button><button type="submit" class="btn primary">Lưu quyền xem</button></div></form>`;
+  };
   const detail = (row, rows) => {
     const current = rows.findIndex(item => item.id === row.id), previous = rows[current - 1], next = rows[current + 1];
     const image = resourceImage(row), link = safeResourceLink(row.link), done = !!state.marks?.[row.id];
@@ -84,18 +97,25 @@ export function createResourceWorkspace(root, { phan, seeds = [], ebook = false,
     if (!root) return;
     const all = activeRows(), groups = categories(all);
     if (!groups.includes(category)) category = groups[0] || "";
+    if (!canView(all, category)) {
+      root.innerHTML = `<div class="gt-mon">${groups.map(name => `<button class="gt-mon-nut" data-category="${esc(name)}" aria-pressed="${name === category}">${esc(name)}</button>`).join("")}</div><section class="lock"><h3>Khóa học chưa được cấp quyền</h3><p>Liên hệ quản lý để được mở khóa ${esc(category)}.</p></section>`;
+      qa("[data-category]").forEach(button => button.onclick = () => { category = button.dataset.category; opened = ""; render(); });
+      return;
+    }
     const rows = resourceLessons(all, category), hidden = all.filter(row => row.an && row.loai !== "khoa");
     const selected = rows.find(row => row.id === opened);
     if (!selected) opened = "";
     const completed = rows.filter(row => state.marks?.[row.id]).length;
+    const studying = rows.filter(row => !state.marks?.[row.id] && state.seen?.[row.id]).length;
+    const nextLesson = rows.find(row => !state.marks?.[row.id]);
     const percent = rows.length ? Math.round(completed / rows.length * 100) : 0;
     root.innerHTML = `<div class="gt-wrap ${selected ? "dang-doc" : ""}"><aside class="gt-side"><div class="gt-mon" role="navigation" aria-label="Chọn ${label}">${groups.map(name => `<button class="gt-mon-nut" type="button" data-category="${esc(name)}" aria-pressed="${name === category}"><b>${esc(name)}</b><small>${resourceLessons(all, name).length} ${unit}</small></button>`).join("")}</div>
-      <section class="gt-td"><p class="eyebrow">${esc(category || label)}</p><div class="gt-td-so"><b class="num">${state.staff ? rows.length : `${completed}/${rows.length}`}</b><span>${state.staff ? unit : ebook ? "mục đã đọc" : "bài đã hoàn thành"}</span></div>${state.staff ? "" : `<div class="gt-bar" role="progressbar" aria-label="Tiến độ" aria-valuenow="${percent}" aria-valuemin="0" aria-valuemax="100"><i style="width:${percent}%"></i></div>`}</section></aside>
-      <div class="gt-main">${state.canManage ? `<div class="rw-actions">${!ebook ? `<button class="btn" type="button" data-add-course>+ Thêm khóa học</button>` : ""}<button class="btn primary" type="button" data-add>+ Thêm ${ebook ? "chương / tài liệu" : "bài học"}</button></div>` : ""}
-      ${addingCourse && state.canManage ? courseForm() : editing !== null && state.canManage ? form(all.find(row => row.id === editing)) : selected ? detail(selected, rows) : rows.length ? `<div class="gt-ds"><div class="gt-luoi">${rows.map((row, i) => { const image = resourceImage(row), done = !!state.marks?.[row.id]; return `<button class="gt-the tt-${state.staff ? "gv" : done ? "xong" : "chua"}" type="button" data-open="${esc(row.id)}"><span class="gt-anh">${image ? `<img src="${esc(image)}" alt="" loading="lazy">` : `<span class="gt-ph" aria-hidden="true">${ebook ? "📖" : "🖼️"}</span>`}</span><span class="gt-noi"><small class="gt-so">${ebook ? "Mục" : "Bài"} ${String(i + 1).padStart(2, "0")}</small><b class="gt-ten">${esc(row.ten)}</b><span class="gt-mota">${esc(row.moTa || String(row.noidung || "").slice(0, 160) || "Nội dung đang được cập nhật.")}</span><span class="gt-tt">${!state.staff ? `<span class="gt-chip ${done ? "xong" : "chua"}">${done ? ebook ? "✓ Đã đọc" : "✓ Hoàn thành" : ebook ? "Chưa đọc" : "Chưa học"}</span>` : ""}</span></span></button>`; }).join("")}</div></div>` : `<p class="muted gt-trong">${ebook ? "Chưa có eBook được đăng." : "Khóa này chưa có bài."}</p>`}
+      <section class="gt-td"><p class="eyebrow">${esc(category || label)}</p><div class="gt-td-so"><b class="num">${state.staff ? rows.length : `${completed}/${rows.length}`}</b><span>${state.staff ? unit : ebook ? "mục đã đọc" : "bài đã hoàn thành"}</span></div>${state.staff ? "" : `<div class="gt-bar" role="progressbar" aria-label="Tiến độ" aria-valuenow="${percent}" aria-valuemin="0" aria-valuemax="100"><i style="width:${percent}%"></i></div><p class="num"><b>${percent}%</b></p><p class="muted">● Hoàn thành ${completed} · ● Đang học ${studying} · ○ Chưa học ${rows.length - completed - studying}</p>${nextLesson ? `<button class="btn primary" type="button" data-open="${esc(nextLesson.id)}">Bài tiếp theo · ${esc(nextLesson.ten)} →</button>` : `<p>Đã hoàn thành khóa học.</p>`}` }</section></aside>
+      <div class="gt-main">${state.canManage ? `<div class="rw-actions"><button class="btn" type="button" data-access>Quyền xem khóa</button>${!ebook ? `<button class="btn" type="button" data-add-course>+ Thêm khóa học</button>` : ""}<button class="btn primary" type="button" data-add>+ Thêm ${ebook ? "chương / tài liệu" : "bài học"}</button></div>` : ""}
+      ${accessEditing && state.canManage ? accessForm(all) : addingCourse && state.canManage ? courseForm() : editing !== null && state.canManage ? form(all.find(row => row.id === editing)) : selected ? detail(selected, rows) : rows.length ? `<div class="gt-ds"><div class="gt-luoi">${rows.map((row, i) => { const image = resourceImage(row), done = !!state.marks?.[row.id]; return `<button class="gt-the tt-${state.staff ? "gv" : done ? "xong" : "chua"}" type="button" data-open="${esc(row.id)}"><span class="gt-anh">${image ? `<img src="${esc(image)}" alt="" loading="lazy">` : `<span class="gt-ph" aria-hidden="true">${ebook ? "📖" : "🖼️"}</span>`}</span><span class="gt-noi"><small class="gt-so">${ebook ? "Mục" : "Bài"} ${String(i + 1).padStart(2, "0")}</small><b class="gt-ten">${esc(row.ten)}</b><span class="gt-mota">${esc(row.moTa || String(row.noidung || "").slice(0, 160) || "Nội dung đang được cập nhật.")}</span><span class="gt-tt">${!state.staff ? `<span class="gt-chip ${done ? "xong" : "chua"}">${done ? ebook ? "✓ Đã đọc" : "✓ Hoàn thành" : ebook ? "Chưa đọc" : "Chưa học"}</span>` : ""}</span></span></button>`; }).join("")}</div></div>` : `<p class="muted gt-trong">${ebook ? "Chưa có eBook được đăng." : "Khóa này chưa có bài."}</p>`}
       ${state.canManage && hidden.length ? `<details class="rw-hidden"><summary>Nội dung đang ẩn (${hidden.length})</summary>${hidden.map(row => `<div><span>${esc(row.khoa)} · ${esc(row.ten)}</span><button class="btn small" type="button" data-restore="${esc(row.id)}">Hiện lại</button></div>`).join("")}</details>` : ""}</div></div>`;
     qa("[data-category]").forEach(button => button.onclick = () => { category = button.dataset.category; opened = ""; editing = null; addingCourse = false; render(); });
-    qa("[data-open]").forEach(button => button.onclick = () => { opened = button.dataset.open; editing = null; render(); root.scrollIntoView({ block: "start" }); });
+    qa("[data-open]").forEach(button => button.onclick = () => { opened = button.dataset.open; editing = null; markSeen?.(opened); render(); root.scrollIntoView({ block: "start" }); });
     if (q("[data-back]")) q("[data-back]").onclick = () => { opened = ""; render(); };
     if (q("[data-mark]")) q("[data-mark]").onclick = async () => { try { await mark(selected.id); } catch { notify("Chưa lưu được tiến độ. Thử lại.", "err"); } };
     if (q("[data-add]")) q("[data-add]").onclick = () => { addingCourse = false; opened = ""; editing = ""; render(); };
@@ -103,6 +123,18 @@ export function createResourceWorkspace(root, { phan, seeds = [], ebook = false,
     qa("[data-hide]").forEach(button => button.onclick = async () => { if (!confirm("Ẩn nội dung này khỏi học viên?")) return; try { await save(button.dataset.hide, { an: true }); opened = ""; notify("Đã ẩn nội dung."); } catch { notify("Chưa ẩn được. Thử lại.", "err"); } });
     qa("[data-restore]").forEach(button => button.onclick = async () => { try { await save(button.dataset.restore, { an: false }); notify("Đã hiện lại nội dung."); } catch { notify("Chưa hiện lại được. Thử lại.", "err"); } });
     if (q("[data-add-course]")) q("[data-add-course]").onclick = () => { addingCourse = true; editing = null; opened = ""; render(); q('[data-course-form] input').focus(); };
+    if (q("[data-access]")) q("[data-access]").onclick = () => { accessEditing = true; opened = ""; editing = null; render(); };
+    if (q("[data-access-cancel]")) q("[data-access-cancel]").onclick = () => { accessEditing = false; render(); };
+    const permissionEditor = q("[data-access-form]");
+    if (permissionEditor) permissionEditor.onsubmit = async event => {
+      event.preventDefault(); if (!state.canManage) return;
+      const values = new FormData(permissionEditor), meta = accessRow(all, category);
+      const data = { phan, khoa: category, ten: category, loai: "khoa", thutu: 0, an: false,
+        access: values.get("access"), viewers: values.getAll("viewer") };
+      const button = permissionEditor.querySelector('[type="submit"]'); button.disabled = true;
+      try { await save(meta?.id || null, data); accessEditing = false; notify("Đã lưu quyền xem."); render(); }
+      catch { button.disabled = false; q("[data-access-status]").textContent = "Chưa lưu được quyền xem. Thử lại."; }
+    };
     const courseEditor = q("[data-course-form]");
     if (courseEditor) {
       q("[data-course-cancel]").onclick = () => { addingCourse = false; render(); };
