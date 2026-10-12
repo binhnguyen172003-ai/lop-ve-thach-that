@@ -4120,3 +4120,14 @@ body:has(#toast:not([hidden])) .tl-bong,body:has(#server-issue:not([hidden])) .t
 .hero.cine #hero-h1 .ln{animation:none;opacity:1;transform:none;filter:none}
 .hero.cine #hero-h1 .strike::after{animation-duration:.18s;animation-delay:0s}
 }
+
+/* Honor rows: name, badge and score have independent aligned columns. */
+.mg-rows summary{grid-template-columns:32px 52px minmax(0,1fr) 32px 72px;grid-template-rows:auto auto;column-gap:12px;row-gap:5px;padding:14px 16px}
+.mg-rows .mg-rk{grid-column:1;grid-row:1/3;align-self:center}
+.mg-rows .mg-tr{grid-column:2;grid-row:1/3;align-self:center;justify-self:start}
+.mg-rows .mg-nm{display:block;grid-column:3;grid-row:1;font-size:.95rem;line-height:1.4;letter-spacing:0;min-width:0;overflow-wrap:break-word}
+.mg-rows .mg-sub{grid-column:3;grid-row:2;font-size:.75rem;line-height:1.45}
+.mg-rows .mg-award{grid-column:4;grid-row:1/3;display:flex;align-items:center;justify-content:center;min-width:0}
+.mg-rows .mg-award .tsd{margin:0;flex:none;width:28px;min-width:28px}
+.mg-rows .mg-sc{grid-column:5;grid-row:1/3;justify-self:end;align-self:center;white-space:nowrap;gap:3px}
+@media(max-width:640px){.mg-rows summary{grid-template-columns:22px 42px minmax(0,1fr) 24px 54px;column-gap:8px;padding:12px 10px}.mg-rows .mg-nm{font-size:.82rem;line-height:1.4}.mg-rows .mg-sub{font-size:.7rem}.mg-rows .mg-award .tsd{width:23px;min-width:23px}.mg-rows .mg-sc b{font-size:1.35rem}}
