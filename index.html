@@ -34,10 +34,11 @@
 </script>
 <meta name="theme-color" content="#15171b">
 <script>try{var t=localStorage.getItem("lvkv-theme");if(["light","dark"].includes(t))document.documentElement.dataset.theme=t}catch(e){}</script>
-<link rel="manifest" href="manifest.webmanifest">
+<link rel="manifest" href="manifest.webmanifest?v=20261013install">
+<script defer src="assets/js/install.js?v=20261013install"></script>
 <link rel="apple-touch-icon" href="assets/img/icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Vẽ Không Vui">
+<meta name="apple-mobile-web-app-title" content="Dreamers">
 <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
 <!-- Học viên đã đăng nhập / đang mở trang học: tải sẵn thư viện ngay. Khách xem giới thiệu thì để sau. -->
 <script>try{var h=location.hash.slice(1),c=JSON.parse(localStorage.getItem("lvkv-phien")||"null");if(/^(tong-quan|khoa-hoc|ebook|giao-trinh|bai-tap|tai-khoan|duyet|diem-danh|lam-viec|thi-thu|van-hanh)$/.test(h)||(c&&c.mail)){["app","auth","firestore"].forEach(function(n){var l=document.createElement("link");l.rel="modulepreload";l.href="https://www.gstatic.com/firebasejs/10.12.2/firebase-"+n+".js";document.head.appendChild(l)})}}catch(e){}</script>
@@ -666,6 +667,14 @@
     <h1>Vào lớp học</h1>
     <p class="muted">Làm 3 bước dưới đây. Anh chị duyệt xong là em vào học được.</p>
   </div>
+
+  <section class="card step-card" id="pwa-card" aria-label="Cài web lớp">
+    <h3>Mở lớp từ màn hình chính</h3>
+    <p class="muted">Thêm biểu tượng Dreamers để vào lớp nhanh hơn.</p>
+    <button class="btn" id="pwa-install" type="button" aria-controls="pwa-help" aria-expanded="false">Tạo lối tắt / Hướng dẫn</button>
+    <p class="muted" id="pwa-help" hidden></p>
+    <p class="status" id="pwa-status" role="status"></p>
+  </section>
 
   <ol class="stepper" id="stepper">
     <li data-step="1"><b>1</b><span>Tạo tài khoản / Đăng nhập</span></li>
