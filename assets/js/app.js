@@ -547,6 +547,21 @@ function timBaiTrung() {
   for (const ds of nhomTin.values()) if (ds.length > 1) ds.sort((a, b) => (b.luc || 0) - (a.luc || 0)).slice(1).forEach(x => xoa.push(x));
   return xoa;
 }
+function renderEmptyGallery(types) {
+  gallerySig = "";
+  galList = [];
+  const canAdd = !!(user && isTeacher);
+  $("#gallery").className = "gallery";
+  $("#gallery").innerHTML = types.filter(Boolean).map(l => `<div class="gal-o">${canAdd
+    ? `<button type="button" class="gal-b gal-them" data-empty-type="${esc(l.ten)}" aria-label="Thêm ảnh ${esc(l.ten)}">`
+    : '<div class="gal-b gal-them" style="cursor:default">'}
+    <span class="gal-plus" aria-hidden="true">+</span><b>${canAdd ? "Thêm ảnh" : "Chưa có ảnh"}</b><small>${esc(l.ten)}</small>
+    ${canAdd ? "</button>" : "</div>"}</div>`).join("");
+  $("#gallery [data-empty-type]").forEach(button => button.onclick = () => {
+    moDangBai();
+    $('input[name="bv-loai"]').forEach(input => { input.checked = input.value === button.dataset.emptyType; });
+  });
+}
 function renderGallery() {
   const all = galTatCa(), has = all.length > 0;
   const count = t => all.filter(b => b.loai === t).length;
@@ -574,9 +589,9 @@ function renderGallery() {
       }, `Bấm lần nữa để xoá ${n} bài trùng`);
     }
   }
-  if (!has) { $("#gallery").className = "gallery arts"; $("#gallery").innerHTML = LOAI_BAI.map(l => artCard(l, "Ảnh bài thật sắp cập nhật")).join(""); return; }
+  if (!has) { renderEmptyGallery(galFilter === "all" ? LOAI_BAI : LOAI_BAI.filter(l => l.ten === galFilter)); return; }
   galList = all.filter(b => galFilter === "all" || b.loai === galFilter);
-  if (!galList.length) { gallerySig = ""; const l = LOAI_BAI.find(x => x.ten === galFilter); $("#gallery").className = "gallery arts"; $("#gallery").innerHTML = artCard(l, "Phần này chưa có ảnh"); return; }
+  if (!galList.length) { renderEmptyGallery(LOAI_BAI.filter(l => l.ten === galFilter)); return; }
   $("#gallery").className = "gallery";
   const xoaDuoc = b => b.id && user && (isAdmin || (isTeacher && b.nguoi === mail));
   // Không dựng lại lưới khi dữ liệu không đổi (mỗi lần tải lại trang Firestore gửi dữ liệu 2 lần, tránh phân tích lại ảnh base64 nhiều lần)
