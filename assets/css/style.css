@@ -3957,3 +3957,6 @@ nav.on-hero .acct{box-shadow:none;background:rgba(12,14,18,.85);border-color:rgb
   .cd-lead h3{font-size:1.1rem}
   .cd-lead .eyebrow{font-size:.68rem;letter-spacing:.06em}
 }
+
+/* Số cùng chiều cao thay vì kiểu số có nét lên xuống của font serif. */
+.cine-stat b{font-variant-numeric:lining-nums tabular-nums;font-feature-settings:"lnum" 1,"tnum" 1;font-weight:600}
