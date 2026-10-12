@@ -562,6 +562,14 @@ function renderEmptyGallery(types) {
     $('input[name="bv-loai"]').forEach(input => { input.checked = input.value === button.dataset.emptyType; });
   });
 }
+
+function scrollArtworkPage(direction) {
+  const gallery = $("#gallery");
+  gallery.scrollBy({left: direction * (gallery.clientWidth + 12), behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth"});
+}
+$("#gallery-prev").onclick = () => scrollArtworkPage(-1);
+$("#gallery-next").onclick = () => scrollArtworkPage(1);
+
 function renderGallery() {
   const all = galTatCa(), has = all.length > 0;
   const count = t => all.filter(b => b.loai === t).length;
