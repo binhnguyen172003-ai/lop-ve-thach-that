@@ -196,8 +196,34 @@ if (publicCached && Date.now() - publicCached.luc < 86400000) {
   if (Array.isArray(publicCached.bantin)) BANTIN_DONG = publicCached.bantin;
   if (Array.isArray(publicCached.doingu)) GIAO_VIEN.splice(0, GIAO_VIEN.length, ...publicCached.doingu);
 }
-let publicCacheTimer = 0, publicTeamLoaded = false;
+let publicCacheTimer = 0, publicTeamLoaded = false, publicLiveArrived = false;
+const publicImageDB = new Promise(resolve => {
+  if (!window.indexedDB) return resolve(null);
+  try {
+    const request = indexedDB.open("lvkv-public-images", 1);
+    request.onupgradeneeded = () => request.result.createObjectStore("snapshots");
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => resolve(null);
+    request.onblocked = () => resolve(null);
+  } catch (e) { resolve(null); }
+});
+publicImageDB.then(database => {
+  if (!database) return;
+  try {
+    const request = database.transaction("snapshots").objectStore("snapshots").get("content");
+    request.onsuccess = () => {
+      const cache = request.result;
+      if (publicLiveArrived || !cache || Date.now() - cache.luc >= 86400000) return;
+      if (Array.isArray(cache.baive)) BAIVE_DONG = cache.baive;
+      if (Array.isArray(cache.bantin)) BANTIN_DONG = cache.bantin;
+      if (Array.isArray(cache.doingu)) GIAO_VIEN.splice(0, GIAO_VIEN.length, ...cache.doingu);
+      renderGallery(); renderBanTin(); renderGiaoVien();
+      dispatchEvent(new Event("baive-doi"));
+    };
+  } catch (e) {}
+});
 function savePublicContent() {
+  publicLiveArrived = true;
   clearTimeout(publicCacheTimer);
   publicCacheTimer = setTimeout(() => {
     const payload = { luc: Date.now(), baive: BAIVE_DONG, bantin: BANTIN_DONG,
@@ -205,6 +231,10 @@ function savePublicContent() {
     try {
       const json = JSON.stringify(payload);
       if (json.length < 1500000) localStorage.setItem(PUBLIC_CACHE_KEY, json);
+      publicImageDB.then(database => {
+        if (!database) return;
+        try { const tx = database.transaction("snapshots", "readwrite"); tx.onerror = () => {}; tx.objectStore("snapshots").put(payload, "content"); } catch (e) {}
+      });
     } catch (e) {}
   }, 300);
 }
@@ -627,7 +657,7 @@ function renderGallery() {
   const gSig = [galFilter, !!user, isAdmin, !!isTeacher,galList.map(b => [b.id || "", b.luc || 0, b.anh ? b.anh.length : 0, b.hang, b.hocVien, b.loai, b.moTa, b.ghiChu, b.biDanh, biDanhCua(b), b.chucVu, b.mau].join("~")).join("|")].join("#");
   if (gSig === gallerySig) return; gallerySig = gSig;
   $("#gallery").innerHTML = galList.map((b, i) =>
-    `<div class="gal-o"><button type="button" class="gal-b" data-gi="${i}" aria-label="Xem lớn bài vẽ ${i + 1}"><img src="${esc(b.anh)}" alt="${esc(b.moTa || b.ghiChu || "Bài vẽ học viên")}" loading="lazy" decoding="async" width="300" height="400">
+    `<div class="gal-o"><button type="button" class="gal-b" data-gi="${i}" aria-label="Xem lớn bài vẽ ${i + 1}"><img src="${esc(b.anh)}" alt="${esc(b.moTa || b.ghiChu || "Bài vẽ học viên")}" ${i < 6 ? 'loading="eager" fetchpriority="high"' : 'loading="lazy"'} decoding="async" width="300" height="400">
       <span class="cap">${esc(b.hocVien || "")}${biDanhCua(b) ? `<em class="bd">${esc(biDanhCua(b))}</em>` : ""}${b.loai ? `<small>${esc(b.loai)}</small>` : ""}</span>${b.hang ? `<span class="gal-top">TOP ${Number(b.hang)}</span>` : ""}</button>
       ${linkAnToan(b.link) ? `<a class="gal-link" href="${esc(linkAnToan(b.link))}" target="_blank" rel="noopener" aria-label="Mở link kèm bài">↗</a>` : ""}
       ${isAdmin && b.id ? `<button type="button" class="nb-more gal-more" data-mn="${esc(b.id)}" aria-label="Tuỳ chọn: sửa thông tin, xoá bài">⋮</button>` : xoaDuoc(b) ? `<button type="button" class="gal-x" data-xbv="${esc(b.id)}" aria-label="Xoá bài này">Xoá</button>` : ""}</div>`).join("");
@@ -1265,7 +1295,7 @@ const GHI_CHU = {
     box.innerHTML = `<div class="gv-stage nb-stage">${ds.map((b, i) => `<figure class="nb-card nb-tran${b.nv ? " nb-nv nv-" + nhanVienLop(b) : ""}" data-i="${i}">
         ${b.nv ? `<span class="nb-nv-tag">${esc(nhanVienTen(b))}</span>` : ""}
         ${isAdmin && b.id ? `<button type="button" class="nb-more" data-mn="${esc(b.id)}" aria-label="Tuỳ chọn: sửa link, xoá bài">⋮</button>` : ""}
-        <img src="${esc(b.anh)}" alt="${esc((b.loai || "Bài vẽ") + " · " + (b.hocVien || ""))}" ${i < 2 ? 'loading="eager" fetchpriority="low"' : 'loading="lazy"'} decoding="async" draggable="false">
+        <img src="${esc(b.anh)}" alt="${esc((b.loai || "Bài vẽ") + " · " + (b.hocVien || ""))}" ${i < 2 ? 'loading="eager" fetchpriority="high"' : 'loading="lazy"'} decoding="async" draggable="false">
         ${b.top ? `<span class="nb-medal h${b.top}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 2h4l1 5-3 1zM17 2h-4l-1 5 3 1z" class="rb"/><circle cx="12" cy="15" r="6.5" class="md"/><text x="12" y="18.2" text-anchor="middle">${b.top}</text></svg><b>TOP ${b.top}</b><i>${TEN[ky]}</i></span>` : ""}
         ${b.tg ? "" : (m => m.length ? (a => `<span class="nb-tt" data-rk="${esc(b.hocVien)}" role="button" tabindex="0" title="${esc(a.ten)} · ${CAP[a.cap].ten} — ${esc(a.mo)}">${huyHieuTT(a, a.cap, "sm")}<span class="nb-ttx"><b>${esc(a.ten)}</b><small>${a.n} ${esc(a.dv)} · ${CAP[a.cap].ten}</small></span></span>`)(m[0]) : "")(ttNoiNhat(b.hocVien))}
         ${b.tg ? "" : (t => khungThe(t.r, t.i))(tinhRank(null, null, null, b.hocVien))}
