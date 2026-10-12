@@ -230,7 +230,7 @@ function savePublicContent() {
       doingu: publicTeamLoaded ? GIAO_VIEN : publicCached?.doingu };
     try {
       const json = JSON.stringify(payload);
-      if (json.length < 1500000) localStorage.setItem(PUBLIC_CACHE_KEY, json);
+      if (json.length < 1500000) try { localStorage.setItem(PUBLIC_CACHE_KEY, json); } catch (e) {}
       publicImageDB.then(database => {
         if (!database) return;
         try { const tx = database.transaction("snapshots", "readwrite"); tx.onerror = () => {}; tx.objectStore("snapshots").put(payload, "content"); } catch (e) {}
