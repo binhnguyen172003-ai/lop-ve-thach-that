@@ -3964,3 +3964,24 @@ nav.on-hero .acct{box-shadow:none;background:rgba(12,14,18,.85);border-color:rgb
 /* Cùng font đứng để cả ba giá trị có chiều cao nhìn đồng nhất. */
 .cine-stats .cine-stat > b{font-family:var(--f-body);font-style:normal;font-weight:600;font-size:2rem;line-height:1.25;letter-spacing:0;font-variant-numeric:lining-nums tabular-nums;font-feature-settings:normal}
 @media(max-width:640px){.cine-stats .cine-stat > b{font-size:clamp(1.4rem,6.5vw,1.9rem)}}
+
+/* Chữ lớn đầu trang hiện theo hai dòng, không chờ Firebase hay JavaScript. */
+.hero.cine #hero-h1 .ln{opacity:1;transform:none;filter:none}
+@media(prefers-reduced-motion:no-preference){
+  .hero.cine #hero-h1 .ln{animation:hero-title-appear .85s cubic-bezier(.22,1,.36,1) both}
+  .hero.cine #hero-h1 .hv-1{animation-delay:.08s}
+  .hero.cine #hero-h1 .hv-2{animation-delay:.28s}
+  .hero.cine #hero-h1 .strike::after{transform-origin:left center;animation:hero-title-stroke .55s cubic-bezier(.22,1,.36,1) .8s both}
+}
+@keyframes hero-title-appear{
+  from{opacity:0;transform:translateY(18px);filter:blur(6px)}
+  to{opacity:1;transform:none;filter:none}
+}
+@keyframes hero-title-stroke{
+  from{transform:rotate(-11deg) scaleX(0)}
+  to{transform:rotate(-11deg) scaleX(1)}
+}
+@media(prefers-reduced-motion:reduce){
+  .hero.cine #hero-h1 .ln{animation:none;opacity:1;filter:none;transform:none}
+  .hero.cine #hero-h1 .strike::after{animation:none}
+}
