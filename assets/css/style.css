@@ -4017,3 +4017,19 @@ nav.on-hero .acct{box-shadow:none;background:rgba(12,14,18,.85);border-color:rgb
 .exam-clock b{font:italic 600 clamp(1.8rem,7vw,2.4rem)/1.2 var(--f-serif);font-variant-numeric:lining-nums tabular-nums;color:var(--ink)}
 .exam-clock span{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;color:var(--graphite)}
 @media(max-width:640px){.exam-time-points{grid-template-columns:1fr}.exam-time-points>div+div{border-left:0;padding-left:0;padding-top:14px;border-top:1px solid var(--rule)}}
+
+/* Gom đồng hồ thành một cụm, ngày thi nằm dưới và giảm chiều dài khung. */
+.exam-time-summary{display:grid;grid-template-areas:"heading" "title" "chip" "days" "clock" "date" "practice"}
+.exam-time-summary>.eyebrow{grid-area:heading;margin:0}
+.exam-time-summary>h3{grid-area:title;margin:6px 0 8px}
+.exam-time-summary>.chip{grid-area:chip;justify-self:start;margin:0 0 14px}
+.exam-time-points{display:contents}
+.exam-time-points>div:first-child{grid-area:days;align-items:center;gap:2px;text-align:center}
+.exam-time-points .exam-days{font-size:clamp(3.3rem,13vw,5rem);line-height:1.1;margin:0}
+.exam-time-summary>.exam-clock{grid-area:clock;margin-top:10px;padding:0 0 14px;border-top:0}
+.exam-clock>div{gap:3px}
+.exam-clock b{font-size:clamp(1.7rem,6vw,2.2rem)}
+.exam-time-points>div+div{grid-area:date;display:flex;flex-direction:row;align-items:baseline;flex-wrap:wrap;gap:4px 10px;padding:12px 0 0;border-left:0;border-top:1px solid var(--rule)}
+.exam-time-points>div+div>small{flex-basis:100%;font-size:.75rem}
+.exam-time-points .exam-date{font-size:1.05rem}
+.exam-time-summary>.exam-practice{grid-area:practice;margin:12px 0 0;padding-top:12px;font-size:.86rem;line-height:1.5}
