@@ -4095,3 +4095,5 @@ nav.on-hero .acct{box-shadow:none;background:rgba(12,14,18,.85);border-color:rgb
   from{transform:translateY(-50%) rotate(-3deg) scaleX(0)}
   to{transform:translateY(-50%) rotate(-3deg) scaleX(1)}
 }
+
+.gv-edit-tools{position:absolute;top:10px;right:10px;z-index:8;display:flex;gap:6px}.gv-edit-tools button{min-width:44px;min-height:44px;background:var(--sheet);color:var(--ink);border:1px solid var(--rule)}#gv-manage{justify-content:flex-end;margin-bottom:16px}
