@@ -4018,6 +4018,7 @@ nav.on-hero .acct{box-shadow:none;background:rgba(12,14,18,.85);border-color:rgb
 .exam-clock span{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;color:var(--graphite)}
 @media(max-width:640px){.exam-time-points{grid-template-columns:1fr}.exam-time-points>div+div{border-left:0;padding-left:0;padding-top:14px;border-top:1px solid var(--rule)}}
 
+
 /* Gom đồng hồ thành một cụm, ngày thi nằm dưới và giảm chiều dài khung. */
 .exam-time-summary{display:grid;grid-template-areas:"heading" "title" "chip" "days" "clock" "date" "practice"}
 .exam-time-summary>.eyebrow{grid-area:heading;margin:0}
@@ -4044,3 +4045,24 @@ nav.on-hero .acct{box-shadow:none;background:rgba(12,14,18,.85);border-color:rgb
 .exam-clock>div{gap:6px;padding-inline:4px}
 .exam-clock b{font-size:clamp(1.8rem,6.5vw,2.7rem)}
 .exam-time-points>div+div{margin-top:16px}
+
+/* Cân khoảng cách và cỡ chữ cho thẻ lịch thi ở mọi màn hình. */
+#lich-thi .cd-lead{padding:22px}
+#lich-thi .exam-time-summary{grid-template-columns:minmax(0,1fr) minmax(0,3fr);column-gap:10px}
+#lich-thi .exam-time-summary>h3{display:block;line-height:1.35}
+#lich-thi .exam-time-summary>.chip{max-width:100%;white-space:normal;overflow-wrap:break-word}
+#lich-thi .exam-time-points .exam-days,#lich-thi .exam-clock b{font-size:clamp(1.8rem,8vw,2.6rem);line-height:1.15}
+#lich-thi .exam-time-summary>.exam-clock{align-self:stretch;grid-template-columns:repeat(3,minmax(0,1fr))}
+#lich-thi .exam-clock>div{min-width:0;justify-content:center}
+#lich-thi .exam-time-points>div+div{margin-top:14px;padding-top:12px}
+#lich-thi .exam-practice{margin:12px 0 0;padding-top:12px}
+@media(max-width:640px){
+  #lich-thi .cd-lead{padding:18px}
+  #lich-thi .exam-time-summary>h3{font-size:1.1rem;margin-bottom:8px}
+  #lich-thi .exam-time-summary>.eyebrow{font-size:.7rem;letter-spacing:.06em}
+  #lich-thi .exam-time-summary>.chip{margin-bottom:12px}
+  #lich-thi .exam-clock span,#lich-thi .exam-days small{font-size:.7rem;letter-spacing:.06em}
+  #lich-thi .exam-time-points>div+div{gap:4px 8px}
+  #lich-thi .exam-practice{font-size:.84rem;line-height:1.5}
+}
+@media(max-width:360px){#lich-thi .cd-lead{padding:14px}#lich-thi .exam-time-summary{column-gap:6px}}
