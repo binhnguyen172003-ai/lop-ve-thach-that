@@ -4001,3 +4001,19 @@ nav.on-hero .acct{box-shadow:none;background:rgba(12,14,18,.85);border-color:rgb
 .exam-time-points .exam-date{font-family:var(--f-body);font-size:1.15rem;font-weight:700;white-space:nowrap}
 .exam-practice{margin-top:20px;padding-top:16px;border-top:1px solid var(--rule);line-height:1.6}
 @media(max-width:380px){.exam-time-points{gap:10px}.exam-time-points>div+div{padding-left:10px}.exam-time-points .exam-date{font-size:1rem}}
+
+/* Nút xoá tin cho quản lý: tách khỏi vùng bấm mở tin và nút sửa. */
+.tb-the .tn-delete{position:absolute;top:10px;right:10px;z-index:6;width:44px;height:44px;display:grid;place-items:center;padding:0;border:1px solid rgba(255,255,255,.55);border-radius:50%;background:rgba(10,12,18,.9);color:#fff;font:500 1.8rem/1 var(--f-body);cursor:pointer}
+.tb-the .tn-delete:hover{background:#a52d35}
+.tb-the .tn-delete:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+.tb-the .nb-more[data-mt]{right:62px}
+
+/* Số ngày là điểm nhấn, giờ phút giây nằm trên một hàng riêng. */
+.exam-time-points .exam-days{font-size:clamp(3.3rem,13vw,5rem);white-space:nowrap}
+.exam-days em{font-style:inherit}
+.exam-clock{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:20px;padding-top:16px;border-top:1px solid var(--rule)}
+.exam-clock>div{display:flex;flex-direction:column;align-items:center;gap:6px}
+.exam-clock>div+div{border-left:1px solid var(--rule)}
+.exam-clock b{font:italic 600 clamp(1.8rem,7vw,2.4rem)/1.2 var(--f-serif);font-variant-numeric:lining-nums tabular-nums;color:var(--ink)}
+.exam-clock span{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;color:var(--graphite)}
+@media(max-width:640px){.exam-time-points{grid-template-columns:1fr}.exam-time-points>div+div{border-left:0;padding-left:0;padding-top:14px;border-top:1px solid var(--rule)}}
