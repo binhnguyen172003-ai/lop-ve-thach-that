@@ -174,7 +174,10 @@ function serverIssue(e) {
     bar.querySelector("button").onclick = () => bar.hidden = true;
     document.body.prepend(bar);
   }
+  bar.dataset.issueCode = code;
   bar.querySelector("span").textContent = text; bar.hidden = false;
+  clearTimeout(serverIssue.dismiss);
+  if (code === "timeout") serverIssue.dismiss = setTimeout(() => { if (bar.dataset.issueCode === "timeout") bar.hidden = true; }, 10000);
   mark("✗ " + text);
 }
 // Đo thời gian chờ máy chủ của mọi thao tác ghi
@@ -4457,7 +4460,7 @@ async function onUser(u) {
     try { const d = await hanTuoi(getDoc(doc(db, col, mail))); return d.exists() ? (d.data() || {}) : null; }
     catch (e) {
       tuLoi = (e && (e.code || e.name)) || "khong-ro";
-      if (e && e.code === "permission-denied") tuChoiQuyen = true; else if (e && !optional) serverIssue(e);
+      if (e && e.code === "permission-denied") tuChoiQuyen = true; else if (e && !optional && e.code !== "timeout") serverIssue(e);
       return undefined; // undefined = chưa hỏi được, khác null = không có
     }
   };
@@ -4484,7 +4487,7 @@ async function onUser(u) {
     if (u.__thuLai <= 20) setTimeout(() => { if (user === u) onUser(u); }, Math.min(5000 * u.__thuLai, 30000));
     if (cu && cu.mail === mail && (cu.isTeacher || cu.approved)) {
       isAdmin = !!cu.isAdmin; isTeacher = !!cu.isTeacher; approved = !!cu.approved; myHv = cu.hv || null;
-      if (u.__thuLai === 1 && !tuChoiQuyen) serverIssue({ code: "timeout" });
+      if (u.__thuLai === 1 && !tuChoiQuyen) mark("Đang đồng bộ hồ sơ; tiếp tục dùng phiên đã lưu.");
     } else if (tuChoiQuyen) {
       // Bị từ chối quyền đọc: không để "đang kiểm tra" mãi. Hiện rõ hướng xử lý, vẫn tự thử lại ngầm.
       renderLocks("pending"); renderAccount(false);
