@@ -4066,3 +4066,11 @@ nav.on-hero .acct{box-shadow:none;background:rgba(12,14,18,.85);border-color:rgb
   #lich-thi .exam-practice{font-size:.84rem;line-height:1.5}
 }
 @media(max-width:360px){#lich-thi .cd-lead{padding:14px}#lich-thi .exam-time-summary{column-gap:6px}}
+
+/* Ô ngày ở form học thử đồng bộ khung ngày của lịch thi. */
+.dk-cd-n{grid-template-columns:minmax(0,1.25fr) repeat(3,minmax(0,1fr));gap:0;align-items:stretch}
+.dk-cd-n>div{min-width:0;box-sizing:border-box;justify-items:center;align-content:center;padding:12px 4px}
+.dk-cd-n>div:first-child{padding:12px 6px;border:1px solid var(--rule);border-radius:14px;background:var(--sheet);gap:6px}
+.dk-cd-n>div:nth-child(2){border-left:0}
+.dk-cd-n>div>b{padding:0;margin:0;white-space:nowrap}
+.dk-cd-n>div:first-child>span{font-weight:600}
