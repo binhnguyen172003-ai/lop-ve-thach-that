@@ -6,7 +6,7 @@ import { ngayVietNam, ngaySinhHopLe, hienNgaySinh, denSinhNhat } from "./sinh-nh
 import { firebaseConfig, ADMIN_EMAIL, EMAIL_NHAN_THONG_BAO } from "../../config/firebase-config.js?v=20261009b";
 import { FILE_LIMITS, FILE_TYPES, fileExt, fileSize, validateFiles, attachmentStorage, uploadError, validAttachmentPath } from "./attachments.js?v=20261009b";
 import { GIAO_TRINH_MAU as GT_LO_TRINH } from "../../data/giao-trinh-mau.js?v=20261010bf";
-import { createResourceWorkspace, ADVANCED_SEEDS } from "./resource-workspace.js?v=20261013viewerSave";
+import { createResourceWorkspace, ADVANCED_SEEDS } from "./resource-workspace.js?v=20261013catalog";
 import { createResourceCache } from "./resource-cache.js?v=20261013resourceFast";
 import { soSanhTenHocVien } from "./ten-hoc-vien.js?v=20261010bs";
 import { GO_KHOI_CA, thuocDanhSachCa } from "./danh-sach-ca.js?v=20261010bs";
@@ -17,7 +17,7 @@ import { LIEN_HE, NAM_THI, LICH_THI, BO_LOC_TRUONG, CA_HOC, THOI_GIAN_BIEU, BAI_
 const FB = "https://www.gstatic.com/firebasejs/10.12.2/";
 let initializeApp, getAuth, onAuthStateChanged, signOut;
 let createUserWithEmailAndPassword, signInWithEmailAndPassword, sendEmailVerification, sendPasswordResetEmail, updateProfile;
-let getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager, collection, doc, getDoc, setDoc, addDoc, deleteDoc, writeBatch, onSnapshot, query, orderBy, where, runTransaction, limit, deleteField, increment;
+let getDocsFromServer, getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager, collection, doc, getDoc, setDoc, addDoc, deleteDoc, writeBatch, onSnapshot, query, orderBy, where, runTransaction, limit, deleteField, increment;
 // Vai trò: isAdmin = quản lý (toàn quyền); isTeacher = giáo viên hoặc quản lý; approved = học viên đã duyệt.
 // Khai báo ở đầu file để các phần trang chủ (bài vẽ, bản tin) biết ai đang xem ngay từ đầu.
 let user = null, mail = "", isAdmin = false, isTeacher = false, approved = false, needVerify = false;
@@ -32,7 +32,7 @@ async function loadFirebase() {
   ({ initializeApp } = a);
   ({ getAuth, onAuthStateChanged, signOut,
      createUserWithEmailAndPassword, signInWithEmailAndPassword, sendEmailVerification, sendPasswordResetEmail, updateProfile } = au);
-  ({ getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager, collection, doc, getDoc, setDoc, addDoc, deleteDoc, writeBatch, onSnapshot, query, orderBy, where, runTransaction, limit, deleteField, increment } = fs);
+  ({ getDocsFromServer, getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager, collection, doc, getDoc, setDoc, addDoc, deleteDoc, writeBatch, onSnapshot, query, orderBy, where, runTransaction, limit, deleteField, increment } = fs);
   bocNhatKy();
 }
 
@@ -1950,10 +1950,43 @@ const saveResource = async (id, data) => {
   }
   return result;
 };
+async function updateEbookGroup(action, name, metadata = null) {
+  if (!isAdmin || !db) throw new Error("Chỉ quản lý được sửa eBook.");
+  const account = mail;
+  const snapshot = await getDocsFromServer(query(collection(db, "giaotrinh"), where("phan", "==", "ebook"), where("khoa", "==", name)));
+  const rows = snapshot.docs.filter(item => !item.id.startsWith("_")).map(item => ({ id: item.id, ...item.data() }));
+  if (!rows.length) throw new Error("eBook đã thay đổi. Tải lại trang rồi thử.");
+  if (mail !== account || !isAdmin) throw new Error("Tài khoản đã thay đổi.");
+  const meta = rows.find(row => row.loai === "khoa"), metaRef = meta ? doc(db, "giaotrinh", meta.id) : doc(collection(db, "giaotrinh"));
+  if (rows.length + (meta ? 0 : 1) > 500) throw new Error("eBook có quá nhiều mục để cập nhật cùng lúc.");
+  if (action === "rename") {
+    const duplicate = resourceDocs.some(row => row.phan === "ebook" && row.khoa !== name && String(row.khoa || "").normalize("NFC").toLocaleLowerCase("vi") === metadata.khoa.normalize("NFC").toLocaleLowerCase("vi"));
+    if (duplicate) throw new Error("Tên eBook đã có. Chọn tên khác.");
+  }
+  const batch = writeBatch(db), updated = rows.map(row => {
+    const patch = action === "rename" ? { khoa: metadata.khoa, ...(row.loai === "khoa" ? metadata : {}) }
+      : action === "delete" ? { an: true, bookDeleted: true, bookWasHidden: row.bookDeleted ? !!row.bookWasHidden : !!row.an }
+      : row.bookDeleted ? { an: !!row.bookWasHidden, bookDeleted: false } : {};
+    if (Object.keys(patch).length) batch.set(doc(db, "giaotrinh", row.id), patch, { merge: true });
+    return { ...row, ...patch };
+  });
+  if (!meta) {
+    const data = { phan: "ebook", khoa: action === "rename" ? metadata.khoa : name, ten: action === "rename" ? metadata.ten : name, loai: "khoa", thutu: 0,
+      ...(action === "rename" ? metadata : { an: action === "delete", bookDeleted: action === "delete", bookWasHidden: false }) };
+    batch.set(metaRef, data); updated.push({ ...data, id: metaRef.id });
+  }
+  await batch.commit();
+  if (mail !== account || !isAdmin) return { id: metaRef.id };
+  resourceCacheRevision++;
+  resourceDocs = [...resourceDocs.filter(row => !(row.phan === "ebook" && row.khoa === name)), ...updated];
+  resourceCache.write(account, resourceDocs);
+  return { id: metaRef.id, rows: resourceDocs };
+}
 const resourceOptions = (phan, ebook) => ({ phan, ebook, seeds: ebook ? [] : ADVANCED_SEEDS,
   save: (id, data) => saveResource(id, { ...(phan === "nang-cao" ? ADVANCED_SEEDS.find(row => row.id === id) : null), phan, ...data }),
   markdown: mdHTML, notify: toast,
   prepareImage: file => nenAnh(file, 1100, 350000),
+  ...(ebook ? { renameCategory: (name, data) => updateEbookGroup("rename", name, data), removeCategory: name => updateEbookGroup("delete", name), restoreCategory: name => updateEbookGroup("restore", name) } : {}),
   markSeen: id => {
     if (!approved || isTeacher || myProgress.xem?.[id]) return;
     myProgress.xem ||= {}; myProgress.xem[id] = Date.now();
