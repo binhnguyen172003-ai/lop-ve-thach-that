@@ -61,8 +61,13 @@ export function resourceLessons(rows, category) {
   return rows.filter(row => !row.an && row.loai !== "khoa" && row.khoa === category);
 }
 
+export function viewerSearchText(value) {
+  return String(value ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/gi, "d").toLowerCase().trim().replace(/\s+/g, " ");
+}
+
 export function createResourceWorkspace(root, { phan, seeds = [], ebook = false, save, mark, markdown, notify, markSeen, prepareImage }) {
   let state = { rows: [], marks: {}, canManage: false }, category = "", opened = "", editing = null, addingCourse = false, accessEditing = false, editingCourse = false, courseDraft = null, coverBusy = false, coverTicket = 0, courseSaving = false;
+  let accessDraft = null, viewerQuery = "", viewerScroll = 0;
   const q = selector => root.querySelector(selector);
   const qa = selector => [...root.querySelectorAll(selector)];
   const label = ebook ? "sách" : "khóa";
@@ -90,11 +95,15 @@ export function createResourceWorkspace(root, { phan, seeds = [], ebook = false,
     return !!state.staff || !meta || meta.access !== "selected" || (meta.viewers || []).includes(state.mail);
   };
   const accessForm = rows => {
-    const meta = accessRow(rows, category);
+    const meta = accessRow(rows, category), draft = accessDraft || meta || {};
     return `<form class="rw-editor teacher" data-access-form><h3>Quyền xem · ${esc(category)}</h3>
-      <label>Ai được xem<select name="access"><option value="all">Tất cả học viên đã duyệt</option><option value="selected"${meta?.access === "selected" ? " selected" : ""}>Chỉ người được chọn</option></select></label>
+      <label>Ai được xem<select name="access"><option value="all">Tất cả học viên đã duyệt</option><option value="selected"${draft.access === "selected" ? " selected" : ""}>Chỉ người được chọn</option></select></label>
       <p class="muted">Quản lý và giáo viên luôn được xem. Chọn học viên bên dưới.</p>
-      ${(state.viewers || []).map(person => `<label class="check"><input type="checkbox" name="viewer" value="${esc(person.id)}"${(meta?.viewers || []).includes(person.id) ? " checked" : ""}><span>${esc(person.ten || person.id)} · ${esc(person.id)}</span></label>`).join("")}
+      <label>Tìm học viên<input type="search" data-viewer-search value="${esc(viewerQuery)}" placeholder="Nhập tên hoặc Gmail…" autocomplete="off"></label>
+      <p class="muted rw-viewer-count" data-viewer-count role="status" aria-live="polite"></p>
+      <div class="rw-viewers" role="group" aria-label="Danh sách học viên" tabindex="0">
+      ${(state.viewers || []).map(person => `<label class="rw-viewer" data-viewer-row data-viewer-search-text="${esc(viewerSearchText((person.ten || "") + " " + person.id))}"><input type="checkbox" name="viewer" value="${esc(person.id)}"${(draft.viewers || []).includes(person.id) ? " checked" : ""}><span><b>${esc(person.ten || person.id)}</b><small>${esc(person.id)}</small></span></label>`).join("")}
+      <p class="muted rw-viewer-empty" data-viewer-empty hidden>Không tìm thấy học viên.</p></div>
       <p class="status" data-access-status></p><div class="hop-nut"><button type="button" class="btn" data-access-cancel>Huỷ</button><button type="submit" class="btn primary">Lưu quyền xem</button></div></form>`;
   };
   const detail = (row, rows) => {
@@ -144,6 +153,7 @@ export function createResourceWorkspace(root, { phan, seeds = [], ebook = false,
     <p class="status" role="status" data-status></p><div class="hop-nut"><button class="btn" type="button" data-cancel>Huỷ</button><button class="btn primary" type="submit">Lưu nội dung</button></div></form>`;
   function render() {
     if (!root) return;
+    if (accessEditing && q(".rw-viewers")) viewerScroll = q(".rw-viewers").scrollTop;
     const all = activeRows(), groups = categories(all);
     if (!groups.includes(category)) category = groups[0] || "";
     if (!canView(all, category)) {
@@ -182,18 +192,43 @@ export function createResourceWorkspace(root, { phan, seeds = [], ebook = false,
     };
     if (q("[data-add-course]")) q("[data-add-course]").onclick = () => beginCourse(false);
     if (q("[data-edit-course]")) q("[data-edit-course]").onclick = () => beginCourse(true);
-    if (q("[data-access]")) q("[data-access]").onclick = () => { accessEditing = true; opened = ""; editing = null; addingCourse = false; editingCourse = false; courseDraft = null; coverTicket++; coverBusy = false; render(); };
-    if (q("[data-access-cancel]")) q("[data-access-cancel]").onclick = () => { accessEditing = false; render(); };
+    if (q("[data-access]")) q("[data-access]").onclick = () => {
+      const meta = accessRow(activeRows(), category);
+      accessDraft = { access: meta?.access || "all", viewers: [...(meta?.viewers || [])] };
+      viewerQuery = ""; viewerScroll = 0; accessEditing = true; opened = ""; editing = null; addingCourse = false; editingCourse = false; courseDraft = null; coverTicket++; coverBusy = false; render(); };
+    if (q("[data-access-cancel]")) q("[data-access-cancel]").onclick = () => { accessEditing = false; accessDraft = null; viewerQuery = ""; render(); };
     const permissionEditor = q("[data-access-form]");
-    if (permissionEditor) permissionEditor.onsubmit = async event => {
+    if (permissionEditor) {
+      const search = q("[data-viewer-search]"), list = q(".rw-viewers");
+      const filterViewers = () => {
+        const query = viewerSearchText(viewerQuery), rows = qa("[data-viewer-row]");
+        let visible = 0;
+        rows.forEach(row => { row.hidden = !row.dataset.viewerSearchText.includes(query); if (!row.hidden) visible++; });
+        q("[data-viewer-count]").textContent = `Hiện ${visible}/${rows.length} học viên · Đã chọn ${accessDraft?.viewers.length || 0}`;
+        const empty = q("[data-viewer-empty]"); empty.hidden = visible > 0;
+        empty.textContent = rows.length ? "Không tìm thấy học viên." : "Chưa có học viên trong danh sách.";
+      };
+      const rememberAccess = () => {
+        if (!state.canManage || !accessDraft) return;
+        const boxes = [...permissionEditor.querySelectorAll('input[name="viewer"]')], known = new Set(boxes.map(box => box.value));
+        accessDraft.access = permissionEditor.querySelector('[name="access"]').value;
+        accessDraft.viewers = [...accessDraft.viewers.filter(id => !known.has(id)), ...boxes.filter(box => box.checked).map(box => box.value)];
+        filterViewers();
+      };
+      search.oninput = () => { viewerQuery = search.value; viewerScroll = 0; filterViewers(); list.scrollTop = 0; };
+      permissionEditor.onchange = rememberAccess;
+      filterViewers(); list.scrollTop = viewerScroll;
+      permissionEditor.onsubmit = async event => {
       event.preventDefault(); if (!state.canManage) return;
-      const values = new FormData(permissionEditor), meta = accessRow(all, category);
+      rememberAccess();
+      const meta = accessRow(activeRows(), category);
       const data = { phan, khoa: category, ten: category, loai: "khoa", thutu: 0, an: false,
-        access: values.get("access"), viewers: values.getAll("viewer") };
+        access: accessDraft.access, viewers: [...new Set(accessDraft.viewers)] };
       const button = permissionEditor.querySelector('[type="submit"]'); button.disabled = true;
-      try { await save(meta?.id || null, data); accessEditing = false; notify("Đã lưu quyền xem."); render(); }
+      try { await save(meta?.id || null, data); accessEditing = false; accessDraft = null; viewerQuery = ""; notify("Đã lưu quyền xem."); render(); }
       catch { button.disabled = false; q("[data-access-status]").textContent = "Chưa lưu được quyền xem. Thử lại."; }
-    };
+      };
+    }
     const courseEditor = q("[data-course-form]");
     if (courseEditor) {
       const draft = courseDraft;
@@ -276,5 +311,5 @@ export function createResourceWorkspace(root, { phan, seeds = [], ebook = false,
       };
     }
   }
-  return { update(next) { state = next; if (!state.canManage) { coverTicket++; coverBusy = false; addingCourse = false; editingCourse = false; courseDraft = null; } render(); } };
+  return { update(next) { state = next; if (!state.canManage) { accessEditing = false; accessDraft = null; viewerQuery = ""; coverTicket++; coverBusy = false; addingCourse = false; editingCourse = false; courseDraft = null; } render(); } };
 }
