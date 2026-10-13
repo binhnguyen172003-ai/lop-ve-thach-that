@@ -72,5 +72,13 @@
         }
       ]
     }
+  ],
+  "prefer_related_applications": false,
+  "related_applications": [
+    {
+      "platform": "webapp",
+      "id": "https://binhnguyen172003-ai.github.io/lop-ve-thach-that/",
+      "url": "https://binhnguyen172003-ai.github.io/lop-ve-thach-that/manifest.webmanifest"
+    }
   ]
 }
