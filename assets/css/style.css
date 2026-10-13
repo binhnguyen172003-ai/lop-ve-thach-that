@@ -4250,3 +4250,10 @@ body:has(#toast:not([hidden])) .tl-bong,body:has(#server-issue:not([hidden])) .t
   #card-login .account-actions:has(#btn-ql:not([hidden])){grid-template-columns:minmax(0,1fr)}
   #pw-box{padding:18px 14px;border-radius:16px}
 }
+
+/* Khi ảnh ngoài không tải được, giữ nguyên khung và không hiện biểu tượng ảnh hỏng. */
+.resource-workspace .rw-image-unavailable > img{display:none}
+.resource-workspace .rw-image-unavailable::after{content:"🖼️";font-size:1.6rem;opacity:.4}
+/* Quy tắc grid của nhãn không được ghi đè trạng thái lọc học viên. */
+.resource-workspace .rw-viewers .rw-viewer[hidden]{display:none}
+#requests .req-item[hidden],#doiten-list > [hidden],#roster tr[hidden],#teachers tr[hidden]{display:none}
