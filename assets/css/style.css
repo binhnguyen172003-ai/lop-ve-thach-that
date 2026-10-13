@@ -3281,7 +3281,7 @@ table.roster.cc-cp{min-width:0}
 .tv-che{flex:none}.tv-che button{min-width:auto;padding:0 14px;flex:none}
 /* Bản tin có ảnh: ảnh (thường là poster có chữ) hiện trọn, đúng tỷ lệ gốc ở phần trên; chữ nằm ở dải dưới, không đè lên ảnh */
 .tb-the.co-anh{background:#0d0f14}
-.tb-the.co-anh>img{inset:0 0 auto 0;height:calc(100% - 108px);object-fit:contain}
+.tb-the.co-anh>img{inset:0 0 auto 0;width:100%;height:calc(100% - 108px);object-fit:cover;object-position:center;padding:0;margin:0;background:transparent}
 .tb-the.co-anh .tb-the-nd{background:#0d0f14;min-height:108px;align-content:start}
 .tb-the.co-anh .tb-the-nd small{-webkit-line-clamp:1}.tb-the.co-anh .tb-the-nd{gap:4px;padding:12px 14px}.tb-the.co-anh .tb-the-nd b{-webkit-line-clamp:2}
 .lpc-xep{min-height:34px}
