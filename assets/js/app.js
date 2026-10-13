@@ -6,7 +6,7 @@ import { ngayVietNam, ngaySinhHopLe, hienNgaySinh, denSinhNhat } from "./sinh-nh
 import { firebaseConfig, ADMIN_EMAIL, EMAIL_NHAN_THONG_BAO } from "../../config/firebase-config.js?v=20261009b";
 import { FILE_LIMITS, FILE_TYPES, fileExt, fileSize, validateFiles, attachmentStorage, uploadError, validAttachmentPath } from "./attachments.js?v=20261009b";
 import { GIAO_TRINH_MAU as GT_LO_TRINH } from "../../data/giao-trinh-mau.js?v=20261010bf";
-import { createResourceWorkspace, ADVANCED_SEEDS } from "./resource-workspace.js?v=20261013viewerSearch";
+import { createResourceWorkspace, ADVANCED_SEEDS } from "./resource-workspace.js?v=20261013viewerSave";
 import { createResourceCache } from "./resource-cache.js?v=20261013resourceFast";
 import { soSanhTenHocVien } from "./ten-hoc-vien.js?v=20261010bs";
 import { GO_KHOI_CA, thuocDanhSachCa } from "./danh-sach-ca.js?v=20261010bs";
@@ -1937,9 +1937,18 @@ function restoreResourceData(account) {
     renderResources();
   });
 }
-const saveResource = (id, data) => {
-  if (!isAdmin || !db) return Promise.reject(new Error("Chỉ quản lý được sửa nội dung."));
-  return id ? setDoc(doc(db, "giaotrinh", id), data, { merge: true }) : addDoc(collection(db, "giaotrinh"), data);
+const saveResource = async (id, data) => {
+  if (!isAdmin || !db) throw new Error("Chỉ quản lý được sửa nội dung.");
+  const account = mail;
+  const result = id ? await setDoc(doc(db, "giaotrinh", id), data, { merge: true }) : await addDoc(collection(db, "giaotrinh"), data);
+  const savedId = id || result?.id;
+  if (savedId && isAdmin && mail === account) {
+    resourceCacheRevision++;
+    const existing = resourceDocs.some(row => row.id === savedId);
+    resourceDocs = existing ? resourceDocs.map(row => row.id === savedId ? { ...row, ...data } : row) : [...resourceDocs, { ...data, id: savedId }];
+    resourceCache.write(account, resourceDocs);
+  }
+  return result;
 };
 const resourceOptions = (phan, ebook) => ({ phan, ebook, seeds: ebook ? [] : ADVANCED_SEEDS,
   save: (id, data) => saveResource(id, { ...(phan === "nang-cao" ? ADVANCED_SEEDS.find(row => row.id === id) : null), phan, ...data }),
