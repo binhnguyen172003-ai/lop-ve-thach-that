@@ -67,7 +67,7 @@ export function viewerSearchText(value) {
 
 export function createResourceWorkspace(root, { phan, seeds = [], ebook = false, save, mark, markdown, notify, markSeen, prepareImage }) {
   let state = { rows: [], marks: {}, canManage: false }, category = "", opened = "", editing = null, addingCourse = false, accessEditing = false, editingCourse = false, courseDraft = null, coverBusy = false, coverTicket = 0, courseSaving = false;
-  let accessDraft = null, viewerQuery = "", viewerScroll = 0;
+  let accessDraft = null, viewerQuery = "", viewerScroll = 0, accessSaving = false, accessError = "";
   const q = selector => root.querySelector(selector);
   const qa = selector => [...root.querySelectorAll(selector)];
   const label = ebook ? "sách" : "khóa";
@@ -97,14 +97,14 @@ export function createResourceWorkspace(root, { phan, seeds = [], ebook = false,
   const accessForm = rows => {
     const meta = accessRow(rows, category), draft = accessDraft || meta || {};
     return `<form class="rw-editor teacher" data-access-form><h3>Quyền xem · ${esc(category)}</h3>
-      <label>Ai được xem<select name="access"><option value="all">Tất cả học viên đã duyệt</option><option value="selected"${draft.access === "selected" ? " selected" : ""}>Chỉ người được chọn</option></select></label>
+      <label>Ai được xem<select name="access"${accessSaving ? " disabled" : ""}><option value="all">Tất cả học viên đã duyệt</option><option value="selected"${draft.access === "selected" ? " selected" : ""}>Chỉ người được chọn</option></select></label>
       <p class="muted">Quản lý và giáo viên luôn được xem. Chọn học viên bên dưới.</p>
       <label>Tìm học viên<input type="search" data-viewer-search value="${esc(viewerQuery)}" placeholder="Nhập tên hoặc Gmail…" autocomplete="off"></label>
       <p class="muted rw-viewer-count" data-viewer-count role="status" aria-live="polite"></p>
       <div class="rw-viewers" role="group" aria-label="Danh sách học viên" tabindex="0">
-      ${(state.viewers || []).map(person => `<label class="rw-viewer" data-viewer-row data-viewer-search-text="${esc(viewerSearchText((person.ten || "") + " " + person.id))}"><input type="checkbox" name="viewer" value="${esc(person.id)}"${(draft.viewers || []).includes(person.id) ? " checked" : ""}><span><b>${esc(person.ten || person.id)}</b><small>${esc(person.id)}</small></span></label>`).join("")}
+      ${(state.viewers || []).map(person => `<label class="rw-viewer" data-viewer-row data-viewer-search-text="${esc(viewerSearchText((person.ten || "") + " " + person.id))}"><input type="checkbox" name="viewer" value="${esc(person.id)}"${(draft.viewers || []).includes(person.id) ? " checked" : ""}${accessSaving ? " disabled" : ""}><span><b>${esc(person.ten || person.id)}</b><small>${esc(person.id)}</small></span></label>`).join("")}
       <p class="muted rw-viewer-empty" data-viewer-empty hidden>Không tìm thấy học viên.</p></div>
-      <p class="status" data-access-status></p><div class="hop-nut"><button type="button" class="btn" data-access-cancel>Huỷ</button><button type="submit" class="btn primary">Lưu quyền xem</button></div></form>`;
+      <p class="status" data-access-status role="status">${accessSaving ? "Đang lưu quyền xem…" : esc(accessError)}</p><div class="hop-nut"><button type="button" class="btn" data-access-cancel${accessSaving ? " disabled" : ""}>Huỷ</button><button type="submit" class="btn primary"${accessSaving ? " disabled" : ""}>${accessSaving ? "Đang lưu…" : "Lưu quyền xem"}</button></div></form>`;
   };
   const detail = (row, rows) => {
     const current = rows.findIndex(item => item.id === row.id), previous = rows[current - 1], next = rows[current + 1];
@@ -193,10 +193,12 @@ export function createResourceWorkspace(root, { phan, seeds = [], ebook = false,
     if (q("[data-add-course]")) q("[data-add-course]").onclick = () => beginCourse(false);
     if (q("[data-edit-course]")) q("[data-edit-course]").onclick = () => beginCourse(true);
     if (q("[data-access]")) q("[data-access]").onclick = () => {
+      if (accessSaving) return;
+      accessError = "";
       const meta = accessRow(activeRows(), category);
       accessDraft = { access: meta?.access || "all", viewers: [...(meta?.viewers || [])] };
       viewerQuery = ""; viewerScroll = 0; accessEditing = true; opened = ""; editing = null; addingCourse = false; editingCourse = false; courseDraft = null; coverTicket++; coverBusy = false; render(); };
-    if (q("[data-access-cancel]")) q("[data-access-cancel]").onclick = () => { accessEditing = false; accessDraft = null; viewerQuery = ""; render(); };
+    if (q("[data-access-cancel]")) q("[data-access-cancel]").onclick = () => { if (accessSaving) return; accessEditing = false; accessDraft = null; viewerQuery = ""; render(); };
     const permissionEditor = q("[data-access-form]");
     if (permissionEditor) {
       const search = q("[data-viewer-search]"), list = q(".rw-viewers");
@@ -209,7 +211,7 @@ export function createResourceWorkspace(root, { phan, seeds = [], ebook = false,
         empty.textContent = rows.length ? "Không tìm thấy học viên." : "Chưa có học viên trong danh sách.";
       };
       const rememberAccess = () => {
-        if (!state.canManage || !accessDraft) return;
+        if (!state.canManage || !accessDraft || accessSaving) return;
         const boxes = [...permissionEditor.querySelectorAll('input[name="viewer"]')], known = new Set(boxes.map(box => box.value));
         accessDraft.access = permissionEditor.querySelector('[name="access"]').value;
         accessDraft.viewers = [...accessDraft.viewers.filter(id => !known.has(id)), ...boxes.filter(box => box.checked).map(box => box.value)];
@@ -219,14 +221,25 @@ export function createResourceWorkspace(root, { phan, seeds = [], ebook = false,
       permissionEditor.onchange = rememberAccess;
       filterViewers(); list.scrollTop = viewerScroll;
       permissionEditor.onsubmit = async event => {
-      event.preventDefault(); if (!state.canManage) return;
-      rememberAccess();
-      const meta = accessRow(activeRows(), category);
-      const data = { phan, khoa: category, ten: category, loai: "khoa", thutu: 0, an: false,
-        access: accessDraft.access, viewers: [...new Set(accessDraft.viewers)] };
-      const button = permissionEditor.querySelector('[type="submit"]'); button.disabled = true;
-      try { await save(meta?.id || null, data); accessEditing = false; accessDraft = null; viewerQuery = ""; notify("Đã lưu quyền xem."); render(); }
-      catch { button.disabled = false; q("[data-access-status]").textContent = "Chưa lưu được quyền xem. Thử lại."; }
+        event.preventDefault(); if (!state.canManage || accessSaving || !accessDraft) return;
+        rememberAccess();
+        const meta = accessRow(activeRows(), category), draft = accessDraft, account = state.mail;
+        const data = { phan, khoa: category, ten: category, loai: "khoa", thutu: Number(meta?.thutu) || 0, an: false,
+          access: draft.access, viewers: [...new Set(draft.viewers)] };
+        accessSaving = true; accessError = ""; render();
+        try {
+          const result = await save(meta?.id || null, data);
+          accessSaving = false;
+          if (!state.canManage || state.mail !== account) { render(); return; }
+          if (meta) state.rows = state.rows.map(row => row.id === meta.id ? { ...row, ...data } : row);
+          else if (!accessRow(activeRows(), data.khoa)) state.rows = [...state.rows, { ...data, id: result?.id || "quyen-moi" }];
+          if (accessDraft === draft) { accessEditing = false; accessDraft = null; viewerQuery = ""; }
+          notify("Đã lưu quyền xem."); render();
+        } catch {
+          accessSaving = false;
+          if (accessDraft === draft && state.canManage && state.mail === account) accessError = "Chưa lưu được quyền xem. Thử lại.";
+          render();
+        }
       };
     }
     const courseEditor = q("[data-course-form]");
@@ -311,5 +324,5 @@ export function createResourceWorkspace(root, { phan, seeds = [], ebook = false,
       };
     }
   }
-  return { update(next) { state = next; if (!state.canManage) { accessEditing = false; accessDraft = null; viewerQuery = ""; coverTicket++; coverBusy = false; addingCourse = false; editingCourse = false; courseDraft = null; } render(); } };
+  return { update(next) { if (state.mail !== next.mail) { accessEditing = false; accessDraft = null; viewerQuery = ""; accessError = ""; } state = next; if (!state.canManage) { accessEditing = false; accessDraft = null; viewerQuery = ""; coverTicket++; coverBusy = false; addingCourse = false; editingCourse = false; courseDraft = null; } render(); } };
 }
