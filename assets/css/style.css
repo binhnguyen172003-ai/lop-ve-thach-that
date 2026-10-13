@@ -4218,3 +4218,35 @@ body:has(#toast:not([hidden])) .tl-bong,body:has(#server-issue:not([hidden])) .t
 
 .resource-workspace .rw-category-grid::-webkit-scrollbar{display:block;width:5px}
 .resource-workspace .rw-category-grid::-webkit-scrollbar-thumb{background:var(--graphite);border-radius:6px}
+
+/* Tài khoản: thao tác gọn, ô nhập không lấn icon xem mật khẩu. */
+#card-login .hv-info{gap:12px;margin-bottom:14px;min-width:0}
+#card-login .hv-edit-actions{margin:0;gap:8px}
+#card-login .hv-doiten{padding:14px;border:1px solid var(--rule);border-radius:12px;background:var(--paper);min-width:0}
+#card-login .hv-doiten form{gap:8px;margin:0;min-width:0}
+#card-login .hv-doiten label{line-height:1.5}
+#card-login .hv-doiten input{min-width:0;background:var(--sheet);font-size:16px}
+#card-login .hv-name-hint{margin:0;color:var(--graphite);font-size:.82rem;line-height:1.5}
+#card-login .hv-name-actions{display:grid;justify-items:start;gap:6px}
+#card-login .hv-name-actions .status{margin:0;overflow-wrap:anywhere}
+#card-login .hv-name-actions .status:empty{display:none}
+#card-login .account-actions{margin:0;gap:8px;min-width:0}
+#card-login .account-actions:has(.btn:not([hidden])){padding-top:14px;border-top:1px solid var(--rule)}
+#card-login .account-actions .btn,#card-login .hv-edit-actions .btn,#card-login .hv-name-actions .btn{min-height:44px;padding:10px 16px;border-radius:12px;font-size:.9rem;line-height:1.4;white-space:normal;text-align:center;min-width:0}
+#pw-box form label{min-width:0;line-height:1.5;letter-spacing:0}
+#pw-box form input:not([type=checkbox]):not([type=radio]){min-width:0;width:100%;min-height:46px;padding:10px 12px;background-image:none;font-size:16px;line-height:1.5}
+#pw-box .pw-row{display:grid;grid-template-columns:minmax(0,1fr) 44px;gap:0;min-width:0;align-items:center;border-bottom:2px solid color-mix(in srgb,var(--ink) 35%,transparent)}
+#pw-box .pw-row:focus-within{border-bottom-color:var(--ink)}
+#pw-box .pw-row input:not([type=checkbox]):not([type=radio]){border-bottom:0;box-shadow:none}
+#pw-box .pw-mat{position:static;transform:none;width:44px;height:44px;min-height:44px;min-width:44px;padding:0;align-self:center}
+#pw-box form > div > .btn.primary,#pw-box .pw-doi{min-height:46px;padding:10px 14px;border-radius:12px;font-size:.95rem;line-height:1.4;white-space:normal;text-align:center}
+#pw-box #pw-forgot{font-size:.85rem;line-height:1.5;min-height:36px;margin:0}
+@media(max-width:640px){
+  #card-login{padding:18px 16px}
+  #card-login .hv-doiten{padding:12px}
+  #card-login .hv-name-actions{justify-items:stretch}
+  #card-login .hv-name-actions .btn{width:100%}
+  #card-login .account-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  #card-login .account-actions:has(#btn-ql:not([hidden])){grid-template-columns:minmax(0,1fr)}
+  #pw-box{padding:18px 14px;border-radius:16px}
+}

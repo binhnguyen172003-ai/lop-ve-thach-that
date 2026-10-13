@@ -2105,7 +2105,7 @@ function renderAccount(pending) {
   $("#who-name").textContent = user.displayName || "Xin chào";
   $("#who-mail").textContent = mail;
   $("#nav-acct-t").textContent = "Tài khoản";
-  $("#btn-learn").textContent = isTeacher ? "Xem giáo trình" : "Vào học ngay →";
+  $("#btn-learn").textContent = isTeacher ? "Xem giáo trình" : "Vào học →";
   { const q = $("#btn-ql"); q.hidden = !isTeacher || needVerify; q.href = isAdmin ? "#duyet" : "#diem-danh"; }
   if (needVerify) {
     $("#who-status").innerHTML = `<span class="chip line">Chưa xác nhận Gmail</span>`;
@@ -2995,7 +2995,7 @@ function renderHvInfo() {
       <div><dt>Ngày sinh</dt><dd>${esc(myHv.ngaySinh ? hienNgaySinh(myHv.ngaySinh) : "Chưa bổ sung")}</dd></div>
       <div><dt>Trường thi dự kiến</dt><dd>${esc(tt || "Chưa chọn")}</dd></div>
     </dl>
-    <div class="ctas"><button class="btn primary" type="button" id="hv-edit-info" aria-expanded="false" aria-controls="f-hv-info">Chỉnh sửa thông tin đã gửi</button></div>
+    <div class="ctas hv-edit-actions"><button class="btn primary" type="button" id="hv-edit-info" aria-expanded="false" aria-controls="f-hv-info">Sửa thông tin</button></div>
     <form class="hv-form" id="f-hv-info" novalidate hidden>
       <h3>Chỉnh sửa thông tin đã gửi</h3>
       <label>Ngày sinh<input id="hv-ngaysinh" type="date" autocomplete="bday" max="${ngayVietNam()}" value="${esc(myHv.ngaySinh || "")}"><small class="muted">${myHv.ngaySinh ? "" : myHv.namSinh ? "Đã có năm sinh " + esc(myHv.namSinh) + ". Em bổ sung ngày và tháng để nhận lời chúc sinh nhật nhé." : "Em bổ sung ngày sinh để nhận lời chúc sinh nhật nhé."}</small></label>
@@ -3007,8 +3007,9 @@ function renderHvInfo() {
     ${donCuaToiHTML()}
     <div class="hv-doiten">${dang
       ? `<p class="muted">Đã gửi yêu cầu đổi tên thành <b>${esc(dang.tenMoi)}</b>. Đang chờ anh chị duyệt.</p>`
-      : `<form id="f-doiten" novalidate><label>Xin đổi họ tên (anh chị duyệt trước khi đổi)<input id="doiten-moi" maxlength="80" autocomplete="name" placeholder="Họ và tên mới"></label>
-         <div><button class="btn" type="submit">Gửi yêu cầu đổi tên</button> <span class="status" id="doiten-st" role="status"></span></div></form>`}
+      : `<form id="f-doiten" novalidate><label>Đổi họ tên<input id="doiten-moi" maxlength="80" autocomplete="name" placeholder="Họ và tên mới" aria-describedby="doiten-hint"></label>
+         <p class="muted hv-name-hint" id="doiten-hint">Cần anh chị duyệt trước khi đổi.</p>
+         <div class="hv-name-actions"><button class="btn" type="submit" aria-label="Gửi yêu cầu đổi tên">Gửi yêu cầu</button> <span class="status" id="doiten-st" role="status"></span></div></form>`}
     </div>`;
   $$("#hv-info [data-dadong]").forEach(b => b.onclick = () => danhDauDaChuyen(b.dataset.dadong));
   $("#hv-edit-info").onclick = () => {
