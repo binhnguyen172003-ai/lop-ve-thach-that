@@ -100,12 +100,14 @@ html[data-theme="light"] #app-intro{background:#f6f5f1;color:#15171b}
     };
     intro.addEventListener("pointerdown", hide);
     addEventListener("pagehide", hide);
-    addEventListener("pageshow", event => { if (event.persisted) show(); });
+    // Đợi trang hiển thị được, rồi mới bắt đầu intro sau màn hình khởi động Android.
+    const afterPaint = () => requestAnimationFrame(() => requestAnimationFrame(show));
+    addEventListener("pageshow", afterPaint);
     document.addEventListener("visibilitychange", () => {
       if (document.hidden) { hiddenAt = Date.now(); hide(); }
       else if (hiddenAt && Date.now() - hiddenAt >= 10000) { hiddenAt = 0; show(); }
     });
-    show();
+    if (document.readyState === "complete") afterPaint();
   } catch { intro.hidden = true; }
 })();
 </script>
