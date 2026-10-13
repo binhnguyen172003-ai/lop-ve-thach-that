@@ -4179,3 +4179,36 @@ body:has(#toast:not([hidden])) .tl-bong,body:has(#server-issue:not([hidden])) .t
 .resource-workspace .rw-viewer small{font-size:.77rem;line-height:1.4;color:var(--graphite);overflow-wrap:anywhere}
 .resource-workspace .rw-viewer-empty{margin:0;padding:16px;font-size:.85rem}
 .resource-workspace [data-viewer-search]{min-width:0;width:100%}
+
+/* Thẻ khóa học và eBook giữ cùng bố cục khi được xem hoặc đang khóa. */
+.resource-workspace .rw-category-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:0;padding:0;max-height:420px;max-height:min(55dvh,420px);overflow-x:hidden;overflow-y:auto;scrollbar-width:thin;scrollbar-gutter:stable;touch-action:pan-y pinch-zoom}
+.resource-workspace .rw-category-card{width:100%;min-width:0;align-content:start;gap:5px;padding:10px;border-radius:14px}
+.resource-workspace .rw-category-card b{white-space:normal;font-size:.85rem;line-height:1.4;overflow-wrap:anywhere}
+.resource-workspace .rw-category-card small{font-size:.73rem;line-height:1.35;overflow-wrap:anywhere}
+.resource-workspace .rw-category-media{display:grid;place-items:center;aspect-ratio:8/5;overflow:hidden;border-radius:9px;background:var(--paper);margin-bottom:3px}
+.resource-workspace .rw-category-media .rw-category-cover{width:100%;height:100%;max-height:100%;object-fit:contain;border-radius:0;margin:0}
+.resource-workspace .rw-category-placeholder{font-size:1.8rem;line-height:1}
+.resource-workspace .rw-category-state{font-size:.7rem;line-height:1.4;color:var(--ok)}
+.resource-workspace .rw-category-card[aria-pressed=true] .rw-category-state{color:inherit}
+.resource-workspace .rw-category-state.is-locked{color:var(--graphite)}
+.resource-workspace .rw-category-card[aria-pressed=true] .is-locked{color:inherit;opacity:.85}
+.resource-workspace .rw-progress{padding:12px 14px;gap:9px}
+.resource-workspace .rw-progress .eyebrow{font-size:.68rem;line-height:1.4;overflow-wrap:anywhere}
+.resource-workspace .rw-progress .gt-td-so b{font-size:1.5rem;line-height:1.2}
+.resource-workspace .rw-progress .gt-td-so span{font-size:.8rem}
+.resource-workspace .rw-progress .gt-td-so .gt-pt{font-size:1rem;color:var(--ok)}
+.resource-workspace .rw-progress .gt-bar{height:6px}
+.resource-workspace .rw-progress .gt-td-ds{font-size:.75rem;gap:5px 12px}
+.resource-workspace .rw-next{min-height:42px;padding:9px 12px;font-size:.83rem}
+.resource-workspace .rw-category-lock{padding:20px;margin:0}
+.resource-workspace .rw-category-lock h3{font-size:1.15rem;line-height:1.4;margin:0 0 8px}
+.resource-workspace .rw-category-lock p{font-size:.9rem;line-height:1.6;margin:0;overflow-wrap:anywhere}
+.resource-workspace .rw-book-status:empty{display:none}
+.resource-workspace .rw-delete-book{color:var(--warn);border-color:var(--warn)}
+.resource-workspace .rw-deleted-books > div{display:flex;align-items:center;justify-content:space-between;gap:12px;min-width:0;padding:10px 0}
+.resource-workspace .rw-deleted-books > div span{min-width:0;overflow-wrap:anywhere}
+@media(min-width:900px){.resource-workspace .rw-category-grid{grid-template-columns:minmax(0,1fr);max-height:min(60dvh,560px)}}
+@media(max-width:480px){.resource-workspace .rw-category-card{padding:8px}.resource-workspace .rw-category-card b{font-size:.8rem}.resource-workspace .rw-category-lock{padding:16px}}
+
+.resource-workspace .rw-category-grid::-webkit-scrollbar{display:block;width:5px}
+.resource-workspace .rw-category-grid::-webkit-scrollbar-thumb{background:var(--graphite);border-radius:6px}
