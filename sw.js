@@ -1,7 +1,7 @@
 // Bộ nhớ đệm giúp web mở tức thì ở lần sau và vẫn xem được khi mất mạng.
 // Thường không cần sửa file này. Mỗi lần đưa web lên, mã phiên bản (?v=) đổi nên bản cũ tự bị thay.
 const V = new URL(self.location.href).searchParams.get("v") || "dev";
-const TRANG = "lvkv-trang-" + V;      // file của web (theo phiên bản)
+const TRANG = "lvkv-trang-20261013sync-" + V;      // file của web (theo phiên bản)
 const THU_VIEN = "lvkv-thu-vien";     // thư viện Firebase + phông chữ (không bao giờ đổi)
 
 self.addEventListener("install", e => {
