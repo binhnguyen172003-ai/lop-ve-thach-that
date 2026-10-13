@@ -22,6 +22,8 @@ export function youtubeId(value) {
 export function resourceImage(row) {
   const manual = safeResourceLink(row.anh);
   if (manual) return manual;
+  const uploaded = courseCoverImage(row.anh);
+  if (uploaded) return uploaded;
   const id = youtubeId(row.link);
   return id ? `https://i.ytimg.com/vi/${id}/hqdefault.jpg` : "";
 }
@@ -67,6 +69,7 @@ export function viewerSearchText(value) {
 
 export function createResourceWorkspace(root, { phan, seeds = [], ebook = false, publicMode = false, save, mark, markdown, notify, markSeen, prepareImage, renameCategory, removeCategory, restoreCategory, requestUnlock, openConversation }) {
   let state = { rows: [], marks: {}, canManage: false }, category = "", opened = "", editing = null, addingCourse = false, accessEditing = false, editingCourse = false, courseDraft = null, coverBusy = false, coverTicket = 0, courseSaving = false;
+  let lessonImage = "", lessonImageBusy = false, lessonImageTicket = 0;
   let accessDraft = null, viewerQuery = "", viewerScroll = 0, accessSaving = false, accessError = "";
   let categoryChosen = false, bookBusy = false, bookError = "";
   let unlockRequests = new Map();
@@ -157,7 +160,9 @@ export function createResourceWorkspace(root, { phan, seeds = [], ebook = false,
     <label>Mô tả ngắn<input name="moTa" maxlength="200" value="${esc(row?.moTa || "")}"></label>
     <label>Kiến thức / nội dung<textarea name="noidung" rows="8" maxlength="20000" placeholder="Viết nội dung; có thể dùng ## tiêu đề, - danh sách…">${esc(row?.noidung || "")}</textarea></label>
     <label>Link ${ebook ? "đọc sách / PDF" : "video hoặc tài liệu"} (https://…)<input name="link" type="url" maxlength="2000" value="${esc(row?.link || "")}"></label>
-    <label>Link ${ebook ? "ảnh bìa" : "ảnh bài"} (để trống sẽ dùng ảnh YouTube)<input name="anh" type="url" maxlength="2000" value="${esc(row?.anh || "")}"></label>
+    <label>Tải ${ebook ? "ảnh bìa" : "ảnh bài"} từ máy<input type="file" data-lesson-image accept="image/jpeg,image/png,image/webp"></label>
+    <div class="rw-cover-preview" data-lesson-preview${courseCoverImage(lessonImage) ? "" : " hidden"}><img ${courseCoverImage(lessonImage) ? `src="${esc(lessonImage)}"` : ""} alt="Ảnh đang chọn"><button class="btn small" type="button" data-lesson-remove>Bỏ ảnh</button></div>
+    <label>Hoặc dùng link ${ebook ? "ảnh bìa" : "ảnh bài"} (để trống sẽ dùng ảnh YouTube)<input name="anh" type="url" maxlength="2000" value="${esc(safeResourceLink(lessonImage))}"></label>
     <label>Lời dặn của anh chị<textarea name="ghichu" rows="3" maxlength="2000">${esc(row?.ghichu || "")}</textarea></label>
     <p class="status" role="status" data-status></p><div class="hop-nut"><button class="btn" type="button" data-cancel>Huỷ</button><button class="btn primary" type="submit">Lưu nội dung</button></div></form>`;
   function render() {
@@ -233,8 +238,8 @@ export function createResourceWorkspace(root, { phan, seeds = [], ebook = false,
     qa("[data-open]").forEach(button => button.onclick = () => { opened = button.dataset.open; editing = null; markSeen?.(opened); render(); root.scrollIntoView({ block: "start" }); });
     if (q("[data-back]")) q("[data-back]").onclick = () => { opened = ""; render(); };
     if (q("[data-mark]")) q("[data-mark]").onclick = async () => { try { await mark(selected.id); } catch { notify("Chưa lưu được tiến độ. Thử lại.", "err"); } };
-    if (q("[data-add]")) q("[data-add]").onclick = () => { editingCourse = false; courseDraft = null; coverTicket++; coverBusy = false; addingCourse = false; opened = ""; editing = ""; render(); };
-    qa("[data-edit]").forEach(button => button.onclick = () => { editing = button.dataset.edit; render(); });
+    if (q("[data-add]")) q("[data-add]").onclick = () => { editingCourse = false; courseDraft = null; coverTicket++; coverBusy = false; lessonImageTicket++; lessonImage = ""; lessonImageBusy = false; addingCourse = false; opened = ""; editing = ""; render(); };
+    qa("[data-edit]").forEach(button => button.onclick = () => { editing = button.dataset.edit; lessonImageTicket++; lessonImage = all.find(row => row.id === editing)?.anh || ""; lessonImageBusy = false; render(); });
     qa("[data-hide]").forEach(button => button.onclick = async () => { if (!confirm("Ẩn nội dung này khỏi học viên?")) return; try { await save(button.dataset.hide, { an: true }); opened = ""; notify("Đã ẩn nội dung."); } catch { notify("Chưa ẩn được. Thử lại.", "err"); } });
     qa("[data-restore]").forEach(button => button.onclick = async () => { try { await save(button.dataset.restore, { an: false }); notify("Đã hiện lại nội dung."); } catch { notify("Chưa hiện lại được. Thử lại.", "err"); } });
     const beginCourse = existing => {
@@ -366,19 +371,48 @@ export function createResourceWorkspace(root, { phan, seeds = [], ebook = false,
     }
     const editor = q("[data-resource-form]");
     if (editor) {
-      q("[data-cancel]").onclick = () => { editing = null; render(); };
+      const imageInput = q("[data-lesson-image]"), imageLink = editor.elements.anh, imagePreview = q("[data-lesson-preview]");
+      const updateImagePreview = () => {
+        const image = courseCoverImage(lessonImage), preview = imagePreview.querySelector("img");
+        imagePreview.hidden = !image;
+        if (image) preview.src = image; else preview.removeAttribute("src");
+      };
+      imageInput.onchange = async event => {
+        const file = event.target.files?.[0], status = q("[data-status]");
+        if (!file || !state.canManage) return;
+        if (!/^image\/(jpeg|png|webp)$/.test(file.type) || file.size > 10 * 1024 * 1024) { status.textContent = "Chọn ảnh JPG, PNG hoặc WebP dưới 10 MB."; return; }
+        if (!prepareImage) { status.textContent = "Chưa tải được phần xử lý ảnh. Dùng link ảnh hoặc tải lại trang."; return; }
+        const ticket = ++lessonImageTicket;
+        lessonImageBusy = true; editor.querySelector('[type="submit"]').disabled = true; status.textContent = "Đang chuẩn bị ảnh…";
+        try {
+          const image = await prepareImage(file);
+          if (ticket !== lessonImageTicket || !editor.isConnected || !state.canManage) return;
+          if (!courseCoverImage(image)) throw new Error("Ảnh chưa hợp lệ hoặc quá lớn. Chọn ảnh khác.");
+          lessonImage = image; imageLink.value = ""; updateImagePreview(); status.textContent = "Ảnh đã sẵn sàng.";
+        } catch (error) {
+          if (ticket !== lessonImageTicket || !editor.isConnected) return;
+          status.textContent = error.message || "Không mở được ảnh.";
+        } finally {
+          if (ticket === lessonImageTicket && editor.isConnected) { lessonImageBusy = false; editor.querySelector('[type="submit"]').disabled = false; }
+        }
+      };
+      imageLink.oninput = () => { if (imageLink.value.trim()) { lessonImageTicket++; lessonImage = ""; lessonImageBusy = false; updateImagePreview(); editor.querySelector('[type="submit"]').disabled = false; } };
+      q("[data-lesson-remove]").onclick = () => { lessonImageTicket++; lessonImage = ""; lessonImageBusy = false; imageInput.value = ""; imageLink.value = ""; updateImagePreview(); q("[data-status]").textContent = ""; editor.querySelector('[type="submit"]').disabled = false; };
+      q("[data-cancel]").onclick = () => { lessonImageTicket++; lessonImage = ""; lessonImageBusy = false; editing = null; render(); };
       editor.onsubmit = async event => {
         event.preventDefault();
-        if (!state.canManage) return;
+        if (!state.canManage || lessonImageBusy) return;
         const data = Object.fromEntries(new FormData(editor));
+        delete data[""];
+        data.anh = lessonImage || data.anh;
         data.khoa = data.khoa.trim(); data.ten = data.ten.trim();
         for (const key of ["moTa", "noidung", "link", "anh", "ghichu"]) data[key] = data[key].trim();
         const status = q("[data-status]");
         if (!data.khoa || !data.ten || !data.noidung && !data.link) { status.textContent = "Điền tên và ít nhất một nội dung hoặc link."; return; }
-        if ((data.link && !safeResourceLink(data.link)) || (data.anh && !safeResourceLink(data.anh))) { status.textContent = "Link phải bắt đầu bằng https:// và không chứa thông tin đăng nhập."; return; }
+        if ((data.link && !safeResourceLink(data.link)) || (data.anh && !courseCoverImage(data.anh))) { status.textContent = "Link phải bắt đầu bằng https:// và không chứa thông tin đăng nhập."; return; }
         data.thutu = Number(data.thutu); data.phan = phan; data.an = false;
         const submit = editor.querySelector('[type="submit"]'); submit.disabled = true; status.textContent = "Đang lưu…";
-        try { await save(editing || null, data); editing = null; opened = ""; notify("Đã lưu nội dung."); }
+        try { await save(editing || null, data); lessonImageTicket++; lessonImage = ""; editing = null; opened = ""; notify("Đã lưu nội dung."); }
         catch { submit.disabled = false; status.textContent = "Chưa lưu được. Kiểm tra mạng rồi thử lại."; }
       };
     }
