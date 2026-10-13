@@ -2183,6 +2183,8 @@ body.hop-mo{overflow:hidden}
 @media (max-width:640px){#card-login .ctas{display:grid;grid-template-columns:1fr;gap:10px}#card-login .ctas .btn{width:100%}}
 /* Bài vẽ nổi bật: thẻ "+" cuối vòng xoay */
 .nb-card.nb-add{display:grid;place-items:center;border:2px dashed var(--accent);border-radius:18px;background:var(--accent-soft);cursor:pointer;min-height:100%}
+.nb-stage .nb-card.nb-add{min-height:0}
+.nb-stage .nb-card.nb-add:focus-visible{outline:3px solid var(--accent);outline-offset:-6px}
 .nb-add-in{display:grid;justify-items:center;gap:8px;text-align:center;padding:24px;color:var(--ink)}
 .nb-add .nb-plus{width:76px;height:76px;font-size:2.6rem;border-style:solid}
 .nb-add-in b{font:700 1.1rem var(--f-display)}.nb-add-in small{font-size:.82rem;color:var(--graphite);line-height:1.4}
@@ -4250,3 +4252,4 @@ body:has(#toast:not([hidden])) .tl-bong,body:has(#server-issue:not([hidden])) .t
   #card-login .account-actions:has(#btn-ql:not([hidden])){grid-template-columns:minmax(0,1fr)}
   #pw-box{padding:18px 14px;border-radius:16px}
 }
+
