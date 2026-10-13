@@ -55,7 +55,7 @@
 <script nomodule>document.addEventListener("DOMContentLoaded",function(){var d=document.createElement("div");d.className="slow-bar";d.innerHTML="Trình duyệt này đã quá cũ nên web chạy không đủ. Hãy cập nhật Chrome hoặc Safari rồi mở lại.";document.body.insertBefore(d,document.body.firstChild)})</script>
 <script>setTimeout(function(){if(window.__appOk)return;var d=document.createElement("div");d.className="slow-bar";d.innerHTML='Mạng đang chậm, trang chưa tải xong. <button type="button" onclick="location.reload()">Tải lại</button>';document.body.insertBefore(d,document.body.firstChild)},12000)</script>
 <style>
-#app-intro{position:fixed;inset:0;z-index:10000;display:grid;place-items:center;background:#15171b;color:#f1f2f4;animation:appIntroOut .15s ease 1.95s forwards}
+#app-intro{position:fixed;inset:0;z-index:10000;display:grid;place-items:center;background:#15171b;color:#f1f2f4;animation:appIntroOut .15s ease var(--intro-hold,1.95s) forwards}
 #app-intro .intro-brand{display:grid;justify-items:center;gap:24px;padding:24px;text-align:center}
 #app-intro .intro-logo{width:min(64vw,260px,46dvh);aspect-ratio:1;border-radius:26%;overflow:hidden;background:#000;animation:appIntroIn .22s ease-out both}
 #app-intro .intro-logo img{display:block;width:100%;height:100%;max-width:none;border-radius:inherit;object-fit:contain}
@@ -85,6 +85,7 @@ html[data-theme="light"] #app-intro{background:#f6f5f1;color:#15171b}
   let timer, hiddenAt = 0;
   try {
     const preview = new URLSearchParams(location.search).get("intro") === "1";
+    intro.style.setProperty("--intro-hold", preview ? "5.95s" : "1.95s");
     const app = preview || matchMedia("(display-mode: standalone)").matches || matchMedia("(display-mode: fullscreen)").matches || navigator.standalone === true;
     if (!app) { intro.remove(); return; }
     const hide = () => { clearTimeout(timer); intro.hidden = true; };
@@ -96,7 +97,7 @@ html[data-theme="light"] #app-intro{background:#f6f5f1;color:#15171b}
       intro.style.animation = "none";
       void intro.offsetWidth;
       intro.style.animation = "";
-      timer = setTimeout(hide, matchMedia("(prefers-reduced-motion: reduce)").matches ? 550 : 2150);
+      timer = setTimeout(hide, matchMedia("(prefers-reduced-motion: reduce)").matches ? 550 : preview ? 6150 : 2150);
     };
     intro.addEventListener("pointerdown", hide);
     addEventListener("pagehide", hide);
