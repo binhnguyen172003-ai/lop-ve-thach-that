@@ -32,6 +32,14 @@ export function courseCoverImage(value) {
   return typeof value === "string" && value.length <= 500000 && /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(value) ? value : "";
 }
 
+export function courseIntro(meta) {
+  const description = String(meta?.moTa || "").trim();
+  if (typeof meta?.dieuKienMoKhoa === "string") return { description, condition: meta.dieuKienMoKhoa.trim() };
+  // Tách câu điều kiện từng được ghi cuối mô tả, giữ nguyên dữ liệu cho tới khi quản lý lưu.
+  const legacy = description.match(/[,;\n]\s*(Cần[^,\n.!?]{1,80}mở kh[oó][aá])\.?\s*$/iu);
+  return legacy ? { description: description.slice(0, legacy.index).trim(), condition: legacy[1].trim() } : { description, condition: "" };
+}
+
 export const PORTRAIT_VIDEOS = ["vZdFuUTUeJw", "kcsVYarOj3Q", "0ugijncV044", "F0gvbmmmBks", "wAzToQzLvsI", "zawPgE4fVyw", "1n_FuJRkL5E", "E1liPpUFsNE", "dtsrRKw5mVI", "MyBXfdEDKXw", "bzmE8cv2mGY", "jvsmtqpkUtA", "mn4sFkA0Z40", "g4bWjq8EGlk", "VJYjfK-1_uA", "E7_4OQaNIUI", "rmx5PwAQvMw"];
 // Tên tiếng Việt dựa trên tiêu đề gốc của từng video VORNIKOW.
 const TITLES_VI = ["Kỹ thuật nét, sắc độ, khối và quy luật sáng tối", "Xử lý đường biên", "Vẽ hộp sọ · Giai đoạn 1–2", "Vẽ hộp sọ · Giai đoạn 3–4", "Cấu trúc cơ mặt", "Mắt và mũi · Lý thuyết", "Mắt và mũi · Thực hành", "Vẽ mắt · Xử lý chi tiết", "Vẽ mũi · Xử lý đường biên", "Vẽ môi", "Chân dung người đàn ông đầu trọc · Hình khối khuôn mặt", "Chân dung người đàn ông đầu trọc · Toàn bộ quá trình vẽ", "Chân dung với đầu hơi nghiêng", "Chân dung nam", "Chân dung người đàn ông đầu trọc", "Chân dung Alain Delon", "Ký hoạ trong 1 giờ"];
@@ -58,6 +66,7 @@ export function createResourceWorkspace(root, { phan, seeds = [], ebook = false,
   const q = selector => root.querySelector(selector);
   const qa = selector => [...root.querySelectorAll(selector)];
   const label = ebook ? "sách" : "khóa";
+  const itemLabel = ebook ? "eBook" : "khóa học";
   const unit = ebook ? "chương / tài liệu" : "bài học";
   const activeRows = () => resourceRows(state.rows, seeds, phan);
   const categories = rows => [...new Set(rows.filter(row => !row.an).map(row => row.khoa || (ebook ? "eBook" : "Khóa nâng cao")))];
@@ -88,23 +97,25 @@ export function createResourceWorkspace(root, { phan, seeds = [], ebook = false,
       ${state.canManage ? `<div class="gtb-ql"><b>Quản lý nội dung</b><button class="btn small" type="button" data-edit="${esc(row.id)}">Sửa nội dung</button><button class="btn small" type="button" data-hide="${esc(row.id)}">Ẩn mục này</button></div>` : ""}</article>`;
   };
   const courseForm = () => {
-    const draft = courseDraft || {}, cover = courseCoverImage(draft.anhBia), title = editingCourse ? "Sửa khóa học" : "Thêm khóa học";
+    const draft = courseDraft || {}, cover = courseCoverImage(draft.anhBia), title = `${editingCourse ? "Sửa" : "Thêm"} ${itemLabel}`;
     return `<form class="rw-editor teacher" data-course-form><h3>${title}</h3>
-      <label>Tên khóa học<input name="khoa" required maxlength="120" value="${esc(draft.khoa || "")}"${editingCourse ? " readonly" : ""} placeholder="VD: Hình họa người nâng cao"></label>
-      <label>Ảnh bìa khóa học<input type="file" data-course-cover accept="image/jpeg,image/png,image/webp"${coverBusy ? " disabled" : ""}></label>
+      <label>Tên ${itemLabel}<input name="khoa" required maxlength="120" value="${esc(draft.khoa || "")}"${editingCourse ? " readonly" : ""} placeholder="VD: Hình họa người nâng cao"></label>
+      <label>Ảnh bìa ${itemLabel}<input type="file" data-course-cover accept="image/jpeg,image/png,image/webp"${coverBusy ? " disabled" : ""}></label>
       <div class="rw-cover-preview"${cover ? "" : " hidden"}><img ${cover ? `src="${esc(cover)}"` : ""} alt="Ảnh bìa đang chọn"><button class="btn small" type="button" data-cover-remove>Bỏ ảnh bìa</button></div>
       <label>Hoặc dùng link ảnh bìa<input name="coverUrl" type="url" maxlength="2000" value="${esc(safeResourceLink(draft.anhBia))}" placeholder="https://…"></label>
-      <label>Mô tả khóa học<textarea name="moTa" maxlength="2000" rows="6" placeholder="Khóa này học gì, phù hợp với ai và học xong sẽ làm được gì?">${esc(draft.moTa || "")}</textarea></label>
-      <p class="status" role="status" data-course-status>${coverBusy ? "Đang chuẩn bị ảnh bìa…" : courseSaving ? "Đang lưu khóa học…" : ""}</p>
-      <div class="hop-nut"><button class="btn" type="button" data-course-cancel${courseSaving ? " disabled" : ""}>Huỷ</button><button class="btn primary" type="submit"${coverBusy || courseSaving ? " disabled" : ""}>${editingCourse ? "Lưu khóa học" : "Tạo khóa học"}</button></div></form>`;
+      <label>Mô tả ${itemLabel}<textarea name="moTa" maxlength="2000" rows="6" placeholder="${ebook ? "Sách này có nội dung gì, dành cho ai và giúp học viên học được gì?" : "Khóa này học gì, phù hợp với ai và học xong sẽ làm được gì?"}">${esc(draft.moTa || "")}</textarea></label>
+      <label>Điều kiện mở khóa<input name="dieuKienMoKhoa" maxlength="80" value="${esc(draft.dieuKienMoKhoa || "")}" placeholder="VD: Cần 15 đô để mở khóa"><small class="muted">Viết ngắn khoảng 5–6 từ. Để trống nếu không có điều kiện.</small></label>
+      <p class="status" role="status" data-course-status>${coverBusy ? "Đang chuẩn bị ảnh bìa…" : courseSaving ? `Đang lưu ${itemLabel}…` : ""}</p>
+      <div class="hop-nut"><button class="btn" type="button" data-course-cancel${courseSaving ? " disabled" : ""}>Huỷ</button><button class="btn primary" type="submit"${coverBusy || courseSaving ? " disabled" : ""}>${editingCourse ? "Lưu" : "Tạo"} ${itemLabel}</button></div></form>`;
   };
   const courseSummary = all => {
-    if (ebook || !category) return "";
-    const meta = accessRow(all, category), cover = courseCoverImage(meta?.anhBia);
-    return `<section class="rw-course-summary" aria-label="Giới thiệu khóa học">
+    if (!category) return "";
+    const meta = accessRow(all, category), cover = courseCoverImage(meta?.anhBia), intro = courseIntro(meta);
+    return `<section class="rw-course-summary" aria-label="Giới thiệu ${itemLabel}">
       ${cover ? `<img class="rw-course-cover" src="${esc(cover)}" alt="Ảnh bìa ${esc(category)}" loading="lazy">` : ""}
-      <div class="rw-course-copy"><p class="eyebrow">Giới thiệu khóa học</p><h2>${esc(category)}</h2>
-      <p class="rw-course-description">${esc(meta?.moTa || "Mô tả khóa học đang được cập nhật.")}</p></div></section>`;
+      <div class="rw-course-copy"><p class="eyebrow">Giới thiệu ${itemLabel}</p><h2>${esc(category)}</h2>
+      <p class="rw-course-description">${esc(intro.description || `Mô tả ${itemLabel} đang được cập nhật.`)}</p>
+      ${intro.condition ? `<dl class="rw-course-unlock"><dt>Điều kiện mở khóa</dt><dd>${esc(intro.condition)}</dd></dl>` : ""}</div></section>`;
   };
   const form = row => `<form class="rw-editor teacher" data-resource-form><h3>${row ? "Sửa" : "Thêm"} ${ebook ? "chương hoặc tài liệu" : "bài học"}</h3>
     <div class="fgrid"><label>Tên ${label}<input name="khoa" required maxlength="120" value="${esc(row?.khoa || category)}" placeholder="${ebook ? "VD: Hình hoạ cơ bản" : "VD: Chân dung nâng cao"}"></label>
@@ -122,7 +133,7 @@ export function createResourceWorkspace(root, { phan, seeds = [], ebook = false,
     const all = activeRows(), groups = categories(all);
     if (!groups.includes(category)) category = groups[0] || "";
     if (!canView(all, category)) {
-      root.innerHTML = `<div class="gt-mon">${groups.map(name => `<button class="gt-mon-nut" data-category="${esc(name)}" aria-pressed="${name === category}">${esc(name)}</button>`).join("")}</div><section class="lock"><h3>Khóa học chưa được cấp quyền</h3><p>Liên hệ quản lý để được mở khóa ${esc(category)}.</p></section>`;
+      root.innerHTML = `<div class="gt-mon">${groups.map(name => `<button class="gt-mon-nut" data-category="${esc(name)}" aria-pressed="${name === category}">${esc(name)}</button>`).join("")}</div><section class="lock"><h3>${ebook ? "eBook" : "Khóa học"} chưa được cấp quyền</h3><p>Liên hệ quản lý để được mở khóa ${esc(category)}.</p></section>`;
       qa("[data-category]").forEach(button => button.onclick = () => { category = button.dataset.category; opened = ""; editing = null; addingCourse = false; accessEditing = false; editingCourse = false; courseDraft = null; coverBusy = false; coverTicket++; render(); });
       return;
     }
@@ -133,9 +144,9 @@ export function createResourceWorkspace(root, { phan, seeds = [], ebook = false,
     const studying = rows.filter(row => !state.marks?.[row.id] && state.seen?.[row.id]).length;
     const nextLesson = rows.find(row => !state.marks?.[row.id]);
     const percent = rows.length ? Math.round(completed / rows.length * 100) : 0;
-    root.innerHTML = `<div class="gt-wrap ${selected ? "dang-doc" : ""}"><aside class="gt-side"><div class="gt-mon" role="navigation" aria-label="Chọn ${label}">${groups.map(name => `<button class="gt-mon-nut" type="button" data-category="${esc(name)}" aria-pressed="${name === category}">${!ebook && courseCoverImage(accessRow(all, name)?.anhBia) ? `<img class="rw-category-cover" src="${esc(courseCoverImage(accessRow(all, name)?.anhBia))}" alt="" loading="lazy">` : ""}<b>${esc(name)}</b><small>${resourceLessons(all, name).length} ${unit}</small></button>`).join("")}</div>
+    root.innerHTML = `<div class="gt-wrap ${selected ? "dang-doc" : ""}"><aside class="gt-side"><div class="gt-mon" role="navigation" aria-label="Chọn ${label}">${groups.map(name => `<button class="gt-mon-nut" type="button" data-category="${esc(name)}" aria-pressed="${name === category}">${courseCoverImage(accessRow(all, name)?.anhBia) ? `<img class="rw-category-cover" src="${esc(courseCoverImage(accessRow(all, name)?.anhBia))}" alt="" loading="lazy">` : ""}<b>${esc(name)}</b><small>${resourceLessons(all, name).length} ${unit}</small></button>`).join("")}</div>
       <section class="gt-td"><p class="eyebrow">${esc(category || label)}</p><div class="gt-td-so"><b class="num">${state.staff ? rows.length : `${completed}/${rows.length}`}</b><span>${state.staff ? unit : ebook ? "mục đã đọc" : "bài đã hoàn thành"}</span></div>${state.staff ? "" : `<div class="gt-bar" role="progressbar" aria-label="Tiến độ" aria-valuenow="${percent}" aria-valuemin="0" aria-valuemax="100"><i style="width:${percent}%"></i></div><p class="num"><b>${percent}%</b></p><p class="muted">● Hoàn thành ${completed} · ● Đang học ${studying} · ○ Chưa học ${rows.length - completed - studying}</p>${nextLesson ? `<button class="btn primary" type="button" data-open="${esc(nextLesson.id)}">Bài tiếp theo · ${esc(nextLesson.ten)} →</button>` : `<p>Đã hoàn thành khóa học.</p>`}` }</section></aside>
-      <div class="gt-main">${state.canManage ? `<div class="rw-actions"><button class="btn" type="button" data-access>Quyền xem khóa</button>${!ebook ? `<button class="btn" type="button" data-edit-course>Sửa khóa học</button><button class="btn" type="button" data-add-course>+ Thêm khóa học</button>` : ""}<button class="btn primary" type="button" data-add>+ Thêm ${ebook ? "chương / tài liệu" : "bài học"}</button></div>` : ""}
+      <div class="gt-main">${state.canManage ? `<div class="rw-actions"><button class="btn" type="button" data-access>Quyền xem ${ebook ? "eBook" : "khóa"}</button><button class="btn" type="button" data-edit-course>Sửa ${itemLabel}</button><button class="btn" type="button" data-add-course>+ Thêm ${itemLabel}</button><button class="btn primary" type="button" data-add>+ Thêm ${ebook ? "chương / tài liệu" : "bài học"}</button></div>` : ""}
       ${!selected && !accessEditing && !addingCourse && !editingCourse && editing === null ? courseSummary(all) : ""}
       ${accessEditing && state.canManage ? accessForm(all) : (addingCourse || editingCourse) && state.canManage ? courseForm() : editing !== null && state.canManage ? form(all.find(row => row.id === editing)) : selected ? detail(selected, rows) : rows.length ? `<div class="gt-ds"><div class="gt-luoi">${rows.map((row, i) => { const image = resourceImage(row), done = !!state.marks?.[row.id]; return `<button class="gt-the tt-${state.staff ? "gv" : done ? "xong" : "chua"}" type="button" data-open="${esc(row.id)}"><span class="gt-anh">${image ? `<img src="${esc(image)}" alt="" loading="lazy">` : `<span class="gt-ph" aria-hidden="true">${ebook ? "📖" : "🖼️"}</span>`}</span><span class="gt-noi"><small class="gt-so">${ebook ? "Mục" : "Bài"} ${String(i + 1).padStart(2, "0")}</small><b class="gt-ten">${esc(row.ten)}</b><span class="gt-mota">${esc(row.moTa || String(row.noidung || "").slice(0, 160) || "Nội dung đang được cập nhật.")}</span><span class="gt-tt">${!state.staff ? `<span class="gt-chip ${done ? "xong" : "chua"}">${done ? ebook ? "✓ Đã đọc" : "✓ Hoàn thành" : ebook ? "Chưa đọc" : "Chưa học"}</span>` : ""}</span></span></button>`; }).join("")}</div></div>` : `<p class="muted gt-trong">${ebook ? "Chưa có eBook được đăng." : "Khóa này chưa có bài."}</p>`}
       ${state.canManage && hidden.length ? `<details class="rw-hidden"><summary>Nội dung đang ẩn (${hidden.length})</summary>${hidden.map(row => `<div><span>${esc(row.khoa)} · ${esc(row.ten)}</span><button class="btn small" type="button" data-restore="${esc(row.id)}">Hiện lại</button></div>`).join("")}</details>` : ""}</div></div>`;
@@ -151,7 +162,8 @@ export function createResourceWorkspace(root, { phan, seeds = [], ebook = false,
       coverTicket++; coverBusy = false; editingCourse = existing; addingCourse = !existing;
       accessEditing = false; editing = null; opened = "";
       const meta = existing ? accessRow(all, category) : null;
-      courseDraft = { khoa: existing ? category : "", moTa: meta?.moTa || "", anhBia: meta?.anhBia || "" };
+      const intro = courseIntro(meta);
+      courseDraft = { khoa: existing ? category : "", moTa: intro.description, dieuKienMoKhoa: intro.condition, anhBia: meta?.anhBia || "" };
       render(); q('[data-course-form] input').focus();
     };
     if (q("[data-add-course]")) q("[data-add-course]").onclick = () => beginCourse(false);
@@ -175,6 +187,7 @@ export function createResourceWorkspace(root, { phan, seeds = [], ebook = false,
         if (!draft || !state.canManage) return;
         draft.khoa = courseEditor.elements.khoa.value;
         draft.moTa = courseEditor.elements.moTa.value;
+        draft.dieuKienMoKhoa = courseEditor.elements.dieuKienMoKhoa.value;
       });
       courseEditor.elements.coverUrl.onchange = () => {
         draft.anhBia = courseEditor.elements.coverUrl.value.trim();
@@ -207,25 +220,26 @@ export function createResourceWorkspace(root, { phan, seeds = [], ebook = false,
         if (!state.canManage || coverBusy || courseSaving || !draft) return;
         const values = Object.fromEntries(new FormData(courseEditor));
         const name = editingCourse ? category : values.khoa.trim().normalize("NFC"), status = q("[data-course-status]");
-        if (!name) { status.textContent = "Điền tên khóa học."; return; }
-        if (!editingCourse && categories(activeRows()).some(x => x.normalize("NFC").toLocaleLowerCase("vi") === name.toLocaleLowerCase("vi"))) { status.textContent = "Tên khóa học đã có. Chọn khóa đó để thêm bài."; return; }
-        const cover = draft.anhBia || "", description = values.moTa.trim();
+        if (!name) { status.textContent = `Điền tên ${itemLabel}.`; return; }
+        if (!editingCourse && categories(activeRows()).some(x => x.normalize("NFC").toLocaleLowerCase("vi") === name.toLocaleLowerCase("vi"))) { status.textContent = `Tên ${itemLabel} đã có. Chọn mục đó để thêm nội dung.`; return; }
+        const cover = draft.anhBia || "", description = values.moTa.trim(), condition = values.dieuKienMoKhoa.trim();
         if (cover && !courseCoverImage(cover)) { status.textContent = "Ảnh bìa phải là ảnh đã chọn hoặc link https:// hợp lệ."; return; }
         if (description.length > 2000) { status.textContent = "Mô tả tối đa 2.000 ký tự."; return; }
+        if (condition.length > 80) { status.textContent = "Điều kiện tối đa 80 ký tự; nên viết khoảng 5–6 từ."; return; }
         const meta = editingCourse ? accessRow(activeRows(), category) : null;
         courseSaving = true; render();
-        const row = { phan, khoa: name, ten: name, anhBia: cover, moTa: description, loai: "khoa", thutu: Number(meta?.thutu) || 0, an: false };
+        const row = { phan, khoa: name, ten: name, anhBia: cover, moTa: description, dieuKienMoKhoa: condition, loai: "khoa", thutu: Number(meta?.thutu) || 0, an: false };
         try {
           const result = await save(meta?.id || null, row);
           if (meta) state.rows = state.rows.map(item => item.id === meta.id ? { ...item, ...row } : item);
           else if (!state.rows.some(x => x.phan === phan && x.loai === "khoa" && x.khoa === name)) state.rows = [...state.rows, { ...row, id: result?.id || "khoa-moi" }];
           courseSaving = false;
-          if (courseDraft !== draft) { notify("Đã lưu khóa học."); return; }
+          if (courseDraft !== draft) { notify(`Đã lưu ${itemLabel}.`); return; }
           category = name; addingCourse = false; editingCourse = false; courseDraft = null; opened = ""; editing = null;
-          render(); notify("Đã lưu ảnh bìa và mô tả khóa học.");
+          render(); notify(`Đã lưu thông tin ${itemLabel}.`);
         } catch {
           courseSaving = false; if (courseDraft !== draft) return; render();
-          const errorStatus = q("[data-course-status]"); if (errorStatus) errorStatus.textContent = "Chưa lưu được khóa học. Kiểm tra mạng rồi thử lại.";
+          const errorStatus = q("[data-course-status]"); if (errorStatus) errorStatus.textContent = `Chưa lưu được ${itemLabel}. Kiểm tra mạng rồi thử lại.`;
         }
       };
     }
