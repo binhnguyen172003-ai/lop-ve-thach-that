@@ -4161,3 +4161,8 @@ body:has(#toast:not([hidden])) .tl-bong,body:has(#server-issue:not([hidden])) .t
 .resource-workspace .rw-cover-preview img{display:block;max-width:100%;max-height:220px;border-radius:12px;object-fit:contain}
 .resource-workspace .rw-editor input[type=file]{padding:10px;max-width:100%;font-size:.9rem}
 @media(max-width:640px){.resource-workspace .rw-course-copy{padding:16px}.resource-workspace .rw-category-cover{height:88px}.resource-workspace .rw-course-cover{max-height:240px}}
+
+/* Điều kiện khóa học: tên mục bên trái, nội dung ngắn bên phải. */
+.resource-workspace .rw-course-unlock{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);align-items:start;gap:12px;margin:16px 0 0;padding-top:14px;border-top:1px solid var(--rule);font-size:.9rem;line-height:1.5}
+.resource-workspace .rw-course-unlock dt{color:var(--graphite);font-weight:500;overflow-wrap:anywhere}
+.resource-workspace .rw-course-unlock dd{min-width:0;margin:0;text-align:right;color:var(--ink);font-weight:600;overflow-wrap:anywhere}
