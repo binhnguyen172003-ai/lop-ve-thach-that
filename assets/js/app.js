@@ -6,7 +6,8 @@ import { ngayVietNam, ngaySinhHopLe, hienNgaySinh, denSinhNhat } from "./sinh-nh
 import { firebaseConfig, ADMIN_EMAIL, EMAIL_NHAN_THONG_BAO } from "../../config/firebase-config.js?v=20261009b";
 import { FILE_LIMITS, FILE_TYPES, fileExt, fileSize, validateFiles, attachmentStorage, uploadError, validAttachmentPath } from "./attachments.js?v=20261009b";
 import { GIAO_TRINH_MAU as GT_LO_TRINH } from "../../data/giao-trinh-mau.js?v=20261010bf";
-import { createResourceWorkspace, ADVANCED_SEEDS } from "./resource-workspace.js?v=20261013ebookUnlock";
+import { createResourceWorkspace, ADVANCED_SEEDS } from "./resource-workspace.js?v=20261013resourceFast";
+import { createResourceCache } from "./resource-cache.js?v=20261013resourceFast";
 import { soSanhTenHocVien } from "./ten-hoc-vien.js?v=20261010bs";
 import { GO_KHOI_CA, thuocDanhSachCa } from "./danh-sach-ca.js?v=20261010bs";
 import * as vanTay from "./van-tay.js?v=20261013removed";
@@ -1925,7 +1926,17 @@ let lvTB = [], lvCV = [], lvKenh = [], lvMine = null, lvErr = "", lvTab = "tin",
 let cvView = "mo", chatFilter = "hocvien", reqCount = 0;
 window.__lvReady = true;
 
-let resourceDocs = [];
+let resourceDocs = [], resourceCacheRevision = 0;
+const resourceCache = createResourceCache();
+function restoreResourceData(account) {
+  if (!account || !user || !(isTeacher || approved)) return;
+  const revision = resourceCacheRevision;
+  resourceCache.read(account).then(rows => {
+    if (!rows || mail !== account || !user || !(isTeacher || approved) || revision !== resourceCacheRevision) return;
+    resourceDocs = rows;
+    renderResources();
+  });
+}
 const saveResource = (id, data) => {
   if (!isAdmin || !db) return Promise.reject(new Error("Chỉ quản lý được sửa nội dung."));
   return id ? setDoc(doc(db, "giaotrinh", id), data, { merge: true }) : addDoc(collection(db, "giaotrinh"), data);
@@ -4447,6 +4458,7 @@ function showCachedSession() {
   if (!c || !c.mail) { renderLocks("out"); renderAccount(false); return; }
   user = { displayName: c.ten, photoURL: c.anh, email: c.mail }; mail = c.mail; napAvatarMay(c.mail);
   isAdmin = !!c.isAdmin; isTeacher = !!c.isTeacher; approved = !!c.approved; myHv = c.hv || null; myChucVu = c.cv || "";
+  restoreResourceData(c.mail);
   const coDL = (isTeacher || approved) && loadData(c.mail); // nạp dữ liệu trên máy trước để các ô số liệu không hiện "0"
   renderLocks(isTeacher || approved ? "ok" : "pending");
   renderAccount(c.pending || false);
@@ -4497,12 +4509,14 @@ async function onUser(u) {
   mark(u ? "Khôi phục đăng nhập (" + (u.email || "") + ")" : "Khôi phục đăng nhập (chưa đăng nhập)");
   stopListeners();
   const prevMail = mail;
+  resourceCacheRevision++;
   user = u; mail = u ? String(u.email || "").toLowerCase() : "";
   vanTay.khiDangNhap(u);
   isAdmin = false; isTeacher = false; approved = false; needVerify = false;
   napAvatarMay(mail);
   roster = []; requests = []; teachers = []; progressAll = {}; feedbackAll = {};
   diemdanhAll = {}; myDiemdanh = {}; myHv = null; hvTuMayChu = false; troLyDaTai = { diemDanh: false, diem: false, bai: false }; lvReset(); khoMon = {}; khoGD = []; donAll = []; donCuaToi = []; donNhap = []; donTam = {}; khoLoi = ""; khoDaTai = false;
+  if (prevMail && prevMail !== mail) { resourceDocs = []; resourceCache.clear(prevMail); }
   if (prevMail && prevMail !== mail) try { localStorage.removeItem(DATA_KEY + prevMail); } catch (e) {} // máy dùng chung: xoá dữ liệu người trước
   loadData(mail);
   // Đổi người dùng thì xoá sạch form đăng ký, tránh gửi nhầm thông tin của người trước (máy dùng chung).
@@ -4524,6 +4538,7 @@ async function onUser(u) {
   // Hiện ngay, không chờ máy chủ: quản lý nhận ra từ Gmail; người mới hiện form đăng ký luôn.
   if (isAdminMail) {
     isAdmin = true; isTeacher = true; approved = false;
+    restoreResourceData(mail);
     saveSession(false); renderLocks("ok"); renderAccount(false);
   } else if (!(cachedSession && cachedSession.mail === mail)) {
     renderLocks("pending"); renderAccount(false);
@@ -4620,10 +4635,12 @@ async function onUser(u) {
     else { watchRole("hocvien", false); watchRole("giaovien", false); }
   }
   if (!canLearn) {
+    resourceCacheRevision++; resourceDocs = []; resourceCache.clear(mail);
     try { localStorage.removeItem(DATA_KEY + mail); } catch (e) {}
     lessons = []; homework = []; myFeedback = {};
     return;
   }
+  restoreResourceData(mail);
 
   if (!isTeacher) {
     if (tdDoc) { myProgress = { bai: tdDoc.bai || {}, baitap: tdDoc.baitap || {}, xem: tdDoc.xem || {} }; if (tdDoc.anh && !avaTuMay) { myAvatar = tdDoc.anh; try { localStorage.setItem(AVA_KEY(mail), myAvatar); } catch (e) {} } }
@@ -4637,9 +4654,12 @@ async function onUser(u) {
     renderMyProg();
   }
   listen(query(collection(db, "giaotrinh"), orderBy("thutu")), snap => {
+    if (user !== u) return;
     const all = snap.docs.filter(d => !d.id.startsWith("_")).map(d => ({ id: d.id, ...d.data() }));
     lessons = all.filter(row => !["nang-cao", "ebook"].includes(row.phan));
+    resourceCacheRevision++;
     resourceDocs = all.filter(row => ["nang-cao", "ebook"].includes(row.phan));
+    resourceCache.write(mail, resourceDocs);
     renderLessons(); renderResources(); if (isAdmin) { renderRoster(); dongBoBaiHoc(); } saveData(); renderTiles();
   });
   listen(query(collection(db, "baitap"), orderBy("han")), snap => {
