@@ -1,27 +1,57 @@
 // Cài web độc lập với đăng nhập và dữ liệu lớp.
 (() => {
-  let promptEvent = null, installed = false, busy = false;
+  const INSTALLED_KEY = "lvkv-app-installed";
+  let promptEvent = null, installed = false, busy = false, checking = true;
+  try { installed = localStorage.getItem(INSTALLED_KEY) === "1"; } catch {}
+  const rememberInstalled = () => {
+    installed = true;
+    promptEvent = null;
+    try { localStorage.setItem(INSTALLED_KEY, "1"); } catch {}
+  };
   const standalone = matchMedia("(display-mode: standalone)");
-  const isApp = () => installed || standalone.matches || navigator.standalone === true;
+  const inApp = () => standalone.matches || matchMedia("(display-mode: minimal-ui)").matches || matchMedia("(display-mode: fullscreen)").matches || navigator.standalone === true;
+  const isApp = () => installed || inApp();
+  let detection = null;
+  const detectInstalled = () => detection ||= (async () => {
+    try {
+      if (inApp()) rememberInstalled();
+      if (typeof navigator.getInstalledRelatedApps === "function") {
+        const apps = await navigator.getInstalledRelatedApps();
+        const appId = new URL("./", location.href).href;
+        const manifestUrl = new URL("manifest.webmanifest", location.href).href;
+        if (apps.some(app => app.platform === "webapp" && (app.id === appId || app.url?.split("?")[0] === manifestUrl))) rememberInstalled();
+      }
+    } catch {} // Trình duyệt không hỗ trợ vẫn nhận biết qua lần mở app.
+    finally { checking = false; render(); }
+  })().finally(() => { detection = null; });
   const button = () => document.getElementById("pwa-install");
   function render() {
     const card = document.getElementById("pwa-card"), btn = button();
     if (!card || !btn) return;
-    card.hidden = isApp();
+    card.hidden = checking || isApp();
     btn.disabled = busy;
     btn.textContent = promptEvent ? "Cài ứng dụng" : "Tạo lối tắt / Hướng dẫn";
   }
   addEventListener("beforeinstallprompt", event => {
     event.preventDefault();
+    // Trình duyệt cho cài lại: app đã gỡ, bỏ trạng thái cũ trên máy.
+    installed = false;
+    try { localStorage.removeItem(INSTALLED_KEY); } catch {}
     promptEvent = event;
     render();
   });
   addEventListener("appinstalled", () => {
-    installed = true;
-    promptEvent = null;
+    rememberInstalled();
     render();
   });
-  standalone.addEventListener?.("change", render);
+  standalone.addEventListener?.("change", detectInstalled);
+  addEventListener("pageshow", detectInstalled);
+  addEventListener("storage", event => {
+    if (event.key !== INSTALLED_KEY) return;
+    installed = event.newValue === "1";
+    render();
+  });
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) detectInstalled(); });
   document.addEventListener("DOMContentLoaded", () => {
     const btn = button(), help = document.getElementById("pwa-help");
     if (!btn || !help) return;
@@ -57,5 +87,6 @@
       }
     });
     render();
+    detectInstalled();
   });
 })();
