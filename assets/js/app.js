@@ -87,7 +87,7 @@ const troLyPromise = import("./tro-ly.js?v=20261013teacherNotice").catch(e => co
 let vanHanhP = null, vanHanhM = null;
 let tacVuP = null, tacVuM = null;
 const taiTacVu = () => tacVuP ||= import("./tac-vu.js?v=20261010bv").then(m => tacVuM = m).catch(e => { tacVuP = null; console.warn("Chưa tải được phần tác vụ", e); });
-const taiVanHanh = () => vanHanhP ||= import("./van-hanh.js?v=20261011fix").then(m => vanHanhM = m).catch(e => { vanHanhP = null; console.warn("Chưa tải được phần vận hành", e); });
+const taiVanHanh = () => vanHanhP ||= import("./van-hanh.js?v=20261013shiftLayout").then(m => vanHanhM = m).catch(e => { vanHanhP = null; console.warn("Chưa tải được phần vận hành", e); });
 window.__appOk = true;
 document.querySelectorAll(".slow-bar").forEach(el => el.remove());
 
@@ -5721,4 +5721,5 @@ renderBanTin();
   const nd = $("#chat-nd");
   if (nd) nd.addEventListener("focus", () => [150, 450].forEach(t => setTimeout(() => { dat(); $("#f-chat").scrollIntoView({ block: "end" }); const m = $("#chat-msgs"); if (m) m.scrollTop = m.scrollHeight; }, t)));
 })();
+
 
