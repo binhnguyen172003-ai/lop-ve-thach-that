@@ -1950,6 +1950,15 @@ function renderResources() {
   advancedWorkspace.update(state); ebookWorkspace.update(state);
 }
 
+function renderAccountIntro() {
+  const isNew = $("#tab-new").getAttribute("aria-selected") === "true";
+  const showSteps = !user && isNew;
+  $("#stepper").hidden = !showSteps;
+  $("#v-tai-khoan > .page-head > p.muted").hidden = !showSteps;
+  $("#v-tai-khoan > .page-head > h1").textContent = user ? "Tài khoản của em" : isNew ? "Vào lớp học" : "Đăng nhập";
+  $("#card-login > .who").hidden = !user && !isNew;
+}
+
 function renderLocks(state) {
   const msg = {
     checking: ["Đang kiểm tra tài khoản…", "Chờ một chút nhé."],
@@ -1968,11 +1977,7 @@ function renderLocks(state) {
   $("#khoa-body").hidden = state !== "ok";
   $("#ebook-body").hidden = state !== "ok";
   if (state === "ok") renderResources();
-  // Đã được duyệt: ẩn 3 bước hướng dẫn, chỉ giữ thẻ tài khoản gọn. Chưa duyệt thì vẫn hiện đầy đủ.
-  const daDuyet = state === "ok";
-  $("#stepper").hidden = daDuyet;
-  $("#v-tai-khoan > .page-head > p.muted").hidden = daDuyet;
-  $("#v-tai-khoan > .page-head > h1").textContent = daDuyet ? "Tài khoản của em" : "Vào lớp học";
+  renderAccountIntro();
   $("#bt-body").hidden = state !== "ok";
   $("#lv-body").hidden = state !== "ok";
   capNhatTheKhoa();
@@ -1997,6 +2002,7 @@ document.addEventListener("click", e => {
   if (location.hash === "#tai-khoan" && e.target.closest?.('a[href="#tai-khoan"]')) accountTop();
 });
 function renderAccount(pending) {
+  renderAccountIntro();
   const justSignedIn = !!user && accountShownMail !== mail;
   accountShownMail = user ? mail : "";
   // Đóng bàn phím trước khi ẩn form, tránh giữ vị trí ở cuối ô mật khẩu.
@@ -4809,6 +4815,7 @@ function showTab(which) {
   $("#f-new").hidden = !isNew; $("#f-pw").hidden = isNew;
   $("#pw-chao-h").textContent = isNew ? "Tạo tài khoản mới" : "Chào mừng trở lại!";
   $("#pw-chao-p").textContent = isNew ? "Tham gia cộng đồng học vẽ cùng Thạch Thất." : "Đăng nhập để tiếp tục hành trình học vẽ cùng nhau.";
+  renderAccountIntro();
 }
 const matNut = (b, hien) => { b.setAttribute("aria-pressed", hien); b.setAttribute("aria-label", hien ? "Ẩn mật khẩu" : "Hiện mật khẩu"); };
 $$(".pw-doi").forEach(b => b.onclick = () => { $("#tab-" + b.dataset.tab).click(); $("#pw-box").scrollIntoView({ block: "start", behavior: "smooth" }); });
