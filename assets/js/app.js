@@ -1,3 +1,4 @@
+import { createSessionData } from "./session-data.js?v=20261013sync2";
 import { ngayVietNam, ngaySinhHopLe, hienNgaySinh, denSinhNhat } from "./sinh-nhat.js?v=20261011birthday";
 // =====================================================================
 //  LOGIC CỦA WEB — thường không cần sửa file này.
@@ -17,7 +18,7 @@ import { LIEN_HE, NAM_THI, LICH_THI, BO_LOC_TRUONG, CA_HOC, THOI_GIAN_BIEU, BAI_
 const FB = "https://www.gstatic.com/firebasejs/10.12.2/";
 let initializeApp, getAuth, onAuthStateChanged, signOut;
 let createUserWithEmailAndPassword, signInWithEmailAndPassword, sendEmailVerification, sendPasswordResetEmail, updateProfile;
-let getDocsFromServer, getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager, collection, doc, getDoc, setDoc, addDoc, deleteDoc, writeBatch, onSnapshot, query, orderBy, where, runTransaction, limit, deleteField, increment;
+let getDocsFromServer, getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager, collection, doc, getDoc, getDocFromCache, setDoc, addDoc, deleteDoc, writeBatch, onSnapshot, query, orderBy, where, runTransaction, limit, deleteField, increment;
 // Vai trò: isAdmin = quản lý (toàn quyền); isTeacher = giáo viên hoặc quản lý; approved = học viên đã duyệt.
 // Khai báo ở đầu file để các phần trang chủ (bài vẽ, bản tin) biết ai đang xem ngay từ đầu.
 let user = null, mail = "", isAdmin = false, isTeacher = false, approved = false, needVerify = false;
@@ -32,7 +33,7 @@ async function loadFirebase() {
   ({ initializeApp } = a);
   ({ getAuth, onAuthStateChanged, signOut,
      createUserWithEmailAndPassword, signInWithEmailAndPassword, sendEmailVerification, sendPasswordResetEmail, updateProfile } = au);
-  ({ getDocsFromServer, getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager, collection, doc, getDoc, setDoc, addDoc, deleteDoc, writeBatch, onSnapshot, query, orderBy, where, runTransaction, limit, deleteField, increment } = fs);
+  ({ getDocsFromServer, getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager, collection, doc, getDoc, getDocFromCache, setDoc, addDoc, deleteDoc, writeBatch, onSnapshot, query, orderBy, where, runTransaction, limit, deleteField, increment } = fs);
   bocNhatKy();
 }
 
@@ -43,7 +44,11 @@ const NK_BANG = new Set(["hocvien", "giaovien", "nhanxet", "diemdanh", "baitap",
 const nkGoc = {};
 const nkCan = ref => isTeacher && ref && ref.parent && !ref.parent.parent && NK_BANG.has(ref.parent.id) && !String(ref.id).startsWith("_");
 const nkJson = d => { try { const t = JSON.stringify(d); return t.length > 600000 ? "(quá lớn)" : t; } catch (e) { return "(quá lớn)"; } };
-async function nkTruoc(ref) { try { const d = await nkGoc.getDoc(ref); return d.exists() ? d.data() : null; } catch (e) { return undefined; } }
+async function nkTruoc(ref) {
+  // Các tài liệu đang xem đã có trong SDK: không đọc lại mạng trước mỗi lần lưu.
+  try { const d = await getDocFromCache(ref); if (!d.metadata?.hasPendingWrites) return d.exists() ? d.data() : null; } catch {}
+  try { const d = await nkGoc.getDoc(ref); return d.exists() ? d.data() : null; } catch { return undefined; }
+}
 function nkGhi(ref, loai, truoc, sau, gop) {
   if (truoc === undefined) return; // không đọc được bản trước (thiếu quyền/mạng) thì bỏ qua, không chặn thao tác chính
   nkGoc.addDoc(nkGoc.collection(db, "nhatky"), { col: ref.parent.id, ma: ref.id, loai, gop: !!gop, truoc: truoc ? nkJson(truoc) : "", sau: sau ? nkJson(sau) : "",
@@ -86,8 +91,8 @@ const troLyPromise = import("./tro-ly.js?v=20261013teacherNotice").catch(e => co
 // Thi thử + vận hành lớp: chỉ tải khi đã đăng nhập vào học
 let vanHanhP = null, vanHanhM = null;
 let tacVuP = null, tacVuM = null;
-const taiTacVu = () => tacVuP ||= import("./tac-vu.js?v=20261010bv").then(m => tacVuM = m).catch(e => { tacVuP = null; console.warn("Chưa tải được phần tác vụ", e); });
-const taiVanHanh = () => vanHanhP ||= import("./van-hanh.js?v=20261011fix").then(m => vanHanhM = m).catch(e => { vanHanhP = null; console.warn("Chưa tải được phần vận hành", e); });
+const taiTacVu = () => tacVuP ||= import("./tac-vu.js?v=20261013sync2").then(m => tacVuM = m).catch(e => { tacVuP = null; console.warn("Chưa tải được phần tác vụ", e); });
+const taiVanHanh = () => vanHanhP ||= import("./van-hanh.js?v=20261013sync2").then(m => vanHanhM = m).catch(e => { vanHanhP = null; console.warn("Chưa tải được phần vận hành", e); });
 window.__appOk = true;
 document.querySelectorAll(".slow-bar").forEach(el => el.remove());
 
@@ -145,6 +150,9 @@ if ("serviceWorker" in navigator && (location.protocol === "https:" || ["localho
   };
   navigator.serviceWorker.addEventListener("controllerchange", () => {
     if (!hadController || reloading) return;
+    const controllerVersion = new URL(navigator.serviceWorker.controller.scriptURL).searchParams.get("v");
+    const pageVersion = new URL(import.meta.url).searchParams.get("v");
+    if (controllerVersion === pageVersion) return;
     const reload = () => { if (reloading) return; reloading = true; location.reload(); };
     if (canReload()) { reload(); return; }
     let banner = document.getElementById("app-update");
@@ -155,9 +163,9 @@ if ("serviceWorker" in navigator && (location.protocol === "https:" || ["localho
       banner.append(message, button); document.body.prepend(banner);
     }
   });
-  const register = () => navigator.serviceWorker.register("sw.js?v=20261013sync", { updateViaCache: "none" })
+  const register = () => navigator.serviceWorker.register("sw.js?v=20261013sync2", { updateViaCache: "none" })
     .then(reg => { swRegistration = reg; checkUpdate(); }).catch(() => {});
-  if (document.readyState === "complete") register(); else addEventListener("load", register, { once: true });
+  register(); // Không chờ ảnh/video tải xong mới kiểm tra bản mới.
   addEventListener("online", checkUpdate);
   addEventListener("pageshow", checkUpdate);
   document.addEventListener("visibilitychange", checkUpdate);
@@ -228,7 +236,8 @@ if (publicCached && Date.now() - publicCached.luc < 86400000) {
   if (Array.isArray(publicCached.bantin)) BANTIN_DONG = publicCached.bantin;
   if (Array.isArray(publicCached.doingu)) GIAO_VIEN.splice(0, GIAO_VIEN.length, ...publicCached.doingu);
 }
-let publicCacheTimer = 0, publicTeamLoaded = false, publicLiveArrived = false;
+let publicCacheTimer = 0;
+const publicLiveSections = new Set();
 const publicImageDB = new Promise(resolve => {
   if (!window.indexedDB) return resolve(null);
   try {
@@ -239,27 +248,31 @@ const publicImageDB = new Promise(resolve => {
     request.onblocked = () => resolve(null);
   } catch (e) { resolve(null); }
 });
-publicImageDB.then(database => {
-  if (!database) return;
+const publicContentReady = publicImageDB.then(database => new Promise(resolve => {
+  if (!database) return resolve();
   try {
     const request = database.transaction("snapshots").objectStore("snapshots").get("content");
     request.onsuccess = () => {
       const cache = request.result;
-      if (publicLiveArrived || !cache || Date.now() - cache.luc >= 86400000) return;
-      if (Array.isArray(cache.baive)) BAIVE_DONG = cache.baive;
-      if (Array.isArray(cache.bantin)) BANTIN_DONG = cache.bantin;
-      if (Array.isArray(cache.doingu)) GIAO_VIEN.splice(0, GIAO_VIEN.length, ...cache.doingu);
+      if (!cache || Date.now() - cache.luc >= 86400000) return resolve();
+      if (!publicLiveSections.has("baive") && Array.isArray(cache.baive)) BAIVE_DONG = cache.baive;
+      if (!publicLiveSections.has("bantin") && Array.isArray(cache.bantin)) BANTIN_DONG = cache.bantin;
+      if (!publicLiveSections.has("doingu") && Array.isArray(cache.doingu)) GIAO_VIEN.splice(0, GIAO_VIEN.length, ...cache.doingu);
       renderGallery(); renderBanTin(); renderGiaoVien();
       dispatchEvent(new Event("baive-doi"));
+      resolve();
     };
-  } catch (e) {}
-});
-function savePublicContent() {
-  publicLiveArrived = true;
+    request.onerror = () => resolve();
+  } catch (e) { resolve(); }
+}));
+function savePublicContent(section) {
+  if (section) publicLiveSections.add(section);
   clearTimeout(publicCacheTimer);
-  publicCacheTimer = setTimeout(() => {
+  publicCacheTimer = setTimeout(async () => {
+    // Đợi đọc ảnh đã lưu trước khi ghi, tránh một mục về sớm xoá cache mục khác.
+    await publicContentReady;
     const payload = { luc: Date.now(), baive: BAIVE_DONG, bantin: BANTIN_DONG,
-      doingu: publicTeamLoaded ? GIAO_VIEN : publicCached?.doingu };
+      doingu: GIAO_VIEN };
     try {
       const json = JSON.stringify(payload);
       if (json.length < 1500000) try { localStorage.setItem(PUBLIC_CACHE_KEY, json); } catch (e) {}
@@ -296,7 +309,7 @@ function copyText(text, statusEl, okMsg, selectEl) {
 }
 
 /* ================= Điều hướng ================= */
-const PAGES = ["tong-quan", "khoa-hoc", "ebook", "giao-trinh", "bai-tap", "tai-khoan", "duyet", "diem-danh", "lam-viec", "thi-thu", "van-hanh"];
+const PAGES = ["goc-nghe-thuat", "tong-quan", "khoa-hoc", "ebook", "giao-trinh", "bai-tap", "tai-khoan", "duyet", "diem-danh", "lam-viec", "thi-thu", "van-hanh"];
 // Nhớ vị trí cuộn theo từng bước lịch sử: mở mục mới → lên đầu; bấm quay lại / tiến tới → về đúng chỗ đang xem
 try { history.scrollRestoration = "manual"; } catch (e) {}
 const viTriCuon = {}; let khoaCuon = null;
@@ -1316,15 +1329,15 @@ const GHI_CHU = {
     const thu = x => x.nv ? 0 : (x.top || 99);
     return ds.sort((a, b) => thu(a) - thu(b)).slice(0, 10).map(b => b.nv ? { ...b, tg: true, top: 0 } : b); };
   const coThem = () => !!(user && isTeacher);
-  const theThem = i => `<figure class="nb-card nb-add" data-i="${i}" data-add="1"><div class="nb-add-in"><span class="nb-plus" aria-hidden="true">+</span><b>Thêm bài vẽ</b><small>Đăng ảnh bài học viên${isAdmin ? "<br>Chọn Top 5 ở trang Quản lý" : ""}</small></div></figure>`;
+  const theThem = i => `<figure class="nb-card nb-add" data-i="${i}" data-add="1" role="button" tabindex="0" aria-label="Thêm bài vẽ mới"><div class="nb-add-in"><span class="nb-plus" aria-hidden="true">+</span><b>Thêm bài vẽ</b><small>Đăng ảnh bài học viên${isAdmin ? "<br>Chọn Top 5 ở trang Quản lý" : ""}</small></div></figure>`;
   let sig = "";
   const ve = () => {
     const ds = locNoiBat(ky).slice(0, 10);
     // Khoá so sánh nhẹ: không ghép cả chuỗi ảnh base64 (rất nặng) mỗi lần tải lại, chỉ dùng độ dài + thời điểm đăng
     const k = [ky, !!user && isTeacher, isAdmin, XP_DONG.length, TT_DONG.length, ...ds.map(b => [b.id || "", b.luc || 0, b.anh ? b.anh.length : 0, b.top, b.hocVien, b.loai, b.ghiChu, b.chucVu, b.biDanh, biDanhCua(b), b.mau, b.hang].join("~"))].join("|");
     if (k === sig) return; sig = k;
-    if (!ds.length && !coThem()) { box.innerHTML = `<p class="nb-rong">Chưa có bài nổi bật ${TEN[ky]}. ${ky === "tuan" ? "Anh chị sẽ cập nhật bài đẹp mỗi tuần." : `Bài tuần trước tự chuyển sang đây khi ${ky === "thang" ? "qua 1 tuần" : "qua 1 tháng"}.`}</p>`; return; }
-    if (!ds.length) { box.__vongCleanup?.(); box.innerHTML = '<button type="button" class="btn nb-add-outside">+ Thêm bài vẽ</button>'; box.querySelector("button").onclick = () => moDangBai(); return; }
+    if (!ds.length && !coThem()) { box.__vongCleanup?.(); box.innerHTML = `<p class="nb-rong">Chưa có bài nổi bật ${TEN[ky]}. ${ky === "tuan" ? "Anh chị sẽ cập nhật bài đẹp mỗi tuần." : `Bài tuần trước tự chuyển sang đây khi ${ky === "thang" ? "qua 1 tuần" : "qua 1 tháng"}.`}</p>`; return; }
+    const soThe = ds.length + (coThem() ? 1 : 0);
     box.innerHTML = `<div class="gv-stage nb-stage">${ds.map((b, i) => `<figure class="nb-card nb-tran${b.nv ? " nb-nv nv-" + nhanVienLop(b) : ""}" data-i="${i}">
         ${b.nv ? `<span class="nb-nv-tag">${esc(nhanVienTen(b))}</span>` : ""}
         ${isAdmin && b.id ? `<button type="button" class="nb-more" data-mn="${esc(b.id)}" aria-label="Tuỳ chọn: sửa link, xoá bài">⋮</button>` : ""}
@@ -1332,11 +1345,13 @@ const GHI_CHU = {
         ${b.top ? `<span class="nb-medal h${b.top}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 2h4l1 5-3 1zM17 2h-4l-1 5 3 1z" class="rb"/><circle cx="12" cy="15" r="6.5" class="md"/><text x="12" y="18.2" text-anchor="middle">${b.top}</text></svg><b>TOP ${b.top}</b><i>${TEN[ky]}</i></span>` : ""}
         ${b.tg ? "" : (m => m.length ? (a => `<span class="nb-tt" data-rk="${esc(b.hocVien)}" role="button" tabindex="0" title="${esc(a.ten)} · ${CAP[a.cap].ten} — ${esc(a.mo)}">${huyHieuTT(a, a.cap, "sm")}<span class="nb-ttx"><b>${esc(a.ten)}</b><small>${a.n} ${esc(a.dv)} · ${CAP[a.cap].ten}</small></span></span>`)(m[0]) : "")(ttNoiNhat(b.hocVien))}
         ${b.tg ? "" : (t => khungThe(t.r, t.i))(tinhRank(null, null, null, b.hocVien))}
-        <figcaption><b>${esc(b.hocVien || "")} ${b.tg ? "" : (t => huyHieu(t.r, t.i, "xs", b.hocVien))(tinhRank(null, null, null, b.hocVien))}</b>${b.nv && biDanhCua(b) ? `<em class="nb-bd">${esc(biDanhCua(b))}</em>` : ""}<span>${esc([b.loai, b.ghiChu].filter(Boolean).join(" · "))}</span></figcaption></figure>`).join("")}</div>${coThem() ? '<div class="ctas" style="justify-content:center"><button type="button" class="btn small nb-add-outside">+ Thêm bài vẽ</button></div>' : ""}
+        <figcaption><b class="nb-name">${esc(b.hocVien || "")}</b>${b.tg ? "" : (t => huyHieu(t.r, t.i, "xs", b.hocVien))(tinhRank(null, null, null, b.hocVien))}${b.nv && biDanhCua(b) ? `<em class="nb-bd">${esc(biDanhCua(b))}</em>` : ""}<span class="nb-description">${esc([b.loai, b.ghiChu].filter(Boolean).join(" · "))}</span></figcaption></figure>`).join("")}${coThem() ? theThem(ds.length) : ""}</div>
       <div class="gv-ctl"><button type="button" class="gv-nav" aria-label="Bài trước">‹</button>
-        <div class="gv-dots">${ds.map((b, i) => `<button type="button" data-i="${i}" aria-label="Bài ${i + 1}"></button>`).join("")}</div>
+        <div class="gv-dots">${Array.from({ length: soThe }, (_, i) => `<button type="button" data-i="${i}" aria-label="${i === ds.length ? "Thêm bài vẽ" : `Bài ${i + 1}`}"></button>`).join("")}</div>
         <button type="button" class="gv-nav" aria-label="Bài sau">›</button></div>`;
-    box.querySelector(".nb-add-outside")?.addEventListener("click", () => moDangBai());
+    box.querySelector("[data-add]")?.addEventListener("keydown", e => {
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.currentTarget.click(); }
+    });
     const [p, n] = box.querySelectorAll(".gv-nav");
     // Nút ⋮ (chỉ quản lý thấy): sửa link/thông tin hoặc xoá bài; bấm ⋮ không được kéo hay mở ảnh
     box.querySelectorAll(".nb-more").forEach(bt => {
@@ -1348,6 +1363,19 @@ const GHI_CHU = {
       if (c.dataset.add) { moDangBai(); return; }
       galList = ds; showLb(Number(c.dataset.i));
     });
+    // Chừa đủ chỗ cho thẻ có tên/mô tả dài nhất, kể cả khi đổi font hoặc xoay máy.
+    const stage = box.querySelector(".nb-stage");
+    const fitStage = () => {
+      const artworkCards = cards.filter(c => !c.dataset.add);
+      const height = Math.max(400, ...artworkCards.map(c => c.offsetHeight));
+      stage.style.setProperty("--nb-card-height", `${height}px`);
+      if (height) stage.style.height = `${height + 20}px`;
+    };
+    fitStage();
+    const captionObserver = new ResizeObserver(fitStage);
+    cards.filter(c => !c.dataset.add).forEach(c => captionObserver.observe(c));
+    const cleanup = box.__vongCleanup;
+    box.__vongCleanup = () => { captionObserver.disconnect(); cleanup?.(); };
   };
   const chonKy = () => { if (daChon) return; ky = ["tuan", "thang", "nam"].find(k => locNoiBat(k).length) || "tuan"; $$("#nb-tabs [data-k]").forEach(x => x.setAttribute("aria-selected", x.dataset.k === ky)); };
   addEventListener("xephang-doi", () => ve());
@@ -1910,6 +1938,25 @@ let app, auth, db;
 let teachers = [], feedbackAll = {}, myFeedback = {};
 let diemdanhAll = {}, myDiemdanh = {}, myHv = null, hvTuMayChu = false, myChucVu = "", myGvDoc = null;
 let troLyDaTai = { diemDanh: false, diem: false, bai: false };
+const fastData = createSessionData();
+let staffReady = new Set(), staffSynced = new Set(), staffSaveTimer = 0, staffRenderFrame = 0;
+const staffRole = () => isAdmin ? "admin" : "teacher";
+function restoreStaffData() {
+  if (!mail || !isTeacher) return;
+  const d = fastData.read(mail, staffRole(), "staff");
+  if (!d) return;
+  roster = d.roster || []; diemdanhAll = d.diemdanhAll || {}; progressAll = d.progressAll || {}; feedbackAll = d.feedbackAll || {}; teachers = d.teachers || []; requests = d.requests || []; doiTen = d.doiTen || [];
+  staffReady = new Set(d.ready || []); window.__rosterReady = staffReady.has("roster");
+}
+function saveStaffData() {
+  clearTimeout(staffSaveTimer);
+  const account = mail, role = staffRole();
+  staffSaveTimer = setTimeout(() => { if (isTeacher && mail === account) fastData.write(account, role, "staff", { roster, diemdanhAll, progressAll, feedbackAll, teachers, requests, doiTen, ready: [...staffReady] }); }, 150);
+}
+function refreshStaffData() {
+  saveStaffData(); cancelAnimationFrame(staffRenderFrame);
+  staffRenderFrame = requestAnimationFrame(() => { if (!isTeacher) return; renderHomework(); renderAttend(); if (isAdmin) { renderRoster(); renderResources(); } renderLV(); if (vanHanhM) vanHanhM.veLai(); });
+}
 const gradeOpen = new Set(), gradeDraft = {};
 let needRedraw = false;
 // Khi giáo viên gõ xong (rời ô nhập), vẽ lại nếu trong lúc gõ có dữ liệu mới.
@@ -2012,10 +2059,43 @@ const resourceOptions = (phan, ebook) => ({ phan, ebook, seeds: ebook ? [] : ADV
   mark: async id => { if (!approved || isTeacher) return; await toggleProgress("bai", id); renderResources(); }
 });
 const advancedWorkspace = createResourceWorkspace($("#nang-cao"), resourceOptions("nang-cao", false));
+let artRows = [], artUnsub = null, artManage = null;
+const artSeeds = ["Kiến thức mỹ thuật", "Tài liệu miễn phí", "Phim & nghệ thuật", "Nghệ thuật đời sống"].map((name, i) => ({
+  id: `art-topic-${i}`, phan: "goc-nghe-thuat", khoa: name, ten: name, loai: "khoa", thutu: i, an: false,
+  moTa: ["Kỹ thuật vẽ, màu sắc và bố cục.", "Sách, bài đọc và tài liệu tham khảo được chia sẻ miễn phí.", "Khám phá hình ảnh, màu sắc và góc quay qua phim, video.", "Quan sát nghệ thuật trong kiến trúc, thời trang và cuộc sống hằng ngày."][i]
+}));
+const artWorkspace = createResourceWorkspace($("#art-list"), {
+  phan: "goc-nghe-thuat", publicMode: true, seeds: artSeeds, markdown: mdHTML, notify: toast,
+  prepareImage: file => nenAnh(file, 1100, 350000),
+  save: async (id, data) => {
+    if (!isAdmin || !db) throw new Error("Chỉ quản lý được sửa nội dung.");
+    const clean = { ...data, phan: "goc-nghe-thuat", access: "all", viewers: [], dieuKienMoKhoa: "" };
+    const result = id ? await setDoc(doc(db, "gocnghethuat", id), clean, { merge: true }) : await addDoc(collection(db, "gocnghethuat"), clean);
+    return { id: id || result.id };
+  },
+  markSeen: () => {}, mark: async () => toast("Nội dung miễn phí, em có thể xem và đọc tự do.")
+});
+function renderArt() {
+  artWorkspace.update({ rows: artRows, canManage: isAdmin, staff: true, mail, marks: {}, seen: {}, viewers: [] });
+  if (!db || (artUnsub && artManage === isAdmin)) return;
+  if (artUnsub) artUnsub();
+  artManage = isAdmin;
+  const source = collection(db, "gocnghethuat");
+  artUnsub = onSnapshot(isAdmin ? source : query(source, where("an", "==", false)), snap => {
+    artRows = snap.docs.map(d => ({ ...d.data(), id: d.id }));
+    $("#art-status").textContent = "";
+    artWorkspace.update({ rows: artRows, canManage: isAdmin, staff: true, mail, marks: {}, seen: {}, viewers: [] });
+  }, () => {
+    artRows = [];
+    artWorkspace.update({ rows: [], canManage: isAdmin, staff: true, mail, marks: {}, seen: {}, viewers: [] });
+    $("#art-status").textContent = "Chưa tải được nội dung chia sẻ. Vui lòng thử lại sau.";
+  });
+}
+renderArt();
 const ebookWorkspace = createResourceWorkspace($("#ebook-list"), resourceOptions("ebook", true));
 function renderResources() {
   const state = { rows: resourceDocs, marks: myProgress.bai || {}, canManage: isAdmin, staff: isTeacher, mail, seen: myProgress.xem || {}, viewers: roster };
-  advancedWorkspace.update(state); ebookWorkspace.update(state);
+  advancedWorkspace.update(state); ebookWorkspace.update(state); renderArt();
 }
 
 function renderAccountIntro() {
@@ -2028,6 +2108,7 @@ function renderAccountIntro() {
 }
 
 function renderLocks(state) {
+  renderArt();
   const msg = {
     checking: ["Đang kiểm tra tài khoản…", "Chờ một chút nhé."],
     setup: ["Web chưa được kết nối Firebase", "Giáo viên cần dán cấu hình Firebase vào file firebase-config.js."],
@@ -2082,6 +2163,8 @@ function renderAccount(pending) {
   $$("[data-teacher]").forEach(el => el.hidden = !isTeacher);
   $$("[data-admin]").forEach(el => el.hidden = !isAdmin);
   renderAccNav(); renderTiles();
+  // Phiên quản lý đã lưu vẫn phải có bảng ngay, không phụ thuộc callback máy chủ.
+  if (isAdmin) queueMicrotask(() => renderQL());
   $("#dd-lock").hidden = isTeacher;
   $("#duyet-lock").hidden = isAdmin;
   $("#pw-box").hidden = !!user || !configured;
@@ -2477,7 +2560,7 @@ function renderHomework() {
     const submitted = roster.filter(r => (progressAll[r.id] || {}).baitap && progressAll[r.id].baitap[h.id]).length;
     const graded = roster.filter(r => (feedbackAll[r.id] || {})[h.id]).length;
     const fb = myFeedback[h.id];
-    const staffBar = `<span class="chip ok">${submitted}/${students} đã nộp</span><span class="chip">${graded} đã chấm</span>
+    const staffBar = `<div class="hw-stats"><span class="chip ok">${submitted}/${students} đã nộp</span><span class="chip">${graded} đã chấm</span></div>
         <button class="btn small primary" data-grade="${esc(h.id)}">${gradeOpen.has(h.id) ? "Đóng chấm bài" : "Chấm bài"}</button>
         <button class="btn small" data-sua="${esc(h.id)}">Sửa</button>
         <button class="btn small" data-nhan-ban="${esc(h.id)}">Nhân bản</button>
@@ -2494,7 +2577,7 @@ function renderHomework() {
       ${!isTeacher && canLamLai(fb, myProgress.baitap[h.id]) ? `<div class="lamlai-box"><b>⚠ Bài này cần làm lại</b><span>Chưa đạt: ${esc(chuaDat(fb).join(", ") || "theo nhận xét của anh chị")}.${fb.hanLamLai ? ` Hạn nộp lại: <b>${ngayVN(fb.hanLamLai)}</b>` : ""} Làm lại sớm để không bị chậm tiến độ cả lớp nhé.</span><button class="btn small primary" data-nl="${esc(h.id)}">Em đã làm lại · Nộp lại</button></div>` : ""}
       ${!isTeacher && daNopLai(fb, myProgress.baitap[h.id]) ? `<p class="nl-cho">✓ Đã nộp lại, chờ anh chị chấm lại.</p>` : ""}
       ${isTeacher ? "" : anhHocVien(h)}
-      <div class="acts">${isTeacher ? staffBar : studentBar}</div>
+      <div class="acts${isTeacher ? " hw-staff-actions" : ""}">${isTeacher ? staffBar : studentBar}</div>
       ${isTeacher && gradeOpen.has(h.id) ? gradeTable(h) : ""}</div>`;
   }).join("");
   // Nộp: bấm 1 lần. Huỷ nộp: phải bấm 2 lần, và bỏ qua cú chạm trong 0,9 giây đầu (chạm đúp không vô tình huỷ)
@@ -2591,7 +2674,7 @@ function tongHopBaiTap() {
     const dat = fbs.filter(f => f.trangThai === "dat").length, lamLai = fbs.filter(f => f.trangThai === "lamlai").length;
     const anh = ds.filter(r => ((anhBaiTapAll[r.id] || {})[h.id] || []).length).length;
     const tb = diems.length ? (diems.reduce((a, b) => a + b, 0) / diems.length).toFixed(1).replace(".", ",") : "–";
-    return `<tr><td><b>${esc(h.ten)}</b><small>${esc(h.khoa || "")}</small></td><td class="num">${nop}/${ds.length}</td><td class="num">${fbs.length}</td><td class="num">${anh}</td><td class="num">${tb}</td><td class="num">${fbs.length ? Math.round(dat / fbs.length * 100) + "%" : "–"}</td><td class="num">${lamLai}</td></tr>`;
+    return `<tr><td><b>${esc(h.ten)}</b><small>${esc(h.khoa || "")}</small></td><td class="num" data-label="Đã nộp">${nop}/${ds.length}</td><td class="num" data-label="Đã chấm">${fbs.length}</td><td class="num" data-label="Có ảnh">${anh}</td><td class="num" data-label="Điểm TB">${tb}</td><td class="num" data-label="Đạt 3 tiêu chí">${fbs.length ? Math.round(dat / fbs.length * 100) + "%" : "–"}</td><td class="num" data-label="Làm lại">${lamLai}</td></tr>`;
   }).join("");
   box.innerHTML = `<section class="bt-tong"><p class="eyebrow">Đánh giá bài tập</p><div class="bt-tong-bang"><table><thead><tr><th>Bài</th><th>Đã nộp</th><th>Đã chấm</th><th>Có ảnh</th><th>Điểm TB</th><th>Đạt 3 tiêu chí</th><th>Làm lại</th></tr></thead><tbody>${dong}</tbody></table></div></section>`;
   hienAnhTuKho();
@@ -3302,6 +3385,11 @@ function renderAttend() {
       <td><span class="pill ${t.muc}">${t.pass === null ? "Chưa có dữ liệu" : t.pass + "% · " + MUC_TEN[t.muc]}</span></td>
       <td><button type="button" class="btn small" data-msg="${esc(r.id)}">Chép tin nhắn</button></td></tr>`).join("")}</tbody></table></div>`
     : `<p class="muted">${empty}</p>`;
+  if (!staffReady.has("attendance") && !Object.keys(diemdanhAll).length) {
+    $("#dd-watch").innerHTML = '<p class="muted" role="status">Đang tải dữ liệu chuyên cần…</p>';
+    $("#dd-sum").innerHTML = '<span class="muted" role="status">Đang tải điểm danh…</span>';
+    $("#dd-list").innerHTML = '<li class="muted" role="status">Đang tải điểm danh của ca này…</li>';
+  }
   $$("#dd-watch [data-msg]").forEach(b => b.onclick = () => {
     const x = rows.find(o => o.r.id === b.dataset.msg); if (!x) return;
     const { r, t } = x;
@@ -3693,6 +3781,7 @@ function renderTiles() {
     { href: "#bai-tap", t: isTeacher ? "Giao & chấm bài tập" : "Bài tập", d: moBai ? `${moBai} bài đang mở` : "Chưa có bài đang mở" },
     { href: "#tai-khoan", t: "Tài khoản", d: "Thông tin cá nhân, ảnh đại diện và đăng xuất" },
     { href: "#khoa-hoc", t: "Khóa học", d: "Lộ trình học và video tham khảo" },
+    { href: "#goc-nghe-thuat", t: "Góc nghệ thuật", d: "Kiến thức, phim ảnh và tài liệu miễn phí" },
     { href: "#ebook", t: "eBook", d: "Sách và tài liệu học vẽ" },
     { href: "#giao-trinh", t: isTeacher ? "Xem giáo trình" : "Giáo trình", d: isTeacher ? `${lessons.length} bài trong giáo trình` : `Đã học ${daHoc}/${lessons.length} bài` },
     isTeacher && { href: "#bai-ve", t: "Đăng bài vẽ học viên", d: "Chụp bài, chọn loại bài, đăng lên web" },
@@ -4482,11 +4571,11 @@ setInterval(() => { try { if (user) capNhatNhac(); } catch (e) {} }, 60000);
 
 /* ---------- Đăng nhập ---------- */
 function stopListeners() { unsubs.forEach(u => u()); unsubs = []; if (vanHanhM) vanHanhM.dung(); if (tacVuM) tacVuM.dung(); }
-function listen(q, fn) {
-  const t = performance.now(); let first = true;
+function listen(q, fn, onError) {
+  const t = performance.now(), session = user; let first = true;
   const name = q.path || (q._query && q._query.path && q._query.path.segments && q._query.path.segments.join("/")) || "dữ liệu";
-  unsubs.push(onSnapshot(q, snap => { if (first) { first = false; mark("Tải " + name, t); } fn(snap); },
-    e => { mark("✗ LỖI tải " + name + ": " + (e && e.code), t); serverIssue(e); }));
+  unsubs.push(onSnapshot(q, { includeMetadataChanges: true }, snap => { if (user !== session || (snap.metadata?.fromCache && (Array.isArray(snap.docs) ? !snap.docs.length : !snap.exists()))) return; if (first) { first = false; mark("Tải " + name, t); } fn(snap); },
+    e => { if (user !== session) return; mark("✗ LỖI tải " + name + ": " + (e && e.code), t); serverIssue(e); onError?.(e); }));
 }
 
 /* ---------- Nhớ phiên đăng nhập để trang hiện ngay, không phải chờ ---------- */
@@ -4521,6 +4610,12 @@ function showCachedSession() {
   renderLocks(isTeacher || approved ? "ok" : "pending");
   renderAccount(c.pending || false);
   renderHvInfo();
+  restoreStaffData();
+  if (approved && !isTeacher) {
+    const d = fastData.read(mail, "student", "attendance");
+    if (d) { myDiemdanh = d; troLyDaTai.diemDanh = true; queueMicrotask(() => renderMyProg()); }
+  }
+  if (isAdmin) queueMicrotask(() => renderQL());
   if (coDL) { renderLessons(); renderHomework(); return; }
   $("#lesson").innerHTML = `<p class="muted">Đang tải giáo trình…</p>`;
   $("#hw-list").innerHTML = `<div class="empty">Đang tải bài tập…</div>`;
@@ -4572,8 +4667,11 @@ async function onUser(u) {
   vanTay.khiDangNhap(u);
   isAdmin = false; isTeacher = false; approved = false; needVerify = false;
   napAvatarMay(mail);
+  clearTimeout(staffSaveTimer); cancelAnimationFrame(staffRenderFrame);
+  staffReady = new Set(); staffSynced = new Set(); window.__rosterReady = false;
   roster = []; requests = []; teachers = []; progressAll = {}; feedbackAll = {};
   diemdanhAll = {}; myDiemdanh = {}; myHv = null; hvTuMayChu = false; troLyDaTai = { diemDanh: false, diem: false, bai: false }; lvReset(); khoMon = {}; khoGD = []; donAll = []; donCuaToi = []; donNhap = []; donTam = {}; khoLoi = ""; khoDaTai = false;
+  if (prevMail && prevMail !== mail) fastData.clear(prevMail);
   if (prevMail && prevMail !== mail) { resourceDocs = []; resourceCache.clear(prevMail); }
   if (prevMail && prevMail !== mail) try { localStorage.removeItem(DATA_KEY + prevMail); } catch (e) {} // máy dùng chung: xoá dữ liệu người trước
   loadData(mail);
@@ -4586,7 +4684,7 @@ async function onUser(u) {
     gradeOpen.clear(); Object.keys(gradeDraft).forEach(k => delete gradeDraft[k]);
   }
   pendingReq = null;
-  if (!u) { resourceDocs = []; saveSession(null); renderLocks("out"); renderAccount(false); return; }
+  if (!u) { fastData.clear(); resourceDocs = []; saveSession(null); renderLocks("out"); renderAccount(false); return; }
   store.set("lvkv-gmail", mail); // lần sau mở máy này: Gmail điền sẵn ở mục Đăng nhập
   // Tạo tài khoản bằng mật khẩu: phải bấm link xác nhận trong Gmail trước (chống mạo danh Gmail người khác).
   if (!u.emailVerified) {
@@ -4596,8 +4694,11 @@ async function onUser(u) {
   // Hiện ngay, không chờ máy chủ: quản lý nhận ra từ Gmail; người mới hiện form đăng ký luôn.
   if (isAdminMail) {
     isAdmin = true; isTeacher = true; approved = false;
-    restoreResourceData(mail);
+    restoreResourceData(mail); restoreStaffData();
     saveSession(false); renderLocks("ok"); renderAccount(false);
+  } else if (cachedSession?.mail === mail && cachedSession.isTeacher) {
+    isAdmin = !!cachedSession.isAdmin; isTeacher = true; myChucVu = cachedSession.cv || "";
+    restoreStaffData(); renderLocks("ok"); renderAccount(false);
   } else if (!(cachedSession && cachedSession.mail === mail)) {
     renderLocks("pending"); renderAccount(false);
   }
@@ -4622,14 +4723,17 @@ async function onUser(u) {
     }
   };
   // Đã xác nhận email nhưng token trên máy còn cũ (chưa có claim email_verified): làm mới token trước khi đọc dữ liệu.
-  if (!u.__thuLai && u.emailVerified) { try { await hanTuoi(u.getIdToken()); } catch (e) {} }
+  if (!u.__thuLai && u.emailVerified) u.getIdToken().catch(() => {});
   const tr = performance.now();
   // Ảnh đại diện riêng của tài khoản này (giáo viên, quản lý, học viên đều có)
   let avaTuMay = false;
   getData("anhdaidien", true).then(a => { if (user !== u || !a) return; avaTuMay = true; myAvatar = a.anh || ""; try { myAvatar ? localStorage.setItem(AVA_KEY(mail), myAvatar) : localStorage.removeItem(AVA_KEY(mail)); } catch (e) {} renderTiles(); });
-  const [isAdm, gvDoc, hvDoc, ycDoc, tdDoc] = isAdminMail ? [true, null, null, null, null] : await Promise.all([
-    exists("admins"), getData("giaovien"), getData("hocvien"), getData("yeucau"), getData("tiendo")
+  // Đơn đăng ký và tiến độ không chặn việc xác nhận vai trò / mở các danh sách.
+  const requestData = isAdminMail ? Promise.resolve(null) : getData("yeucau", true);
+  const [isAdm, gvDoc, hvDoc] = isAdminMail ? [true, null, null] : await Promise.all([
+    exists("admins"), getData("giaovien"), getData("hocvien")
   ]);
+  let ycDoc = null;
   if (mail !== (u.email || "").toLowerCase() || user !== u) return; // người dùng đã đổi trong lúc chờ
   mark("Kiểm tra vai trò", tr);
   isAdmin = !!isAdm;
@@ -4664,7 +4768,10 @@ async function onUser(u) {
     const issue = document.getElementById("server-issue");
     if (issue && !tuLoi && !tuChoiQuyen) issue.hidden = true;
   }
-  let pending = !isTeacher && !approved && ycDoc ? ycDoc : false;
+  restoreStaffData();
+  let pending = !isTeacher && !approved && phienCu?.mail === mail ? phienCu.pending || false : false;
+  if (!isTeacher && !approved) { ycDoc = await requestData; pending = ycDoc || pending; }
+  if (user !== u) return;
   // Phiếu lần trước bị máy chủ từ chối: tự gửi lại khi học viên mở web.
   const unsent = !isTeacher && !approved && !ycDoc ? store.get(UNSENT + mail, null) : null;
   if (unsent) {
@@ -4682,7 +4789,8 @@ async function onUser(u) {
   renderAccount(pending);
   // Theo dõi quyền theo thời gian thực: anh chị vừa duyệt là màn hình học viên tự mở khoá,
   // bị thu hồi thì tự khoá — không phải bấm tải lại.
-  const watchRole = (col, has) => unsubs.push(onSnapshot(doc(db, col, mail), d => {
+  const watchRole = (col, has) => unsubs.push(onSnapshot(doc(db, col, mail), { includeMetadataChanges: true }, d => {
+    if (d.metadata?.fromCache && !d.exists()) return;
     if (user !== u || d.exists() === has) return;
     if (!has) toast(col === "giaovien" ? "Quản lý đã duyệt anh/chị làm giáo viên!" : "Anh chị đã duyệt! Em vào học được rồi.");
     onUser(u);
@@ -4693,6 +4801,9 @@ async function onUser(u) {
     else { watchRole("hocvien", false); watchRole("giaovien", false); }
   }
   if (!canLearn) {
+    fastData.clear(mail);
+    roster = []; requests = []; teachers = []; diemdanhAll = {}; progressAll = {}; feedbackAll = {};
+    staffReady.clear(); staffSynced.clear(); window.__rosterReady = false;
     resourceCacheRevision++; resourceDocs = []; resourceCache.clear(mail);
     try { localStorage.removeItem(DATA_KEY + mail); } catch (e) {}
     lessons = []; homework = []; myFeedback = {};
@@ -4701,14 +4812,15 @@ async function onUser(u) {
   restoreResourceData(mail);
 
   if (!isTeacher) {
-    if (tdDoc) { myProgress = { bai: tdDoc.bai || {}, baitap: tdDoc.baitap || {}, xem: tdDoc.xem || {} }; if (tdDoc.anh && !avaTuMay) { myAvatar = tdDoc.anh; try { localStorage.setItem(AVA_KEY(mail), myAvatar); } catch (e) {} } }
+    const attendanceCache = fastData.read(mail, "student", "attendance");
+    if (attendanceCache) { myDiemdanh = attendanceCache; troLyDaTai.diemDanh = true; }
     // Tiến độ đồng bộ trực tiếp: học trên điện thoại thì máy tính cũng thấy ngay, không ghi đè lẫn nhau
-    listen(doc(db, "tiendo", mail), d => { if (!d.exists()) return; const x = d.data();
+    listen(doc(db, "tiendo", mail), d => { const x = d.exists() ? d.data() : {};
       myProgress = { bai: x.bai || {}, baitap: x.baitap || {}, xem: x.xem || {} }; saveData(); renderLessons(); renderResources(); renderHomework(); renderTiles(); });
     listen(doc(db, "nhanxet", mail), d => { troLyDaTai.diem = true; myFeedback = d.exists() ? d.data() : {}; renderHomework(); renderMyProg(); saveData(); });
     listen(doc(db, "anhbaitap", mail), d => { myAnhBT = d.exists() ? d.data() : {}; renderHomework(); });
     // Điểm danh của chính em (lỗi quyền thì im lặng, panel vẫn hiện hướng dẫn)
-    unsubs.push(onSnapshot(doc(db, "diemdanh", mail), d => { troLyDaTai.diemDanh = true; myDiemdanh = d.exists() ? d.data() : {}; renderMyProg(); }, () => renderMyProg()));
+    listen(doc(db, "diemdanh", mail), d => { troLyDaTai.diemDanh = true; myDiemdanh = d.exists() ? d.data() : {}; fastData.write(mail, "student", "attendance", myDiemdanh); renderMyProg(); }, () => renderMyProg());
     renderMyProg();
   }
   listen(query(collection(db, "giaotrinh"), orderBy("thutu")), snap => {
@@ -4724,18 +4836,19 @@ async function onUser(u) {
     troLyDaTai.bai = true; homework = snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(h => isTeacher || giaoCho(h, { id: mail, coso: (myHv && myHv.coso) || "" })); renderHomework(); saveData(); renderTiles(); if (isAdmin) renderQL();
   });
   if (isTeacher) {
-    window.__rosterReady = false;
+    window.__rosterReady = staffReady.has("roster");
+    qlRosterError = "";
     listen(query(collection(db, "hocvien"), orderBy("duyetLuc", "desc")), snap => {
-      roster = snap.docs.map(d => ({ id: d.id, ...d.data() })); renderHomework(); if (isAdmin) { renderRoster(); renderResources(); } renderAttend(); renderLV(); window.__rosterReady = true;
-    });
+      roster = snap.docs.map(d => ({ id: d.id, ...d.data() })); window.__rosterReady = true; staffReady.add("roster"); if (!snap.metadata?.fromCache) staffSynced.add("roster"); qlRosterError = ""; refreshStaffData();
+    }, () => { qlRosterError = "Chưa tải được danh sách học viên. Kiểm tra kết nối rồi tải lại trang."; if (isAdmin) renderQL(); });
     listen(collection(db, "diemdanh"), snap => {
-      diemdanhAll = {}; snap.docs.forEach(d => diemdanhAll[d.id] = d.data()); renderAttend(); if (vanHanhM) vanHanhM.veLai();
+      diemdanhAll = {}; snap.docs.forEach(d => diemdanhAll[d.id] = d.data()); staffReady.add("attendance"); if (!snap.metadata?.fromCache) staffSynced.add("attendance"); refreshStaffData();
     });
     listen(collection(db, "tiendo"), snap => {
-      progressAll = {}; snap.docs.forEach(d => progressAll[d.id] = d.data()); renderHomework(); if (isAdmin) { renderRoster(); renderQL(); }
+      progressAll = {}; snap.docs.forEach(d => progressAll[d.id] = d.data()); staffReady.add("progress"); if (!snap.metadata?.fromCache) staffSynced.add("progress"); refreshStaffData();
     });
     listen(collection(db, "nhanxet"), snap => {
-      feedbackAll = {}; snap.docs.forEach(d => feedbackAll[d.id] = d.data()); renderHomework(); renderAttend();
+      feedbackAll = {}; snap.docs.forEach(d => feedbackAll[d.id] = d.data()); staffReady.add("feedback"); if (!snap.metadata?.fromCache) staffSynced.add("feedback"); refreshStaffData();
     });
     listen(collection(db, "anhbaitap"), snap => { anhBaiTapAll = {}; snap.docs.forEach(d => anhBaiTapAll[d.id] = d.data()); renderHomework(); });
   }
@@ -4743,24 +4856,24 @@ async function onUser(u) {
   if (!$("#v-lam-viec").hidden) lvOnShow();
   if (isTeacher) taiTacVu().then(m => { if (!m || !user || mail !== (u.email || "").toLowerCase()) return;
     m.batDau({ db, fs: { collection, doc, getDoc, setDoc, deleteDoc, writeBatch, query, orderBy, where, onSnapshot }, themHuy: f => unsubs.push(f),
-      mail, ten: (user && user.displayName) || mail.split("@")[0], isAdmin, isTeacher, toast, moHop, nenAnh, homNay: todayVN, giaoVien: () => teachers, doiSo: () => { updBadges(); try { if ($("#dash") && !$("#dash").hidden) renderDash(true); } catch (e) {} } }); });
+      mail, fastData, ten: (user && user.displayName) || mail.split("@")[0], isAdmin, isTeacher, toast, moHop, nenAnh, homNay: todayVN, giaoVien: () => teachers, doiSo: () => { updBadges(); try { if ($("#dash") && !$("#dash").hidden) renderDash(true); } catch (e) {} } }); });
   taiVanHanh().then(m => { if (!m || !user || mail !== (u.email || "").toLowerCase()) return;
     m.batDau({ db, fs: { collection, doc, getDoc, setDoc, deleteDoc, writeBatch, query, orderBy, where, limit, onSnapshot, deleteField }, themHuy: f => unsubs.push(f),
-      mail, ten: (!isTeacher && myHv && myHv.ten) || (user && user.displayName) || mail.split("@")[0], isAdmin, isTeacher,
+      mail, fastData, ten: (!isTeacher && myHv && myHv.ten) || (user && user.displayName) || mail.split("@")[0], isAdmin, isTeacher,
       toast, moHop, nenAnh, homNay: todayVN, giaoVien: () => teachers, hocVien: () => roster, gvToi: () => myGvDoc, taiCSV, ddCa, ddNgay, doiCa: renderAttend, apTKB });
   });
   if (!isAdmin && !isTeacher) listen(query(collection(db, "dondh"), where("mail", "==", mail)), snap => { donCuaToi = snap.docs.map(d => ({ id: d.id, ...d.data() })); renderHvInfo(); });
   if (isAdmin) {
     listen(query(collection(db, "yeucau"), orderBy("guiLuc", "desc")), snap => {
-      requests = snap.docs.filter(d => d.id !== mail).map(d => ({ id: d.id, ...d.data() })); renderRequests();
+      requests = snap.docs.filter(d => d.id !== mail).map(d => ({ id: d.id, ...d.data() })); saveStaffData(); renderRequests();
       if (!svChecked) { svChecked = true; checkRules(); }
     });
     listen(collection(db, "dondh"), snap => { donAll = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (b.tao || 0) - (a.tao || 0)); renderKho(); });
     listen(collection(db, "doiten"), snap => {
-      doiTen = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (a.luc || 0) - (b.luc || 0)); renderDoiTen();
+      doiTen = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (a.luc || 0) - (b.luc || 0)); saveStaffData(); renderDoiTen();
     });
     listen(query(collection(db, "giaovien"), orderBy("duyetLuc", "desc")), snap => {
-      teachers = snap.docs.map(d => ({ id: d.id, ...d.data() })); renderTeachers(); renderLV();
+      teachers = snap.docs.map(d => ({ id: d.id, ...d.data() })); staffReady.add("teachers"); if (!snap.metadata?.fromCache) staffSynced.add("teachers"); saveStaffData(); renderTeachers(); renderLV();
       if (vanHanhM) vanHanhM.capNhatGiaoVien();
     });
   }
@@ -4794,6 +4907,7 @@ async function startFirebase() {
     // Tự chọn kiểu kết nối ổn định nhất với mạng di động/wifi ở Việt Nam.
     try { db = initializeFirestore(app, { experimentalAutoDetectLongPolling: true }); }
     catch (e) { db = getFirestore(app); }
+    renderArt();
     // Mở sẵn kết nối tới máy chủ ngay khi vào trang, để lúc đăng nhập không phải chờ.
     // Public listeners below establish the connection without an extra restricted read.
     // XP thưởng & thành tựu anh chị trao trên web: ai cũng xem được (hiện ở Top rank)
@@ -4807,15 +4921,15 @@ async function startFirebase() {
     }, () => { xhLoi = true; try { renderXHQL(); } catch (e) {} });
     // Bài vẽ anh chị đăng + Top 5 quản lý chọn: ai cũng xem được trên trang chủ
     onSnapshot(collection(db, "baive"), snap => {
-      BAIVE_DONG = snap.docs.map(d => ({ id: d.id, ...d.data() })).map(b => ({ ...b, hang: Number(b.hang) || 0 })); baiVeLoi = false; savePublicContent();
+      BAIVE_DONG = snap.docs.map(d => ({ id: d.id, ...d.data() })).map(b => ({ ...b, hang: Number(b.hang) || 0 })); baiVeLoi = false; savePublicContent("baive");
       // Gộp các snapshot cùng khung hình, rồi cập nhật ngay khi trình duyệt sẵn sàng vẽ.
       cancelAnimationFrame(baiHen); baiHen = requestAnimationFrame(() => { renderGallery(); veTopRank(); dispatchEvent(new Event("baive-doi")); });
       try { renderTop5(); renderTiles(); } catch (e) {}    }, () => { baiVeLoi = true; try { renderTop5(); } catch (e) {} });
-    onSnapshot(doc(db, "cauhinh", "doingu"), d => { if (d.exists() && Array.isArray(d.data().ds)) { GIAO_VIEN.splice(0, GIAO_VIEN.length, ...d.data().ds); publicTeamLoaded = true; savePublicContent(); renderGiaoVien(); } }, () => {});
+    onSnapshot(doc(db, "cauhinh", "doingu"), d => { if (d.exists() && Array.isArray(d.data().ds)) { GIAO_VIEN.splice(0, GIAO_VIEN.length, ...d.data().ds); savePublicContent("doingu"); renderGiaoVien(); } }, () => {});
     // Thời gian biểu quản lý sửa trên web (ai cũng đọc được)
     onSnapshot(doc(db, "cauhinh", "thoigianbieu"), d => { if (d.exists()) apTKB((d.data() || {}).tkb, true); }, () => {});
     // Bản tin nổi bật
-    onSnapshot(collection(db, "bantin"), snap => { BANTIN_DONG = snap.docs.map(d => ({ id: d.id, ...d.data() })); banTinLoi = false; savePublicContent(); renderBanTin(); },
+    onSnapshot(collection(db, "bantin"), snap => { BANTIN_DONG = snap.docs.map(d => ({ id: d.id, ...d.data() })); banTinLoi = false; savePublicContent("bantin"); renderBanTin(); },
       () => { banTinLoi = true; });
   } catch (e) {
     // Đã có quyền lưu trên máy: không chặn bài học, chỉ báo nhẹ. Chưa có quyền thì hiện khung báo mạng yếu.
@@ -4830,6 +4944,7 @@ async function startFirebase() {
   $("#btn-switch").onclick = async () => {
     const prev = mail;
     vanTay.tat(); // đăng xuất thì bỏ khoá vân tay của người này trên máy
+    fastData.clear();
     await signOut(auth);
     // Máy dùng chung: xoá bản nháp, phiếu chưa gửi, ghi chú bàn giao, giỏ hàng, ảnh đại diện của người vừa đăng xuất
     try { Object.keys(localStorage).filter(k => /^(nhap-|phieu-chua-gui-|vh-bg-nhap-|lvtt-gio|lvtt-avatar:|lvkv-dulieu-|lvkv-moc-thi)/.test(k)).forEach(k => localStorage.removeItem(k)); } catch (e) {}
@@ -5575,6 +5690,10 @@ document.addEventListener("click", e => {
 
 /* ---------- Trang Quản lý: học viên đi học · tiến độ · % đỗ ---------- */
 let qlLoc = { cs: "", sx: "can", q: "" };
+let qlRosterError = "";
+addEventListener("hashchange", () => {
+  if (isAdmin && ["#duyet", "#ql-tong", "#ql-top5"].includes(location.hash)) renderQL();
+});
 function renderQL() {
   const box = $("#ql-tong"); if (!box || !isAdmin) return;
   const hom = todayVN(), d = new Date(hom + "T00:00:00Z"), thu2 = new Date(d.getTime() - ((d.getUTCDay() + 6) % 7) * 864e5).toISOString().slice(0, 10);
@@ -5605,7 +5724,7 @@ function renderQL() {
       <td data-l="Bài tập" class="num"><div>${nop}/${homework.filter(h => giaoCho(h, r)).length} nộp<span class="muted">${t.avg === null ? "chưa có điểm" : "TB " + nf1(t.avg)}</span></div></td>
       <td data-l="Dự báo đỗ"><div><span class="pill ${t.keys.length ? t.muc : ""}">${t.pass === null ? "Chưa có" : t.pass + "%"}</span></div></td>
       <td><button type="button" class="btn small" data-qlmsg="${esc(r.id)}">Tin PH</button></td></tr>`).join("")
-    : `<tr><td colspan="7" class="muted">${roster.length ? "Không có học viên phù hợp bộ lọc." : "Chưa có học viên nào được duyệt."}</td></tr>`;
+    : `<tr><td colspan="7" class="muted" role="status">${roster.length ? "Không có học viên phù hợp bộ lọc." : qlRosterError || (window.__rosterReady ? "Chưa có học viên nào được duyệt." : "Đang tải danh sách học viên…")}</td></tr>`;
   box.innerHTML = `<h2 class="ql-h2" id="ql-tong-h">Học viên đi học · tiến độ · % đỗ</h2>
     <div class="ql-kpi">
       <div><span>Học viên</span><b class="num">${all.length}</b></div>
@@ -5623,6 +5742,29 @@ function renderQL() {
     </div>
     <div class="ql-bang-w"><table class="ql-bang"><thead><tr><th>Học viên</th><th>Đi học</th><th>Chuyên cần</th><th>Tiến độ giáo trình</th><th>Bài tập</th><th>Dự báo đỗ</th><th></th></tr></thead><tbody>${bang}</tbody></table></div>
     <p class="muted ql-ghi">% đỗ là ước tính từ giờ học, chuyên cần và điểm bài tập — dùng để biết em nào cần kèm thêm, không phải cam kết với phụ huynh. "Tin PH" chép sẵn tin nhắn gửi Zalo phụ huynh.</p>`;
+  if (!window.__rosterReady && !roster.length) {
+    box.querySelectorAll(".ql-kpi b").forEach(e => e.textContent = "–");
+    box.querySelector(".ql-pb-chu").textContent = "Đang tải danh sách học viên…";
+  } else if (!staffReady.has("attendance") && !Object.keys(diemdanhAll).length) {
+    box.querySelectorAll('.ql-kpi > div:nth-child(2) b,.ql-kpi > div:nth-child(3) b,.ql-kpi > div:nth-child(4) b,.ql-kpi > div:nth-child(5) b').forEach(e => e.textContent = "–");
+    box.querySelector(".ql-pb-chu").textContent = "Đang tải điểm danh và tiến độ…";
+    box.querySelectorAll(".ql-bang tbody tr:not(:has(td[colspan])) td:nth-child(2),.ql-bang tbody tr:not(:has(td[colspan])) td:nth-child(3),.ql-bang tbody tr:not(:has(td[colspan])) td:nth-child(6)").forEach(e => e.textContent = "Đang tải…");
+  }
+  if (roster.length) {
+    const missing = k => !staffReady.has(k);
+    const cells = selector => box.querySelectorAll(".ql-bang tbody tr:not(:has(td[colspan])) " + selector);
+    if (missing("progress")) { cells("td:nth-child(4)").forEach(e => e.textContent = "Đang tải…"); cells("td:nth-child(5)").forEach(e => e.textContent = "Đang tải…"); }
+    if (missing("feedback")) cells("td:nth-child(5) span").forEach(e => e.textContent = "Đang tải điểm…");
+    if (["attendance", "progress", "feedback"].some(missing)) {
+      box.querySelector('.ql-kpi > div:nth-child(4) b').textContent = "–";
+      cells("td:nth-child(6)").forEach(e => e.textContent = "Đang tải…");
+      box.querySelector(".ql-pb-chu").textContent = "Đang tải dữ liệu dự báo…";
+    }
+  }
+  if (roster.length && !["roster", "attendance", "progress", "feedback"].every(k => staffSynced.has(k))) {
+    const note = document.createElement("p"); note.className = "muted ql-sync-note"; note.setAttribute("role", "status");
+    note.textContent = "Đang đồng bộ dữ liệu mới từ máy chủ…"; box.prepend(note);
+  }
   const q = $("#ql-q"); q.oninput = () => { qlLoc.q = q.value; renderQL(); };
   if (dangGo) { q.focus(); q.setSelectionRange(q.value.length, q.value.length); }
   $("#ql-cs").onchange = e => { qlLoc.cs = e.target.value; renderQL(); };

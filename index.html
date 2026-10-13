@@ -49,9 +49,11 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Be+Vietnam+Pro:wght@400;500;600&family=Playfair+Display:ital,wght@1,500;1,600&display=swap" media="print" onload="this.media='all'">
 <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Be+Vietnam+Pro:wght@400;500;600&family=Playfair+Display:ital,wght@1,500;1,600&display=swap"></noscript>
 <link rel="stylesheet" href="assets/css/style.css?v=20261013auditComplete">
+<link rel="stylesheet" href="assets/css/art-corner.css?v=20261013artLabels">
 <link rel="modulepreload" href="assets/js/app.js?v=20261013auditComplete">
+
 <link rel="modulepreload" href="config/firebase-config.js?v=20261009b">
-<link rel="modulepreload" href="data/noi-dung.js?v=20261011birthday">
+<link rel="modulepreload" href="data/noi-dung.js?v=20261011pagesplit">
 <script nomodule>document.addEventListener("DOMContentLoaded",function(){var d=document.createElement("div");d.className="slow-bar";d.innerHTML="Trình duyệt này đã quá cũ nên web chạy không đủ. Hãy cập nhật Chrome hoặc Safari rồi mở lại.";document.body.insertBefore(d,document.body.firstChild)})</script>
 <script>setTimeout(function(){if(window.__appOk)return;var d=document.createElement("div");d.className="slow-bar";d.innerHTML='Mạng đang chậm, trang chưa tải xong. <button type="button" onclick="location.reload()">Tải lại</button>';document.body.insertBefore(d,document.body.firstChild)},12000)</script>
 </head>
@@ -104,6 +106,7 @@
     <div class="dd">
       <button type="button" class="dd-t" aria-expanded="false">Học tập <svg class="chev" viewBox="0 0 8 5" aria-hidden="true"><path d="M1 1l3 3 3-3"/></svg></button>
       <div class="dd-p">
+        <a class="link" href="#goc-nghe-thuat" data-nav="goc-nghe-thuat"><b>Góc nghệ thuật</b><small>Kiến thức và cảm hứng miễn phí</small></a>
         <a class="link" href="#khoa-hoc" data-nav="khoa-hoc"><b>Khoá học</b><small>6 khoá từ cơ bản đến luyện đề</small></a>
         <a class="link" href="#lo-trinh" data-nav="home"><b>Lộ trình học</b><small>Tuần nào học gì, từng môn</small></a>
         <a class="link" href="#lich-hoc" data-nav="home"><b>Lịch học</b><small>Bình Phú · Kim Quan</small></a>
@@ -170,6 +173,7 @@
     <a href="#giao-trinh" data-acc="giao-trinh" data-can="learn"><i aria-hidden="true">📚</i>Giáo trình</a>
     <a href="#khoa-hoc" data-acc="khoa-hoc"><i aria-hidden="true">🎨</i>Khóa học</a>
     <a href="#ebook" data-acc="ebook"><i aria-hidden="true">📖</i>eBook</a>
+    <a href="#goc-nghe-thuat" data-acc="goc-nghe-thuat"><i aria-hidden="true">🖼️</i>Góc nghệ thuật</a>
     <a href="#thi-thu" data-acc="thi-thu" data-can="learn"><i aria-hidden="true">⏱️</i>Thi thử</a>
     <a href="#van-hanh" data-acc="van-hanh" data-can="learn"><i aria-hidden="true">🛠️</i>Vận hành</a>
     <a href="#diem-danh" data-acc="diem-danh" data-can="teacher"><i aria-hidden="true">✅</i>Điểm danh</a>
@@ -558,6 +562,13 @@
       <div class="resource-workspace" id="nang-cao"></div>
     </section>
   </div>
+</main>
+
+<!-- ============ GÓC NGHỆ THUẬT ============ -->
+<main class="wrap" id="v-goc-nghe-thuat" hidden>
+  <div class="page-head"><p class="eyebrow">Khám phá / Góc nghệ thuật</p><h1>Góc nghệ thuật</h1><p class="muted">Kiến thức, tài liệu, phim ảnh và cảm hứng từ đời sống — chia sẻ miễn phí cho mọi người.</p></div>
+  <p class="status" id="art-status" role="status"></p>
+  <div id="art-list" class="resource-workspace"></div>
 </main>
 
 <!-- ============ EBOOK ============ -->

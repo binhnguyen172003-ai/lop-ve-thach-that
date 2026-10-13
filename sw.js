@@ -1,7 +1,7 @@
 // Bộ nhớ đệm giúp web mở tức thì ở lần sau và vẫn xem được khi mất mạng.
 // Thường không cần sửa file này. Mỗi lần đưa web lên, mã phiên bản (?v=) đổi nên bản cũ tự bị thay.
 const V = new URL(self.location.href).searchParams.get("v") || "dev";
-const TRANG = "lvkv-trang-20261013sync-" + V;      // file của web (theo phiên bản)
+const TRANG = "lvkv-trang-20261013fresh-" + V;      // file của web (theo phiên bản)
 const THU_VIEN = "lvkv-thu-vien";     // thư viện Firebase + phông chữ (không bao giờ đổi)
 
 self.addEventListener("install", e => {
@@ -33,18 +33,14 @@ self.addEventListener("fetch", e => {
   if (req.method !== "GET") return;
   const url = new URL(req.url);
 
-  // Trang chính: lấy bản mới nhất; mạng yếu quá 0,8 giây hoặc mất mạng thì mở bản đã lưu.
+  // Trang chính: lấy bản mới nhất; mất mạng thì mở bản đã lưu.
   if (req.mode === "navigate" && url.origin === self.location.origin) {
     e.respondWith((async () => {
       const matMang = async () => (await caches.match("./offline.html")) || (await caches.match("./"));
-      const mang = fetch(req, { cache: "no-cache" }).then(res => { if (res.ok) { const c = res.clone(); caches.open(TRANG).then(x => x.put("./", c)); } return res; });
-      // Giữ worker sống để bản HTML mới vẫn được lưu sau khi trả cache nhanh.
-      e.waitUntil(mang.then(() => undefined, () => undefined));
-      if (url.searchParams.get("intro") === "1") return mang.catch(matMang);
-      const cu = await caches.match("./");
-      if (!cu) return mang.catch(matMang);
-      const cho = new Promise(r => setTimeout(() => r(cu), 800));
-      return Promise.race([mang.catch(matMang), cho]);
+      const mang = fetch(req, { cache: "no-cache" }).then(res => { if (res.ok) { const c = res.clone(); e.waitUntil(caches.open(TRANG).then(x => x.put("./", c))); } return res; });
+      // Khi có mạng, dùng HTML mới ngay; chỉ trả bản lưu khi tải mạng thất bại.
+      // Không hiện giao diện cũ trong lúc chờ rồi buộc người dùng tải lại lần nữa.
+      return mang.catch(async () => (await caches.match("./")) || matMang());
     })());
     return;
   }

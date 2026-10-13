@@ -1,0 +1,4 @@
+/* Giữ ảnh chủ đề nằm trên tên khi cuộn. */
+#art-list .rw-category-grid{grid-auto-rows:max-content;align-content:start}
+#art-list .rw-category-card{grid-template-rows:max-content max-content max-content}
+#art-list .rw-category-media{aspect-ratio:auto;height:100px;min-height:100px}

@@ -22,6 +22,8 @@ export function youtubeId(value) {
 export function resourceImage(row) {
   const manual = safeResourceLink(row.anh);
   if (manual) return manual;
+  const uploaded = courseCoverImage(row.anh);
+  if (uploaded) return uploaded;
   const id = youtubeId(row.link);
   return id ? `https://i.ytimg.com/vi/${id}/hqdefault.jpg` : "";
 }
@@ -65,15 +67,16 @@ export function viewerSearchText(value) {
   return String(value ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/gi, "d").toLowerCase().trim().replace(/\s+/g, " ");
 }
 
-export function createResourceWorkspace(root, { phan, seeds = [], ebook = false, save, mark, markdown, notify, markSeen, prepareImage, renameCategory, removeCategory, restoreCategory, requestUnlock, openConversation }) {
+export function createResourceWorkspace(root, { phan, seeds = [], ebook = false, publicMode = false, save, mark, markdown, notify, markSeen, prepareImage, renameCategory, removeCategory, restoreCategory, requestUnlock, openConversation }) {
   let state = { rows: [], marks: {}, canManage: false }, category = "", opened = "", editing = null, addingCourse = false, accessEditing = false, editingCourse = false, courseDraft = null, coverBusy = false, coverTicket = 0, courseSaving = false;
+  let lessonImage = "", lessonImageBusy = false, lessonImageTicket = 0;
   let accessDraft = null, viewerQuery = "", viewerScroll = 0, accessSaving = false, accessError = "";
   let categoryChosen = false, bookBusy = false, bookError = "";
   let unlockRequests = new Map();
   const q = selector => root.querySelector(selector);
   const qa = selector => [...root.querySelectorAll(selector)];
-  const label = ebook ? "sách" : "khóa";
-  const itemLabel = ebook ? "eBook" : "khóa học";
+  const label = publicMode ? "chủ đề" : ebook ? "sách" : "khóa";
+  const itemLabel = publicMode ? "chủ đề" : ebook ? "eBook" : "khóa học";
   // Ảnh từ dịch vụ ngoài có thể bị lỗi/mất mạng: giữ khung thẻ và thao tác mở bài.
   const imageFallback = img => {
     const frame = img.parentElement;
@@ -106,13 +109,13 @@ export function createResourceWorkspace(root, { phan, seeds = [], ebook = false,
     reuse.forEach(([placeholder, previous]) => placeholder.replaceWith(previous));
     qa("img[data-resource-image]").forEach(img => { if (img.complete && !img.naturalWidth) imageFallback(img); });
   };
-  const unit = ebook ? "chương / tài liệu" : "bài học";
+  const unit = publicMode ? "nội dung" : ebook ? "chương / tài liệu" : "bài học";
   const activeRows = () => resourceRows(state.rows, seeds, phan);
   const categories = rows => [...new Set(rows.filter(row => !row.an).map(row => row.khoa || (ebook ? "eBook" : "Khóa nâng cao")))];
   const accessRow = (rows, name) => rows.find(row => row.loai === "khoa" && row.khoa === name);
   const canView = (rows, name) => {
     const meta = accessRow(rows, name);
-    return !!state.staff || !meta || meta.access !== "selected" || (meta.viewers || []).includes(state.mail);
+    return publicMode || !!state.staff || !meta || meta.access !== "selected" || (meta.viewers || []).includes(state.mail);
   };
   const categoryNav = (rows, groups) => `<div class="gt-mon rw-category-grid" role="navigation" aria-label="Chọn ${label}">${groups.map(name => {
     const cover = courseCoverImage(accessRow(rows, name)?.anhBia), locked = !canView(rows, name);
@@ -139,7 +142,7 @@ export function createResourceWorkspace(root, { phan, seeds = [], ebook = false,
     return `<article class="lesson gt-bai rw-detail"><button class="gtb-ve" type="button" data-back>‹ Tất cả ${unit}</button>
       <header class="gtb-dau"><p class="eyebrow">${esc(row.khoa || label)}</p><h2>${esc(row.ten)}</h2>${!state.staff ? `<span class="gt-chip ${done ? "xong" : "chua"}">${done ? ebook ? "✓ Đã đọc" : "✓ Hoàn thành" : ebook ? "Chưa đọc" : "Chưa học"}</span>` : ""}</header>
       ${image ? `<section class="gtb-phan"><h3>${ebook ? "Ảnh bìa" : "Hình ảnh bài học"}</h3><img class="gtb-anh" data-resource-image="detail:${esc(row.id)}" src="${esc(image)}" alt="${esc(row.ten)}" loading="eager" fetchpriority="high" decoding="async"></section>` : ""}
-      ${row.noidung ? `<section class="gtb-phan"><h3>${ebook ? "Nội dung sách" : "Kiến thức cần nắm"}</h3><div class="bai-md">${markdown(row.noidung)}</div></section>` : ""}
+      ${row.noidung ? `<section class="gtb-phan"><h3>${publicMode ? "Nội dung chia sẻ" : ebook ? "Nội dung sách" : "Kiến thức cần nắm"}</h3><div class="bai-md">${markdown(row.noidung)}</div></section>` : ""}
       ${link ? `<section class="gtb-phan"><h3>${ebook ? "Đọc tài liệu" : row.loai === "video" ? "Xem video" : "Tài liệu kèm theo"}</h3><a class="btn primary" href="${esc(link)}" target="_blank" rel="noopener noreferrer">${ebook ? "Mở tài liệu ↗" : row.loai === "video" ? "Xem trên YouTube ↗" : "Mở tài liệu ↗"}</a></section>` : `<p class="muted">${ebook ? "Tài liệu đang được cập nhật." : "Chưa có link tài liệu."}</p>`}
       ${row.ghichu ? `<section class="gtb-phan"><h3>Lời dặn của anh chị</h3><p>${esc(row.ghichu)}</p></section>` : ""}
       ${!state.staff ? `<button class="btn primary" type="button" data-mark>${done ? ebook ? "✓ Đã đọc · bấm để bỏ" : "✓ Đã hoàn thành · bấm để bỏ" : ebook ? "Đánh dấu đã đọc" : "Đánh dấu đã hoàn thành"}</button>` : ""}
@@ -154,7 +157,7 @@ export function createResourceWorkspace(root, { phan, seeds = [], ebook = false,
       <div class="rw-cover-preview"${cover ? "" : " hidden"}><img ${cover ? `src="${esc(cover)}"` : ""} alt="Ảnh bìa đang chọn"><button class="btn small" type="button" data-cover-remove>Bỏ ảnh bìa</button></div>
       <label>Hoặc dùng link ảnh bìa<input name="coverUrl" type="url" maxlength="2000" value="${esc(safeResourceLink(draft.anhBia))}" placeholder="https://…"></label>
       <label>Mô tả ${itemLabel}<textarea name="moTa" maxlength="2000" rows="6" placeholder="${ebook ? "Sách này có nội dung gì, dành cho ai và giúp học viên học được gì?" : "Khóa này học gì, phù hợp với ai và học xong sẽ làm được gì?"}">${esc(draft.moTa || "")}</textarea></label>
-      <label>Điều kiện mở khóa<input name="dieuKienMoKhoa" maxlength="80" value="${esc(draft.dieuKienMoKhoa || "")}" placeholder="VD: Cần 15 đô để mở khóa"><small class="muted">Viết ngắn khoảng 5–6 từ. Để trống nếu không có điều kiện.</small></label>
+      <label${publicMode ? " hidden" : ""}>Điều kiện mở khóa<input name="dieuKienMoKhoa" maxlength="80" value="${esc(draft.dieuKienMoKhoa || "")}" placeholder="VD: Cần 15 đô để mở khóa"><small class="muted">Viết ngắn khoảng 5–6 từ. Để trống nếu không có điều kiện.</small></label>
       <p class="status" role="status" data-course-status>${coverBusy ? "Đang chuẩn bị ảnh bìa…" : courseSaving ? `Đang lưu ${itemLabel}…` : ""}</p>
       <div class="hop-nut"><button class="btn" type="button" data-course-cancel${courseSaving ? " disabled" : ""}>Huỷ</button><button class="btn primary" type="submit"${coverBusy || courseSaving ? " disabled" : ""}>${editingCourse ? "Lưu" : "Tạo"} ${itemLabel}</button></div></form>`;
   };
@@ -167,15 +170,17 @@ export function createResourceWorkspace(root, { phan, seeds = [], ebook = false,
       <p class="rw-course-description">${esc(intro.description || `Mô tả ${itemLabel} đang được cập nhật.`)}</p>
       ${intro.condition ? `<dl class="rw-course-unlock"><dt>Điều kiện mở khóa</dt><dd>${esc(intro.condition)}</dd></dl>` : ""}</div></section>`;
   };
-  const form = row => `<form class="rw-editor teacher" data-resource-form><h3>${row ? "Sửa" : "Thêm"} ${ebook ? "chương hoặc tài liệu" : "bài học"}</h3>
+  const form = row => `<form class="rw-editor teacher" data-resource-form><h3>${row ? "Sửa" : "Thêm"} ${publicMode ? "nội dung" : ebook ? "chương hoặc tài liệu" : "bài học"}</h3>
     <div class="fgrid"><label>Tên ${label}<input name="khoa" required maxlength="120" value="${esc(row?.khoa || category)}" placeholder="${ebook ? "VD: Hình hoạ cơ bản" : "VD: Chân dung nâng cao"}"></label>
-    <label>Tên ${ebook ? "chương / tài liệu" : "bài học"}<input name="ten" required maxlength="180" value="${esc(row?.ten || "")}"></label></div>
-    <div class="fgrid"><label>Loại nội dung<select name="loai">${(ebook ? [["sach", "Sách / chương"], ["tai-lieu", "Tài liệu"]] : [["video", "Video"], ["bai-hoc", "Bài học"], ["tai-lieu", "Tài liệu"]]).map(([key, text]) => `<option value="${key}"${row?.loai === key ? " selected" : ""}>${text}</option>`).join("")}</select></label>
+    <label>Tên ${publicMode ? "nội dung" : ebook ? "chương / tài liệu" : "bài học"}<input name="ten" required maxlength="180" value="${esc(row?.ten || "")}"></label></div>
+    <div class="fgrid"><label>Loại nội dung<select name="loai">${(ebook ? [["sach", "Sách / chương"], ["tai-lieu", "Tài liệu"]] : (publicMode ? [["video", "Phim / video"], ["bai-hoc", "Kiến thức / đời sống"], ["tai-lieu", "Tài liệu miễn phí"]] : [["video", "Video"], ["bai-hoc", "Bài học"], ["tai-lieu", "Tài liệu"]])).map(([key, text]) => `<option value="${key}"${row?.loai === key ? " selected" : ""}>${text}</option>`).join("")}</select></label>
     <label>Thứ tự hiển thị<input name="thutu" type="number" min="0" max="9999" step="1" value="${Number(row?.thutu) || activeRows().length + 1}"></label></div>
     <label>Mô tả ngắn<input name="moTa" maxlength="200" value="${esc(row?.moTa || "")}"></label>
     <label>Kiến thức / nội dung<textarea name="noidung" rows="8" maxlength="20000" placeholder="Viết nội dung; có thể dùng ## tiêu đề, - danh sách…">${esc(row?.noidung || "")}</textarea></label>
     <label>Link ${ebook ? "đọc sách / PDF" : "video hoặc tài liệu"} (https://…)<input name="link" type="url" maxlength="2000" value="${esc(row?.link || "")}"></label>
-    <label>Link ${ebook ? "ảnh bìa" : "ảnh bài"} (để trống sẽ dùng ảnh YouTube)<input name="anh" type="url" maxlength="2000" value="${esc(row?.anh || "")}"></label>
+    <label>Tải ${ebook ? "ảnh bìa" : "ảnh bài"} từ máy<input type="file" data-lesson-image accept="image/jpeg,image/png,image/webp"></label>
+    <div class="rw-cover-preview" data-lesson-preview${courseCoverImage(lessonImage) ? "" : " hidden"}><img ${courseCoverImage(lessonImage) ? `src="${esc(lessonImage)}"` : ""} alt="Ảnh đang chọn"><button class="btn small" type="button" data-lesson-remove>Bỏ ảnh</button></div>
+    <label>Hoặc dùng link ${ebook ? "ảnh bìa" : "ảnh bài"} (để trống sẽ dùng ảnh YouTube)<input name="anh" type="url" maxlength="2000" value="${esc(safeResourceLink(lessonImage))}"></label>
     <label>Lời dặn của anh chị<textarea name="ghichu" rows="3" maxlength="2000">${esc(row?.ghichu || "")}</textarea></label>
     <p class="status" role="status" data-status></p><div class="hop-nut"><button class="btn" type="button" data-cancel>Huỷ</button><button class="btn primary" type="submit">Lưu nội dung</button></div></form>`;
   function render() {
@@ -226,9 +231,9 @@ export function createResourceWorkspace(root, { phan, seeds = [], ebook = false,
       ${state.staff ? "" : `<div class="gt-bar" role="progressbar" aria-label="Tiến độ" aria-valuenow="${percent}" aria-valuemin="0" aria-valuemax="100"><i style="width:${percent}%"></i></div>
       <ul class="gt-td-ds"><li>${ebook ? "Đã đọc" : "Hoàn thành"} <b>${completed}</b></li><li>${ebook ? "Đang đọc" : "Đang học"} <b>${studying}</b></li><li>${ebook ? "Chưa đọc" : "Chưa học"} <b>${rows.length - completed - studying}</b></li></ul>
       ${nextLesson ? `<button class="btn primary rw-next" type="button" data-open="${esc(nextLesson.id)}" aria-label="${ebook ? "Tiếp tục đọc" : "Tiếp tục học"}: ${esc(nextLesson.ten)}">${ebook ? "Tiếp tục đọc" : "Tiếp tục học"} →</button>` : `<p class="muted">${ebook ? "Đã đọc hết các mục." : "Đã hoàn thành khóa học."}</p>`}`}</section></aside>
-      <div class="gt-main">${state.canManage ? `<div class="rw-actions"><button class="btn" type="button" data-access>Quyền xem ${ebook ? "eBook" : "khóa"}</button><button class="btn" type="button" data-edit-course>Sửa ${itemLabel}</button><button class="btn" type="button" data-add-course>+ Thêm ${itemLabel}</button><button class="btn primary" type="button" data-add>+ Thêm ${ebook ? "chương / tài liệu" : "bài học"}</button>${ebook && category ? `<button class="btn rw-delete-book" type="button" data-delete-book${bookBusy ? " disabled" : ""}>Xóa eBook</button>` : ""}</div>` : ""}
+      <div class="gt-main">${state.canManage ? `<div class="rw-actions">${publicMode ? "" : `<button class="btn" type="button" data-access>Quyền xem ${ebook ? "eBook" : "khóa"}</button>`}<button class="btn" type="button" data-edit-course>Sửa ${itemLabel}</button><button class="btn" type="button" data-add-course>+ Thêm ${itemLabel}</button><button class="btn primary" type="button" data-add>+ Thêm ${publicMode ? "nội dung" : ebook ? "chương / tài liệu" : "bài học"}</button>${ebook && category ? `<button class="btn rw-delete-book" type="button" data-delete-book${bookBusy ? " disabled" : ""}>Xóa eBook</button>` : ""}</div>` : ""}
       ${!selected && !accessEditing && !addingCourse && !editingCourse && editing === null ? courseSummary(all) : ""}
-      ${accessEditing && state.canManage ? accessForm(all) : (addingCourse || editingCourse) && state.canManage ? courseForm() : editing !== null && state.canManage ? form(all.find(row => row.id === editing)) : selected ? detail(selected, rows) : rows.length ? `<div class="gt-ds"><div class="gt-luoi">${rows.map((row, i) => { const image = resourceImage(row), done = !!state.marks?.[row.id]; return `<button class="gt-the tt-${state.staff ? "gv" : done ? "xong" : "chua"}" type="button" data-open="${esc(row.id)}"><span class="gt-anh">${image ? `<img data-resource-image="lesson:${esc(row.id)}" src="${esc(image)}" alt="" loading="${i < 4 ? "eager" : "lazy"}" fetchpriority="${i === 0 ? "high" : "auto"}" decoding="async">` : `<span class="gt-ph" aria-hidden="true">${ebook ? "📖" : "🖼️"}</span>`}</span><span class="gt-noi"><small class="gt-so">${ebook ? "Mục" : "Bài"} ${String(i + 1).padStart(2, "0")}</small><b class="gt-ten">${esc(row.ten)}</b><span class="gt-mota">${esc(row.moTa || String(row.noidung || "").slice(0, 160) || "Nội dung đang được cập nhật.")}</span><span class="gt-tt">${!state.staff ? `<span class="gt-chip ${done ? "xong" : "chua"}">${done ? ebook ? "✓ Đã đọc" : "✓ Hoàn thành" : ebook ? "Chưa đọc" : "Chưa học"}</span>` : ""}</span></span></button>`; }).join("")}</div></div>` : `<p class="muted gt-trong">${ebook ? "Chưa có eBook được đăng." : "Khóa này chưa có bài."}</p>`}
+      ${accessEditing && state.canManage ? accessForm(all) : (addingCourse || editingCourse) && state.canManage ? courseForm() : editing !== null && state.canManage ? form(all.find(row => row.id === editing)) : selected ? detail(selected, rows) : rows.length ? `<div class="gt-ds"><div class="gt-luoi">${rows.map((row, i) => { const image = resourceImage(row), done = !!state.marks?.[row.id]; return `<button class="gt-the tt-${state.staff ? "gv" : done ? "xong" : "chua"}" type="button" data-open="${esc(row.id)}"><span class="gt-anh">${image ? `<img data-resource-image="lesson:${esc(row.id)}" src="${esc(image)}" alt="" loading="${i < 4 ? "eager" : "lazy"}" fetchpriority="${i === 0 ? "high" : "auto"}" decoding="async">` : `<span class="gt-ph" aria-hidden="true">${ebook ? "📖" : "🖼️"}</span>`}</span><span class="gt-noi"><small class="gt-so">${publicMode ? "Mục" : ebook ? "Mục" : "Bài"} ${String(i + 1).padStart(2, "0")}</small><b class="gt-ten">${esc(row.ten)}</b><span class="gt-mota">${esc(row.moTa || String(row.noidung || "").slice(0, 160) || "Nội dung đang được cập nhật.")}</span><span class="gt-tt">${!state.staff ? `<span class="gt-chip ${done ? "xong" : "chua"}">${done ? ebook ? "✓ Đã đọc" : "✓ Hoàn thành" : ebook ? "Chưa đọc" : "Chưa học"}</span>` : ""}</span></span></button>`; }).join("")}</div></div>` : `<p class="muted gt-trong">${publicMode ? "Chưa có nội dung được đăng trong chủ đề này." : ebook ? "Chưa có eBook được đăng." : "Khóa này chưa có bài."}</p>`}
       ${state.canManage && ebook ? `<p class="status rw-book-status" data-book-status role="status">${bookBusy ? "Đang cập nhật eBook…" : esc(bookError)}</p>${deletedBooks.length ? `<details class="rw-hidden rw-deleted-books"><summary>eBook đã xóa (${deletedBooks.length})</summary>${deletedBooks.map(name => `<div><span>${esc(name)}</span><button class="btn small" type="button" data-restore-book="${esc(name)}"${bookBusy ? " disabled" : ""}>Khôi phục</button></div>`).join("")}</details>` : ""}` : ""}
       ${state.canManage && hidden.length ? `<details class="rw-hidden"><summary>Nội dung đang ẩn (${hidden.length})</summary>${hidden.map(row => `<div><span>${esc(row.khoa)} · ${esc(row.ten)}</span><button class="btn small" type="button" data-restore="${esc(row.id)}">Hiện lại</button></div>`).join("")}</details>` : ""}</div></div>`);
     qa("[data-category]").forEach(button => button.onclick = () => { category = button.dataset.category; categoryChosen = true; bookError = ""; opened = ""; editing = null; addingCourse = false; accessEditing = false; editingCourse = false; courseDraft = null; coverBusy = false; coverTicket++; render(); });
@@ -251,8 +256,8 @@ export function createResourceWorkspace(root, { phan, seeds = [], ebook = false,
     qa("[data-open]").forEach(button => button.onclick = () => { opened = button.dataset.open; editing = null; markSeen?.(opened); render(); root.scrollIntoView({ block: "start" }); });
     if (q("[data-back]")) q("[data-back]").onclick = () => { opened = ""; render(); };
     if (q("[data-mark]")) q("[data-mark]").onclick = async () => { try { await mark(selected.id); } catch { notify("Chưa lưu được tiến độ. Thử lại.", "err"); } };
-    if (q("[data-add]")) q("[data-add]").onclick = () => { editingCourse = false; courseDraft = null; coverTicket++; coverBusy = false; addingCourse = false; opened = ""; editing = ""; render(); };
-    qa("[data-edit]").forEach(button => button.onclick = () => { editing = button.dataset.edit; render(); });
+    if (q("[data-add]")) q("[data-add]").onclick = () => { editingCourse = false; courseDraft = null; coverTicket++; coverBusy = false; lessonImageTicket++; lessonImage = ""; lessonImageBusy = false; addingCourse = false; opened = ""; editing = ""; render(); };
+    qa("[data-edit]").forEach(button => button.onclick = () => { editing = button.dataset.edit; lessonImageTicket++; lessonImage = all.find(row => row.id === editing)?.anh || ""; lessonImageBusy = false; render(); });
     qa("[data-hide]").forEach(button => button.onclick = async () => { if (!confirm("Ẩn nội dung này khỏi học viên?")) return; try { await save(button.dataset.hide, { an: true }); opened = ""; notify("Đã ẩn nội dung."); } catch { notify("Chưa ẩn được. Thử lại.", "err"); } });
     qa("[data-restore]").forEach(button => button.onclick = async () => { try { await save(button.dataset.restore, { an: false }); notify("Đã hiện lại nội dung."); } catch { notify("Chưa hiện lại được. Thử lại.", "err"); } });
     const beginCourse = existing => {
@@ -384,19 +389,48 @@ export function createResourceWorkspace(root, { phan, seeds = [], ebook = false,
     }
     const editor = q("[data-resource-form]");
     if (editor) {
-      q("[data-cancel]").onclick = () => { editing = null; render(); };
+      const imageInput = q("[data-lesson-image]"), imageLink = editor.elements.anh, imagePreview = q("[data-lesson-preview]");
+      const updateImagePreview = () => {
+        const image = courseCoverImage(lessonImage), preview = imagePreview.querySelector("img");
+        imagePreview.hidden = !image;
+        if (image) preview.src = image; else preview.removeAttribute("src");
+      };
+      imageInput.onchange = async event => {
+        const file = event.target.files?.[0], status = q("[data-status]");
+        if (!file || !state.canManage) return;
+        if (!/^image\/(jpeg|png|webp)$/.test(file.type) || file.size > 10 * 1024 * 1024) { status.textContent = "Chọn ảnh JPG, PNG hoặc WebP dưới 10 MB."; return; }
+        if (!prepareImage) { status.textContent = "Chưa tải được phần xử lý ảnh. Dùng link ảnh hoặc tải lại trang."; return; }
+        const ticket = ++lessonImageTicket;
+        lessonImageBusy = true; editor.querySelector('[type="submit"]').disabled = true; status.textContent = "Đang chuẩn bị ảnh…";
+        try {
+          const image = await prepareImage(file);
+          if (ticket !== lessonImageTicket || !editor.isConnected || !state.canManage) return;
+          if (!courseCoverImage(image)) throw new Error("Ảnh chưa hợp lệ hoặc quá lớn. Chọn ảnh khác.");
+          lessonImage = image; imageLink.value = ""; updateImagePreview(); status.textContent = "Ảnh đã sẵn sàng.";
+        } catch (error) {
+          if (ticket !== lessonImageTicket || !editor.isConnected) return;
+          status.textContent = error.message || "Không mở được ảnh.";
+        } finally {
+          if (ticket === lessonImageTicket && editor.isConnected) { lessonImageBusy = false; editor.querySelector('[type="submit"]').disabled = false; }
+        }
+      };
+      imageLink.oninput = () => { if (imageLink.value.trim()) { lessonImageTicket++; lessonImage = ""; lessonImageBusy = false; updateImagePreview(); editor.querySelector('[type="submit"]').disabled = false; } };
+      q("[data-lesson-remove]").onclick = () => { lessonImageTicket++; lessonImage = ""; lessonImageBusy = false; imageInput.value = ""; imageLink.value = ""; updateImagePreview(); q("[data-status]").textContent = ""; editor.querySelector('[type="submit"]').disabled = false; };
+      q("[data-cancel]").onclick = () => { lessonImageTicket++; lessonImage = ""; lessonImageBusy = false; editing = null; render(); };
       editor.onsubmit = async event => {
         event.preventDefault();
-        if (!state.canManage) return;
+        if (!state.canManage || lessonImageBusy) return;
         const data = Object.fromEntries(new FormData(editor));
+        delete data[""];
+        data.anh = lessonImage || data.anh;
         data.khoa = data.khoa.trim(); data.ten = data.ten.trim();
         for (const key of ["moTa", "noidung", "link", "anh", "ghichu"]) data[key] = data[key].trim();
         const status = q("[data-status]");
         if (!data.khoa || !data.ten || !data.noidung && !data.link) { status.textContent = "Điền tên và ít nhất một nội dung hoặc link."; return; }
-        if ((data.link && !safeResourceLink(data.link)) || (data.anh && !safeResourceLink(data.anh))) { status.textContent = "Link phải bắt đầu bằng https:// và không chứa thông tin đăng nhập."; return; }
+        if ((data.link && !safeResourceLink(data.link)) || (data.anh && !courseCoverImage(data.anh))) { status.textContent = "Link phải bắt đầu bằng https:// và không chứa thông tin đăng nhập."; return; }
         data.thutu = Number(data.thutu); data.phan = phan; data.an = false;
         const submit = editor.querySelector('[type="submit"]'); submit.disabled = true; status.textContent = "Đang lưu…";
-        try { await save(editing || null, data); editing = null; opened = ""; notify("Đã lưu nội dung."); }
+        try { await save(editing || null, data); lessonImageTicket++; lessonImage = ""; editing = null; opened = ""; notify("Đã lưu nội dung."); }
         catch { submit.disabled = false; status.textContent = "Chưa lưu được. Kiểm tra mạng rồi thử lại."; }
       };
     }

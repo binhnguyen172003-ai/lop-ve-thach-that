@@ -29,13 +29,29 @@ const chonCa = (id, cur) => chon(id, CA_HOC.map(c => [c.ma, `Ca ${c.ten.toLowerC
 const val = id => ($("#" + id)?.value || "").trim();
 
 /* ================= Khởi động ================= */
-let ganMoTab = false;
+let ganMoTab = false, cacheTimer = 0;
 export function batDau(ctx) {
   if (!ganMoTab) { ganMoTab = true; document.addEventListener("click", e => { const a = e.target.closest?.("[data-vh-mo]"); if (a) { tabVH = a.dataset.vhMo; try { sessionStorage.removeItem("vh-mo"); } catch (er) {} ve(); } }); }
   try { const m = sessionStorage.getItem("vh-mo"); if (m) { tabVH = m; sessionStorage.removeItem("vh-mo"); } } catch (er) {}
   dung(); C = ctx;
+  const cacheRole = C.isAdmin ? "admin" : C.isTeacher ? "teacher" : "student";
+  const cached = C.fastData?.read(C.mail, cacheRole, "operations");
+  if (cached) Object.assign(D, cached, { loi: "" });
   const { db, fs: { collection, query, orderBy, where, limit, onSnapshot } } = C;
-  const nghe = (q, fn) => { const u = onSnapshot(q, s => { fn(s.docs.filter(d => d.id[0] !== "_").map(d => ({ id: d.id, ...d.data() }))); D.loi = ""; ve(); }, e => { D.loi = (e && e.code) || "loi"; ve(); }); huy.push(u); C.themHuy(u); };
+  const nghe = (q, fn) => {
+    let received = false;
+    const u = onSnapshot(q, { includeMetadataChanges: true }, s => {
+      if (C !== ctx || (s.metadata?.fromCache && !s.docs.length)) return;
+      if (received && s.docChanges({ includeMetadataChanges: false }).length === 0) return;
+      received = true;
+      fn(s.docs.filter(d => d.id[0] !== "_").map(d => ({ id: d.id, ...d.data() })));
+      D.loi = "";
+      clearTimeout(cacheTimer);
+      cacheTimer = setTimeout(() => { if (C === ctx) C.fastData?.write(C.mail, cacheRole, "operations", D); }, 150);
+      ve();
+    }, e => { if (C !== ctx) return; D.loi = (e && e.code) || "loi"; ve(); });
+    huy.push(u); C.themHuy(u);
+  };
   nghe(query(collection(db, "thithu"), orderBy("tao", "desc")), r => D.thi = r);
   nghe(C.isTeacher ? collection(db, "thithubai") : query(collection(db, "thithubai"), where("mail", "==", C.mail)), r => D.bai = r);
   nghe(collection(db, "trucnhat"), r => { D.truc = {}; r.forEach(x => D.truc[x.id] = x); });
@@ -58,6 +74,7 @@ export function batDau(ctx) {
   ve();
 }
 export function dung() {
+  clearTimeout(cacheTimer); cancelAnimationFrame(veHen);
   huy.forEach(u => { try { u(); } catch (e) {} }); huy = []; C = null; clearInterval(dongHo); anhThi = [];
   Object.assign(D, { thi: [], bai: [], ca: [], doica: [], bg: [], suco: [], truc: {}, kt: [], nk: [], bl: [], dc: [], sua: [], loi: "" });
   ["#tt-body", "#vh-body"].forEach(s => { if ($(s)) $(s).innerHTML = ""; });
@@ -559,7 +576,7 @@ function gvTrongThang(thang) {
 }
 const bangThang = thang => gvTrongThang(thang).map(gv => tinhLuong(gv, thang)).sort((a, b) => String(a.ten).localeCompare(String(b.ten), "vi"));
 function paneCC() {
-  return `<p class="muted">${C.isAdmin ? "Giáo viên tự <b>Vô ca</b> / <b>Kết ca</b>. Ca tối vào sau <b>19:00</b> là muộn, ra trước <b>21:00</b> là về sớm — web chỉ ghi nhận, không tự trừ lương. Lương = ca hợp lệ + trợ cấp + thưởng − khấu trừ." : "Đến lớp bấm <b>Vô ca</b> (ca tối trước 19:00), về bấm <b>Kết ca</b> (từ 21:00). Giờ đã ghi không tự sửa được — sai thì bấm <b>Báo sai giờ</b> để quản lý duyệt."}</p>`;
+  return `<p class="muted cc-intro">${C.isAdmin ? "Giáo viên tự <b>Vô ca</b> / <b>Kết ca</b>. Ca tối vào sau <b>19:00</b> là muộn, ra trước <b>21:00</b> là về sớm — web chỉ ghi nhận, không tự trừ lương. Lương = ca hợp lệ + trợ cấp + thưởng − khấu trừ." : "<span>Đến lớp bấm <b>Vô ca</b> (ca tối trước 19:00), về bấm <b>Kết ca</b> (từ 21:00).</span><span>Giờ đã ghi không tự sửa được — sai thì bấm <b>Báo sai giờ</b> để quản lý duyệt.</span>"}</p>`;
 }
 function dsCC() {
   const views = C.isAdmin ? [["hom", "Hôm nay"], ["thang", "Chấm công tháng"], ["luong", "Bảng lương"]] : [["hom", "Ca hôm nay"], ["thang", "Công & KPI"], ["luong", "Phiếu lương"]];
@@ -593,8 +610,8 @@ const ddChip = c => { const n = C.ddCa ? C.ddCa(c.ngay, c.ca, c.coSo).da : 0;
 function theoDoiHomNay() {
   const ds = D.ca.filter(c => c.ngay === C.homNay()).sort((a, b) => gioBatDau(a) - gioBatDau(b) || String(a.coSo).localeCompare(String(b.coSo), "vi"));
   const tt = ds.map(trangThaiCa), dem = { day: ds.filter(c => c.vao && !c.ra).length, xong: ds.filter(c => c.ra).length, bad: tt.filter(x => x[0] === "bad").length, warn: tt.filter(x => x[0] === "warn").length };
-  return `<section class="card cc-hom" aria-label="Theo dõi giáo viên đi dạy hôm nay"><h3>Giáo viên hôm nay · ${ds.length} ca <small class="muted">${dem.day} đang dạy · ${dem.xong} xong ca${dem.warn ? ` · ${dem.warn} muộn/về sớm` : ""}${dem.bad ? ` · <b class="cc-do">${dem.bad} chưa / thiếu chấm công</b>` : ""}</small></h3>
-    ${ds.length ? ds.map((c, i) => { const [k, chu] = tt[i]; return `<div class="cc-hom-ca"><div><b>${esc(c.gvTen || c.gv)}</b> · ca ${esc(tenCa(c.ca).toLowerCase())} · ${esc(c.coSo)}
+  return `<section class="card cc-hom cc-hom-team" aria-label="Theo dõi giáo viên đi dạy hôm nay"><h3>Giáo viên hôm nay · ${ds.length} ca <small class="muted">${dem.day} đang dạy · ${dem.xong} xong ca${dem.warn ? ` · ${dem.warn} muộn/về sớm` : ""}${dem.bad ? ` · <b class="cc-do">${dem.bad} chưa / thiếu chấm công</b>` : ""}</small></h3>
+    ${ds.length ? ds.map((c, i) => { const [k, chu] = tt[i]; return `<div class="cc-hom-ca"><div class="cc-hom-info"><b class="cc-hom-name">${esc(c.gvTen || c.gv)}</b><span class="cc-hom-location">Ca ${esc(tenCa(c.ca).toLowerCase())} · ${esc(c.coSo)}</span>
       <small>${c.vao ? `Vào <b class="num">${gioPhut(c.vao)}</b>` : "Chưa vô ca"}${c.ra ? ` · Ra <b class="num">${gioPhut(c.ra)}</b>` : ""}</small></div>
       <div class="cc-hom-nut"><span class="chip ${k}">${chu}</span>${ddChip(c)}${c.gv === C.mail && !c.ra ? `<button type="button" class="btn ${c.vao ? "" : "primary"}" data-x="${c.vao ? "cc-ra" : "cc-vao"}" data-id="${esc(c.id)}">${c.vao ? "Kết ca" : "Vô ca"}</button>` : ""}<button type="button" class="linkish" data-x="cc-cham" data-id="${esc(c.id)}">Sửa</button></div></div>`; }).join("")
       : '<p class="muted">Hôm nay chưa xếp ca nào.</p>'}</section>`;
@@ -619,9 +636,11 @@ function chiPhiNhanSu() {
 function caHomNay() {
   const ds = D.ca.filter(c => c.ngay === C.homNay() && c.gv === C.mail).sort((a, b) => gioBatDau(a) - gioBatDau(b));
   if (!ds.length) return `<section class="card cc-hom"><h3>Ca hôm nay</h3><p class="muted">Hôm nay anh/chị không có ca dạy.</p></section>`;
-  return `<section class="card cc-hom" aria-label="Vô ca, kết ca hôm nay"><h3>Ca hôm nay</h3>${ds.map(c => { const [k, chu] = trangThaiCa(c), [v, r] = mocCa(c); return `<div class="cc-hom-ca">
-    <div><b>Ca ${esc(tenCa(c.ca).toLowerCase())}</b> · ${esc(c.coSo)} <small>Vào trước <b class="num">${gioPhut(v)}</b> · ra từ <b class="num">${gioPhut(r)}</b></small>
-      <small>${c.vao ? `Vào <b class="num">${gioPhut(c.vao)}</b>` : "Chưa vô ca"}${c.ra ? ` · Ra <b class="num">${gioPhut(c.ra)}</b>` : ""} <span class="chip ${k}">${chu}</span> ${ddChip(c)}</small></div>
+  return `<section class="card cc-hom cc-hom-self" aria-label="Vô ca, kết ca hôm nay"><h3>Ca hôm nay</h3>${ds.map(c => { const [k, chu] = trangThaiCa(c), [v, r] = mocCa(c); return `<div class="cc-hom-ca">
+    <div class="cc-hom-info"><p class="cc-hom-title"><b>Ca ${esc(tenCa(c.ca).toLowerCase())}</b> · ${esc(c.coSo)}</p>
+      <small class="cc-hom-hours"><span>Vào trước <b class="num">${gioPhut(v)}</b></span><span>Ra từ <b class="num">${gioPhut(r)}</b></span></small>
+      <small class="cc-hom-time">${c.vao ? `Vào <b class="num">${gioPhut(c.vao)}</b>` : "Chưa vô ca"}${c.ra ? ` · Ra <b class="num">${gioPhut(c.ra)}</b>` : ""}</small>
+      <div class="cc-hom-status"><span class="chip ${k}">${chu}</span>${ddChip(c)}</div></div>
     <div class="cc-hom-nut">${!c.vao ? `<button type="button" class="btn primary" data-x="cc-vao" data-id="${esc(c.id)}">Vô ca</button>`
       : `<a class="btn${c.ra ? "" : " primary"}" href="#diem-danh" data-dd-mo="${esc(c.ngay + "|" + c.ca + "|" + c.coSo)}">Điểm danh lớp</a>${c.ra ? '<span class="chip ok">Xong ca ✓</span>' : `<button type="button" class="btn" data-x="cc-ra" data-id="${esc(c.id)}">Kết ca</button>`}`}
       ${c.vao ? `<button type="button" class="linkish" data-x="cc-sua" data-id="${esc(c.id)}">Báo sai giờ</button>` : ""}</div></div>`; }).join("")}</section>`;
@@ -1008,3 +1027,4 @@ async function khoiPhuc(n) {
   const va = {}; khoa.forEach(k => { va[k] = k in truoc ? truoc[k] : deleteField(); });
   return ghi(setDoc(ref, va, { merge: true }), "Đã khôi phục bản trước ✓");
 }
+

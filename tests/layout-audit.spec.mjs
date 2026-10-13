@@ -1,5 +1,5 @@
 import { test, expect } from 'playwright/test';
-const routes = ['tong-quan','khoa-hoc','ebook','giao-trinh','bai-tap','tai-khoan','duyet','diem-danh','lam-viec','thi-thu','van-hanh'];
+const routes = ['goc-nghe-thuat','tong-quan','khoa-hoc','ebook','giao-trinh','bai-tap','tai-khoan','duyet','diem-danh','lam-viec','thi-thu','van-hanh'];
 for (const width of [320,375,430,768,1366]) for (const theme of ['light','dark']) {
   test(`bố cục và chuyển trang ${width}px ${theme}`, async ({page}) => {
     await page.setViewportSize({width,height:800});
