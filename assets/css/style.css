@@ -1246,7 +1246,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
 .hw-search-row{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(130px,1fr);gap:12px}.hw-search-row label{font-size:.78rem}.hw-search-row input,.hw-search-row select{font-size:.87rem}
 #hw-results{font-size:.76rem;margin-top:10px}
 .hw-list{gap:16px}.hw{padding:24px;gap:12px 16px;border-radius:18px;grid-template-columns:minmax(0,1fr);box-shadow:0 7px 22px #00000007}
-.hw .eyebrow{font-size:.67rem;letter-spacing:.09em}.hw h3{margin-top:8px;font-size:1.28rem;line-height:1.3;overflow-wrap:anywhere}
+.hw .eyebrow{font-size:.67rem;letter-spacing:.04em;line-height:1.5;overflow-wrap:break-word}.hw h3{margin-top:6px;font-size:1.12rem;line-height:1.5;text-wrap:wrap;overflow-wrap:break-word}
 .hw .due{text-align:left;justify-self:start;padding:4px 9px;border-radius:6px;background:var(--paper);font-size:.74rem}
 .hw .due.late{background:color-mix(in srgb,var(--warn) 12%,var(--sheet))}.hw p.desc{line-height:1.75;font-size:.87rem;overflow-wrap:anywhere}
 .hw .acts{padding-top:16px;margin-top:4px;border-top:1px solid var(--rule);align-items:center}.hw .acts .btn.small{min-height:40px}.hw .acts [data-del]{margin-left:auto;color:var(--graphite)}
@@ -4288,3 +4288,55 @@ body:has(#toast:not([hidden])) .tl-bong,body:has(#server-issue:not([hidden])) .t
 }
 
 
+
+/* Bài tập: thống kê và nút thao tác có hàng riêng, chữ dài không ép cột. */
+.hw-stats{display:flex;flex-wrap:wrap;gap:8px;min-width:0}
+.hw .hw-staff-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.hw-staff-actions .hw-stats,.hw .hw-staff-actions [data-grade]{grid-column:1/-1}
+.hw .hw-staff-actions .btn{width:100%;min-width:0;min-height:44px;padding:9px 8px;line-height:1.4;white-space:normal;text-align:center;justify-content:center;margin:0;border-radius:12px}
+.hw .hw-staff-actions [data-del]{margin-left:0}
+.hw-compose .file-drop{min-height:128px;gap:8px;padding:18px 12px;line-height:1.5}
+.hw-compose .file-drop strong{font-size:.85rem;overflow-wrap:break-word}
+.hw-compose .file-drop>span{font-size:.73rem;line-height:1.6;overflow-wrap:break-word}
+.hw-compose .compose-submit,.hw-compose .compose-cancel{min-height:44px;padding:10px 12px;font-size:.86rem;line-height:1.5;white-space:normal;text-align:center;justify-content:center;gap:10px;border-radius:12px}
+.hw-compose .compose-submit span{flex:none;font-size:1.1rem}
+.hw-compose .file-help{margin:0;font-size:.73rem;line-height:1.65}
+.hw-toolbar .tabs{width:100%;flex-wrap:nowrap;overflow-x:auto;max-width:100%}
+.hw-toolbar .tab{flex:1 0 auto;padding:9px 10px;font-size:.8rem;line-height:1.4;white-space:nowrap}
+.hw-search-row label{display:grid;gap:6px;line-height:1.5;min-width:0}
+.hw-search-row input,.hw-search-row select{margin:0;min-width:0;width:100%}
+/* Theo dõi cả đội giáo viên: tên và ca dạy luôn có đủ chiều ngang. */
+.cc-hom-team h3{line-height:1.5}
+.cc-hom-team h3 small{display:block;margin:6px 0 0;font-size:.8rem;line-height:1.6}
+.cc-hom-team .cc-hom-ca{display:grid;grid-template-columns:minmax(0,1fr) minmax(180px,auto);align-items:start;gap:12px;padding:16px 0}
+.cc-hom-name{display:block;font-size:.98rem;line-height:1.5;overflow-wrap:break-word}
+.cc-hom-location{display:block;margin-top:3px;font-size:.87rem;line-height:1.5;overflow-wrap:break-word}
+.cc-hom-team .cc-hom-info small{font-size:.8rem;line-height:1.5;margin-top:6px}
+.cc-hom-team .cc-hom-nut{gap:8px;max-width:340px;align-items:center}
+.cc-hom-team .cc-hom-nut .chip{margin:0;max-width:100%;font-size:.75rem;line-height:1.5;white-space:normal;letter-spacing:0}
+.cc-hom-team .cc-hom-nut .linkish{min-height:44px;padding:8px 12px;line-height:1.4}
+.bt-tong td:first-child{min-width:220px;max-width:380px;overflow-wrap:break-word}
+@media(max-width:760px){
+  .cc-hom-team .cc-hom-ca{grid-template-columns:minmax(0,1fr);gap:10px}
+  .cc-hom-team .cc-hom-nut{justify-content:flex-start;max-width:none}
+  .cc-hom-team .cc-hom-nut .linkish{margin-left:auto}
+  .bt-tong{padding:16px}
+  .bt-tong-bang{overflow:visible}
+  .bt-tong table,.bt-tong tbody{display:block;min-width:0;width:100%}
+  .bt-tong thead{display:none}
+  .bt-tong tbody tr{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px 8px;padding:14px 0;border-top:1px solid var(--rule)}
+  .bt-tong tbody tr:first-child{border-top:0}
+  .bt-tong tbody td{display:block;padding:0;border:0;min-width:0;max-width:none;line-height:1.5}
+  .bt-tong tbody td:first-child{grid-column:1/-1;min-width:0;font-size:.94rem;line-height:1.55}
+  .bt-tong tbody td:first-child small{margin-top:5px}
+  .bt-tong tbody td.num{text-align:left;font-size:.98rem;font-weight:600;white-space:normal}
+  .bt-tong td[data-label]::before{content:attr(data-label);display:block;color:var(--graphite);font-size:.68rem;font-weight:500;line-height:1.5;margin-bottom:3px}
+}
+@media(max-width:600px){
+  .hw{padding:16px;gap:12px}
+  .hw h3{font-size:1.04rem}
+  .hw ul.desc,.hw p.desc{font-size:.85rem;line-height:1.65}
+  .hw .hw-stats .chip{font-size:.73rem}
+  .hw-toolbar .tab{padding:9px 7px;font-size:.76rem}
+  .hw-toolbar .tab span{margin-left:4px}
+}

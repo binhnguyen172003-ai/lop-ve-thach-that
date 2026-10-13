@@ -87,7 +87,7 @@ const troLyPromise = import("./tro-ly.js?v=20261013teacherNotice").catch(e => co
 let vanHanhP = null, vanHanhM = null;
 let tacVuP = null, tacVuM = null;
 const taiTacVu = () => tacVuP ||= import("./tac-vu.js?v=20261010bv").then(m => tacVuM = m).catch(e => { tacVuP = null; console.warn("Chưa tải được phần tác vụ", e); });
-const taiVanHanh = () => vanHanhP ||= import("./van-hanh.js?v=20261013shiftLayout").then(m => vanHanhM = m).catch(e => { vanHanhP = null; console.warn("Chưa tải được phần vận hành", e); });
+const taiVanHanh = () => vanHanhP ||= import("./van-hanh.js?v=20261013layoutFresh").then(m => vanHanhM = m).catch(e => { vanHanhP = null; console.warn("Chưa tải được phần vận hành", e); });
 window.__appOk = true;
 document.querySelectorAll(".slow-bar").forEach(el => el.remove());
 
@@ -145,6 +145,9 @@ if ("serviceWorker" in navigator && (location.protocol === "https:" || ["localho
   };
   navigator.serviceWorker.addEventListener("controllerchange", () => {
     if (!hadController || reloading) return;
+    const controllerVersion = new URL(navigator.serviceWorker.controller.scriptURL).searchParams.get("v");
+    const pageVersion = new URL(import.meta.url).searchParams.get("v");
+    if (controllerVersion === pageVersion) return;
     const reload = () => { if (reloading) return; reloading = true; location.reload(); };
     if (canReload()) { reload(); return; }
     let banner = document.getElementById("app-update");
@@ -155,9 +158,9 @@ if ("serviceWorker" in navigator && (location.protocol === "https:" || ["localho
       banner.append(message, button); document.body.prepend(banner);
     }
   });
-  const register = () => navigator.serviceWorker.register("sw.js?v=20261013sync", { updateViaCache: "none" })
+  const register = () => navigator.serviceWorker.register("sw.js?v=20261013layoutFresh", { updateViaCache: "none" })
     .then(reg => { swRegistration = reg; checkUpdate(); }).catch(() => {});
-  if (document.readyState === "complete") register(); else addEventListener("load", register, { once: true });
+  register(); // Không chờ ảnh/video tải xong mới kiểm tra bản mới.
   addEventListener("online", checkUpdate);
   addEventListener("pageshow", checkUpdate);
   document.addEventListener("visibilitychange", checkUpdate);
@@ -2528,7 +2531,7 @@ function renderHomework() {
     const submitted = roster.filter(r => (progressAll[r.id] || {}).baitap && progressAll[r.id].baitap[h.id]).length;
     const graded = roster.filter(r => (feedbackAll[r.id] || {})[h.id]).length;
     const fb = myFeedback[h.id];
-    const staffBar = `<span class="chip ok">${submitted}/${students} đã nộp</span><span class="chip">${graded} đã chấm</span>
+    const staffBar = `<div class="hw-stats"><span class="chip ok">${submitted}/${students} đã nộp</span><span class="chip">${graded} đã chấm</span></div>
         <button class="btn small primary" data-grade="${esc(h.id)}">${gradeOpen.has(h.id) ? "Đóng chấm bài" : "Chấm bài"}</button>
         <button class="btn small" data-sua="${esc(h.id)}">Sửa</button>
         <button class="btn small" data-nhan-ban="${esc(h.id)}">Nhân bản</button>
@@ -2545,7 +2548,7 @@ function renderHomework() {
       ${!isTeacher && canLamLai(fb, myProgress.baitap[h.id]) ? `<div class="lamlai-box"><b>⚠ Bài này cần làm lại</b><span>Chưa đạt: ${esc(chuaDat(fb).join(", ") || "theo nhận xét của anh chị")}.${fb.hanLamLai ? ` Hạn nộp lại: <b>${ngayVN(fb.hanLamLai)}</b>` : ""} Làm lại sớm để không bị chậm tiến độ cả lớp nhé.</span><button class="btn small primary" data-nl="${esc(h.id)}">Em đã làm lại · Nộp lại</button></div>` : ""}
       ${!isTeacher && daNopLai(fb, myProgress.baitap[h.id]) ? `<p class="nl-cho">✓ Đã nộp lại, chờ anh chị chấm lại.</p>` : ""}
       ${isTeacher ? "" : anhHocVien(h)}
-      <div class="acts">${isTeacher ? staffBar : studentBar}</div>
+      <div class="acts${isTeacher ? " hw-staff-actions" : ""}">${isTeacher ? staffBar : studentBar}</div>
       ${isTeacher && gradeOpen.has(h.id) ? gradeTable(h) : ""}</div>`;
   }).join("");
   // Nộp: bấm 1 lần. Huỷ nộp: phải bấm 2 lần, và bỏ qua cú chạm trong 0,9 giây đầu (chạm đúp không vô tình huỷ)
@@ -2642,7 +2645,7 @@ function tongHopBaiTap() {
     const dat = fbs.filter(f => f.trangThai === "dat").length, lamLai = fbs.filter(f => f.trangThai === "lamlai").length;
     const anh = ds.filter(r => ((anhBaiTapAll[r.id] || {})[h.id] || []).length).length;
     const tb = diems.length ? (diems.reduce((a, b) => a + b, 0) / diems.length).toFixed(1).replace(".", ",") : "–";
-    return `<tr><td><b>${esc(h.ten)}</b><small>${esc(h.khoa || "")}</small></td><td class="num">${nop}/${ds.length}</td><td class="num">${fbs.length}</td><td class="num">${anh}</td><td class="num">${tb}</td><td class="num">${fbs.length ? Math.round(dat / fbs.length * 100) + "%" : "–"}</td><td class="num">${lamLai}</td></tr>`;
+    return `<tr><td><b>${esc(h.ten)}</b><small>${esc(h.khoa || "")}</small></td><td class="num" data-label="Đã nộp">${nop}/${ds.length}</td><td class="num" data-label="Đã chấm">${fbs.length}</td><td class="num" data-label="Có ảnh">${anh}</td><td class="num" data-label="Điểm TB">${tb}</td><td class="num" data-label="Đạt 3 tiêu chí">${fbs.length ? Math.round(dat / fbs.length * 100) + "%" : "–"}</td><td class="num" data-label="Làm lại">${lamLai}</td></tr>`;
   }).join("");
   box.innerHTML = `<section class="bt-tong"><p class="eyebrow">Đánh giá bài tập</p><div class="bt-tong-bang"><table><thead><tr><th>Bài</th><th>Đã nộp</th><th>Đã chấm</th><th>Có ảnh</th><th>Điểm TB</th><th>Đạt 3 tiêu chí</th><th>Làm lại</th></tr></thead><tbody>${dong}</tbody></table></div></section>`;
   hienAnhTuKho();
