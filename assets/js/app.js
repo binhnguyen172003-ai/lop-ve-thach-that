@@ -131,8 +131,36 @@ addEventListener("error", e => {
   $("#toast").onclick = () => location.reload();
 });
 /* ---------- Mở tức thì ở lần sau + dùng được khi mạng yếu ---------- */
-if ("serviceWorker" in navigator && (location.protocol === "https:" || ["localhost", "127.0.0.1"].includes(location.hostname)) && !/[?&]khongcache/.test(location.search))
-  addEventListener("load", () => navigator.serviceWorker.register("sw.js?v=20261012vitals").catch(() => {}));
+if ("serviceWorker" in navigator && (location.protocol === "https:" || ["localhost", "127.0.0.1"].includes(location.hostname)) && !/[?&]khongcache/.test(location.search)) {
+  let swRegistration = null, lastUpdateCheck = 0, editedForm = false, reloading = false;
+  const hadController = !!navigator.serviceWorker.controller;
+  document.addEventListener("input", e => { if (e.target.closest?.("form")) editedForm = true; }, { passive: true });
+  const canReload = () => !editedForm && !document.activeElement?.matches("input,textarea,select,[contenteditable=true]")
+    && !document.querySelector('form button[type="submit"]:disabled, form button:not([type]):disabled');
+  const checkUpdate = () => {
+    if (!swRegistration || !navigator.onLine || document.hidden || Date.now() - lastUpdateCheck < 60000) return;
+    lastUpdateCheck = Date.now();
+    swRegistration.update().catch(() => {});
+  };
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    if (!hadController || reloading) return;
+    const reload = () => { if (reloading) return; reloading = true; location.reload(); };
+    if (canReload()) { reload(); return; }
+    let banner = document.getElementById("app-update");
+    if (!banner) {
+      banner = document.createElement("div"); banner.id = "app-update"; banner.className = "slow-bar"; banner.setAttribute("role", "status");
+      const message = document.createElement("span"); message.textContent = "Có bản mới. Lưu nội dung đang sửa rồi tải lại. ";
+      const button = document.createElement("button"); button.type = "button"; button.className = "btn small"; button.textContent = "Tải bản mới"; button.onclick = reload;
+      banner.append(message, button); document.body.prepend(banner);
+    }
+  });
+  const register = () => navigator.serviceWorker.register("sw.js?v=20261013sync", { updateViaCache: "none" })
+    .then(reg => { swRegistration = reg; checkUpdate(); }).catch(() => {});
+  if (document.readyState === "complete") register(); else addEventListener("load", register, { once: true });
+  addEventListener("online", checkUpdate);
+  addEventListener("pageshow", checkUpdate);
+  document.addEventListener("visibilitychange", checkUpdate);
+}
 
 /* ---------- Đo tốc độ: mở web kèm ?chandoan=1 để xem từng bước mất bao lâu ---------- */
 const DIAG = /[?&]chandoan/.test(location.search);
