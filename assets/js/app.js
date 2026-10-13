@@ -1957,7 +1957,22 @@ function setStep(n) {
     li.className = k < n ? "done" : k === n ? "now" : "";
   });
 }
+let accountShownMail = "";
+function accountTop() {
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    if (location.hash !== "#tai-khoan") return;
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+  }));
+}
+document.addEventListener("click", e => {
+  if (location.hash === "#tai-khoan" && e.target.closest?.('a[href="#tai-khoan"]')) accountTop();
+});
 function renderAccount(pending) {
+  const justSignedIn = !!user && accountShownMail !== mail;
+  accountShownMail = user ? mail : "";
+  // Đóng bàn phím trước khi ẩn form, tránh giữ vị trí ở cuối ô mật khẩu.
+  if (justSignedIn && $("#pw-box")?.contains(document.activeElement)) document.activeElement.blur();
+  if (justSignedIn && location.hash === "#tai-khoan") accountTop();
   const trialButton = $("#menu-ov .menu-cta");
   if (trialButton) trialButton.hidden = !!user;
   if (typeof pending === "object") pendingReq = pending; else if (pending === false) pendingReq = null;
