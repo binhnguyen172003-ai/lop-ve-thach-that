@@ -1,5 +1,5 @@
-// Dữ liệu đã xem chỉ dùng trong đúng tab, tài khoản và vai trò; máy chủ vẫn quyết định quyền.
-export function createSessionData({ storage = (() => { try { return globalThis.sessionStorage; } catch { return null; } })(), now = () => Date.now(), maxAge = 86400000 } = {}) {
+// Dữ liệu đã xem dùng cho đúng tài khoản/vai trò, kể cả mở tab mới; máy chủ vẫn quyết định quyền.
+export function createSessionData({ storage = (() => { try { return globalThis.localStorage; } catch { return null; } })(), now = () => Date.now(), maxAge = 86400000 } = {}) {
   const prefix = 'lvkv-fast:';
   const key = (account, role, section) => prefix + JSON.stringify([account, role, section]);
   return {

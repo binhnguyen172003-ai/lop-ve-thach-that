@@ -29,7 +29,7 @@ const chonCa = (id, cur) => chon(id, CA_HOC.map(c => [c.ma, `Ca ${c.ten.toLowerC
 const val = id => ($("#" + id)?.value || "").trim();
 
 /* ================= Khởi động ================= */
-let ganMoTab = false;
+let ganMoTab = false, cacheTimer = 0;
 export function batDau(ctx) {
   if (!ganMoTab) { ganMoTab = true; document.addEventListener("click", e => { const a = e.target.closest?.("[data-vh-mo]"); if (a) { tabVH = a.dataset.vhMo; try { sessionStorage.removeItem("vh-mo"); } catch (er) {} ve(); } }); }
   try { const m = sessionStorage.getItem("vh-mo"); if (m) { tabVH = m; sessionStorage.removeItem("vh-mo"); } } catch (er) {}
@@ -38,7 +38,20 @@ export function batDau(ctx) {
   const cached = C.fastData?.read(C.mail, cacheRole, "operations");
   if (cached) Object.assign(D, cached, { loi: "" });
   const { db, fs: { collection, query, orderBy, where, limit, onSnapshot } } = C;
-  const nghe = (q, fn) => { const u = onSnapshot(q, { includeMetadataChanges: true }, s => { if (s.metadata?.fromCache && !s.docs.length) return; fn(s.docs.filter(d => d.id[0] !== "_").map(d => ({ id: d.id, ...d.data() }))); D.loi = ""; C.fastData?.write(C.mail, cacheRole, "operations", D); ve(); }, e => { D.loi = (e && e.code) || "loi"; ve(); }); huy.push(u); C.themHuy(u); };
+  const nghe = (q, fn) => {
+    let received = false;
+    const u = onSnapshot(q, { includeMetadataChanges: true }, s => {
+      if (C !== ctx || (s.metadata?.fromCache && !s.docs.length)) return;
+      if (received && s.docChanges({ includeMetadataChanges: false }).length === 0) return;
+      received = true;
+      fn(s.docs.filter(d => d.id[0] !== "_").map(d => ({ id: d.id, ...d.data() })));
+      D.loi = "";
+      clearTimeout(cacheTimer);
+      cacheTimer = setTimeout(() => { if (C === ctx) C.fastData?.write(C.mail, cacheRole, "operations", D); }, 150);
+      ve();
+    }, e => { if (C !== ctx) return; D.loi = (e && e.code) || "loi"; ve(); });
+    huy.push(u); C.themHuy(u);
+  };
   nghe(query(collection(db, "thithu"), orderBy("tao", "desc")), r => D.thi = r);
   nghe(C.isTeacher ? collection(db, "thithubai") : query(collection(db, "thithubai"), where("mail", "==", C.mail)), r => D.bai = r);
   nghe(collection(db, "trucnhat"), r => { D.truc = {}; r.forEach(x => D.truc[x.id] = x); });
@@ -61,6 +74,7 @@ export function batDau(ctx) {
   ve();
 }
 export function dung() {
+  clearTimeout(cacheTimer); cancelAnimationFrame(veHen);
   huy.forEach(u => { try { u(); } catch (e) {} }); huy = []; C = null; clearInterval(dongHo); anhThi = [];
   Object.assign(D, { thi: [], bai: [], ca: [], doica: [], bg: [], suco: [], truc: {}, kt: [], nk: [], bl: [], dc: [], sua: [], loi: "" });
   ["#tt-body", "#vh-body"].forEach(s => { if ($(s)) $(s).innerHTML = ""; });

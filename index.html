@@ -48,15 +48,12 @@
 <!-- Phông chữ tải sau, không bắt người xem chờ trắng màn hình -->
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Be+Vietnam+Pro:wght@400;500;600&family=Playfair+Display:ital,wght@1,500;1,600&display=swap" media="print" onload="this.media='all'">
 <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Be+Vietnam+Pro:wght@400;500;600&family=Playfair+Display:ital,wght@1,500;1,600&display=swap"></noscript>
-<link rel="stylesheet" href="assets/css/style.css?v=20261013dataSync">
+<link rel="stylesheet" href="assets/css/style.css?v=20261013sync2">
 <link rel="stylesheet" href="assets/css/art-corner.css?v=20261013artLabels">
-<link rel="modulepreload" href="assets/js/app.js?v=20261013dataSync">
-<script>
-// Người đã đăng nhập: tải thư viện dữ liệu sớm, không chờ app.js chạy xong.
-try{if(JSON.parse(localStorage.getItem("lvkv-phien")||"null")?.mail){for(const name of ["app","auth","firestore"]){const link=document.createElement("link");link.rel="modulepreload";link.href="https://www.gstatic.com/firebasejs/10.12.2/firebase-"+name+".js";document.head.append(link)}}}catch(e){}
-</script>
+<link rel="modulepreload" href="assets/js/app.js?v=20261013sync2">
+
 <link rel="modulepreload" href="config/firebase-config.js?v=20261009b">
-<link rel="modulepreload" href="data/noi-dung.js?v=20261011birthday">
+<link rel="modulepreload" href="data/noi-dung.js?v=20261011pagesplit">
 <script nomodule>document.addEventListener("DOMContentLoaded",function(){var d=document.createElement("div");d.className="slow-bar";d.innerHTML="Trình duyệt này đã quá cũ nên web chạy không đủ. Hãy cập nhật Chrome hoặc Safari rồi mở lại.";document.body.insertBefore(d,document.body.firstChild)})</script>
 <script>setTimeout(function(){if(window.__appOk)return;var d=document.createElement("div");d.className="slow-bar";d.innerHTML='Mạng đang chậm, trang chưa tải xong. <button type="button" onclick="location.reload()">Tải lại</button>';document.body.insertBefore(d,document.body.firstChild)},12000)</script>
 </head>
@@ -1028,7 +1025,7 @@ try{if(JSON.parse(localStorage.getItem("lvkv-phien")||"null")?.mail){for(const n
   }catch(e){}
 })();
 </script>
-<script type="module" src="assets/js/app.js?v=20261013dataSync"></script>
+<script type="module" src="assets/js/app.js?v=20261013sync2"></script>
 <script type="module" src="assets/js/morph-icons.js?v=20261011a"></script>
 </body>
 </html>
