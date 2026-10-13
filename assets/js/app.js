@@ -6,7 +6,7 @@ import { ngayVietNam, ngaySinhHopLe, hienNgaySinh, denSinhNhat } from "./sinh-nh
 import { firebaseConfig, ADMIN_EMAIL, EMAIL_NHAN_THONG_BAO } from "../../config/firebase-config.js?v=20261009b";
 import { FILE_LIMITS, FILE_TYPES, fileExt, fileSize, validateFiles, attachmentStorage, uploadError, validAttachmentPath } from "./attachments.js?v=20261009b";
 import { GIAO_TRINH_MAU as GT_LO_TRINH } from "../../data/giao-trinh-mau.js?v=20261010bf";
-import { createResourceWorkspace, ADVANCED_SEEDS } from "./resource-workspace.js?v=20261013catalog";
+import { createResourceWorkspace, ADVANCED_SEEDS } from "./resource-workspace.js?v=20261013unlock";
 import { createResourceCache } from "./resource-cache.js?v=20261013resourceFast";
 import { soSanhTenHocVien } from "./ten-hoc-vien.js?v=20261010bs";
 import { GO_KHOI_CA, thuocDanhSachCa } from "./danh-sach-ca.js?v=20261010bs";
@@ -1983,6 +1983,18 @@ async function updateEbookGroup(action, name, metadata = null) {
   return { id: metaRef.id, rows: resourceDocs };
 }
 const resourceOptions = (phan, ebook) => ({ phan, ebook, seeds: ebook ? [] : ADVANCED_SEEDS,
+  requestUnlock: async name => {
+    if (!user || !approved || !db || !mail || isTeacher) throw new Error("Tài khoản chưa được phép gửi yêu cầu.");
+    const meta = resourceDocs.find(row => row.phan === phan && row.loai === "khoa" && row.khoa === name && !row.an);
+    if (!meta || meta.access !== "selected" || (meta.viewers || []).includes(mail)) throw new Error("Quyền xem đã thay đổi. Tải lại nội dung rồi thử.");
+    await window.__guiTinThay(`Yêu cầu mở khóa ${ebook ? "eBook" : "khóa học"}: ${name}\nAnh chị kiểm tra và cấp quyền xem cho em nhé.`);
+  },
+  openConversation: () => {
+    if (!user || !approved || isTeacher || !mail) return;
+    setLvTab("tin");
+    location.hash = "#lam-viec";
+    if (lvOpen !== mail || !lvMsgUnsub) moKenh(mail, false);
+  },
   save: (id, data) => saveResource(id, { ...(phan === "nang-cao" ? ADVANCED_SEEDS.find(row => row.id === id) : null), phan, ...data }),
   markdown: mdHTML, notify: toast,
   prepareImage: file => nenAnh(file, 1100, 350000),

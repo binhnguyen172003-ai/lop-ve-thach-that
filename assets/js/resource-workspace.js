@@ -65,10 +65,11 @@ export function viewerSearchText(value) {
   return String(value ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/gi, "d").toLowerCase().trim().replace(/\s+/g, " ");
 }
 
-export function createResourceWorkspace(root, { phan, seeds = [], ebook = false, save, mark, markdown, notify, markSeen, prepareImage, renameCategory, removeCategory, restoreCategory }) {
+export function createResourceWorkspace(root, { phan, seeds = [], ebook = false, save, mark, markdown, notify, markSeen, prepareImage, renameCategory, removeCategory, restoreCategory, requestUnlock, openConversation }) {
   let state = { rows: [], marks: {}, canManage: false }, category = "", opened = "", editing = null, addingCourse = false, accessEditing = false, editingCourse = false, courseDraft = null, coverBusy = false, coverTicket = 0, courseSaving = false;
   let accessDraft = null, viewerQuery = "", viewerScroll = 0, accessSaving = false, accessError = "";
   let categoryChosen = false, bookBusy = false, bookError = "";
+  let unlockRequests = new Map();
   const q = selector => root.querySelector(selector);
   const qa = selector => [...root.querySelectorAll(selector)];
   const label = ebook ? "sách" : "khóa";
@@ -167,12 +168,31 @@ export function createResourceWorkspace(root, { phan, seeds = [], ebook = false,
     if (!categoryChosen && !canView(all, category)) category = groups.find(name => canView(all, name)) || category;
     if (!canView(all, category)) {
       const meta = accessRow(all, category), condition = courseIntro(meta).condition;
+      const request = unlockRequests.get(category) || {};
       paint(`<div class="gt-wrap"><aside class="gt-side">${categoryNav(all, groups)}</aside><div class="gt-main">
         <section class="lock rw-category-lock"><h3>${ebook ? "eBook" : "Khóa học"} chưa được cấp quyền</h3>
           <p class="muted">Liên hệ quản lý để được mở khóa ${esc(category)}.</p>
           ${condition ? `<dl class="rw-course-unlock"><dt>Điều kiện mở khóa</dt><dd>${esc(condition)}</dd></dl>` : ""}
+          ${requestUnlock && state.mail ? `<div class="rw-unlock-actions"><button class="btn primary" type="button" data-request-unlock${request.busy ? " disabled" : ""}>${request.busy ? "Đang gửi…" : request.sent ? "Mở tin nhắn trao đổi" : "Gửi yêu cầu mở khóa"}</button>
+            <p class="muted" role="status" aria-live="polite" data-unlock-status>${esc(request.error || (request.sent ? "Đã gửi yêu cầu. Chờ quản lý cấp quyền." : "Yêu cầu sẽ gửi vào tin nhắn trao đổi với lớp."))}</p></div>` : ""}
         </section></div></div>`);
       qa("[data-category]").forEach(button => button.onclick = () => { category = button.dataset.category; categoryChosen = true; opened = ""; editing = null; addingCourse = false; accessEditing = false; editingCourse = false; courseDraft = null; coverBusy = false; coverTicket++; bookError = ""; render(); });
+      if (q("[data-request-unlock]")) q("[data-request-unlock]").onclick = async () => {
+        const name = category, account = state.mail, previous = unlockRequests.get(name);
+        if (!account || state.staff || previous?.busy) return;
+        if (previous?.sent) { openConversation?.(); return; }
+        unlockRequests.set(name, { busy: true }); render();
+        try {
+          await requestUnlock(name);
+          if (state.mail !== account) return;
+          unlockRequests.set(name, { sent: true }); render();
+        } catch (error) {
+          if (state.mail !== account) return;
+          unlockRequests.set(name, { error: error?.code === "permission-denied" ? "Chưa gửi được yêu cầu. Liên hệ quản lý để kiểm tra quyền tin nhắn." : "Chưa gửi được yêu cầu. Kiểm tra mạng rồi thử lại." }); render(); return;
+        }
+        notify("Đã gửi yêu cầu mở khóa vào tin nhắn trao đổi.");
+        openConversation?.();
+      };
       return;
     }
     const rows = resourceLessons(all, category), hidden = all.filter(row => row.an && !row.bookDeleted && row.loai !== "khoa");
@@ -363,5 +383,5 @@ export function createResourceWorkspace(root, { phan, seeds = [], ebook = false,
       };
     }
   }
-  return { update(next) { if (state.mail !== next.mail) { category = ""; categoryChosen = false; accessEditing = false; accessDraft = null; viewerQuery = ""; accessError = ""; } state = next; if (!state.canManage) { accessEditing = false; accessDraft = null; viewerQuery = ""; coverTicket++; coverBusy = false; addingCourse = false; editingCourse = false; courseDraft = null; } render(); } };
+  return { update(next) { if (state.mail !== next.mail) { unlockRequests = new Map(); category = ""; categoryChosen = false; accessEditing = false; accessDraft = null; viewerQuery = ""; accessError = ""; } state = next; if (!state.canManage) { accessEditing = false; accessDraft = null; viewerQuery = ""; coverTicket++; coverBusy = false; addingCourse = false; editingCourse = false; courseDraft = null; } render(); } };
 }

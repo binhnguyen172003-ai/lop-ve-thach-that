@@ -4203,6 +4203,8 @@ body:has(#toast:not([hidden])) .tl-bong,body:has(#server-issue:not([hidden])) .t
 .resource-workspace .rw-category-lock{padding:20px;margin:0}
 .resource-workspace .rw-category-lock h3{font-size:1.15rem;line-height:1.4;margin:0 0 8px}
 .resource-workspace .rw-category-lock p{font-size:.9rem;line-height:1.6;margin:0;overflow-wrap:anywhere}
+.resource-workspace .rw-unlock-actions{display:grid;justify-items:start;gap:10px;margin-top:18px}
+.resource-workspace .rw-unlock-actions .btn{min-height:44px;max-width:100%;white-space:normal;text-align:center}
 .resource-workspace .rw-book-status:empty{display:none}
 .resource-workspace .rw-delete-book{color:var(--warn);border-color:var(--warn)}
 .resource-workspace .rw-deleted-books > div{display:flex;align-items:center;justify-content:space-between;gap:12px;min-width:0;padding:10px 0}
