@@ -54,8 +54,37 @@
 <link rel="modulepreload" href="data/noi-dung.js?v=20261011birthday">
 <script nomodule>document.addEventListener("DOMContentLoaded",function(){var d=document.createElement("div");d.className="slow-bar";d.innerHTML="Trình duyệt này đã quá cũ nên web chạy không đủ. Hãy cập nhật Chrome hoặc Safari rồi mở lại.";document.body.insertBefore(d,document.body.firstChild)})</script>
 <script>setTimeout(function(){if(window.__appOk)return;var d=document.createElement("div");d.className="slow-bar";d.innerHTML='Mạng đang chậm, trang chưa tải xong. <button type="button" onclick="location.reload()">Tải lại</button>';document.body.insertBefore(d,document.body.firstChild)},12000)</script>
+<style>
+#app-intro{position:fixed;inset:0;z-index:10000;display:grid;place-items:center;background:#15171b;color:#f1f2f4;pointer-events:none;animation:appIntroOut .15s ease .55s forwards}
+#app-intro .intro-brand{display:grid;justify-items:center;gap:12px;padding:24px;text-align:center;animation:appIntroIn .24s ease-out both}
+#app-intro img{width:clamp(88px,24vw,112px);height:clamp(88px,24vw,112px);border-radius:24px;object-fit:contain}
+#app-intro strong{font:600 24px/1.2 system-ui,sans-serif;letter-spacing:.06em}
+#app-intro span{font:400 14px/1.5 system-ui,sans-serif;color:#a8afb9}
+html[data-theme="light"] #app-intro{background:#f6f5f1;color:#15171b}
+html[data-theme="light"] #app-intro span{color:#626873}
+@keyframes appIntroIn{from{opacity:0;transform:translateY(6px) scale(.97)}to{opacity:1;transform:none}}
+@keyframes appIntroOut{to{opacity:0;visibility:hidden}}
+@media(prefers-reduced-motion:reduce){#app-intro{animation:appIntroOut .01s linear .12s forwards}#app-intro .intro-brand{animation:none}}
+</style>
 </head>
 <body>
+<div id="app-intro" hidden aria-hidden="true">
+  <div class="intro-brand"><img src="assets/img/icon-192.png" width="112" height="112" alt=""><strong>Dreamers</strong><span>Học Vẽ Không Vui</span></div>
+</div>
+<script>
+(() => {
+  const intro = document.getElementById("app-intro");
+  try {
+    const app = matchMedia("(display-mode: standalone)").matches || matchMedia("(display-mode: fullscreen)").matches || navigator.standalone === true;
+    const navigation = performance.getEntriesByType("navigation")[0];
+    if (!app || (navigation && navigation.type !== "navigate")) { intro.remove(); return; }
+    intro.hidden = false;
+    // Nội dung và dữ liệu lớp vẫn tải song song; không đợi đăng nhập hay mạng.
+    setTimeout(() => intro.remove(), matchMedia("(prefers-reduced-motion: reduce)").matches ? 160 : 750);
+    addEventListener("pagehide", () => intro.remove(), { once: true });
+  } catch { intro.remove(); }
+})();
+</script>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></symbol>
   <!-- Hình minh hoạ các hạng mục (nét chì + điểm xanh) -->
