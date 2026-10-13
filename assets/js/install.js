@@ -75,7 +75,7 @@
         await event.prompt();
         const result = await event.userChoice;
         status.textContent = result.outcome === "accepted"
-          ? "Đã chấp nhận cài. Chờ Chrome hoàn tất rồi mở biểu tượng Dreamers."
+          ? "Đã chấp nhận cài. Chờ Chrome hoàn tất rồi mở biểu tượng Vẽ Không Vui."
           : "Chưa cài. Em có thể tạo lối tắt qua menu Chrome.";
       } catch {
         status.textContent = "Chưa mở được cửa sổ cài đặt. Xem hướng dẫn bên dưới.";
