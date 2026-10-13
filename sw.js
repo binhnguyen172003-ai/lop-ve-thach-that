@@ -38,6 +38,9 @@ self.addEventListener("fetch", e => {
     e.respondWith((async () => {
       const matMang = async () => (await caches.match("./offline.html")) || (await caches.match("./"));
       const mang = fetch(req, { cache: "no-cache" }).then(res => { if (res.ok) { const c = res.clone(); caches.open(TRANG).then(x => x.put("./", c)); } return res; });
+      // Giữ worker sống để bản HTML mới vẫn được lưu sau khi trả cache nhanh.
+      e.waitUntil(mang.then(() => undefined, () => undefined));
+      if (url.searchParams.get("intro") === "1") return mang.catch(matMang);
       const cu = await caches.match("./");
       if (!cu) return mang.catch(matMang);
       const cho = new Promise(r => setTimeout(() => r(cu), 800));
