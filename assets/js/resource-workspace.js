@@ -67,6 +67,20 @@ export function createResourceWorkspace(root, { phan, seeds = [], ebook = false,
   const qa = selector => [...root.querySelectorAll(selector)];
   const label = ebook ? "sách" : "khóa";
   const itemLabel = ebook ? "eBook" : "khóa học";
+  let lastMarkup = "";
+  const paint = html => {
+    if (html === lastMarkup && root.firstChild) return;
+    lastMarkup = html;
+    const images = new Map(qa("img[data-resource-image]").map(img => [img.dataset.resourceImage, img]));
+    root.innerHTML = html;
+    qa("img[data-resource-image]").forEach(img => {
+      const previous = images.get(img.dataset.resourceImage);
+      if (!previous || previous.getAttribute("src") !== img.getAttribute("src")) return;
+      [...previous.attributes].filter(attr => attr.name !== "src").forEach(attr => previous.removeAttribute(attr.name));
+      [...img.attributes].filter(attr => attr.name !== "src").forEach(attr => previous.setAttribute(attr.name, attr.value));
+      img.replaceWith(previous);
+    });
+  };
   const unit = ebook ? "chương / tài liệu" : "bài học";
   const activeRows = () => resourceRows(state.rows, seeds, phan);
   const categories = rows => [...new Set(rows.filter(row => !row.an).map(row => row.khoa || (ebook ? "eBook" : "Khóa nâng cao")))];
@@ -88,7 +102,7 @@ export function createResourceWorkspace(root, { phan, seeds = [], ebook = false,
     const image = resourceImage(row), link = safeResourceLink(row.link), done = !!state.marks?.[row.id];
     return `<article class="lesson gt-bai rw-detail"><button class="gtb-ve" type="button" data-back>‹ Tất cả ${unit}</button>
       <header class="gtb-dau"><p class="eyebrow">${esc(row.khoa || label)}</p><h2>${esc(row.ten)}</h2>${!state.staff ? `<span class="gt-chip ${done ? "xong" : "chua"}">${done ? ebook ? "✓ Đã đọc" : "✓ Hoàn thành" : ebook ? "Chưa đọc" : "Chưa học"}</span>` : ""}</header>
-      ${image ? `<section class="gtb-phan"><h3>${ebook ? "Ảnh bìa" : "Hình ảnh bài học"}</h3><img class="gtb-anh" src="${esc(image)}" alt="${esc(row.ten)}" loading="lazy"></section>` : ""}
+      ${image ? `<section class="gtb-phan"><h3>${ebook ? "Ảnh bìa" : "Hình ảnh bài học"}</h3><img class="gtb-anh" data-resource-image="detail:${esc(row.id)}" src="${esc(image)}" alt="${esc(row.ten)}" loading="eager" fetchpriority="high" decoding="async"></section>` : ""}
       ${row.noidung ? `<section class="gtb-phan"><h3>${ebook ? "Nội dung sách" : "Kiến thức cần nắm"}</h3><div class="bai-md">${markdown(row.noidung)}</div></section>` : ""}
       ${link ? `<section class="gtb-phan"><h3>${ebook ? "Đọc tài liệu" : row.loai === "video" ? "Xem video" : "Tài liệu kèm theo"}</h3><a class="btn primary" href="${esc(link)}" target="_blank" rel="noopener noreferrer">${ebook ? "Mở tài liệu ↗" : row.loai === "video" ? "Xem trên YouTube ↗" : "Mở tài liệu ↗"}</a></section>` : `<p class="muted">${ebook ? "Tài liệu đang được cập nhật." : "Chưa có link tài liệu."}</p>`}
       ${row.ghichu ? `<section class="gtb-phan"><h3>Lời dặn của anh chị</h3><p>${esc(row.ghichu)}</p></section>` : ""}
@@ -112,7 +126,7 @@ export function createResourceWorkspace(root, { phan, seeds = [], ebook = false,
     if (!category) return "";
     const meta = accessRow(all, category), cover = courseCoverImage(meta?.anhBia), intro = courseIntro(meta);
     return `<section class="rw-course-summary" aria-label="Giới thiệu ${itemLabel}">
-      ${cover ? `<img class="rw-course-cover" src="${esc(cover)}" alt="Ảnh bìa ${esc(category)}" loading="lazy">` : ""}
+      ${cover ? `<img class="rw-course-cover" data-resource-image="cover:${esc(category)}" src="${esc(cover)}" alt="Ảnh bìa ${esc(category)}" loading="eager" fetchpriority="high" decoding="async">` : ""}
       <div class="rw-course-copy"><p class="eyebrow">Giới thiệu ${itemLabel}</p><h2>${esc(category)}</h2>
       <p class="rw-course-description">${esc(intro.description || `Mô tả ${itemLabel} đang được cập nhật.`)}</p>
       ${intro.condition ? `<dl class="rw-course-unlock"><dt>Điều kiện mở khóa</dt><dd>${esc(intro.condition)}</dd></dl>` : ""}</div></section>`;
@@ -133,7 +147,7 @@ export function createResourceWorkspace(root, { phan, seeds = [], ebook = false,
     const all = activeRows(), groups = categories(all);
     if (!groups.includes(category)) category = groups[0] || "";
     if (!canView(all, category)) {
-      root.innerHTML = `<div class="gt-mon">${groups.map(name => `<button class="gt-mon-nut" data-category="${esc(name)}" aria-pressed="${name === category}">${esc(name)}</button>`).join("")}</div><section class="lock"><h3>${ebook ? "eBook" : "Khóa học"} chưa được cấp quyền</h3><p>Liên hệ quản lý để được mở khóa ${esc(category)}.</p></section>`;
+      paint(`<div class="gt-mon">${groups.map(name => `<button class="gt-mon-nut" data-category="${esc(name)}" aria-pressed="${name === category}">${esc(name)}</button>`).join("")}</div><section class="lock"><h3>${ebook ? "eBook" : "Khóa học"} chưa được cấp quyền</h3><p>Liên hệ quản lý để được mở khóa ${esc(category)}.</p></section>`);
       qa("[data-category]").forEach(button => button.onclick = () => { category = button.dataset.category; opened = ""; editing = null; addingCourse = false; accessEditing = false; editingCourse = false; courseDraft = null; coverBusy = false; coverTicket++; render(); });
       return;
     }
@@ -144,12 +158,12 @@ export function createResourceWorkspace(root, { phan, seeds = [], ebook = false,
     const studying = rows.filter(row => !state.marks?.[row.id] && state.seen?.[row.id]).length;
     const nextLesson = rows.find(row => !state.marks?.[row.id]);
     const percent = rows.length ? Math.round(completed / rows.length * 100) : 0;
-    root.innerHTML = `<div class="gt-wrap ${selected ? "dang-doc" : ""}"><aside class="gt-side"><div class="gt-mon" role="navigation" aria-label="Chọn ${label}">${groups.map(name => `<button class="gt-mon-nut" type="button" data-category="${esc(name)}" aria-pressed="${name === category}">${courseCoverImage(accessRow(all, name)?.anhBia) ? `<img class="rw-category-cover" src="${esc(courseCoverImage(accessRow(all, name)?.anhBia))}" alt="" loading="lazy">` : ""}<b>${esc(name)}</b><small>${resourceLessons(all, name).length} ${unit}</small></button>`).join("")}</div>
+    paint(`<div class="gt-wrap ${selected ? "dang-doc" : ""}"><aside class="gt-side"><div class="gt-mon" role="navigation" aria-label="Chọn ${label}">${groups.map(name => `<button class="gt-mon-nut" type="button" data-category="${esc(name)}" aria-pressed="${name === category}">${courseCoverImage(accessRow(all, name)?.anhBia) ? `<img class="rw-category-cover" data-resource-image="category:${esc(name)}" src="${esc(courseCoverImage(accessRow(all, name)?.anhBia))}" alt="" loading="${name === category ? "eager" : "lazy"}" decoding="async">` : ""}<b>${esc(name)}</b><small>${resourceLessons(all, name).length} ${unit}</small></button>`).join("")}</div>
       <section class="gt-td"><p class="eyebrow">${esc(category || label)}</p><div class="gt-td-so"><b class="num">${state.staff ? rows.length : `${completed}/${rows.length}`}</b><span>${state.staff ? unit : ebook ? "mục đã đọc" : "bài đã hoàn thành"}</span></div>${state.staff ? "" : `<div class="gt-bar" role="progressbar" aria-label="Tiến độ" aria-valuenow="${percent}" aria-valuemin="0" aria-valuemax="100"><i style="width:${percent}%"></i></div><p class="num"><b>${percent}%</b></p><p class="muted">● Hoàn thành ${completed} · ● Đang học ${studying} · ○ Chưa học ${rows.length - completed - studying}</p>${nextLesson ? `<button class="btn primary" type="button" data-open="${esc(nextLesson.id)}">Bài tiếp theo · ${esc(nextLesson.ten)} →</button>` : `<p>Đã hoàn thành khóa học.</p>`}` }</section></aside>
       <div class="gt-main">${state.canManage ? `<div class="rw-actions"><button class="btn" type="button" data-access>Quyền xem ${ebook ? "eBook" : "khóa"}</button><button class="btn" type="button" data-edit-course>Sửa ${itemLabel}</button><button class="btn" type="button" data-add-course>+ Thêm ${itemLabel}</button><button class="btn primary" type="button" data-add>+ Thêm ${ebook ? "chương / tài liệu" : "bài học"}</button></div>` : ""}
       ${!selected && !accessEditing && !addingCourse && !editingCourse && editing === null ? courseSummary(all) : ""}
-      ${accessEditing && state.canManage ? accessForm(all) : (addingCourse || editingCourse) && state.canManage ? courseForm() : editing !== null && state.canManage ? form(all.find(row => row.id === editing)) : selected ? detail(selected, rows) : rows.length ? `<div class="gt-ds"><div class="gt-luoi">${rows.map((row, i) => { const image = resourceImage(row), done = !!state.marks?.[row.id]; return `<button class="gt-the tt-${state.staff ? "gv" : done ? "xong" : "chua"}" type="button" data-open="${esc(row.id)}"><span class="gt-anh">${image ? `<img src="${esc(image)}" alt="" loading="lazy">` : `<span class="gt-ph" aria-hidden="true">${ebook ? "📖" : "🖼️"}</span>`}</span><span class="gt-noi"><small class="gt-so">${ebook ? "Mục" : "Bài"} ${String(i + 1).padStart(2, "0")}</small><b class="gt-ten">${esc(row.ten)}</b><span class="gt-mota">${esc(row.moTa || String(row.noidung || "").slice(0, 160) || "Nội dung đang được cập nhật.")}</span><span class="gt-tt">${!state.staff ? `<span class="gt-chip ${done ? "xong" : "chua"}">${done ? ebook ? "✓ Đã đọc" : "✓ Hoàn thành" : ebook ? "Chưa đọc" : "Chưa học"}</span>` : ""}</span></span></button>`; }).join("")}</div></div>` : `<p class="muted gt-trong">${ebook ? "Chưa có eBook được đăng." : "Khóa này chưa có bài."}</p>`}
-      ${state.canManage && hidden.length ? `<details class="rw-hidden"><summary>Nội dung đang ẩn (${hidden.length})</summary>${hidden.map(row => `<div><span>${esc(row.khoa)} · ${esc(row.ten)}</span><button class="btn small" type="button" data-restore="${esc(row.id)}">Hiện lại</button></div>`).join("")}</details>` : ""}</div></div>`;
+      ${accessEditing && state.canManage ? accessForm(all) : (addingCourse || editingCourse) && state.canManage ? courseForm() : editing !== null && state.canManage ? form(all.find(row => row.id === editing)) : selected ? detail(selected, rows) : rows.length ? `<div class="gt-ds"><div class="gt-luoi">${rows.map((row, i) => { const image = resourceImage(row), done = !!state.marks?.[row.id]; return `<button class="gt-the tt-${state.staff ? "gv" : done ? "xong" : "chua"}" type="button" data-open="${esc(row.id)}"><span class="gt-anh">${image ? `<img data-resource-image="lesson:${esc(row.id)}" src="${esc(image)}" alt="" loading="${i < 4 ? "eager" : "lazy"}" fetchpriority="${i === 0 ? "high" : "auto"}" decoding="async">` : `<span class="gt-ph" aria-hidden="true">${ebook ? "📖" : "🖼️"}</span>`}</span><span class="gt-noi"><small class="gt-so">${ebook ? "Mục" : "Bài"} ${String(i + 1).padStart(2, "0")}</small><b class="gt-ten">${esc(row.ten)}</b><span class="gt-mota">${esc(row.moTa || String(row.noidung || "").slice(0, 160) || "Nội dung đang được cập nhật.")}</span><span class="gt-tt">${!state.staff ? `<span class="gt-chip ${done ? "xong" : "chua"}">${done ? ebook ? "✓ Đã đọc" : "✓ Hoàn thành" : ebook ? "Chưa đọc" : "Chưa học"}</span>` : ""}</span></span></button>`; }).join("")}</div></div>` : `<p class="muted gt-trong">${ebook ? "Chưa có eBook được đăng." : "Khóa này chưa có bài."}</p>`}
+      ${state.canManage && hidden.length ? `<details class="rw-hidden"><summary>Nội dung đang ẩn (${hidden.length})</summary>${hidden.map(row => `<div><span>${esc(row.khoa)} · ${esc(row.ten)}</span><button class="btn small" type="button" data-restore="${esc(row.id)}">Hiện lại</button></div>`).join("")}</details>` : ""}</div></div>`);
     qa("[data-category]").forEach(button => button.onclick = () => { category = button.dataset.category; opened = ""; editing = null; addingCourse = false; accessEditing = false; editingCourse = false; courseDraft = null; coverBusy = false; coverTicket++; render(); });
     qa("[data-open]").forEach(button => button.onclick = () => { opened = button.dataset.open; editing = null; markSeen?.(opened); render(); root.scrollIntoView({ block: "start" }); });
     if (q("[data-back]")) q("[data-back]").onclick = () => { opened = ""; render(); };
@@ -183,12 +197,12 @@ export function createResourceWorkspace(root, { phan, seeds = [], ebook = false,
     const courseEditor = q("[data-course-form]");
     if (courseEditor) {
       const draft = courseDraft;
-      courseEditor.addEventListener("input", () => {
+      courseEditor.oninput = () => {
         if (!draft || !state.canManage) return;
         draft.khoa = courseEditor.elements.khoa.value;
         draft.moTa = courseEditor.elements.moTa.value;
         draft.dieuKienMoKhoa = courseEditor.elements.dieuKienMoKhoa.value;
-      });
+      };
       courseEditor.elements.coverUrl.onchange = () => {
         draft.anhBia = courseEditor.elements.coverUrl.value.trim();
         const preview = q(".rw-cover-preview"), image = courseCoverImage(draft.anhBia), img = preview.querySelector("img");
