@@ -34,8 +34,11 @@ export function batDau(ctx) {
   if (!ganMoTab) { ganMoTab = true; document.addEventListener("click", e => { const a = e.target.closest?.("[data-vh-mo]"); if (a) { tabVH = a.dataset.vhMo; try { sessionStorage.removeItem("vh-mo"); } catch (er) {} ve(); } }); }
   try { const m = sessionStorage.getItem("vh-mo"); if (m) { tabVH = m; sessionStorage.removeItem("vh-mo"); } } catch (er) {}
   dung(); C = ctx;
+  const cacheRole = C.isAdmin ? "admin" : C.isTeacher ? "teacher" : "student";
+  const cached = C.fastData?.read(C.mail, cacheRole, "operations");
+  if (cached) Object.assign(D, cached, { loi: "" });
   const { db, fs: { collection, query, orderBy, where, limit, onSnapshot } } = C;
-  const nghe = (q, fn) => { const u = onSnapshot(q, s => { fn(s.docs.filter(d => d.id[0] !== "_").map(d => ({ id: d.id, ...d.data() }))); D.loi = ""; ve(); }, e => { D.loi = (e && e.code) || "loi"; ve(); }); huy.push(u); C.themHuy(u); };
+  const nghe = (q, fn) => { const u = onSnapshot(q, { includeMetadataChanges: true }, s => { if (s.metadata?.fromCache && !s.docs.length) return; fn(s.docs.filter(d => d.id[0] !== "_").map(d => ({ id: d.id, ...d.data() }))); D.loi = ""; C.fastData?.write(C.mail, cacheRole, "operations", D); ve(); }, e => { D.loi = (e && e.code) || "loi"; ve(); }); huy.push(u); C.themHuy(u); };
   nghe(query(collection(db, "thithu"), orderBy("tao", "desc")), r => D.thi = r);
   nghe(C.isTeacher ? collection(db, "thithubai") : query(collection(db, "thithubai"), where("mail", "==", C.mail)), r => D.bai = r);
   nghe(collection(db, "trucnhat"), r => { D.truc = {}; r.forEach(x => D.truc[x.id] = x); });

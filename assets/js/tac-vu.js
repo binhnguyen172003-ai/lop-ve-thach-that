@@ -26,10 +26,14 @@ const viet = n => String(n || "?").trim().split(/\s+/).slice(-1)[0].slice(0, 2).
 
 export function batDau(ctx) {
   dung(); C = ctx;
+  const cacheRole = C.isAdmin ? "admin" : "teacher";
+  ds = C.fastData?.read(C.mail, cacheRole, "tasks") || [];
   const { db, fs: { collection, query, where, onSnapshot } } = C;
   const q = C.isAdmin ? collection(db, "congviec") : query(collection(db, "congviec"), where("nguoi", "array-contains-any", ["tatca", C.mail]));
-  const u = onSnapshot(q, s => {
+  const u = onSnapshot(q, { includeMetadataChanges: true }, s => {
+    if (s.metadata?.fromCache && !s.docs.length) return;
     ds = s.docs.filter(d => d.id[0] !== "_").map(d => ({ id: d.id, ...d.data() }));
+    C.fastData?.write(C.mail, cacheRole, "tasks", ds);
     if (C.isAdmin) boSungNguoi();
     ve(); C.doiSo && C.doiSo();
   }, e => { ds = []; const g = $("#tv-goc"); if (g) g.innerHTML = `<p class="tv-loi">Chưa tải được tác vụ${e && e.code === "permission-denied" ? ": quản lý cần dán luật bảo mật mới vào Firebase." : ". Kiểm tra mạng rồi tải lại trang."}</p>`; });

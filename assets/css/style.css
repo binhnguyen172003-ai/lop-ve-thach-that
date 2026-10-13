@@ -4340,3 +4340,35 @@ body:has(#toast:not([hidden])) .tl-bong,body:has(#server-issue:not([hidden])) .t
   .hw-toolbar .tab{padding:9px 7px;font-size:.76rem}
   .hw-toolbar .tab span{margin-left:4px}
 }
+
+/* Theo dõi chuyên cần: thẻ học viên gọn và cùng trục trên điện thoại. */
+@media(max-width:640px){
+  #dd-watch .dw-wrap{padding:8px}
+  #dd-watch table.dw{display:block;width:100%}
+  #dd-watch .dw tbody{gap:10px}
+  #dd-watch .dw tr:not(.dd-msg-row){grid-template-columns:repeat(2,minmax(0,1fr));grid-template-areas:"name name" "study study" "absence hours" "risk action";gap:12px;padding:14px 14px 14px 16px;border-radius:14px;min-width:0;box-shadow:none;border-left:3px solid var(--rule)}
+  #dd-watch .dw tr.bad{border-left-color:#d7261e}
+  #dd-watch .dw tr.warn{border-left-color:#e0a100}
+  #dd-watch .dw tr.ok{border-left-color:#1f9d4a}
+  #dd-watch .dw td{font-size:.86rem;line-height:1.5;min-width:0;overflow-wrap:break-word}
+  #dd-watch .dw td:first-child{grid-area:name}
+  #dd-watch .dw td:first-child>b{font-size:.98rem;line-height:1.45}
+  #dd-watch .dw td:first-child .muted{font-size:.78rem;line-height:1.5}
+  #dd-watch .dw td.dw-study{grid-area:study;display:grid;gap:4px}
+  #dd-watch .dw-study b{font-size:.85rem;line-height:1.5}
+  #dd-watch .dw-study span{font-size:.78rem;line-height:1.5;margin:0}
+  #dd-watch .dw td:nth-child(3){grid-area:absence}
+  #dd-watch .dw td:nth-child(4){grid-area:hours}
+  #dd-watch .dw td:nth-child(3)::before,#dd-watch .dw td:nth-child(4)::before{display:block;font-size:.7rem;line-height:1.4;margin-bottom:3px}
+  #dd-watch .dw td:nth-child(3)::before{content:"Vắng liền"}
+  #dd-watch .dw td:nth-child(4)::before{content:"Giờ học"}
+  #dd-watch .dw td:nth-child(5){grid-area:risk;align-self:center}
+  #dd-watch .dw .pill{max-width:100%;font-size:.72rem;line-height:1.45;padding:6px 9px;white-space:normal;text-align:center}
+  #dd-watch .dw td:nth-child(6){grid-area:action;align-self:center}
+  #dd-watch .dw [data-msg]{min-width:0;width:100%;min-height:44px;padding:8px 10px;font-size:.78rem;line-height:1.4;white-space:normal;text-align:center;border-radius:12px}
+  #dd-watch .dw tr.dd-msg-row td{display:block;grid-area:auto}
+}
+@media(max-width:360px){
+  #dd-watch .dw tr:not(.dd-msg-row){grid-template-areas:"name name" "study study" "absence hours" "risk risk" "action action"}
+  #dd-watch .dw td:nth-child(5){justify-self:start}
+}
