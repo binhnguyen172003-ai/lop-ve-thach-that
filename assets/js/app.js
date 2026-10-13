@@ -384,11 +384,11 @@ function daysUntil(iso) {
   return Math.floor((Date.UTC(y, m - 1, d) - Date.now()) / 86400000);
 }
 function updateExamClock() {
-  const clock = document.querySelector(".exam-clock"); if (!clock) return;
+  const clock = document.querySelector(".exam-clock"); if (!clock || !clock.getClientRects().length) return;
   const seconds = Math.floor(Math.max(0, Number(clock.dataset.examTarget) - Date.now()) / 1000);
   const d = Math.floor(seconds / 86400), values = [Math.floor(seconds % 86400 / 3600), Math.floor(seconds % 3600 / 60), seconds % 60];
-  ["h", "m", "s"].forEach((k, i) => { clock.querySelector("[data-exam-" + k + "]").textContent = String(values[i]).padStart(2, "0"); });
-  const days = document.querySelector("[data-exam-days]"); if (days) days.textContent = d;
+  ["h", "m", "s"].forEach((k, i) => { const el = clock.querySelector("[data-exam-" + k + "]"), value = String(values[i]).padStart(2, "0"); if (el && el.textContent !== value) el.textContent = value; });
+  const days = document.querySelector("[data-exam-days]"); if (days && days.textContent !== String(d)) days.textContent = d;
 }
 setInterval(() => { if (!document.hidden) updateExamClock(); }, 1000);
 let examFilter = "all";
@@ -1607,21 +1607,24 @@ $("#dk-zalo").href = ZALO_LINK;
     const ds = LICH_THI.filter(e => e.truong !== "THPT" && (!t || e.truong === t) && moc(e, them) > Date.now()).sort((a, b) => moc(a, them) - moc(b, them));
     return ds[0] ? { ...ds[0], them, nam: Number(ds[0].ngay.slice(0, 4)) + them } : null;
   };
-  let ky = chon(), timer = 0, thay = false;
+  let ky = chon(), timer = 0, thay = false, noiDungCu = "";
   const hai = n => String(n).padStart(2, "0");
   const ve = () => {
     if (!ky) { $("#dk-cd").hidden = true; return; }
     $("#dk-cd").hidden = false;
     const con = Math.max(0, moc(ky, ky.them) - Date.now()), s = Math.floor(con / 1000);
     const d = Math.floor(s / 86400), h = Math.floor(s % 86400 / 3600), m = Math.floor(s % 3600 / 60), giay = s % 60;
-    $("#cd-d").textContent = d; $("#cd-h").textContent = hai(h); $("#cd-m").textContent = hai(m); $("#cd-s").textContent = hai(giay);
+    [["#cd-d", String(d)], ["#cd-h", hai(h)], ["#cd-m", hai(m)], ["#cd-s", hai(giay)]].forEach(([id, value]) => { const el = $(id); if (el.textContent !== value) el.textContent = value; });
     const ai = lop.value && lop.value in SAU ? `${lop.value} · thi ${lop.value === "Lớp 6–8" ? "từ năm" : "năm"} ${ky.nam}` : `Học sinh lớp 12 · thi năm ${ky.nam}`;
     const truong = sel.value && sel.value !== "Trường khác" ? ky.ten : "kỳ thi năng khiếu đầu tiên · " + ky.ten;
-    $("#dk-cd-t").textContent = `${ai} · ${truong} · ${ky.them ? "dự kiến " : ""}${ky.hienThi}/${ky.nam}`;
+    const title = `${ai} · ${truong} · ${ky.them ? "dự kiến " : ""}${ky.hienThi}/${ky.nam}`;
+    if ($("#dk-cd-t").textContent !== title) $("#dk-cd-t").textContent = title;
     const buoi = Math.floor(d / 7) * 4;
-    $("#dk-cd-f").innerHTML = ky.them
+    const noiDung = ky.them
       ? `≈ <b>${buoi} buổi học</b> nếu học 4 buổi mỗi tuần. Học sớm từ ${lop.value.toLowerCase()} là lợi thế lớn: <b>vững hình hoạ trước, năm cuối chỉ cần luyện đề</b>.`
       : `≈ <b>${buoi} buổi học</b> nếu học 4 buổi mỗi tuần. Mỗi tuần chậm trễ là bớt 4 buổi luyện, <b>đăng ký học thử ngay hôm nay</b>.`;
+    // Giữ nguyên DOM khi nội dung không đổi; chỉ giây cần cập nhật mỗi nhịp.
+    if (noiDung !== noiDungCu) { $("#dk-cd-f").innerHTML = noiDung; noiDungCu = noiDung; }
   };
   const chay = () => { clearInterval(timer); if (thay && !document.hidden) timer = setInterval(ve, 1000); };
   const doi = () => { ky = chon(); ve(); };
