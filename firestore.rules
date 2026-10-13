@@ -75,6 +75,16 @@ service cloud.firestore {
     }
 
     // Giáo trình: ai đã duyệt cũng đọc được; chỉ quản lý sửa.
+    // Góc nghệ thuật: chỉ nội dung công khai mới mở cho khách, quản lý được sửa.
+    match /gocnghethuat/{id} {
+      allow read: if resource.data.an == false || isAdmin();
+      allow create, update: if isAdmin()
+        && request.resource.data.phan == 'goc-nghe-thuat'
+        && request.resource.data.access == 'all'
+        && request.resource.data.viewers.size() == 0;
+      allow delete: if isAdmin();
+    }
+
     match /giaotrinh/{id} {
       allow read: if isStudent() || isStaff();
       allow write: if isAdmin();

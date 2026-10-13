@@ -6,7 +6,7 @@ import { ngayVietNam, ngaySinhHopLe, hienNgaySinh, denSinhNhat } from "./sinh-nh
 import { firebaseConfig, ADMIN_EMAIL, EMAIL_NHAN_THONG_BAO } from "../../config/firebase-config.js?v=20261009b";
 import { FILE_LIMITS, FILE_TYPES, fileExt, fileSize, validateFiles, attachmentStorage, uploadError, validAttachmentPath } from "./attachments.js?v=20261009b";
 import { GIAO_TRINH_MAU as GT_LO_TRINH } from "../../data/giao-trinh-mau.js?v=20261010bf";
-import { createResourceWorkspace, ADVANCED_SEEDS } from "./resource-workspace.js?v=20261013unlock";
+import { createResourceWorkspace, ADVANCED_SEEDS } from "./resource-workspace.js?v=20261013artCorner";
 import { createResourceCache } from "./resource-cache.js?v=20261013resourceFast";
 import { soSanhTenHocVien } from "./ten-hoc-vien.js?v=20261010bs";
 import { GO_KHOI_CA, thuocDanhSachCa } from "./danh-sach-ca.js?v=20261010bs";
@@ -296,7 +296,7 @@ function copyText(text, statusEl, okMsg, selectEl) {
 }
 
 /* ================= Điều hướng ================= */
-const PAGES = ["tong-quan", "khoa-hoc", "ebook", "giao-trinh", "bai-tap", "tai-khoan", "duyet", "diem-danh", "lam-viec", "thi-thu", "van-hanh"];
+const PAGES = ["goc-nghe-thuat", "tong-quan", "khoa-hoc", "ebook", "giao-trinh", "bai-tap", "tai-khoan", "duyet", "diem-danh", "lam-viec", "thi-thu", "van-hanh"];
 // Nhớ vị trí cuộn theo từng bước lịch sử: mở mục mới → lên đầu; bấm quay lại / tiến tới → về đúng chỗ đang xem
 try { history.scrollRestoration = "manual"; } catch (e) {}
 const viTriCuon = {}; let khoaCuon = null;
@@ -2012,10 +2012,43 @@ const resourceOptions = (phan, ebook) => ({ phan, ebook, seeds: ebook ? [] : ADV
   mark: async id => { if (!approved || isTeacher) return; await toggleProgress("bai", id); renderResources(); }
 });
 const advancedWorkspace = createResourceWorkspace($("#nang-cao"), resourceOptions("nang-cao", false));
+let artRows = [], artUnsub = null, artManage = null;
+const artSeeds = ["Kiến thức mỹ thuật", "Tài liệu miễn phí", "Phim & nghệ thuật", "Nghệ thuật đời sống"].map((name, i) => ({
+  id: `art-topic-${i}`, phan: "goc-nghe-thuat", khoa: name, ten: name, loai: "khoa", thutu: i, an: false,
+  moTa: ["Kỹ thuật vẽ, màu sắc và bố cục.", "Sách, bài đọc và tài liệu tham khảo được chia sẻ miễn phí.", "Khám phá hình ảnh, màu sắc và góc quay qua phim, video.", "Quan sát nghệ thuật trong kiến trúc, thời trang và cuộc sống hằng ngày."][i]
+}));
+const artWorkspace = createResourceWorkspace($("#art-list"), {
+  phan: "goc-nghe-thuat", publicMode: true, seeds: artSeeds, markdown: mdHTML, notify: toast,
+  prepareImage: file => nenAnh(file, 1100, 350000),
+  save: async (id, data) => {
+    if (!isAdmin || !db) throw new Error("Chỉ quản lý được sửa nội dung.");
+    const clean = { ...data, phan: "goc-nghe-thuat", access: "all", viewers: [], dieuKienMoKhoa: "" };
+    const result = id ? await setDoc(doc(db, "gocnghethuat", id), clean, { merge: true }) : await addDoc(collection(db, "gocnghethuat"), clean);
+    return { id: id || result.id };
+  },
+  markSeen: () => {}, mark: async () => toast("Nội dung miễn phí, em có thể xem và đọc tự do.")
+});
+function renderArt() {
+  artWorkspace.update({ rows: artRows, canManage: isAdmin, staff: true, mail, marks: {}, seen: {}, viewers: [] });
+  if (!db || (artUnsub && artManage === isAdmin)) return;
+  if (artUnsub) artUnsub();
+  artManage = isAdmin;
+  const source = collection(db, "gocnghethuat");
+  artUnsub = onSnapshot(isAdmin ? source : query(source, where("an", "==", false)), snap => {
+    artRows = snap.docs.map(d => ({ ...d.data(), id: d.id }));
+    $("#art-status").textContent = "";
+    artWorkspace.update({ rows: artRows, canManage: isAdmin, staff: true, mail, marks: {}, seen: {}, viewers: [] });
+  }, () => {
+    artRows = [];
+    artWorkspace.update({ rows: [], canManage: isAdmin, staff: true, mail, marks: {}, seen: {}, viewers: [] });
+    $("#art-status").textContent = "Chưa tải được nội dung chia sẻ. Vui lòng thử lại sau.";
+  });
+}
+renderArt();
 const ebookWorkspace = createResourceWorkspace($("#ebook-list"), resourceOptions("ebook", true));
 function renderResources() {
   const state = { rows: resourceDocs, marks: myProgress.bai || {}, canManage: isAdmin, staff: isTeacher, mail, seen: myProgress.xem || {}, viewers: roster };
-  advancedWorkspace.update(state); ebookWorkspace.update(state);
+  advancedWorkspace.update(state); ebookWorkspace.update(state); renderArt();
 }
 
 function renderAccountIntro() {
@@ -2028,6 +2061,7 @@ function renderAccountIntro() {
 }
 
 function renderLocks(state) {
+  renderArt();
   const msg = {
     checking: ["Đang kiểm tra tài khoản…", "Chờ một chút nhé."],
     setup: ["Web chưa được kết nối Firebase", "Giáo viên cần dán cấu hình Firebase vào file firebase-config.js."],
@@ -3693,6 +3727,7 @@ function renderTiles() {
     { href: "#bai-tap", t: isTeacher ? "Giao & chấm bài tập" : "Bài tập", d: moBai ? `${moBai} bài đang mở` : "Chưa có bài đang mở" },
     { href: "#tai-khoan", t: "Tài khoản", d: "Thông tin cá nhân, ảnh đại diện và đăng xuất" },
     { href: "#khoa-hoc", t: "Khóa học", d: "Lộ trình học và video tham khảo" },
+    { href: "#goc-nghe-thuat", t: "Góc nghệ thuật", d: "Kiến thức, phim ảnh và tài liệu miễn phí" },
     { href: "#ebook", t: "eBook", d: "Sách và tài liệu học vẽ" },
     { href: "#giao-trinh", t: isTeacher ? "Xem giáo trình" : "Giáo trình", d: isTeacher ? `${lessons.length} bài trong giáo trình` : `Đã học ${daHoc}/${lessons.length} bài` },
     isTeacher && { href: "#bai-ve", t: "Đăng bài vẽ học viên", d: "Chụp bài, chọn loại bài, đăng lên web" },
@@ -4794,6 +4829,7 @@ async function startFirebase() {
     // Tự chọn kiểu kết nối ổn định nhất với mạng di động/wifi ở Việt Nam.
     try { db = initializeFirestore(app, { experimentalAutoDetectLongPolling: true }); }
     catch (e) { db = getFirestore(app); }
+    renderArt();
     // Mở sẵn kết nối tới máy chủ ngay khi vào trang, để lúc đăng nhập không phải chờ.
     // Public listeners below establish the connection without an extra restricted read.
     // XP thưởng & thành tựu anh chị trao trên web: ai cũng xem được (hiện ở Top rank)
