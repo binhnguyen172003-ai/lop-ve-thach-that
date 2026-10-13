@@ -3684,10 +3684,21 @@ body.vt-khoa > *:not(.vt-ov){visibility:hidden}
 .nb-stage .nb-card.nb-tran.nb-nv{border-width:2px}
 /* Khung hạng nằm trên chú thích đặc và luôn nổi trên cùng. */
 .nb-stage .nb-card.nb-tran .kt{z-index:3}
-.nb-stage .nb-card.nb-tran img{height:calc(100% - 118px)}
-.nb-stage .nb-card.nb-tran .kt-thanh{top:calc(100% - 112px)}
-.nb-stage .nb-card.nb-tran figcaption{top:calc(100% - 104px);bottom:10px;min-height:0;padding:20px 14px 10px;align-content:center;gap:4px;overflow:hidden}
-.nb-stage .nb-card.nb-tran:not(:has(.kt)) figcaption{top:auto}
+.nb-stage .nb-card.nb-tran{--nb-image-height:328px;display:grid;grid-template-rows:var(--nb-image-height) auto;height:auto}
+.nb-stage .nb-card.nb-tran img{height:100%;min-height:0}
+.nb-stage .nb-card.nb-tran .kt-thanh{top:calc(var(--nb-image-height) + 7px)}
+.nb-stage .nb-card.nb-tran figcaption{position:relative;inset:auto;min-height:112px;margin:14px 10px 10px;padding:14px;align-content:start;justify-items:start;gap:8px;overflow:visible;text-align:left}
+.nb-stage .nb-card.nb-tran figcaption .nb-name{display:block;width:100%;margin:0;font:italic 600 1.2rem/1.35 var(--f-serif);overflow-wrap:anywhere}
+.nb-stage .nb-card.nb-tran figcaption .rk-chip{box-sizing:border-box;max-width:100%;margin:0;padding:5px 8px;gap:4px;min-height:30px}
+.nb-stage .nb-card.nb-tran figcaption .rk-chip b{display:block}
+.nb-stage .nb-card.nb-tran figcaption .nb-bd{margin:0;line-height:1.4}
+.nb-stage .nb-card.nb-tran figcaption .nb-description{font:400 .8rem/1.5 var(--f-body);color:rgba(255,255,255,.78);overflow-wrap:anywhere}
+.nb-stage .nb-card.nb-add{min-height:0;height:var(--nb-card-height,400px)}
+@media(max-width:640px){
+  .nb-stage .nb-card.nb-tran{--nb-image-height:282px}
+  .nb-stage .nb-card.nb-tran figcaption{padding:12px;gap:7px}
+  .nb-stage .nb-card.nb-tran figcaption .nb-name{font-size:1.12rem}
+}
 
 /* Công tắc kính ba chế độ: sáng, tối, theo giao diện của máy. */
 .theme-switch{flex:none;position:relative;z-index:2}

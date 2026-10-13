@@ -1332,7 +1332,7 @@ const GHI_CHU = {
         ${b.top ? `<span class="nb-medal h${b.top}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 2h4l1 5-3 1zM17 2h-4l-1 5 3 1z" class="rb"/><circle cx="12" cy="15" r="6.5" class="md"/><text x="12" y="18.2" text-anchor="middle">${b.top}</text></svg><b>TOP ${b.top}</b><i>${TEN[ky]}</i></span>` : ""}
         ${b.tg ? "" : (m => m.length ? (a => `<span class="nb-tt" data-rk="${esc(b.hocVien)}" role="button" tabindex="0" title="${esc(a.ten)} · ${CAP[a.cap].ten} — ${esc(a.mo)}">${huyHieuTT(a, a.cap, "sm")}<span class="nb-ttx"><b>${esc(a.ten)}</b><small>${a.n} ${esc(a.dv)} · ${CAP[a.cap].ten}</small></span></span>`)(m[0]) : "")(ttNoiNhat(b.hocVien))}
         ${b.tg ? "" : (t => khungThe(t.r, t.i))(tinhRank(null, null, null, b.hocVien))}
-        <figcaption><b>${esc(b.hocVien || "")} ${b.tg ? "" : (t => huyHieu(t.r, t.i, "xs", b.hocVien))(tinhRank(null, null, null, b.hocVien))}</b>${b.nv && biDanhCua(b) ? `<em class="nb-bd">${esc(biDanhCua(b))}</em>` : ""}<span>${esc([b.loai, b.ghiChu].filter(Boolean).join(" · "))}</span></figcaption></figure>`).join("")}${coThem() ? theThem(ds.length) : ""}</div>
+        <figcaption><b class="nb-name">${esc(b.hocVien || "")}</b>${b.tg ? "" : (t => huyHieu(t.r, t.i, "xs", b.hocVien))(tinhRank(null, null, null, b.hocVien))}${b.nv && biDanhCua(b) ? `<em class="nb-bd">${esc(biDanhCua(b))}</em>` : ""}<span class="nb-description">${esc([b.loai, b.ghiChu].filter(Boolean).join(" · "))}</span></figcaption></figure>`).join("")}${coThem() ? theThem(ds.length) : ""}</div>
       <div class="gv-ctl"><button type="button" class="gv-nav" aria-label="Bài trước">‹</button>
         <div class="gv-dots">${Array.from({ length: soThe }, (_, i) => `<button type="button" data-i="${i}" aria-label="${i === ds.length ? "Thêm bài vẽ" : `Bài ${i + 1}`}"></button>`).join("")}</div>
         <button type="button" class="gv-nav" aria-label="Bài sau">›</button></div>`;
@@ -1350,6 +1350,19 @@ const GHI_CHU = {
       if (c.dataset.add) { moDangBai(); return; }
       galList = ds; showLb(Number(c.dataset.i));
     });
+    // Chừa đủ chỗ cho thẻ có tên/mô tả dài nhất, kể cả khi đổi font hoặc xoay máy.
+    const stage = box.querySelector(".nb-stage");
+    const fitStage = () => {
+      const artworkCards = cards.filter(c => !c.dataset.add);
+      const height = Math.max(400, ...artworkCards.map(c => c.offsetHeight));
+      stage.style.setProperty("--nb-card-height", `${height}px`);
+      if (height) stage.style.height = `${height + 20}px`;
+    };
+    fitStage();
+    const captionObserver = new ResizeObserver(fitStage);
+    cards.filter(c => !c.dataset.add).forEach(c => captionObserver.observe(c));
+    const cleanup = box.__vongCleanup;
+    box.__vongCleanup = () => { captionObserver.disconnect(); cleanup?.(); };
   };
   const chonKy = () => { if (daChon) return; ky = ["tuan", "thang", "nam"].find(k => locNoiBat(k).length) || "tuan"; $$("#nb-tabs [data-k]").forEach(x => x.setAttribute("aria-selected", x.dataset.k === ky)); };
   addEventListener("xephang-doi", () => ve());
@@ -2118,6 +2131,8 @@ function renderAccount(pending) {
   $$("[data-teacher]").forEach(el => el.hidden = !isTeacher);
   $$("[data-admin]").forEach(el => el.hidden = !isAdmin);
   renderAccNav(); renderTiles();
+  // Phiên quản lý đã lưu vẫn phải có bảng ngay, không phụ thuộc callback máy chủ.
+  if (isAdmin) queueMicrotask(() => renderQL());
   $("#dd-lock").hidden = isTeacher;
   $("#duyet-lock").hidden = isAdmin;
   $("#pw-box").hidden = !!user || !configured;
@@ -4519,11 +4534,11 @@ setInterval(() => { try { if (user) capNhatNhac(); } catch (e) {} }, 60000);
 
 /* ---------- Đăng nhập ---------- */
 function stopListeners() { unsubs.forEach(u => u()); unsubs = []; if (vanHanhM) vanHanhM.dung(); if (tacVuM) tacVuM.dung(); }
-function listen(q, fn) {
+function listen(q, fn, onError) {
   const t = performance.now(); let first = true;
   const name = q.path || (q._query && q._query.path && q._query.path.segments && q._query.path.segments.join("/")) || "dữ liệu";
   unsubs.push(onSnapshot(q, snap => { if (first) { first = false; mark("Tải " + name, t); } fn(snap); },
-    e => { mark("✗ LỖI tải " + name + ": " + (e && e.code), t); serverIssue(e); }));
+    e => { mark("✗ LỖI tải " + name + ": " + (e && e.code), t); serverIssue(e); onError?.(e); }));
 }
 
 /* ---------- Nhớ phiên đăng nhập để trang hiện ngay, không phải chờ ---------- */
@@ -4762,9 +4777,10 @@ async function onUser(u) {
   });
   if (isTeacher) {
     window.__rosterReady = false;
+    qlRosterError = "";
     listen(query(collection(db, "hocvien"), orderBy("duyetLuc", "desc")), snap => {
-      roster = snap.docs.map(d => ({ id: d.id, ...d.data() })); renderHomework(); if (isAdmin) { renderRoster(); renderResources(); } renderAttend(); renderLV(); window.__rosterReady = true;
-    });
+      roster = snap.docs.map(d => ({ id: d.id, ...d.data() })); window.__rosterReady = true; qlRosterError = ""; renderHomework(); if (isAdmin) { renderRoster(); renderResources(); } renderAttend(); renderLV();
+    }, () => { qlRosterError = "Chưa tải được danh sách học viên. Kiểm tra kết nối rồi tải lại trang."; if (isAdmin) renderQL(); });
     listen(collection(db, "diemdanh"), snap => {
       diemdanhAll = {}; snap.docs.forEach(d => diemdanhAll[d.id] = d.data()); renderAttend(); if (vanHanhM) vanHanhM.veLai();
     });
@@ -5613,6 +5629,10 @@ document.addEventListener("click", e => {
 
 /* ---------- Trang Quản lý: học viên đi học · tiến độ · % đỗ ---------- */
 let qlLoc = { cs: "", sx: "can", q: "" };
+let qlRosterError = "";
+addEventListener("hashchange", () => {
+  if (isAdmin && ["#duyet", "#ql-tong", "#ql-top5"].includes(location.hash)) renderQL();
+});
 function renderQL() {
   const box = $("#ql-tong"); if (!box || !isAdmin) return;
   const hom = todayVN(), d = new Date(hom + "T00:00:00Z"), thu2 = new Date(d.getTime() - ((d.getUTCDay() + 6) % 7) * 864e5).toISOString().slice(0, 10);
@@ -5643,7 +5663,7 @@ function renderQL() {
       <td data-l="Bài tập" class="num"><div>${nop}/${homework.filter(h => giaoCho(h, r)).length} nộp<span class="muted">${t.avg === null ? "chưa có điểm" : "TB " + nf1(t.avg)}</span></div></td>
       <td data-l="Dự báo đỗ"><div><span class="pill ${t.keys.length ? t.muc : ""}">${t.pass === null ? "Chưa có" : t.pass + "%"}</span></div></td>
       <td><button type="button" class="btn small" data-qlmsg="${esc(r.id)}">Tin PH</button></td></tr>`).join("")
-    : `<tr><td colspan="7" class="muted">${roster.length ? "Không có học viên phù hợp bộ lọc." : "Chưa có học viên nào được duyệt."}</td></tr>`;
+    : `<tr><td colspan="7" class="muted" role="status">${roster.length ? "Không có học viên phù hợp bộ lọc." : qlRosterError || (window.__rosterReady ? "Chưa có học viên nào được duyệt." : "Đang tải danh sách học viên…")}</td></tr>`;
   box.innerHTML = `<h2 class="ql-h2" id="ql-tong-h">Học viên đi học · tiến độ · % đỗ</h2>
     <div class="ql-kpi">
       <div><span>Học viên</span><b class="num">${all.length}</b></div>
