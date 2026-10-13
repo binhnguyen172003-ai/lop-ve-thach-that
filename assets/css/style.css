@@ -4147,3 +4147,17 @@ body:has(#toast:not([hidden])) .tl-bong,body:has(#server-issue:not([hidden])) .t
   #pwa-card{grid-template-columns:minmax(0,1fr);gap:14px;padding:18px}
   #pwa-card #pwa-install{justify-self:stretch;width:100%}
 }
+
+
+/* Bìa và mô tả khóa nâng cao. */
+.resource-workspace .rw-course-summary{overflow:hidden;margin-bottom:18px;border:1px solid var(--rule);border-radius:18px;background:var(--sheet)}
+.resource-workspace .rw-course-cover{display:block;width:100%;height:auto;max-height:340px;object-fit:contain;background:var(--paper)}
+.resource-workspace .rw-course-copy{padding:20px;min-width:0}
+.resource-workspace .rw-course-copy .eyebrow{margin:0 0 6px}
+.resource-workspace .rw-course-copy h2{margin:0;font-size:clamp(1.25rem,4.5vw,1.7rem);line-height:1.3;overflow-wrap:anywhere}
+.resource-workspace .rw-course-description{margin:12px 0 0;line-height:1.65;white-space:pre-line;overflow-wrap:anywhere;color:var(--graphite)}
+.resource-workspace .rw-category-cover{display:block;width:100%;height:100px;border-radius:10px;object-fit:cover;margin-bottom:8px}
+.resource-workspace .rw-cover-preview{display:grid;justify-items:start;gap:10px}
+.resource-workspace .rw-cover-preview img{display:block;max-width:100%;max-height:220px;border-radius:12px;object-fit:contain}
+.resource-workspace .rw-editor input[type=file]{padding:10px;max-width:100%;font-size:.9rem}
+@media(max-width:640px){.resource-workspace .rw-course-copy{padding:16px}.resource-workspace .rw-category-cover{height:88px}.resource-workspace .rw-course-cover{max-height:240px}}
