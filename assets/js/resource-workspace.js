@@ -77,19 +77,37 @@ export function createResourceWorkspace(root, { phan, seeds = [], ebook = false,
   const qa = selector => [...root.querySelectorAll(selector)];
   const label = publicMode ? "chủ đề" : ebook ? "sách" : "khóa";
   const itemLabel = publicMode ? "chủ đề" : ebook ? "eBook" : "khóa học";
+  // Ảnh từ dịch vụ ngoài có thể bị lỗi/mất mạng: giữ khung thẻ và thao tác mở bài.
+  const imageFallback = img => {
+    const frame = img.parentElement;
+    if (frame?.matches(".gt-anh, .rw-category-media")) {
+      frame.classList.add("rw-image-unavailable");
+      frame.title = "Ảnh chưa tải được";
+    }
+  };
+  root.addEventListener("error", event => {
+    if (event.target?.matches?.("img[data-resource-image]")) imageFallback(event.target);
+  }, true);
   let lastMarkup = "";
   const paint = html => {
     if (html === lastMarkup && root.firstChild) return;
     lastMarkup = html;
     const images = new Map(qa("img[data-resource-image]").map(img => [img.dataset.resourceImage, img]));
-    root.innerHTML = html;
-    qa("img[data-resource-image]").forEach(img => {
+    // Chuẩn bị DOM trong template, thay ảnh đã có bằng vị trí giữ chỗ trước khi gắn vào trang.
+    const template = document.createElement("template"), reuse = [];
+    template.innerHTML = html;
+    template.content.querySelectorAll("img[data-resource-image]").forEach(img => {
       const previous = images.get(img.dataset.resourceImage);
       if (!previous || previous.getAttribute("src") !== img.getAttribute("src")) return;
-      [...previous.attributes].filter(attr => attr.name !== "src").forEach(attr => previous.removeAttribute(attr.name));
-      [...img.attributes].filter(attr => attr.name !== "src").forEach(attr => previous.setAttribute(attr.name, attr.value));
-      img.replaceWith(previous);
+      // Chỉ đổi thuộc tính khác giá trị; xoá rồi đặt lại loading có thể làm ảnh lỗi tải lại.
+      [...previous.attributes].filter(attr => !img.hasAttribute(attr.name)).forEach(attr => previous.removeAttribute(attr.name));
+      [...img.attributes].filter(attr => previous.getAttribute(attr.name) !== attr.value).forEach(attr => previous.setAttribute(attr.name, attr.value));
+      const placeholder = template.content.ownerDocument.createElement("span");
+      img.replaceWith(placeholder); reuse.push([placeholder, previous]);
     });
+    root.replaceChildren(template.content);
+    reuse.forEach(([placeholder, previous]) => placeholder.replaceWith(previous));
+    qa("img[data-resource-image]").forEach(img => { if (img.complete && !img.naturalWidth) imageFallback(img); });
   };
   const unit = publicMode ? "nội dung" : ebook ? "chương / tài liệu" : "bài học";
   const activeRows = () => resourceRows(state.rows, seeds, phan);
