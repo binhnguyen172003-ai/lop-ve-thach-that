@@ -82,16 +82,31 @@ html[data-theme="light"] #app-intro{background:#f6f5f1;color:#15171b}
 <script>
 (() => {
   const intro = document.getElementById("app-intro");
+  let timer, hiddenAt = 0;
   try {
-    const app = matchMedia("(display-mode: standalone)").matches || matchMedia("(display-mode: fullscreen)").matches || navigator.standalone === true;
-    const navigation = performance.getEntriesByType("navigation")[0];
-    if (!app || (navigation && navigation.type !== "navigate")) { intro.remove(); return; }
-    intro.hidden = false;
-    intro.addEventListener("pointerdown", () => intro.remove(), { once: true });
-    // Nội dung và dữ liệu lớp vẫn tải song song; không đợi đăng nhập hay mạng.
-    setTimeout(() => intro.remove(), matchMedia("(prefers-reduced-motion: reduce)").matches ? 550 : 2150);
-    addEventListener("pagehide", () => intro.remove(), { once: true });
-  } catch { intro.remove(); }
+    const preview = new URLSearchParams(location.search).get("intro") === "1";
+    const app = preview || matchMedia("(display-mode: standalone)").matches || matchMedia("(display-mode: fullscreen)").matches || navigator.standalone === true;
+    if (!app) { intro.remove(); return; }
+    const hide = () => { clearTimeout(timer); intro.hidden = true; };
+    const show = () => {
+      if (document.hidden) return;
+      hide();
+      // Reset cả logo và chữ khi app được mở lại từ phiên đang chạy.
+      intro.hidden = false;
+      intro.style.animation = "none";
+      void intro.offsetWidth;
+      intro.style.animation = "";
+      timer = setTimeout(hide, matchMedia("(prefers-reduced-motion: reduce)").matches ? 550 : 2150);
+    };
+    intro.addEventListener("pointerdown", hide);
+    addEventListener("pagehide", hide);
+    addEventListener("pageshow", event => { if (event.persisted) show(); });
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden) { hiddenAt = Date.now(); hide(); }
+      else if (hiddenAt && Date.now() - hiddenAt >= 10000) { hiddenAt = 0; show(); }
+    });
+    show();
+  } catch { intro.hidden = true; }
 })();
 </script>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
