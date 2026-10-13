@@ -330,6 +330,7 @@ function hanhDongVH(loai, id, btn) {
   const nk = D.nk.find(x => x.id === id), sc = D.suco.find(x => x.id === id), dc = D.doica.find(x => x.id === id);
   if (loai === "cc-thang") { thangCC = id === "0" ? 0 : thangCC + Number(id); return ve(); }
   if (loai === "cc-gv") { gvCC = id; return ve(); }
+  if (loai === "cc-ngay") return moNgayCong(id);
   if (loai === "cc-cham") return moChamCong(D.ca.find(x => x.id === id));
   if (loai === "cc-csv") return taiBangCong();
   if (loai === "cc-csv-luong") return taiBangLuong();
@@ -629,8 +630,8 @@ function chiPhiNhanSu() {
   // tính qua bảng lương từng người để không đếm ca trùng và dùng đúng số liệu tháng đã chốt
   const thang = [...new Set([iso(t2).slice(0, 7), hom.slice(0, 7), iso(cn).slice(0, 7)])], dong = thang.flatMap(t => gvTrongThang(t).flatMap(gv => tinhLuong(gv, t).dong));
   const tien = (a, b) => { const o = { BPhú: 0, KQuan: 0, khac: 0 }; dong.filter(r => r.ngay >= a && r.ngay <= b).forEach(r => { const k = csNgan(r.coSo); o[k in o ? k : "khac"] += r.luong + r.tc; }); return o; };
-  return `<section class="card" aria-label="Chi phí nhân sự"><h3>Chi phí nhân sự <small class="muted">lương ca + trợ cấp đã chấm, chưa gồm thưởng</small></h3>
-    <div class="roster-wrap"><table class="roster cc-cp"><thead><tr><th></th><th>Bình Phú</th><th>Kim Quan</th><th>Tổng</th></tr></thead><tbody>${khoang.map(([t, a, b]) => { const o = tien(a, b); return `<tr><th>${t}</th><td class="num">${vndCC(o.BPhú)}</td><td class="num">${vndCC(o.KQuan)}</td><td class="num"><b>${vndCC(o.BPhú + o.KQuan + o.khac)}</b></td></tr>`; }).join("")}</tbody></table></div></section>`;
+  return `<section class="card" aria-label="Chi phí nhân sự"><h3>Chi phí nhân sự</h3><p class="muted cc-cost-note">Lương ca + trợ cấp đã chấm, chưa gồm thưởng.</p>
+    <div class="roster-wrap"><table class="roster cc-cp"><thead><tr><th></th><th>Bình Phú</th><th>Kim Quan</th><th>Tổng</th></tr></thead><tbody>${khoang.map(([t, a, b]) => { const o = tien(a, b); return `<tr><th>${t}</th><td class="num" data-l="Bình Phú">${vndCC(o.BPhú)}</td><td class="num" data-l="Kim Quan">${vndCC(o.KQuan)}</td><td class="num" data-l="Tổng"><b>${vndCC(o.BPhú + o.KQuan + o.khac)}</b></td></tr>`; }).join("")}</tbody></table></div></section>`;
 }
 // thẻ "Ca hôm nay" của giáo viên: Vô ca → điểm danh lớp → Kết ca
 function caHomNay() {
@@ -697,15 +698,17 @@ function luoiThang(thang, loc) {
   const o = []; for (let i = 0; i < lech; i++) o.push(`<div class="cc-o trong"></div>`);
   for (let d = 1; d <= soNgay; d++) {
     const n = `${thang}-${pad(d)}`, cs = (theoNgay[n] || []).sort(xepCa);
-    o.push(`<div class="cc-o${n === hom ? " hom" : ""}${(lech + d - 1) % 7 >= 5 ? " cuoituan" : ""}"><span class="cc-so num">${d}</span>${cs.map(c => {
-      const t = CONG.find(x => x[0] === congCua(c)), th = thieuCham(c), dau = th ? "!" : c.vao ? (laMuon(c) || phutSom(c) ? "⏰" : "✓") : "";
-      const nhan = `${dau}${csNgan(c.coSo)} ${caNgan(c.ca)}${C.isAdmin && !loc ? " · " + esc(String(c.gvTen || "").split(" ").pop()) : ""}`;
-      const tip = esc(`${c.gvTen || c.gv} · ca ${tenCa(c.ca).toLowerCase()} · ${c.coSo} · ${t ? t[1] : th ? TEN_THIEU[th] : "chưa chấm"}${c.vao ? " · vào " + gioPhut(c.vao) + (laMuon(c) ? ` (muộn ${phutMuon(c)}′)` : "") : ""}${c.ra ? " · ra " + gioPhut(c.ra) + (phutSom(c) ? ` (sớm ${phutSom(c)}′)` : "") : ""}`);
-      const cls = `cc-chip ${t ? t[2] : th ? "bad" : "chua"}`;
-      return C.isAdmin ? `<button type="button" class="${cls}" data-x="cc-cham" data-id="${esc(c.id)}" title="${tip}">${nhan}</button>` : `<span class="${cls}" title="${tip}">${nhan}</span>`; }).join("")}</div>`);
+    const bad = cs.some(c => thieuCham(c) || congCua(c) === 0), half = cs.some(c => congCua(c) === 0.5), done = cs.length && cs.every(c => congCua(c) === 1);
+    o.push(`<div class="cc-o${n === hom ? " hom" : ""}${(lech + d - 1) % 7 >= 5 ? " cuoituan" : ""}"><span class="cc-so num">${d}</span>${cs.length ? `<button type="button" class="cc-chip ${bad ? "bad" : half ? "warn" : done ? "ok" : "chua"}" data-x="cc-ngay" data-id="${n}" aria-label="Xem ${cs.length} ca ngày ${ngayVN(n)}${bad ? ', có ca vắng hoặc thiếu chấm' : ''}">${cs.length} ca${bad ? ' !' : ''}</button>` : ""}</div>`);
   }
   return `<div class="cc-luoi" role="grid"><div class="cc-thu">T2</div><div class="cc-thu">T3</div><div class="cc-thu">T4</div><div class="cc-thu">T5</div><div class="cc-thu">T6</div><div class="cc-thu">T7</div><div class="cc-thu">CN</div>${o.join("")}</div>
-    <p class="cc-chu"><span class="cc-chip chua">Chưa chấm</span><span class="cc-chip ok">Có mặt · 1 công</span><span class="cc-chip warn">Nửa công</span><span class="cc-chip bad">Vắng / thiếu chấm</span> <small class="muted">✓ đúng giờ · ⏰ muộn / về sớm · ! thiếu chấm · BPhú/KQuan · S/C/T = ca sáng/chiều/tối</small></p>`;
+    <details class="ui-help"><summary>Chú thích lịch</summary><p class="cc-chu"><span class="cc-chip chua">Chưa đủ công</span><span class="cc-chip ok">Đủ công</span><span class="cc-chip warn">Có nửa công</span><span class="cc-chip bad">Vắng / thiếu chấm</span><small class="muted">Bấm số ca trong ngày để xem chi tiết.</small></p></details>`;
+}
+function moNgayCong(ngay) {
+  const loc = C.isAdmin ? gvCC : C.mail;
+  const cs = D.ca.filter(c => c.ngay === ngay && (!loc || c.gv === loc)).sort(xepCa);
+  const h = C.moHop(`<h3>Ca ngày ${ngayVN(ngay)}</h3><div class="cc-day-list">${cs.map(c => { const [k, chu] = trangThaiCa(c); return `<div class="cc-day-item"><b>${esc(c.gvTen || c.gv)}</b><span>${esc(tenCa(c.ca))} · ${esc(c.coSo)}</span><small class="muted">Vào ${c.vao ? gioPhut(c.vao) : "—"} · Ra ${c.ra ? gioPhut(c.ra) : "—"}</small><span class="chip ${k}">${esc(chu)}</span>${C.isAdmin ? `<button class="btn small" type="button" data-day-edit="${esc(c.id)}">Chấm công</button>` : ""}</div>`; }).join("")}</div>`, "Ca trong ngày");
+  h.el.querySelectorAll("[data-day-edit]").forEach(b => b.onclick = () => { h.dong(); moChamCong(cs.find(c => c.id === b.dataset.dayEdit)); });
 }
 function viewThang() {
   const thang = thangDangXem(), [y, m] = thang.split("-").map(Number);
@@ -717,7 +720,7 @@ function viewThang() {
     <td class="num">${t.ngay}</td><td class="num">${t.ca}</td><td class="num"><b>${soN(L.cong)}</b></td><td class="num">${t.muon ? `${t.muon} <small>(${t.phutMuon}′)</small>` : ""}</td><td class="num">${t.som ? `${t.som} <small>(${t.phutSom}′)</small>` : ""}</td>
     <td class="num">${t.thieu ? `<span class="chip bad">${t.thieu}</span>` : ""}</td><td class="num">${t.vang || ""}${t.chua ? ` <span class="chip warn">${t.chua} chưa chấm</span>` : ""}</td>
     <td><span class="chip ${kp.du ? "ok" : "bad"}" title="${esc(kp.muc.map(x => x[0] + ": " + x[2]).join(" · "))}">${kp.du ? "Đủ KPI" : "Thiếu KPI"}</span> <button type="button" class="linkish" data-x="cc-kpi" data-id="${esc(L.gv)}">Chỉ tiêu</button></td></tr>`; }).join("");
-  return lich + `<h3 class="vh-h2">Tổng hợp công tháng ${m}/${y}</h3>${bang.length ? `<div class="roster-wrap cc-bang-o"><table class="roster cc-bang"><thead><tr><th>Giáo viên</th><th>Ngày đi</th><th>Số ca</th><th>Công</th><th>Đi muộn</th><th>Về sớm</th><th>Thiếu chấm</th><th>Vắng</th><th>KPI</th></tr></thead><tbody>${dong}</tbody></table></div>
+  return lich + `<h3 class="vh-h2">Tổng hợp công tháng ${m}/${y}</h3>${bang.length ? `<div class="roster-wrap cc-bang-o"><table class="roster cc-bang cc-summary"><thead><tr><th>Giáo viên</th><th>Ngày đi</th><th>Số ca</th><th>Công</th><th>Đi muộn</th><th>Về sớm</th><th>Thiếu chấm</th><th>Vắng</th><th>KPI</th></tr></thead><tbody>${dong}</tbody></table></div>
     <div class="vh-nut"><button type="button" class="btn small" data-x="cc-csv">Tải bảng công tháng (Excel)</button></div>` : `<p class="muted vh-trong">Tháng ${m}/${y} chưa có ca nào. Xếp ca ở mục Ca dạy, mỗi ca là một buổi công.</p>`}`;
 }
 function kpiToi(L) {
@@ -827,7 +830,7 @@ function moChamCong(c) {
     <div class="cc-chon">${CONG.map(([v, t, k]) => `<button type="button" class="btn ${c.cong === v ? "primary" : ""} cc-${k}" data-cong="${v}">${t}</button>`).join("")}<button type="button" class="btn" data-cong="">Tự tính theo vô/kết ca</button></div>
     <details class="cc-chinh"><summary><b>Sửa giờ vào / ra</b></summary><div class="cc-gio"><label>Giờ vào<input type="time" id="cc-v" value="${c.vao ? gioPhut(c.vao) : ""}"></label><label>Giờ ra<input type="time" id="cc-r" value="${c.ra ? gioPhut(c.ra) : ""}"></label></div>
       <div class="hop-nut"><button type="button" class="btn" id="cc-luu-gio">Lưu giờ</button></div></details>
-    <label class="cc-tick"><input type="checkbox" id="cc-tc"${c.tcTat ? "" : " checked"}> Tính trợ cấp cho ca này</label>
+    <label class="cc-tick"><input type="checkbox" id="cc-tc"${c.tcTat ? "" : " checked"}><span>Tính trợ cấp cho ca này</span></label>
     <div class="hop-nut"><button class="btn" type="button" data-dong>Đóng</button></div>`, "Chấm công");
   const luu = (b, moi, nhan) => guiNut(b, () => setDoc(doc(db, "caday", c.id), { ...moi, chamBoi: C.mail, chamLuc: Date.now() }, { merge: true }), nhan);
   h.el.querySelectorAll("[data-cong]").forEach(b => b.onclick = async () => { if (await luu(b, { cong: b.dataset.cong === "" ? deleteField() : Number(b.dataset.cong) }, "Đã chấm công ✓")) h.dong(); });

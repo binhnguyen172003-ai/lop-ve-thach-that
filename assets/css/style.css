@@ -4379,3 +4379,49 @@ body:has(#toast:not([hidden])) .tl-bong,body:has(#server-issue:not([hidden])) .t
 /* Quy tắc grid của nhãn không được ghi đè trạng thái lọc học viên. */
 .resource-workspace .rw-viewers .rw-viewer[hidden]{display:none}
 #requests .req-item[hidden],#doiten-list > [hidden],#roster tr[hidden],#teachers tr[hidden]{display:none}
+/* Compact operations and attendance layout, 2026-10-14. */
+.ui-help{margin:10px 0 16px;font-size:.85rem;line-height:1.5}
+.ui-help>summary{cursor:pointer;color:var(--graphite);padding:8px 0;min-height:36px}
+.ui-help p{margin:8px 0;font-size:inherit;line-height:1.55}
+.cc-luoi .cc-o{min-height:72px}
+.cc-luoi .cc-chip{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;overflow-wrap:normal;min-height:36px;border-radius:8px;font-size:.7rem;padding:4px 2px}
+.cc-day-list{display:grid;gap:10px}.cc-day-item{display:grid;gap:6px;padding:12px;border:1px solid var(--rule);border-radius:12px}.cc-day-item .chip{justify-self:start;margin:0}.cc-day-item .btn{justify-self:start}
+.hop label.cc-tick,.hop-f label.cc-tick{display:flex;flex-direction:row;align-items:center;gap:10px;margin:14px 0;line-height:1.4}
+.hop label.cc-tick input,.hop-f label.cc-tick input{flex:0 0 20px;width:20px;height:20px;margin:0}
+.cc-chon{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.cc-chon .btn{min-width:0;min-height:44px;padding:10px 8px;white-space:normal;font-size:.88rem}
+.cc-chon .btn:last-child{grid-column:1/-1}
+.cc-cost-note{font-size:.8rem;line-height:1.5;margin:6px 0 12px}
+.ql-art-actions{display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px;margin:14px 0}
+.ql-art-actions .muted{font-size:.8rem}
+.ql-nen{display:grid;justify-items:start;gap:8px}.ql-nen .btn{max-width:100%;white-space:normal;text-align:left}
+#ql-top5 .t5-o{min-width:0;align-content:start}#ql-top5 .t5-o select{min-width:0;max-width:100%;text-overflow:ellipsis}
+@media(max-width:640px){
+  .cc-hom-team .cc-hom-ca{position:relative;gap:8px;padding:14px 0}
+  .cc-hom-team .cc-hom-info{padding-right:48px}
+  .cc-hom-team .cc-hom-nut{gap:6px;justify-content:flex-start}
+  .cc-hom-team .cc-hom-nut .linkish{position:absolute;right:0;top:10px;margin:0;padding:8px 4px;min-width:44px;text-align:center}
+  .cc-hom-team .cc-hom-nut .chip{font-size:.7rem;padding:4px 8px;line-height:1.4}
+  .cc-hv-luoi{grid-template-columns:minmax(0,1fr)}
+  .cc-hv{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 12px}
+  .cc-hv>b{grid-column:1/-1}.cc-hv span{font-size:.8rem;line-height:1.5}
+  table.roster.cc-cp, .cc-cp tbody{display:block;width:100%;min-width:0}
+  .cc-cp thead{display:none}
+  .cc-cp tbody tr{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 12px;padding:12px 0;border-bottom:1px solid var(--rule)}
+  .cc-cp tbody th{grid-column:1/-1;text-align:left;padding:0;border:0}
+  .cc-cp tbody td{padding:0;border:0;min-width:0;white-space:normal;font-size:.88rem}
+  .cc-cp tbody td:last-child{grid-column:1/-1}
+  .cc-cp tbody td:before{content:attr(data-l);display:block;font-size:.7rem;color:var(--graphite);margin-bottom:2px}
+  .cc-summary tbody tr{gap:10px 14px;padding:14px}
+  .cc-summary tbody td:empty{display:block}
+  .cc-summary tbody td:empty:after{content:"—";color:var(--graphite)}
+  .cc-summary tbody td:last-child{grid-column:1/-1;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .cc-summary tbody td:last-child:before{width:100%}
+  .cc-summary .chip{margin:0;font-size:.74rem}.cc-summary .linkish{min-height:36px}
+  #dd-watch .dw tr:not(.dd-msg-row){gap:8px;padding:12px;grid-template-areas:"name name" "study study" "absence hours" "risk risk" "action action"}
+  #dd-watch .dw td:nth-child(5){justify-self:start}
+  #ql-top5 .t5-o img,#ql-top5 .t5-trong{aspect-ratio:1/1;height:auto}
+  #ql-top5 .t5-o.h1{grid-column:auto}
+  .ql-art-actions{display:grid;justify-items:start;gap:6px}
+  .ql-art-actions .btn{width:100%;font-size:.88rem}
+}

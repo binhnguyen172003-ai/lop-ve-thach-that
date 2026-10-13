@@ -92,7 +92,7 @@ const troLyPromise = import("./tro-ly.js?v=20261013teacherNotice").catch(e => co
 let vanHanhP = null, vanHanhM = null;
 let tacVuP = null, tacVuM = null;
 const taiTacVu = () => tacVuP ||= import("./tac-vu.js?v=20261013sync2").then(m => tacVuM = m).catch(e => { tacVuP = null; console.warn("Chưa tải được phần tác vụ", e); });
-const taiVanHanh = () => vanHanhP ||= import("./van-hanh.js?v=20261013sync2").then(m => vanHanhM = m).catch(e => { vanHanhP = null; console.warn("Chưa tải được phần vận hành", e); });
+const taiVanHanh = () => vanHanhP ||= import("./van-hanh.js?v=20261014layout").then(m => vanHanhM = m).catch(e => { vanHanhP = null; console.warn("Chưa tải được phần vận hành", e); });
 window.__appOk = true;
 document.querySelectorAll(".slow-bar").forEach(el => el.remove());
 
@@ -5803,13 +5803,13 @@ function renderTop5() {
   const gan = BAIVE_DONG.filter(b => (Date.parse(todayVN()) - Date.parse(b.ngay || "2000-01-01")) / 864e5 <= 45).sort((a, b) => (b.luc || 0) - (a.luc || 0));
   const o = k => BAIVE_DONG.find(b => tuanNay(b) && b.hang === k);
   box.innerHTML = `<h2 class="ql-h2" id="ql-top5-h">Top 5 bài vẽ nổi bật tuần</h2>
-    <p class="muted">Chọn bài cho từng vị trí: bài đang ở vị trí đó sẽ tự xuống một bậc (Top 5 bị đẩy thì bỏ khỏi Top). Chỉ 5 bài này hiện ở mục "Bài vẽ nổi bật" trên trang chủ; sau 1 tuần tự chuyển sang Top tháng. Bài khác vẫn nằm ở mục "Bài vẽ học viên".</p>
+    <details class="ui-help"><summary>Hướng dẫn chọn Top 5</summary><p class="muted">Chọn bài cho từng vị trí: bài đang ở vị trí đó sẽ tự xuống một bậc (Top 5 bị đẩy thì bỏ khỏi Top). Chỉ 5 bài này hiện ở mục "Bài vẽ nổi bật" trên trang chủ; sau 1 tuần tự chuyển sang Top tháng. Bài khác vẫn nằm ở mục "Bài vẽ học viên".</p></details>
     ${baiVeLoi ? `<p class="xh-loi">Máy chủ chưa cho đọc mục bài vẽ. Quản lý cần dán luật bảo mật mới (firestore.rules) một lần.</p>` : ""}
     <div class="tq5">${[1, 2, 3, 4, 5].map(k => { const b = o(k); return `<div class="t5-o h${k}">
       <span class="t5-so">TOP ${k}</span>${b ? `<img src="${esc(b.anh)}" alt="">` : `<span class="t5-trong">Trống</span>`}
       <select data-t5="${k}" aria-label="Chọn bài Top ${k}"><option value="">${b ? "— Bỏ khỏi Top —" : "Chọn bài…"}</option>${gan.map(x => `<option value="${esc(x.id)}"${b && b.id === x.id ? " selected" : ""}>${esc(x.hocVien)} · ${esc(x.loai)} · ${ngayVN(x.ngay)}</option>`).join("")}</select></div>`; }).join("")}</div>
-    <p><button type="button" class="btn primary" data-dang-bai>+ Đăng bài vẽ mới</button> <span class="muted">${gan.length} bài anh chị đăng trong 45 ngày qua</span></p>
-    ${(n => n || nenTT ? `<p class="ql-nen"><button type="button" class="btn small" id="ql-nen-anh"${nenDang || !n ? " disabled" : ""}>🗜️ Nén lại ảnh cũ${n ? ` (${n} ảnh nặng)` : ""}</button><span class="muted" id="ql-nen-st">${esc(nenTT || "Bài vẽ và bản tin đăng trước đây còn ảnh to, làm web tải chậm. Bấm một lần để thu nhỏ, nét vẽ vẫn rõ.")}</span></p>` : "")(anhCanNen().length)}`;
+    <p class="ql-art-actions"><button type="button" class="btn primary" data-dang-bai>+ Đăng bài vẽ mới</button> <span class="muted">${gan.length} bài trong 45 ngày</span></p>
+    ${(n => n || nenTT ? `<p class="ql-nen"><button type="button" class="btn small" id="ql-nen-anh"${nenDang || !n ? " disabled" : ""}>🗜️ Nén lại ảnh cũ${n ? ` (${n} ảnh nặng)` : ""}</button><span class="muted" id="ql-nen-st">${esc(nenTT || "Thu nhỏ ảnh cũ để tải nhanh hơn.")}</span></p>` : "")(anhCanNen().length)}`;
   const nen = $("#ql-nen-anh"); if (nen) nen.onclick = () => nenLaiAnhCu(nen);
   $$("#ql-top5 [data-t5]").forEach(s => s.onchange = () => {
     const k = Number(s.dataset.t5), cu = o(k), id = s.value;

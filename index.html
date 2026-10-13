@@ -48,9 +48,9 @@
 <!-- Phông chữ tải sau, không bắt người xem chờ trắng màn hình -->
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Be+Vietnam+Pro:wght@400;500;600&family=Playfair+Display:ital,wght@1,500;1,600&display=swap" media="print" onload="this.media='all'">
 <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Be+Vietnam+Pro:wght@400;500;600&family=Playfair+Display:ital,wght@1,500;1,600&display=swap"></noscript>
-<link rel="stylesheet" href="assets/css/style.css?v=20261013auditComplete">
+<link rel="stylesheet" href="assets/css/style.css?v=20261014layout">
 <link rel="stylesheet" href="assets/css/art-corner.css?v=20261013artLabels">
-<link rel="modulepreload" href="assets/js/app.js?v=20261013auditComplete">
+<link rel="modulepreload" href="assets/js/app.js?v=20261014layout">
 
 <link rel="modulepreload" href="config/firebase-config.js?v=20261009b">
 <link rel="modulepreload" href="data/noi-dung.js?v=20261011pagesplit">
@@ -930,9 +930,11 @@
     <p class="dd-sum" id="dd-sum" role="status" aria-live="polite"></p>
     <ul class="dd-list" id="dd-list"></ul>
     <div data-admin hidden>
-    <h3 style="margin-top:34px">Theo dõi chuyên cần &amp; dự báo đỗ <span class="chip">Quản lý</span></h3>
+    <h3 style="margin-top:34px">Chuyên cần &amp; dự báo đỗ <span class="chip">Quản lý</span></h3>
+    <details class="ui-help"><summary>Xem hướng dẫn</summary>
     <p class="muted" style="margin-bottom:12px">Chọn "Ít buổi nhất" hoặc "Nhiều buổi nhất" để xem số buổi đã đi học. Bấm "Chép tin nhắn" rồi dán vào Zalo gửi phụ huynh.</p>
     <p class="muted dd-filter-note" id="dd-watch-note">Lịch đề xuất được làm tròn lên theo buổi học, dựa trên số giờ còn thiếu, thời gian đến ngày thi và mức học tối thiểu của lớp. Anh chị điều chỉnh theo tình hình từng em.</p>
+    </details>
     <div class="dd-watch" id="dd-watch"></div>
     </div>
   </div>
@@ -1025,7 +1027,7 @@
   }catch(e){}
 })();
 </script>
-<script type="module" src="assets/js/app.js?v=20261013auditComplete"></script>
+<script type="module" src="assets/js/app.js?v=20261014layout"></script>
 <script type="module" src="assets/js/morph-icons.js?v=20261011a"></script>
 </body>
 </html>
