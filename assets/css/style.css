@@ -4200,11 +4200,15 @@ body:has(#toast:not([hidden])) .tl-bong,body:has(#server-issue:not([hidden])) .t
 .resource-workspace .rw-progress .gt-bar{height:6px}
 .resource-workspace .rw-progress .gt-td-ds{font-size:.75rem;gap:5px 12px}
 .resource-workspace .rw-next{min-height:42px;padding:9px 12px;font-size:.83rem}
-.resource-workspace .rw-category-lock{padding:20px;margin:0}
-.resource-workspace .rw-category-lock h3{font-size:1.15rem;line-height:1.4;margin:0 0 8px}
+.resource-workspace .rw-category-lock{display:block;width:100%;max-width:none;padding:20px;margin:0;border-radius:16px}
+.resource-workspace .rw-category-lock h3{font-size:1.1rem;line-height:1.45;margin:0;overflow-wrap:anywhere}
 .resource-workspace .rw-category-lock p{font-size:.9rem;line-height:1.6;margin:0;overflow-wrap:anywhere}
-.resource-workspace .rw-unlock-actions{display:grid;justify-items:start;gap:10px;margin-top:18px}
-.resource-workspace .rw-unlock-actions .btn{min-height:44px;max-width:100%;white-space:normal;text-align:center}
+.resource-workspace .rw-category-lock h3 + p{margin-top:8px}
+.resource-workspace .rw-category-lock .rw-course-unlock{grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:baseline;gap:8px 12px;margin-top:14px;padding-top:12px;font-size:.85rem}
+.resource-workspace .rw-unlock-actions{display:grid;justify-items:start;gap:8px;margin-top:16px}
+.resource-workspace .rw-unlock-actions .btn{min-height:44px;max-width:100%;padding:10px 18px;border-radius:12px;font-size:.9rem;line-height:1.4;white-space:normal;text-align:center}
+.resource-workspace .rw-unlock-actions p{font-size:.85rem;line-height:1.5}
+@media(max-width:760px){.resource-workspace .rw-unlock-actions{justify-items:stretch}.resource-workspace .rw-unlock-actions .btn{width:100%}.resource-workspace .rw-unlock-actions p{text-align:center}}
 .resource-workspace .rw-book-status:empty{display:none}
 .resource-workspace .rw-delete-book{color:var(--warn);border-color:var(--warn)}
 .resource-workspace .rw-deleted-books > div{display:flex;align-items:center;justify-content:space-between;gap:12px;min-width:0;padding:10px 0}
