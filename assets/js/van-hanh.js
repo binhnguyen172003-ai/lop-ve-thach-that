@@ -38,6 +38,8 @@ export function batDau(ctx) {
   const cached = C.fastData?.read(C.mail, cacheRole, "operations");
   if (cached) Object.assign(D, cached, { loi: "" });
   D.caReady = cached?.caReady === true;
+  const savedShifts = C.fastData?.read(C.mail, cacheRole, "shifts");
+  if (savedShifts && Array.isArray(savedShifts.ca)) { D.ca = savedShifts.ca; D.caReady = true; }
   const { db, fs: { collection, query, orderBy, where, limit, onSnapshot } } = C;
   const nghe = (q, fn) => {
     let received = false;
@@ -54,7 +56,7 @@ export function batDau(ctx) {
     huy.push(u); C.themHuy(u);
   };
   // Lịch ca được đăng ký trước các dữ liệu vận hành khác.
-  if (C.isTeacher) nghe(query(collection(db, "caday"), orderBy("ngay")), r => { D.ca = r; D.caReady = true; if (C.doiCa) C.doiCa(); });
+  if (C.isTeacher) nghe(query(collection(db, "caday"), orderBy("ngay")), r => { D.ca = r; D.caReady = true; C.fastData?.write(C.mail, cacheRole, "shifts", { ca: r }); if (C.doiCa) C.doiCa(); });
   nghe(query(collection(db, "thithu"), orderBy("tao", "desc")), r => D.thi = r);
   nghe(C.isTeacher ? collection(db, "thithubai") : query(collection(db, "thithubai"), where("mail", "==", C.mail)), r => D.bai = r);
   nghe(collection(db, "trucnhat"), r => { D.truc = {}; r.forEach(x => D.truc[x.id] = x); });
