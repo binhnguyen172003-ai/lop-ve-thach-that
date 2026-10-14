@@ -4429,3 +4429,22 @@ body:has(#toast:not([hidden])) .tl-bong,body:has(#server-issue:not([hidden])) .t
 .ql-pagination { display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:12px; margin:16px 0; }
 .ql-pagination > span { text-align:center; overflow-wrap:anywhere; }
 .ql-pagination .btn { min-height:44px; }
+
+/* Thẻ giáo viên: nền đặc để không xuyên chữ từ thẻ phía sau. */
+#giao-vien .gv-stage .gv-in{background:var(--sheet);-webkit-backdrop-filter:none;backdrop-filter:none;isolation:isolate;grid-template-rows:auto auto 1fr}
+#giao-vien .gv-txt{background:var(--sheet);position:relative;z-index:1;gap:4px;line-height:1.4}
+#giao-vien .gv-vt{line-height:1.4;letter-spacing:.04em}
+#giao-vien .gv-ten{line-height:1.35}
+#giao-vien .gv-edit-tools{top:8px;right:8px;gap:6px}
+#giao-vien .gv-edit-tools button{display:grid;place-items:center;min-width:44px;min-height:44px;padding:6px 10px;border-radius:12px;font-size:.8rem;line-height:1.2}
+@media(max-width:640px){
+  #giao-vien .sec-head{gap:10px;margin-bottom:14px}
+  #giao-vien #h-gv{font-size:clamp(1.55rem,7vw,2rem);line-height:1.25}
+  #giao-vien #gv-manage{justify-content:flex-start;margin:0 0 12px}
+  #giao-vien #gv-add{min-height:44px;padding:10px 16px;font-size:.88rem}
+  #giao-vien .gv-bai{aspect-ratio:auto;height:160px;min-height:160px}
+  #giao-vien .gv-bai-trong{padding-top:36px;padding-bottom:14px}
+  #giao-vien .gv-ava{width:52px;height:52px;margin-top:-26px;z-index:2}
+  #giao-vien .gv-txt{padding:8px 12px 14px}
+  #giao-vien .gv-ng{font-size:.8rem;line-height:1.5}
+}
