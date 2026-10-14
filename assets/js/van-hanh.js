@@ -37,6 +37,7 @@ export function batDau(ctx) {
   const cacheRole = C.isAdmin ? "admin" : C.isTeacher ? "teacher" : "student";
   const cached = C.fastData?.read(C.mail, cacheRole, "operations");
   if (cached) Object.assign(D, cached, { loi: "" });
+  D.caReady = cached?.caReady === true;
   const { db, fs: { collection, query, orderBy, where, limit, onSnapshot } } = C;
   const nghe = (q, fn) => {
     let received = false;
@@ -52,11 +53,12 @@ export function batDau(ctx) {
     }, e => { if (C !== ctx) return; D.loi = (e && e.code) || "loi"; ve(); });
     huy.push(u); C.themHuy(u);
   };
+  // Lịch ca được đăng ký trước các dữ liệu vận hành khác.
+  if (C.isTeacher) nghe(query(collection(db, "caday"), orderBy("ngay")), r => { D.ca = r; D.caReady = true; if (C.doiCa) C.doiCa(); });
   nghe(query(collection(db, "thithu"), orderBy("tao", "desc")), r => D.thi = r);
   nghe(C.isTeacher ? collection(db, "thithubai") : query(collection(db, "thithubai"), where("mail", "==", C.mail)), r => D.bai = r);
   nghe(collection(db, "trucnhat"), r => { D.truc = {}; r.forEach(x => D.truc[x.id] = x); });
   if (C.isTeacher) {
-    nghe(query(collection(db, "caday"), orderBy("ngay")), r => { D.ca = r; if (C.doiCa) C.doiCa(); });
     nghe(C.isAdmin ? collection(db, "doica") : query(collection(db, "doica"), where("tu", "==", C.mail)), r => D.doica = r.sort((a, b) => b.luc - a.luc));
     nghe(query(collection(db, "bangiao"), orderBy("luc", "desc"), limit(80)), r => D.bg = r);
     nghe(collection(db, "suco"), r => D.suco = r.sort((a, b) => b.luc - a.luc));
@@ -74,7 +76,7 @@ export function batDau(ctx) {
   ve();
 }
 export function dung() {
-  clearTimeout(cacheTimer); cancelAnimationFrame(veHen);
+  clearTimeout(cacheTimer); cancelAnimationFrame(veHen); D.caReady = false;
   huy.forEach(u => { try { u(); } catch (e) {} }); huy = []; C = null; clearInterval(dongHo); anhThi = [];
   Object.assign(D, { thi: [], bai: [], ca: [], doica: [], bg: [], suco: [], truc: {}, kt: [], nk: [], bl: [], dc: [], sua: [], loi: "" });
   ["#tt-body", "#vh-body"].forEach(s => { if ($(s)) $(s).innerHTML = ""; });
@@ -93,7 +95,7 @@ export function capNhatGiaoVien() {
   if (ds.some(([id]) => id === cu)) sel.value = cu;
 }
 // ca đã xếp trong ngày (trang Điểm danh dùng để chỉ mở cơ sở anh chị được phân công); null khi chưa tải xong
-export const caNgay = ngay => C && C.isTeacher && !D.loi ? D.ca.filter(c => c.ngay === ngay) : null;
+export const caNgay = ngay => C && C.isTeacher && D.caReady && !D.loi ? D.ca.filter(c => c.ngay === ngay) : null;
 
 const hopLoi = () => `<div class="vh-loi"><b>Tính năng mới chưa bật được trên máy chủ.</b>
   <p>${C.isAdmin ? "Anh chị vào <b>Quản lý</b> → khung kiểm tra máy chủ → <b>Sao chép luật mới</b> → dán vào Firebase → <b>Publish</b>. Xong tải lại trang." : "Quản lý lớp cần cập nhật luật bảo mật. Em báo anh chị giúp nhé."}</p>
@@ -421,6 +423,7 @@ function moXoaCa(c) {
   h.el.querySelector("#sc-xoa").onclick = async e => { if (await guiNut(e.target, () => C.fs.deleteDoc(C.fs.doc(C.db, "caday", c.id)), "Đã gỡ khỏi ca ✓")) h.dong(); };
 }
 function dsCa() {
+  if (!D.caReady) return `<p class="muted vh-trong" role="status">Đang tải lịch ca dạy…</p>`;
   const hom = C.homNay(), het = (() => { const d = new Date(hom + "T12:00:00"); d.setDate(d.getDate() + 14); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; })();
   const caoCa = c => CA_HOC.findIndex(x => x.ma === c.ca);
   const ds = D.ca.filter(c => c.ngay >= hom && c.ngay <= het && (!chiCaToi || c.gv === C.mail)).sort((a, b) => a.ngay.localeCompare(b.ngay) || caoCa(a) - caoCa(b));
@@ -473,6 +476,7 @@ async function luuTKBO(sel) {
   finally { sel.disabled = false; }
 }
 function lichPhanCong() {
+  if (!D.caReady) return `<p class="muted" role="status">Đang tải lịch phân công…</p>`;
   if (!csLich || !CO_SO.includes(csLich)) csLich = CO_SO[0];
   const goc = new Date(C.homNay() + "T12:00:00"); goc.setDate(goc.getDate() - ((goc.getDay() + 6) % 7) + 7 * tuanLich); // thứ 2 của tuần
   const ngay = Array.from({ length: 7 }, (_, i) => { const d = new Date(goc); d.setDate(d.getDate() + i); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; });
