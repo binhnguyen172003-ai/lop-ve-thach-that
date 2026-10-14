@@ -1,4 +1,4 @@
-import { createSessionData } from "./session-data.js?v=20261013sync2";
+import { createSessionData } from "./session-data.js?v=20261014audit1";
 import { ngayVietNam, ngaySinhHopLe, hienNgaySinh, denSinhNhat } from "./sinh-nhat.js?v=20261011birthday";
 // =====================================================================
 //  LOGIC CỦA WEB — thường không cần sửa file này.
@@ -91,8 +91,8 @@ const troLyPromise = import("./tro-ly.js?v=20261013teacherNotice").catch(e => co
 // Thi thử + vận hành lớp: chỉ tải khi đã đăng nhập vào học
 let vanHanhP = null, vanHanhM = null;
 let tacVuP = null, tacVuM = null;
-const taiTacVu = () => tacVuP ||= import("./tac-vu.js?v=20261013sync2").then(m => tacVuM = m).catch(e => { tacVuP = null; console.warn("Chưa tải được phần tác vụ", e); });
-const taiVanHanh = () => vanHanhP ||= import("./van-hanh.js?v=20261014layout").then(m => vanHanhM = m).catch(e => { vanHanhP = null; console.warn("Chưa tải được phần vận hành", e); });
+const taiTacVu = () => tacVuP ||= import("./tac-vu.js?v=20261014audit1").then(m => tacVuM = m).catch(e => { tacVuP = null; console.warn("Chưa tải được phần tác vụ", e); });
+const taiVanHanh = () => vanHanhP ||= import("./van-hanh.js?v=20261014audit1").then(m => vanHanhM = m).catch(e => { vanHanhP = null; console.warn("Chưa tải được phần vận hành", e); });
 window.__appOk = true;
 document.querySelectorAll(".slow-bar").forEach(el => el.remove());
 
@@ -163,7 +163,7 @@ if ("serviceWorker" in navigator && (location.protocol === "https:" || ["localho
       banner.append(message, button); document.body.prepend(banner);
     }
   });
-  const register = () => navigator.serviceWorker.register("sw.js?v=20261013sync2", { updateViaCache: "none" })
+  const register = () => navigator.serviceWorker.register("sw.js?v=20261014audit1", { updateViaCache: "none" })
     .then(reg => { swRegistration = reg; checkUpdate(); }).catch(() => {});
   register(); // Không chờ ảnh/video tải xong mới kiểm tra bản mới.
   addEventListener("online", checkUpdate);
@@ -702,7 +702,7 @@ function renderGallery() {
   const gSig = [galFilter, !!user, isAdmin, !!isTeacher,galList.map(b => [b.id || "", b.luc || 0, b.anh ? b.anh.length : 0, b.hang, b.hocVien, b.loai, b.moTa, b.ghiChu, b.biDanh, biDanhCua(b), b.chucVu, b.mau].join("~")).join("|")].join("#");
   if (gSig === gallerySig) return; gallerySig = gSig;
   $("#gallery").innerHTML = galList.map((b, i) =>
-    `<div class="gal-o"><button type="button" class="gal-b" data-gi="${i}" aria-label="Xem lớn bài vẽ ${i + 1}"><img src="${esc(b.anh)}" alt="${esc(b.moTa || b.ghiChu || "Bài vẽ học viên")}" ${i < 6 ? 'loading="eager" fetchpriority="high"' : 'loading="lazy"'} decoding="async" width="300" height="400">
+    `<div class="gal-o"><button type="button" class="gal-b" data-gi="${i}" aria-label="Xem lớn bài vẽ ${i + 1}"><img src="${esc(b.anh)}" alt="${esc(b.moTa || b.ghiChu || "Bài vẽ học viên")}" loading="lazy" decoding="async" width="300" height="400">
       <span class="cap">${esc(b.hocVien || "")}${biDanhCua(b) ? `<em class="bd">${esc(biDanhCua(b))}</em>` : ""}${b.loai ? `<small>${esc(b.loai)}</small>` : ""}</span>${b.hang ? `<span class="gal-top">TOP ${Number(b.hang)}</span>` : ""}</button>
       ${linkAnToan(b.link) ? `<a class="gal-link" href="${esc(linkAnToan(b.link))}" target="_blank" rel="noopener" aria-label="Mở link kèm bài">↗</a>` : ""}
       ${isAdmin && b.id ? `<button type="button" class="nb-more gal-more" data-mn="${esc(b.id)}" aria-label="Tuỳ chọn: sửa thông tin, xoá bài">⋮</button>` : xoaDuoc(b) ? `<button type="button" class="gal-x" data-xbv="${esc(b.id)}" aria-label="Xoá bài này">Xoá</button>` : ""}</div>`).join("");
@@ -1447,10 +1447,10 @@ function renderGiaoVien() {
     const t = g.truong ? TRUONG[g.truong] : null;
     return `<article class="gv${g.chinh ? " chinh" : ""}" data-i="${i}" aria-roledescription="thẻ" aria-label="${i + 1} / ${n}: ${esc(g.ten)}">
       <button type="button" class="gv-in" data-i="${i}" tabindex="-1">
-        ${g.anh ? `<img class="gv-bai${g.bai ? " gv-art-full" : ""}" src="${esc(g.bai || IMG + g.anh + "-bai.jpg")}" alt="Bài vẽ của ${esc(g.ten)}" ${i < 2 ? 'loading="eager"' : 'loading="lazy"'} decoding="async" width="348" height="234" draggable="false">`
+        ${g.anh ? `<img class="gv-bai${g.bai ? " gv-art-full" : ""}" src="${esc(g.bai || IMG + g.anh + "-bai.jpg")}" alt="Bài vẽ của ${esc(g.ten)}" loading="lazy" decoding="async" width="348" height="234" draggable="false">`
           : g.chinh ? `<span class="gv-bai gv-bai-trong"><b>6</b><small>năm đứng lớp<br>luyện thi năng khiếu</small></span>`
           : `<span class="gv-bai gv-bai-trong alt"><b>${esc(String(g.khoi || "").replace("Khối ", ""))}</b><small>${esc(g.vaiTro)} ${esc(g.khoi)}</small></span>`}
-        <span class="gv-ava">${g.anh ? `<img src="${esc(g.avatar || IMG + g.anh + ".jpg")}" alt="" ${i < 2 ? 'loading="eager"' : 'loading="lazy"'} decoding="async" width="96" height="96" draggable="false">` : `<i>${esc(initials(g.ten))}</i>`}</span>
+        <span class="gv-ava">${g.anh ? `<img src="${esc(g.avatar || IMG + g.anh + ".jpg")}" alt="" loading="lazy" decoding="async" width="96" height="96" draggable="false">` : `<i>${esc(initials(g.ten))}</i>`}</span>
         <span class="gv-txt">
           <span class="gv-vt">${esc(g.vaiTro)} · ${esc(g.khoi)}</span>
           <b class="gv-ten">${esc(g.ten)}</b>
@@ -4570,12 +4570,34 @@ setInterval(() => { try { if (user) capNhatNhac(); } catch (e) {} }, 60000);
 /* ----- Tác vụ: xem assets/js/tac-vu.js (giao việc, trạng thái, bình luận, Kanban) ----- */
 
 /* ---------- Đăng nhập ---------- */
-function stopListeners() { unsubs.forEach(u => u()); unsubs = []; if (vanHanhM) vanHanhM.dung(); if (tacVuM) tacVuM.dung(); }
+let listenerGeneration = 0;
+function stopListeners() { listenerGeneration++; unsubs.forEach(u => u()); unsubs = []; if (vanHanhM) vanHanhM.dung(); if (tacVuM) tacVuM.dung(); }
 function listen(q, fn, onError) {
-  const t = performance.now(), session = user; let first = true;
+  const t = performance.now(), session = user, generation = listenerGeneration; let first = true, serverSeen = false;
   const name = q.path || (q._query && q._query.path && q._query.path.segments && q._query.path.segments.join("/")) || "dữ liệu";
-  unsubs.push(onSnapshot(q, { includeMetadataChanges: true }, snap => { if (user !== session || (snap.metadata?.fromCache && (Array.isArray(snap.docs) ? !snap.docs.length : !snap.exists()))) return; if (first) { first = false; mark("Tải " + name, t); } fn(snap); },
-    e => { if (user !== session) return; mark("✗ LỖI tải " + name + ": " + (e && e.code), t); serverIssue(e); onError?.(e); }));
+  unsubs.push(onSnapshot(q, { includeMetadataChanges: true }, snap => { if (generation !== listenerGeneration || user !== session || (snap.metadata?.fromCache && (Array.isArray(snap.docs) ? !snap.docs.length : !snap.exists()))) return;
+    const fromServer = !snap.metadata?.fromCache;
+    // Keep the first server confirmation so sync indicators settle, skip metadata-only redraws after it.
+    if (!first && (!fromServer || serverSeen) && typeof snap.docChanges === "function" && !snap.docChanges().length) return;
+    if (fromServer) serverSeen = true;
+    if (first) { first = false; mark("Tải " + name, t); } fn(snap); },
+    e => { if (generation !== listenerGeneration || user !== session) return; mark("✗ LỖI tải " + name + ": " + (e && e.code), t); serverIssue(e); onError?.(e); }));
+}
+
+// Open this collection only when its page is visible; dispose the listener when leaving.
+function listenOnPage(page, q, fn) {
+  const session = user, generation = listenerGeneration;
+  let stop = null;
+  const sync = () => {
+    if (generation !== listenerGeneration || user !== session) return;
+    const visible = !$("#v-" + page)?.hidden;
+    if (visible && !stop) stop = onSnapshot(q, snap => {
+      if (generation === listenerGeneration && user === session && !$("#v-" + page)?.hidden) fn(snap);
+    }, e => { if (generation === listenerGeneration && user === session) serverIssue(e); });
+    else if (!visible && stop) { stop(); stop = null; }
+  };
+  addEventListener("hashchange", sync); sync();
+  unsubs.push(() => { removeEventListener("hashchange", sync); stop?.(); stop = null; });
 }
 
 /* ---------- Nhớ phiên đăng nhập để trang hiện ngay, không phải chờ ---------- */
@@ -4850,7 +4872,7 @@ async function onUser(u) {
     listen(collection(db, "nhanxet"), snap => {
       feedbackAll = {}; snap.docs.forEach(d => feedbackAll[d.id] = d.data()); staffReady.add("feedback"); if (!snap.metadata?.fromCache) staffSynced.add("feedback"); refreshStaffData();
     });
-    listen(collection(db, "anhbaitap"), snap => { anhBaiTapAll = {}; snap.docs.forEach(d => anhBaiTapAll[d.id] = d.data()); renderHomework(); });
+    listenOnPage("bai-tap", collection(db, "anhbaitap"), snap => { anhBaiTapAll = {}; snap.docs.forEach(d => anhBaiTapAll[d.id] = d.data()); renderHomework(); });
   }
   lvStart();
   if (!$("#v-lam-viec").hidden) lvOnShow();
@@ -5689,7 +5711,8 @@ document.addEventListener("click", e => {
 });
 
 /* ---------- Trang Quản lý: học viên đi học · tiến độ · % đỗ ---------- */
-let qlLoc = { cs: "", sx: "can", q: "" };
+let qlLoc = { cs: "", sx: "can", q: "", page: 0 };
+const QL_PAGE_SIZE = 30;
 let qlRosterError = "";
 addEventListener("hashchange", () => {
   if (isAdmin && ["#duyet", "#ql-tong", "#ql-top5"].includes(location.hash)) renderQL();
@@ -5716,7 +5739,10 @@ function renderQL() {
       : ({ bad: 0, warn: 1, ok: 2 }[a.t.keys.length ? a.t.muc : "ok"] - { bad: 0, warn: 1, ok: 2 }[b.t.keys.length ? b.t.muc : "ok"]) || (a.t.pass ?? 101) - (b.t.pass ?? 101));
   const dangGo = document.activeElement && document.activeElement.id === "ql-q";
   const tong = lessons.length || 0;
-  const bang = rows.length ? rows.map(({ r, t, daHoc, nop, tuan }) => `<tr class="${t.keys.length ? t.muc : ""}">
+  const pages = Math.max(1, Math.ceil(rows.length / QL_PAGE_SIZE));
+  qlLoc.page = Math.min(qlLoc.page, pages - 1);
+  const visibleRows = rows.slice(qlLoc.page * QL_PAGE_SIZE, (qlLoc.page + 1) * QL_PAGE_SIZE);
+  const bang = rows.length ? visibleRows.map(({ r, t, daHoc, nop, tuan }) => `<tr class="${t.keys.length ? t.muc : ""}">
       <td data-l="Học viên"><div><b>${esc(r.ten)}</b><span class="muted">${esc(r.chuongTrinh || r.lop || t.khoi)}${r.coso ? " · " + esc(r.coso) : ""}</span></div></td>
       <td data-l="Đi học" class="num"><div><b>${tuan}</b> buổi tuần này<span class="muted">${t.records28 ? t.co28 + " buổi / 4 tuần" : "chưa điểm danh"}${t.streak >= 2 ? ` · vắng liền ${t.streak}` : ""}</span></div></td>
       <td data-l="Chuyên cần" class="num"><div>${t.att === null ? "–" : Math.round(t.att * 100) + "%"}</div></td>
@@ -5741,6 +5767,7 @@ function renderQL() {
       <label>Xếp theo<select id="ql-sx">${[["can", "Cần nhắc trước"], ["do", "% đỗ thấp → cao"], ["it", "Đi học ít nhất"], ["ten", "Tên A–Z"]].map(([v, t]) => `<option value="${v}"${qlLoc.sx === v ? " selected" : ""}>${t}</option>`).join("")}</select></label>
     </div>
     <div class="ql-bang-w"><table class="ql-bang"><thead><tr><th>Học viên</th><th>Đi học</th><th>Chuyên cần</th><th>Tiến độ giáo trình</th><th>Bài tập</th><th>Dự báo đỗ</th><th></th></tr></thead><tbody>${bang}</tbody></table></div>
+    ${rows.length > QL_PAGE_SIZE ? `<div class="ql-pagination" role="navigation" aria-label="Trang học viên"><button type="button" class="btn small" data-ql-page="prev" ${qlLoc.page === 0 ? "disabled" : ""}>Trang trước</button><span role="status">${qlLoc.page * QL_PAGE_SIZE + 1}–${Math.min(rows.length, (qlLoc.page + 1) * QL_PAGE_SIZE)} / ${rows.length} học viên</span><button type="button" class="btn small" data-ql-page="next" ${qlLoc.page === pages - 1 ? "disabled" : ""}>Trang sau</button></div>` : ""}
     <p class="muted ql-ghi">% đỗ là ước tính từ giờ học, chuyên cần và điểm bài tập — dùng để biết em nào cần kèm thêm, không phải cam kết với phụ huynh. "Tin PH" chép sẵn tin nhắn gửi Zalo phụ huynh.</p>`;
   if (!window.__rosterReady && !roster.length) {
     box.querySelectorAll(".ql-kpi b").forEach(e => e.textContent = "–");
@@ -5765,10 +5792,14 @@ function renderQL() {
     const note = document.createElement("p"); note.className = "muted ql-sync-note"; note.setAttribute("role", "status");
     note.textContent = "Đang đồng bộ dữ liệu mới từ máy chủ…"; box.prepend(note);
   }
-  const q = $("#ql-q"); q.oninput = () => { qlLoc.q = q.value; renderQL(); };
-  if (dangGo) { q.focus(); q.setSelectionRange(q.value.length, q.value.length); }
-  $("#ql-cs").onchange = e => { qlLoc.cs = e.target.value; renderQL(); };
-  $("#ql-sx").onchange = e => { qlLoc.sx = e.target.value; renderQL(); };
+  const q = $("#ql-q"); q.oninput = () => { qlLoc.q = q.value; qlLoc.page = 0; renderQL(); };
+  if (dangGo) { q.focus({ preventScroll: true }); q.setSelectionRange(q.value.length, q.value.length); }
+  box.querySelectorAll('[data-ql-page]').forEach(button => button.onclick = () => {
+    qlLoc.page += button.dataset.qlPage === "next" ? 1 : -1;
+    renderQL(); cuonToi($("#ql-q"));
+  });
+  $("#ql-cs").onchange = e => { qlLoc.cs = e.target.value; qlLoc.page = 0; renderQL(); };
+  $("#ql-sx").onchange = e => { qlLoc.sx = e.target.value; qlLoc.page = 0; renderQL(); };
   $$("#ql-tong [data-qlmsg]").forEach(b => b.onclick = () => { const x = all.find(o => o.r.id === b.dataset.qlmsg); if (!x) return;
     const msg = tinNhanPhuHuynh(x.r, x.t);
     try { navigator.clipboard.writeText(msg).then(() => toast("Đã chép tin nhắn. Dán vào Zalo gửi phụ huynh."), () => moHop(`<h3>Tin nhắn phụ huynh</h3><textarea class="dd-msg" readonly rows="8">${esc(msg)}</textarea>`)); }

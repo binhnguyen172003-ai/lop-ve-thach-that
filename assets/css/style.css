@@ -4425,3 +4425,7 @@ body:has(#toast:not([hidden])) .tl-bong,body:has(#server-issue:not([hidden])) .t
   .ql-art-actions{display:grid;justify-items:start;gap:6px}
   .ql-art-actions .btn{width:100%;font-size:.88rem}
 }
+/* Student list pagination: bounded rows, keyboard/touch-friendly wrapping. */
+.ql-pagination { display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:12px; margin:16px 0; }
+.ql-pagination > span { text-align:center; overflow-wrap:anywhere; }
+.ql-pagination .btn { min-height:44px; }

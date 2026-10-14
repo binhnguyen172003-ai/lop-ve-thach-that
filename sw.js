@@ -19,14 +19,22 @@ self.addEventListener("activate", e => {
     .then(() => self.clients.claim()));
 });
 
-const luu = (ten, req, res) => { if (res && res.ok) { const c = res.clone(); caches.open(ten).then(x => x.put(req, c)); } return res; };
-// Lấy từ bộ nhớ trước (nhanh nhất), không có mới tải mạng.
-const nhoTruoc = (ten, req) => caches.match(req).then(r => r || fetch(req).then(res => luu(ten, req, res)));
-// Trả bản đã lưu ngay, đồng thời tải bản mới cho lần sau.
-const nhoRoiCapNhat = (ten, req) => caches.match(req).then(r => {
-  const moi = fetch(req).then(res => luu(ten, req, res)).catch(() => r);
-  return r || moi;
-});
+// Cache failures (quota/private browsing) must never turn a successful download into an error.
+const luu = (event, ten, req, res) => {
+  if (res && res.ok) {
+    const copy = res.clone();
+    event.waitUntil(caches.open(ten).then(cache => cache.put(req, copy)).catch(() => {}));
+  }
+  return res;
+};
+const docNho = (ten, req) => caches.open(ten).then(cache => cache.match(req)).catch(() => undefined);
+const nhoTruoc = (event, ten, req) => docNho(ten, req).then(saved => saved || fetch(req).then(res => luu(event, ten, req, res)));
+const nhoRoiCapNhat = (event, ten, req) => {
+  const saved = docNho(ten, req);
+  const fresh = fetch(req).then(res => luu(event, ten, req, res));
+  event.waitUntil(fresh.catch(() => {}));
+  return saved.then(res => res || fresh);
+};
 
 self.addEventListener("fetch", e => {
   const req = e.request;
@@ -37,7 +45,7 @@ self.addEventListener("fetch", e => {
   if (req.mode === "navigate" && url.origin === self.location.origin) {
     e.respondWith((async () => {
       const matMang = async () => (await caches.match("./offline.html")) || (await caches.match("./"));
-      const mang = fetch(req, { cache: "no-cache" }).then(res => { if (res.ok) { const c = res.clone(); e.waitUntil(caches.open(TRANG).then(x => x.put("./", c))); } return res; });
+      const mang = fetch(req, { cache: "no-cache" }).then(res => { if (res.ok) { const c = res.clone(); e.waitUntil(caches.open(TRANG).then(x => x.put("./", c)).catch(() => {})); } return res; });
       // Khi có mạng, dùng HTML mới ngay; chỉ trả bản lưu khi tải mạng thất bại.
       // Không hiện giao diện cũ trong lúc chờ rồi buộc người dùng tải lại lần nữa.
       return mang.catch(async () => (await caches.match("./")) || matMang());
@@ -46,11 +54,11 @@ self.addEventListener("fetch", e => {
   }
   if (url.origin === self.location.origin) {
     // File có mã phiên bản không bao giờ đổi nội dung → lấy từ bộ nhớ luôn.
-    e.respondWith(url.searchParams.has("v") ? nhoTruoc(TRANG, req) : nhoRoiCapNhat(TRANG, req));
+    e.respondWith(url.searchParams.has("v") ? nhoTruoc(e, TRANG, req) : nhoRoiCapNhat(e, TRANG, req));
     return;
   }
-  if (url.hostname === "www.gstatic.com" && url.pathname.startsWith("/firebasejs/")) { e.respondWith(nhoTruoc(THU_VIEN, req)); return; }
-  if (url.hostname === "fonts.gstatic.com") { e.respondWith(nhoTruoc(THU_VIEN, req)); return; }
-  if (url.hostname === "fonts.googleapis.com") { e.respondWith(nhoRoiCapNhat(THU_VIEN, req)); return; }
+  if (url.hostname === "www.gstatic.com" && url.pathname.startsWith("/firebasejs/")) { e.respondWith(nhoTruoc(e, THU_VIEN, req)); return; }
+  if (url.hostname === "fonts.gstatic.com") { e.respondWith(nhoTruoc(e, THU_VIEN, req)); return; }
+  if (url.hostname === "fonts.googleapis.com") { e.respondWith(nhoRoiCapNhat(e, THU_VIEN, req)); return; }
   // Còn lại (đăng nhập Google, dữ liệu Firestore, gửi email) đi thẳng, không đụng tới.
 });

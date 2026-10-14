@@ -32,3 +32,30 @@ test('Quản lý mở được bảng học viên từ phiên đã lưu khi máy
   await page.evaluate(() => window.adminContentFixture([]));
   await expect(page.locator('.ql-bang')).toContainText('Chưa có học viên nào được duyệt');
 });
+
+test('550 học viên: phân trang, tìm toàn bộ danh sách, giao diện dài không tràn', async ({ page }) => {
+  await page.route('https://**/*', route => route.abort());
+  await page.addInitScript(() => localStorage.setItem('lvkv-phien', JSON.stringify({mail:'fixture@example.com',ten:'Thử nghiệm',isAdmin:true,isTeacher:true})));
+  await page.route('**/assets/js/app.js?*', async route => {
+    const source=await readFile(new URL('../assets/js/app.js',import.meta.url),'utf8');
+    await route.fulfill({contentType:'text/javascript',body:source+`\nwindow.auditFixture=()=>{roster=Array.from({length:550},(_,i)=>({id:'fixture-'+i,ten:'Học viên thử nghiệm '+i,coso:'Bình Phú',khoi:'Khối H'}));window.__rosterReady=true;renderQL();};`});
+  });
+  await page.goto('/#duyet'); await page.waitForFunction(()=>window.auditFixture);
+  await page.evaluate(()=>window.auditFixture());
+  await expect(page.locator('.ql-bang tbody tr')).toHaveCount(30);
+  await expect(page.locator('.ql-pagination')).toContainText('1–30 / 550');
+  await page.getByRole('button',{name:'Trang sau',exact:true}).click();
+  await expect(page.locator('.ql-pagination')).toContainText('31–60 / 550');
+  await page.locator('#ql-q').fill('549');
+  await expect(page.locator('.ql-bang tbody tr')).toHaveCount(1);
+  await expect(page.locator('.ql-bang')).toContainText('Học viên thử nghiệm 549');
+  await page.locator('#ql-q').fill('');
+  await expect(page.locator('.ql-pagination')).toContainText('1–30 / 550');
+  for(const width of [320,390,768,1366]) {
+    await page.setViewportSize({width,height:844});
+    for(const theme of ['light','dark']) {
+      await page.evaluate(theme=>document.documentElement.dataset.theme=theme,theme);
+      expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBeTruthy();
+    }
+  }
+});
