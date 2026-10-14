@@ -42,7 +42,7 @@
 <meta name="apple-mobile-web-app-title" content="Vẽ Không Vui">
 <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
 <!-- Học viên đã đăng nhập / đang mở trang học: tải sẵn thư viện ngay. Khách xem giới thiệu thì để sau. -->
-<script>try{var h=location.hash.slice(1),c=JSON.parse(localStorage.getItem("lvkv-phien")||"null");if(/^(tong-quan|khoa-hoc|ebook|giao-trinh|bai-tap|tai-khoan|duyet|diem-danh|lam-viec|thi-thu|van-hanh)$/.test(h)||(c&&c.mail)){["app","auth","firestore"].forEach(function(n){var l=document.createElement("link");l.rel="modulepreload";l.href="https://www.gstatic.com/firebasejs/10.12.2/firebase-"+n+".js";document.head.appendChild(l)})}}catch(e){}</script>
+<script>try{var h=location.hash.slice(1),c=JSON.parse(localStorage.getItem("lvkv-phien")||"null");if(/^(tong-quan|khoa-hoc|ebook|giao-trinh|bai-tap|tai-khoan|duyet|diem-danh|lam-viec|thi-thu|van-hanh)$/.test(h)||(c&&c.mail)){if(h==="van-hanh"){var v=document.createElement("link");v.rel="modulepreload";v.href="assets/js/van-hanh.js?v=20261014audit1";document.head.appendChild(v)}["app","auth","firestore"].forEach(function(n){var l=document.createElement("link");l.rel="modulepreload";l.href="https://www.gstatic.com/firebasejs/10.12.2/firebase-"+n+".js";document.head.appendChild(l)})}}catch(e){}</script>
 <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
