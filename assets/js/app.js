@@ -87,7 +87,13 @@ const $ = s => document.querySelector(s);
 // Máy đã bật khoá vân tay: che nội dung ngay khi web mở, trước khi dữ liệu đã lưu kịp hiện ra
 vanTay.khoiDong({ dangXuat: () => document.getElementById("btn-switch")?.click() });
 // Trợ lý (chat + nhắc việc) tải riêng, không làm chậm trang
-const troLyPromise = import("./tro-ly.js?v=20261013teacherNotice").catch(e => console.warn("Chưa tải được trợ lý", e));
+// Cho trình duyệt vẽ giao diện trước khi chạy các tác vụ phụ lúc mở app.
+const sauKhungDau = fn => requestAnimationFrame(() => requestAnimationFrame(() => {
+  if ("requestIdleCallback" in window) window.requestIdleCallback(fn, { timeout: 2000 });
+  else setTimeout(fn, 150);
+}));
+const troLyPromise = new Promise(resolve => sauKhungDau(() => resolve(import("./tro-ly.js?v=20261013teacherNotice"))))
+  .catch(e => console.warn("Chưa tải được trợ lý", e));
 // Thi thử + vận hành lớp: chỉ tải khi đã đăng nhập vào học
 let vanHanhP = null, vanHanhM = null;
 let tacVuP = null, tacVuM = null;
@@ -165,7 +171,7 @@ if ("serviceWorker" in navigator && (location.protocol === "https:" || ["localho
   });
   const register = () => navigator.serviceWorker.register("sw.js?v=20261014audit1", { updateViaCache: "none" })
     .then(reg => { swRegistration = reg; checkUpdate(); }).catch(() => {});
-  register(); // Không chờ ảnh/video tải xong mới kiểm tra bản mới.
+  sauKhungDau(register); // Kiểm tra bản mới sau khung hình đầu, không chờ ảnh/video.
   addEventListener("online", checkUpdate);
   addEventListener("pageshow", checkUpdate);
   document.addEventListener("visibilitychange", checkUpdate);
