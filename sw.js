@@ -14,9 +14,16 @@ self.addEventListener("install", e => {
   self.skipWaiting();
 });
 self.addEventListener("activate", e => {
-  e.waitUntil(caches.keys()
-    .then(ks => Promise.all(ks.filter(k => k.startsWith("lvkv-trang-") && k !== TRANG).map(k => caches.delete(k))))
-    .then(() => self.clients.claim()));
+  e.waitUntil((async () => {
+    // Bắt đầu tải trang song song với lúc worker khởi động khi mở lại app.
+    // Trình duyệt cũ vẫn dùng đường fetch thông thường.
+    if (self.registration.navigationPreload) {
+      await self.registration.navigationPreload.enable().catch(() => {});
+    }
+    const ks = await caches.keys();
+    await Promise.all(ks.filter(k => k.startsWith("lvkv-trang-") && k !== TRANG).map(k => caches.delete(k)));
+    await self.clients.claim();
+  })());
 });
 
 // Cache failures (quota/private browsing) must never turn a successful download into an error.
@@ -45,7 +52,12 @@ self.addEventListener("fetch", e => {
   if (req.mode === "navigate" && url.origin === self.location.origin) {
     e.respondWith((async () => {
       const matMang = async () => (await caches.match("./offline.html")) || (await caches.match("./"));
-      const mang = fetch(req, { cache: "no-cache" }).then(res => { if (res.ok) { const c = res.clone(); e.waitUntil(caches.open(TRANG).then(x => x.put("./", c)).catch(() => {})); } return res; });
+      const mang = (async () => {
+        const preloaded = await e.preloadResponse?.catch(() => undefined);
+        const res = preloaded?.ok ? preloaded : await fetch(req, { cache: "no-cache" });
+        if (res.ok) { const c = res.clone(); e.waitUntil(caches.open(TRANG).then(x => x.put("./", c)).catch(() => {})); }
+        return res;
+      })();
       // Khi có mạng, dùng HTML mới ngay; chỉ trả bản lưu khi tải mạng thất bại.
       // Không hiện giao diện cũ trong lúc chờ rồi buộc người dùng tải lại lần nữa.
       return mang.catch(async () => (await caches.match("./")) || matMang());
