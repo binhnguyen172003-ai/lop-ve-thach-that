@@ -549,6 +549,7 @@ svg.art{display:block;width:100%;height:auto;aspect-ratio:4/3;color:var(--ink)}
 .mg-name{background:#0b0b0d;color:#fff;padding:10px 12px 12px;display:grid;line-height:1.1}
 .mg-name span{font:500 .92rem var(--f-body);text-transform:uppercase;opacity:.85}
 .mg-yr{font:700 .72rem var(--f-body);font-style:normal;color:#f5c400;letter-spacing:.06em;text-transform:uppercase;margin-top:4px}
+.mg-name > b{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px}.mg-name > b .tsd{margin-left:0}
 .mg-name b{font:900 clamp(1.15rem,2.4vw,1.5rem) var(--f-display);text-transform:uppercase;letter-spacing:.02em}
 .mg-rows{list-style:none;margin:10px auto 0;padding:0;max-width:760px;display:grid;gap:5px}
 .mg-rows > li{background:#0b0b0d;color:#fff}
@@ -1905,18 +1906,19 @@ body.tl-dang-keo{-webkit-user-select:none;user-select:none}
 .bv-pt > summary::-webkit-details-marker{display:none}
 .bv-pt > summary::after{content:" ▾";color:var(--graphite)}
 .bv-pt[open] > summary{border-bottom:1px solid rgba(255,255,255,.08)}
-.pt-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:16px 18px 6px}
+.pt-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;padding:16px 18px 6px}
 .pt-o{padding:12px 14px;border-radius:14px;background:rgba(255,255,255,.04);display:grid;gap:4px}
 .pt-o b{font:800 1.6rem var(--f-display)}.pt-o span{font-size:.78rem;color:var(--graphite)}.pt-o em{color:#ffcf3a;font-style:normal}
 .pt-lon b{color:#ffcf3a}
-.pt-2{display:grid;grid-template-columns:1fr 1fr;gap:22px;padding:12px 18px}
+.pt-2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:22px;padding:12px 18px}
 .pt-2 h4{font:800 .74rem var(--f-display);letter-spacing:.08em;text-transform:uppercase;color:var(--graphite);margin-bottom:8px}
-.pt-r{display:grid;grid-template-columns:80px 1fr 78px;gap:10px;align-items:center;margin:7px 0;font-size:.84rem}
+.pt-r{display:grid;grid-template-columns:80px minmax(0,1fr) 78px;gap:10px;align-items:center;margin:7px 0;font-size:.84rem}
 .pt-r i{height:10px;border-radius:6px;background:rgba(255,255,255,.06);position:relative;overflow:hidden}
 .pt-r i::after{content:"";position:absolute;inset:0;width:var(--w);background:var(--c);border-radius:6px}
 .pt-r b{text-align:right;font-size:.8rem}
 .pt-note{padding:0 18px 16px;font-size:.76rem}
-@media (max-width:760px){.pt-grid{grid-template-columns:1fr 1fr}.pt-2{grid-template-columns:1fr}}
+@media (max-width:1024px){.pt-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:900px){.pt-2{grid-template-columns:minmax(0,1fr)}}
 /* Thầy cộng XP / trao thành tựu */
 .xh-ql{margin:18px 0;padding:18px;border-radius:18px;border:1px solid rgba(255,207,58,.35);background:rgba(255,207,58,.04)}
 .xh-ql[hidden]{display:none}
@@ -4159,13 +4161,13 @@ body:has(#toast:not([hidden])) .tl-bong,body:has(#server-issue:not([hidden])) .t
 }
 
 /* Honor rows: name, badge and score have independent aligned columns. */
-.mg-rows summary{grid-template-columns:32px 52px minmax(0,1fr) 32px 72px;grid-template-rows:auto auto;column-gap:12px;row-gap:5px;padding:14px 16px}
+.mg-rows summary{grid-template-columns:32px minmax(0,104px) minmax(0,1fr) max-content 72px;grid-template-rows:auto auto;column-gap:12px;row-gap:5px;padding:14px 16px}
 .mg-rows .mg-rk{grid-column:1;grid-row:1/3;align-self:center}
-.mg-rows .mg-tr{grid-column:2;grid-row:1/3;align-self:center;justify-self:start}
+.mg-rows .mg-tr{grid-column:2;grid-row:1/3;align-self:center;justify-self:start;min-width:0;max-width:100%;flex-wrap:wrap}.mg-rows .mg-tr i{flex:none;max-width:100%;overflow-wrap:anywhere}
 .mg-rows .mg-nm{display:block;grid-column:3;grid-row:1;font-size:.95rem;line-height:1.4;letter-spacing:0;min-width:0;overflow-wrap:break-word}
 .mg-rows .mg-sub{grid-column:3;grid-row:2;font-size:.75rem;line-height:1.45}
 .mg-rows .mg-award{grid-column:4;grid-row:1/3;display:flex;align-items:center;justify-content:center;min-width:0}
-.mg-rows .mg-award .tsd{margin:0;flex:none;width:28px;min-width:28px}
+.mg-rows .mg-award .tsd{margin:0;flex:none;width:auto;min-width:0}.mg-rows .mg-award .tsd svg{flex:none}
 .mg-rows .mg-sc{grid-column:5;grid-row:1/3;justify-self:end;align-self:center;white-space:nowrap;gap:3px}
 @media(max-width:640px){.mg-rows summary{grid-template-columns:22px 42px minmax(0,1fr) 24px 54px;column-gap:8px;padding:12px 10px}.mg-rows .mg-nm{font-size:.82rem;line-height:1.4}.mg-rows .mg-sub{font-size:.7rem}.mg-rows .mg-award .tsd{width:23px;min-width:23px}.mg-rows .mg-sc b{font-size:1.35rem}}
 
