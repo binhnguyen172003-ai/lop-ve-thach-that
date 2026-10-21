@@ -1,4 +1,5 @@
 import { createSessionData } from "./session-data.js?v=20261014audit1";
+import { DRIVE_BAI_TAP, la2K9, driveURL } from "./drive-bai-tap.js?v=20261021drive";
 import { ngayVietNam, ngaySinhHopLe, hienNgaySinh, denSinhNhat } from "./sinh-nhat.js?v=20261011birthday";
 // =====================================================================
 //  LOGIC CỦA WEB — thường không cần sửa file này.
@@ -2513,6 +2514,50 @@ function suaBai(l) {
 }
 
 /* ---------- Bài tập ---------- */
+function driveBaiLink(p, hid) {
+  const url = driveURL(p?.driveBai?.[hid]);
+  return url ? `<a class="btn small" href="${esc(url)}" target="_blank" rel="noopener noreferrer">Xem bài trên Drive ↗</a>` : "";
+}
+function renderDriveBaiTap() {
+  const box = $("#drive-bai-tap"); if (!box) return;
+  box.hidden = !isTeacher && !la2K9(myHv);
+  if (box.hidden) { box.innerHTML = ""; return; }
+  const folder = driveURL(myHv?.driveBaiTap, true);
+  box.innerHTML = isTeacher
+    ? `<b>Nộp bài Drive · 2K9</b><p>Học viên tải bài vào thư mục cá nhân rồi gửi link theo từng đề. Trạng thái nộp bài và nhận xét được lưu trên web.</p><div class="acts"><a class="btn small" href="${DRIVE_BAI_TAP}" target="_blank" rel="noopener noreferrer">Mở Drive lớp ↗</a>${isAdmin ? '<button class="btn small" id="drive-gan">Gắn thư mục học viên 2K9</button>' : ""}</div>`
+    : `<b>Thư mục bài của em · 2K9</b><p>${folder ? 'Tải ảnh vào đúng thư mục, đặt tên: Ngày_HọTên_TênĐề. Sau đó chọn “Nộp bài từ Drive” ở đề tương ứng.' : 'Anh chị đang gắn thư mục cá nhân. Em vẫn có thể gửi link bài từ Drive ở từng đề.'}</p>${folder ? `<a class="btn small" href="${esc(folder)}" target="_blank" rel="noopener noreferrer">Mở thư mục của em ↗</a>` : ""}`;
+  if ($("#drive-gan")) $("#drive-gan").onclick = ganThuMucDrive;
+}
+function ganThuMucDrive() {
+  if (!isAdmin) return;
+  const ds = roster.filter(r => la2K9(r) && !teachers.some(t => t.id === r.id)).sort(soSanhTenHocVien);
+  const h = moHop(`<h3>Thư mục Drive · 2K9</h3><p>Chọn đúng hồ sơ trên web, rồi dán link thư mục cá nhân trong Drive lớp. Không thay đổi quyền chia sẻ.</p><label>Học viên<select id="drive-hv"><option value="">Chọn học viên</option>${ds.map(r => `<option value="${esc(r.id)}">${esc(r.ten)} · ${esc(r.coso || "Chưa có cơ sở")} · ${esc(r.id)}</option>`).join("")}</select></label><label>Link thư mục cá nhân<input id="drive-folder" type="url" placeholder="https://drive.google.com/drive/folders/…"></label><p class="status" id="drive-status" role="status"></p><button class="btn primary" id="drive-save">Lưu liên kết</button>`, "Gắn thư mục Drive");
+  $("#drive-hv").onchange = e => { $("#drive-folder").value = driveURL(ds.find(r => r.id === e.target.value)?.driveBaiTap, true); };
+  $("#drive-save").onclick = async e => {
+    const r = ds.find(r => r.id === $("#drive-hv").value), url = driveURL($("#drive-folder").value, true);
+    const st = $("#drive-status");
+    if (!r || !url) { st.textContent = "Chọn học viên và dán đúng link thư mục Google Drive."; return; }
+    e.target.disabled = true;
+    try { await timed("Gắn thư mục Drive", setDoc(doc(db, "hocvien", r.id), { driveBaiTap: url }, { merge: true })); r.driveBaiTap = url; h.dong(); renderDriveBaiTap(); toast("Đã gắn thư mục ✓"); }
+    catch { st.textContent = "Chưa lưu được. Kiểm tra mạng và thử lại."; e.target.disabled = false; }
+  };
+}
+function nopBaiDrive(hid) {
+  if (isTeacher || !la2K9(myHv) || !homework.some(h => h.id === hid && giaoCho(h, { ...myHv, id: mail }))) return;
+  const folder = driveURL(myHv.driveBaiTap, true);
+  const h = moHop(`<h3>Nộp bài từ Drive</h3><p>Tải bài lên Drive trước, sau đó dán link ảnh hoặc thư mục riêng của bài này. Giáo viên cần có quyền xem link.</p>${folder ? `<a class="btn small" href="${esc(folder)}" target="_blank" rel="noopener noreferrer">Mở thư mục của em ↗</a>` : ""}<label>Link bài trên Drive<input type="url" id="drive-nop-url" value="${esc(driveURL(myProgress.driveBai?.[hid]))}" placeholder="https://drive.google.com/…"></label><p class="status" id="drive-nop-st" role="status"></p><button class="btn primary" id="drive-nop-save">Gửi bài</button>`, "Nộp bài từ Drive");
+  $("#drive-nop-save").onclick = async e => {
+    const url = driveURL($("#drive-nop-url").value), st = $("#drive-nop-st");
+    if (!url) { st.textContent = "Dán link ảnh hoặc thư mục Google Drive hợp lệ."; return; }
+    const owner = mail, uid = user?.uid, luc = Date.now(); e.target.disabled = true;
+    try {
+      await timed("Nộp bài Drive", luuTienDo({ driveBai: { [hid]: url }, baitap: { [hid]: luc } }));
+      if (mail !== owner || user?.uid !== uid) return;
+      myProgress.driveBai = { ...myProgress.driveBai, [hid]: url }; myProgress.baitap[hid] = luc;
+      saveData(); h.dong(); renderHomework(); toast("Đã gửi link bài ✓");
+    } catch { st.textContent = "Chưa gửi được. Link chưa được ghi nhận; hãy thử lại."; e.target.disabled = false; }
+  };
+}
 /* ---------- Chấm theo 3 tiêu chí: chưa đạt thì học viên phải nộp lại ---------- */
 const TIEU_CHI = [["hinh", "Hình cơ bản"], ["sacdo", "Sắc độ"], ["tongthe", "Tổng thể"]];
 const nopLuc = v => typeof v === "number" ? v : (v ? 1 : 0);          // thời điểm học viên bấm nộp (bản cũ lưu true)
@@ -2527,6 +2572,7 @@ function nopLai(id) {
   renderHomework(); if (typeof capNhatNhac === "function") capNhatNhac();
 }
 function renderHomework() {
+  renderDriveBaiTap();
   try { capNhatNhac(); } catch (e) {}
   // Không vẽ lại khi giáo viên đang gõ điểm/nhận xét, tránh mất chữ đang gõ.
   const ae = document.activeElement;
@@ -2571,7 +2617,7 @@ function renderHomework() {
         <button class="btn small" data-sua="${esc(h.id)}">Sửa</button>
         <button class="btn small" data-nhan-ban="${esc(h.id)}">Nhân bản</button>
         <button class="btn small" data-del="${esc(h.id)}">Xoá</button>`;
-    const studentBar = `<button class="btn small ${myProgress.baitap[h.id] ? "" : "primary"}" data-hw="${esc(h.id)}">${myProgress.baitap[h.id] ? "Đã nộp ✓" : "Đánh dấu đã nộp"}</button>`;
+    const studentBar = `${la2K9(myHv) ? `<button class="btn small primary" data-drive-nop="${esc(h.id)}">${driveURL(myProgress.driveBai?.[h.id]) ? "Cập nhật bài Drive" : "Nộp bài từ Drive"}</button>${driveBaiLink(myProgress, h.id)}` : ""}<button class="btn small ${myProgress.baitap[h.id] ? "" : "primary"}" data-hw="${esc(h.id)}">${myProgress.baitap[h.id] ? "Đã nộp ✓" : "Đánh dấu đã nộp"}</button>`;
     const tt = isTeacher ? null : canLamLai(fb, myProgress.baitap[h.id]) ? ["lamlai", "Cần làm lại"] : fb ? ["cham", "Đã chấm"] : myProgress.baitap[h.id] ? ["nop", "Đã nộp"] : n < 0 ? ["tre", "Quá hạn"] : ["chua", "Chưa nộp"];
     // Yêu cầu nhiều dòng → gạch đầu dòng cho dễ đọc
     const dong = String(h.mota || "").split("\n").map(x => x.replace(/^\s*[-•*+]\s*/, "").trim()).filter(Boolean);
@@ -2596,6 +2642,7 @@ function renderHomework() {
       toggleProgress("baitap", id).then(renderHomework);
     }; });
   $$("#hw-list [data-nl]").forEach(b => b.onclick = () => nopLai(b.dataset.nl));
+  $$("#hw-list [data-drive-nop]").forEach(b => b.onclick = () => nopBaiDrive(b.dataset.driveNop));
   $$("#hw-list .tc-t").forEach(b => b.onclick = () => { const v = b.getAttribute("aria-pressed") !== "true"; b.setAttribute("aria-pressed", v); gradeDraft[b.dataset.key] = v; });
   $$("#hw-list [data-del]").forEach(b => confirmButton(b, () => deleteHomework(b.dataset.del)));
   $$("#hw-list [data-sua]").forEach(b => b.onclick = () => { const h = homework.find(x => x.id === b.dataset.sua); if (h) moSuaBaiTap(h, false); });
@@ -2696,7 +2743,7 @@ function gradeTable(h) {
     const nopLaiRoi = daNopLai(fb, done);
     return `<div class="g-row ${nopLaiRoi ? "nop-lai" : ""}">
       <div class="g-who"><b>${esc(r.ten)}</b> ${nopLaiRoi ? '<span class="chip warn">Đã nộp lại · chấm lại</span>' : fb.trangThai === "lamlai" ? '<span class="chip bad">Đang phải làm lại</span>' : done ? '<span class="chip ok">Đã nộp</span>' : '<span class="chip line">Chưa nộp</span>'}
-        <span class="muted">${esc(r.chuongTrinh || r.lop || "")}</span>${anhTrongBai(r.id, h.id)}</div>
+        <span class="muted">${esc(r.chuongTrinh || r.lop || "")}</span>${driveBaiLink(progressAll[r.id], h.id)}${anhTrongBai(r.id, h.id)}</div>
       <div class="g-in">
         <label>Điểm<input class="g-diem" data-key="${esc(k1)}" value="${esc(d)}" maxlength="6" inputmode="decimal" placeholder="VD: 8"></label>
         <label class="g-nx-l">Nhận xét<input class="g-nx" data-key="${esc(k2)}" value="${esc(nx)}" maxlength="300" placeholder="Nhận xét ngắn"></label>
@@ -4624,7 +4671,7 @@ function loadData(m) {
 const cachedSession = store.get(SESSION_KEY, null);
 function saveSession(pending) {
   store.set(SESSION_KEY, user ? { mail, ten: user.displayName || "", anh: user.photoURL || "", isAdmin, isTeacher, approved, cv: myChucVu,
-    hv: myHv ? { ten: myHv.ten || "", chuongTrinh: myHv.chuongTrinh || "", lop: myHv.lop || "", coso: myHv.coso || "", ngaySinh: myHv.ngaySinh || "", namSinh: myHv.namSinh || null, khoi: myHv.khoi || "", truongThi: myHv.truongThi || "", sdt: myHv.sdt || "", khoaHoc: Array.isArray(myHv.khoaHoc) ? myHv.khoaHoc : null } : null,
+    hv: myHv ? { driveBaiTap: myHv.driveBaiTap || "", ten: myHv.ten || "", chuongTrinh: myHv.chuongTrinh || "", lop: myHv.lop || "", coso: myHv.coso || "", ngaySinh: myHv.ngaySinh || "", namSinh: myHv.namSinh || null, khoi: myHv.khoi || "", truongThi: myHv.truongThi || "", sdt: myHv.sdt || "", khoaHoc: Array.isArray(myHv.khoaHoc) ? myHv.khoaHoc : null } : null,
     pending: pending ? { guiLuc: pending.guiLuc || Date.now() } : null } : null);
 }
 function showCachedSession() {
@@ -4844,7 +4891,7 @@ async function onUser(u) {
     if (attendanceCache) { myDiemdanh = attendanceCache; troLyDaTai.diemDanh = true; }
     // Tiến độ đồng bộ trực tiếp: học trên điện thoại thì máy tính cũng thấy ngay, không ghi đè lẫn nhau
     listen(doc(db, "tiendo", mail), d => { const x = d.exists() ? d.data() : {};
-      myProgress = { bai: x.bai || {}, baitap: x.baitap || {}, xem: x.xem || {} }; saveData(); renderLessons(); renderResources(); renderHomework(); renderTiles(); });
+      myProgress = { bai: x.bai || {}, baitap: x.baitap || {}, xem: x.xem || {}, driveBai: x.driveBai || {} }; saveData(); renderLessons(); renderResources(); renderHomework(); renderTiles(); });
     listen(doc(db, "nhanxet", mail), d => { troLyDaTai.diem = true; myFeedback = d.exists() ? d.data() : {}; renderHomework(); renderMyProg(); saveData(); });
     listen(doc(db, "anhbaitap", mail), d => { myAnhBT = d.exists() ? d.data() : {}; renderHomework(); });
     // Điểm danh của chính em (lỗi quyền thì im lặng, panel vẫn hiện hướng dẫn)

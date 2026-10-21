@@ -4458,3 +4458,5 @@ body:has(#toast:not([hidden])) .tl-bong,body:has(#server-issue:not([hidden])) .t
   #giao-vien .gv-txt{padding:8px 12px 14px}
   #giao-vien .gv-ng{font-size:.8rem;line-height:1.5}
 }
+
+.drive-bai-tap{padding:1.2rem;margin-bottom:1.5rem;border:1px solid var(--line,#8884);border-radius:16px}.drive-bai-tap .acts{display:flex;flex-wrap:wrap;gap:.6rem}.drive-bai-tap p{max-width:70ch}
