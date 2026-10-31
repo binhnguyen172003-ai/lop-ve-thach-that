@@ -3928,11 +3928,16 @@ nav.on-hero .acct{box-shadow:none;background:rgba(12,14,18,.85);border-color:rgb
 #khoi .khoi dt,#khoi .khoi dd{padding:10px 0;border-top:1px solid var(--rule);overflow-wrap:anywhere}
 #khoi .khoi dt{font-weight:700;color:var(--accent)}
 #khoi .khoi-note{max-width:none;margin-top:18px;line-height:1.55}
+.hocphi-notice{display:flex;align-items:center;justify-content:space-between;gap:20px;margin:0 0 22px;padding:18px 22px;border:1px solid var(--accent);border-left:4px solid var(--accent);border-radius:var(--r);background:var(--sheet)}
+.hocphi-notice h3{margin:3px 0 5px;font-size:1.2rem}
+.hocphi-notice p{max-width:75ch;font-size:.92rem;line-height:1.55}
+.hocphi-date{flex:none;padding:8px 13px;border-radius:999px;background:var(--accent-soft);color:var(--accent);font-weight:700;white-space:nowrap}
 @media(max-width:760px){
   #khoi .khoi{grid-template-columns:1fr;gap:14px}
   #khoi .khoi > div{padding:18px}
   #khoi .khoi-1{min-height:0}
   #khoi .khoi-note{display:block;padding:14px 16px;font-size:.85rem}
+  .hocphi-notice{align-items:flex-start;flex-direction:column;gap:10px;padding:16px}
 }
 @media(max-width:420px){#khoi .khoi dl{grid-template-columns:62px minmax(0,1fr);gap:0 10px;font-size:.84rem}}
 @media(max-width:760px){
